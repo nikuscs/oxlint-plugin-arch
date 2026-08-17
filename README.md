@@ -43,7 +43,7 @@ Rules intentionally contain no repository paths. Consumers choose file globs and
 ## Configuration examples
 
 - [`examples/minimal.oxlint.config.ts`](examples/minimal.oxlint.config.ts) — three small rules showing plugin registration, glob ownership, and options.
-- [`examples/full.oxlint.config.ts`](examples/full.oxlint.config.ts) — all 23 rules across representative component, action, service, route, API, schema, and database scopes.
+- [`examples/full.oxlint.config.ts`](examples/full.oxlint.config.ts) — all 24 rules across representative component, action, service, route, API, schema, and database scopes.
 
 Copy the shapes that match your repository; do not copy globs or naming policy blindly. When vendoring to a different destination, update only the `jsPlugins[].specifier` path.
 
@@ -66,6 +66,7 @@ To use anti-slop as well, add its vendored entry point to the same `jsPlugins` a
 - `no-restricted-files` — reject files selected by a consumer-owned forbidden glob.
 - `no-restricted-token` — restrict an identifier to configured owner paths.
 - `no-runtime-in-types` — keep selected type modules runtime-free.
+- `no-single-use-scalar-schema` — reject local scalar Zod aliases used once where they can be safely inlined.
 - `no-top-level-functions` — reject top-level functions and optional re-exports.
 - `no-unescaped-like` — require configured sanitizers for configured query methods.
 - `only-export-components` — allow only React component and type exports.

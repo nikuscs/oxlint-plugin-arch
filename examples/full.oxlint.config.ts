@@ -145,6 +145,12 @@ export default defineConfig({
           namespaces: ['z'],
           operators: ['infer', 'input'],
         }],
+        'arch/no-single-use-scalar-schema': ['error', {
+          namespaces: ['z'],
+          methods: ['array', 'union', 'record', 'tuple'],
+          structuralMethods: ['and', 'array', 'object', 'or', 'pipe', 'record', 'transform', 'tuple', 'union'],
+          allowZodScalars: true,
+        }],
       },
     },
     {

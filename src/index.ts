@@ -14,6 +14,7 @@ import { noRederiveSchema } from './rules/no-rederive-schema.ts'
 import { noRestrictedFiles } from './rules/no-restricted-files.ts'
 import { noRestrictedToken } from './rules/no-restricted-token.ts'
 import { noRuntimeInTypes } from './rules/no-runtime-in-types.ts'
+import { noSingleUseScalarSchema } from './rules/no-single-use-scalar-schema.ts'
 import { noTopLevelFunctions } from './rules/no-top-level-functions.ts'
 import { noUnescapedLike } from './rules/no-unescaped-like.ts'
 import { onlyExportComponents } from './rules/only-export-components.ts'
@@ -41,6 +42,7 @@ export default eslintCompatPlugin({
     'no-restricted-files': noRestrictedFiles,
     'no-restricted-token': noRestrictedToken,
     'no-runtime-in-types': noRuntimeInTypes,
+    'no-single-use-scalar-schema': noSingleUseScalarSchema,
     'no-top-level-functions': noTopLevelFunctions,
     'no-unescaped-like': noUnescapedLike,
     'only-export-components': onlyExportComponents,
