@@ -32,6 +32,18 @@ export default defineConfig({
       },
     },
     {
+      files: ['**/*.tsx'],
+      rules: {
+        'arch/no-local-schema-construction': ['warn', {
+          packages: ['zod'],
+          namespaces: ['z'],
+          allowIn: ['/src/forms/legacy-form.tsx'],
+          allowPathPatterns: ['/src/components/'],
+          message: 'Move this schema to a types file or the server module that owns it.',
+        }],
+      },
+    },
+    {
       files: ['**/src/components/**/*.tsx'],
       rules: {
         'arch/only-export-components': ['error', { matchFileName: true }],

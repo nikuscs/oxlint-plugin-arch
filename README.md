@@ -43,7 +43,7 @@ Rules intentionally contain no repository paths. Consumers choose file globs and
 ## Configuration examples
 
 - [`examples/minimal.oxlint.config.ts`](examples/minimal.oxlint.config.ts) — three small rules showing plugin registration, glob ownership, and options.
-- [`examples/full.oxlint.config.ts`](examples/full.oxlint.config.ts) — all 22 rules across representative component, action, service, route, API, schema, and database scopes.
+- [`examples/full.oxlint.config.ts`](examples/full.oxlint.config.ts) — all 23 rules across representative component, action, service, route, API, schema, and database scopes.
 
 Copy the shapes that match your repository; do not copy globs or naming policy blindly. When vendoring to a different destination, update only the `jsPlugins[].specifier` path.
 
@@ -61,6 +61,7 @@ To use anti-slop as well, add its vendored entry point to the same `jsPlugins` a
 - `no-file-level-helpers` — keep unapproved helpers out of module scope.
 - `no-imported-type-alias` — reject exported aliases that only rename imported types.
 - `no-inline-schema-elements` — require named schemas inside configured combinators.
+- `no-local-schema-construction` — reject runtime schema-library imports and local schema construction, with consumer-chosen severity, messages, and path exceptions.
 - `no-rederive-schema` — reject type derivation from configured imported schemas.
 - `no-restricted-files` — reject files selected by a consumer-owned forbidden glob.
 - `no-restricted-token` — restrict an identifier to configured owner paths.

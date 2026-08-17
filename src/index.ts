@@ -9,6 +9,7 @@ import { noExtraFactoryKeys } from './rules/no-extra-factory-keys.ts'
 import { noFileLevelHelpers } from './rules/no-file-level-helpers.ts'
 import { noImportedTypeAlias } from './rules/no-imported-type-alias.ts'
 import { noInlineSchemaElements } from './rules/no-inline-schema-elements.ts'
+import { noLocalSchemaConstruction } from './rules/no-local-schema-construction.ts'
 import { noRederiveSchema } from './rules/no-rederive-schema.ts'
 import { noRestrictedFiles } from './rules/no-restricted-files.ts'
 import { noRestrictedToken } from './rules/no-restricted-token.ts'
@@ -35,6 +36,7 @@ export default eslintCompatPlugin({
     'no-file-level-helpers': noFileLevelHelpers,
     'no-imported-type-alias': noImportedTypeAlias,
     'no-inline-schema-elements': noInlineSchemaElements,
+    'no-local-schema-construction': noLocalSchemaConstruction,
     'no-rederive-schema': noRederiveSchema,
     'no-restricted-files': noRestrictedFiles,
     'no-restricted-token': noRestrictedToken,
