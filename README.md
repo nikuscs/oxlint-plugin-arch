@@ -86,23 +86,15 @@ After production changes, run `bun run sync:skill-assets`; CI verifies the bundl
 
 ## Release
 
-Bump with npm's version command. It updates `package.json`, commits, and tags:
+Update `CHANGELOG.md`, then run the full lifecycle from a clean `main`:
 
 ```bash
-npm version patch   # 0.2.0 -> 0.2.1
-npm version minor   # 0.2.0 -> 0.3.0
-npm version major   # 0.2.0 -> 1.0.0
+bun run release              # prompt for patch/minor/major
+bun run release:patch        # check, bump, tag, push, npm publish
+bun run release:dry-run      # check + npm pack dry-run only
 ```
 
-Update `CHANGELOG.md` before the bump, then:
-
-```bash
-git push --follow-tags
-npm login           # once per machine
-npm publish
-```
-
-`prepublishOnly` runs `bun run check` before the tarball goes out. Do not publish from a dirty tree.
+`scripts/release.sh` refuses dirty trees and requires `npm login`. `prepublishOnly` runs `bun run check` again before the tarball goes out.
 
 ## License
 

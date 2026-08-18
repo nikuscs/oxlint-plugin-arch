@@ -21,7 +21,12 @@
     "sync:skill-assets": "bun scripts/sync-skill-assets.ts",
     "check:examples": "oxlint examples/minimal.oxlint.config.ts -c examples/minimal.oxlint.config.ts --disable-nested-config && oxlint examples/full.oxlint.config.ts -c examples/full.oxlint.config.ts --disable-nested-config",
     "check:skill-assets": "bun scripts/sync-skill-assets.ts --check",
-    "prepublishOnly": "bun run check"
+    "prepublishOnly": "bun run check",
+    "release": "bash scripts/release.sh",
+    "release:dry-run": "bash scripts/release.sh --dry-run",
+    "release:patch": "bash scripts/release.sh patch --yes",
+    "release:minor": "bash scripts/release.sh minor --yes",
+    "release:major": "bash scripts/release.sh major --yes"
   },
   "dependencies": {
     "@oxlint/plugins": "1.78.0"
@@ -31,6 +36,7 @@
   },
   "devDependencies": {
     "@types/node": "26.0.1",
+    "bumpp": "10.4.1",
     "oxlint": "1.78.0",
     "typescript": "6.0.3",
     "vitest": "4.1.9"
