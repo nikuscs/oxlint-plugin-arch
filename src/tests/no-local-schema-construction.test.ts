@@ -17,6 +17,7 @@ test('no-local-schema-construction', () => {
         "import type { z as zod } from 'zod'\ntype User = zod.infer<typeof userSchema>",
         "import { type ZodType } from 'zod'\ntype Schema = ZodType",
         "import { type z as zod } from 'zod'\ntype User = zod.input<typeof userSchema>",
+        "export type { z } from 'zod'",
         {
           filename: '/repo/apps/web/src/forms/user-form.tsx',
           code: "import { z } from 'zod'\nconst schema = z.object({})",
@@ -30,6 +31,9 @@ test('no-local-schema-construction', () => {
       ],
       invalid: [
         { code: "import { z } from 'zod'", errors: [runtimeImport] },
+        { code: "import { z } from 'zod/v4'", errors: [runtimeImport] },
+        { code: "export { z } from 'zod'", errors: [runtimeImport] },
+        { code: "export * from 'zod/v4'", errors: [runtimeImport] },
         {
           code: "import { z as zod } from 'zod'\nconst schema = zod.object({})",
           errors: [runtimeImport, construction],

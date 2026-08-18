@@ -1,15 +1,23 @@
 import { defineRule } from '@oxlint/plugins'
-import { exportsCollectFunctions, factoriesExpandTemplate, namingFileBasename, namingMatchTemplate, optionsFirst } from '../utils/index.ts'
+import {
+  declarationsCollectFunctions,
+  exportsCollectFunctions,
+  factoriesExpandTemplate,
+  namingFileBasename,
+  namingMatchTemplate,
+  optionsFirst,
+} from '../utils/index.ts'
 
 interface FilenameExportNameOptions {
   file: string
   export: string
   mode?: 'all' | 'some'
   placeholderPattern?: string
+  allDeclarations?: boolean
 }
 
 /**
- * Builds an expected function name from filename placeholders, then checks exported functions against it.
+ * Builds an expected function name from filename placeholders, then checks exported or all functions against it.
  *
  * Example: `user-action.create.ts` can require `makeUserActionCreate`; `mode: some` allows additional exports.
  */
@@ -24,11 +32,12 @@ export const filenameExportName = defineRule({
         export: { type: 'string' },
         mode: { type: 'string', enum: ['all', 'some'] },
         placeholderPattern: { type: 'string' },
+        allDeclarations: { type: 'boolean' },
       },
       required: ['file', 'export'],
     }],
     messages: {
-      mismatch: "Exported function '{{actual}}' must match '{{expected}}'.",
+      mismatch: "Function '{{actual}}' must match '{{expected}}'.",
     },
   },
   createOnce(context) {
@@ -39,6 +48,7 @@ export const filenameExportName = defineRule({
           export: exportTemplate,
           mode = 'all',
           placeholderPattern,
+          allDeclarations = false,
         } = optionsFirst<FilenameExportNameOptions>(context)
         const groups = namingMatchTemplate(namingFileBasename(context.filename), file, placeholderPattern)
 
@@ -47,11 +57,11 @@ export const filenameExportName = defineRule({
         }
 
         const expected = factoriesExpandTemplate(exportTemplate, groups)
-        const exported = exportsCollectFunctions(program)
+        const functions = allDeclarations ? declarationsCollectFunctions(program) : exportsCollectFunctions(program)
 
         if (mode === 'some') {
-          if (!exported.some((item) => item.name === expected)) {
-            const first = exported.at(0)
+          if (!functions.some((item) => item.name === expected)) {
+            const first = functions.at(0)
             context.report({
               node: first?.node ?? program,
               messageId: 'mismatch',
@@ -61,7 +71,7 @@ export const filenameExportName = defineRule({
           return
         }
 
-        for (const item of exported) {
+        for (const item of functions) {
           if (item.name !== expected) {
             context.report({
               node: item.node,

@@ -1,26 +1,30 @@
 ---
 name: install-oxlint-arch
-description: Vendor and configure the oxlint-plugin-arch raw TypeScript plugin in a local TypeScript or JavaScript repository.
+description: Install oxlint-plugin-arch from npm, or vendor a local copy, and register it in the current repository's Oxlint config.
 ---
 
 # Install oxlint-plugin-arch
 
-Install the bundled Oxlint plugin into the current repository while preserving its package manager, tooling layout, lint configuration, and unrelated changes.
+Prefer the published package. Vendor a local copy only when the user wants to inspect or fork the rules in-tree.
 
 ## Procedure
 
 1. Inspect the target repository:
    - Read its agent instructions and `git status`.
    - Identify its package manager and Oxlint configuration.
-   - Look for an existing local architecture plugin or established tooling directory.
+   - Look for an existing `oxlint-plugin-arch` dependency or vendored architecture plugin.
 
-2. Choose the destination:
-   - Use the destination the user supplied.
-   - Otherwise prefer the repository's existing tooling layout.
-   - If more than one location is plausible, ask the user before copying.
-   - The fallback is `tools/oxlint/arch`.
+2. Install from npm with the repository's existing package manager, unless the user asked to vendor:
 
-3. Copy the bundled source from the target repository root:
+   ```bash
+   bun add -d oxlint-plugin-arch oxlint @oxlint/plugins
+   ```
+
+   Use matching `oxlint` and `@oxlint/plugins` versions. Do not change package managers or unrelated dependency ranges.
+
+3. Register the package in `jsPlugins` using plugin name `arch` and specifier `oxlint-plugin-arch`. Keep all repository paths and policy in the consumer's config.
+
+4. Vendor only if the user asked for a local fork. Copy with:
 
    ```bash
    bun <skill-directory>/scripts/install.ts
@@ -28,14 +32,8 @@ Install the bundled Oxlint plugin into the current repository while preserving i
    bun <skill-directory>/scripts/install.ts --target tools/lint/arch
    ```
 
-   The positional path and `--target` are equivalent and mutually exclusive. Relative paths resolve from the target repository. The installer refuses to replace an existing destination; use `--force` only after backing up and reviewing the existing copy.
+   The fallback destination is `tools/oxlint/arch`. The installer refuses to replace an existing destination unless `--force` is supplied after review. Point `jsPlugins[].specifier` at the copied `index.ts` instead of the package name.
 
-4. Query current compatible versions of `oxlint` and `@oxlint/plugins`, then install the same version of both with the repository's existing package manager. Do not change package managers or unrelated dependency ranges.
+5. Enable only rules whose intended globs and options are confirmed with the user. Architecture rules are deliberately configurable and do not have a universal all-rules preset.
 
-5. Register the printed entry point in `jsPlugins` using plugin name `arch`. Keep all repository paths and policy in the consumer's config; never edit vendored rule source merely to encode one repository's folders.
-
-6. Read `src/tests/` in this repository to understand required rule options. Enable only rules whose intended globs and options are confirmed with the user. Architecture rules are deliberately configurable and do not have a universal all-rules preset.
-
-7. Ignore the chosen vendored directory in lint/format only when the consumer treats vendored source as third-party. Preserve every existing ignore.
-
-8. Run the repository's lint command and typecheck. Report the copied path, versions installed, config changes, enabled rules, and any findings. Do not suppress or weaken findings without approval.
+6. Run the repository's lint command and typecheck. Report the install path or package version, config changes, enabled rules, and any findings. Do not suppress or weaken findings without approval.

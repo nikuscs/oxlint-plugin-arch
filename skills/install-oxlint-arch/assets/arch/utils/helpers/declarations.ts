@@ -1,3 +1,5 @@
+import { astVisit } from './ast.ts'
+import type { AstRuntimeFunction } from './ast.ts'
 import type { ReactComponentsCandidate } from './react-components.ts'
 import type { ESTree } from '@oxlint/plugins'
 
@@ -96,3 +98,106 @@ export function declarationsRuntimeKind(node: DeclarationsRuntime): 'class' | 'e
 
   return 'variable'
 }
+
+function declarationsUnwrapExpression(node: ESTree.Expression): ESTree.Expression {
+  if (node.type === 'ParenthesizedExpression' || node.type === 'TSAsExpression' || node.type === 'TSSatisfiesExpression'
+    || node.type === 'TSTypeAssertion' || node.type === 'TSNonNullExpression') {
+    return declarationsUnwrapExpression(node.expression)
+  }
+
+  if (node.type === 'ChainExpression') {
+    return declarationsUnwrapExpression(node.expression)
+  }
+
+  return node.type === 'AwaitExpression' && node.argument ? declarationsUnwrapExpression(node.argument) : node
+}
+
+export function declarationsIsTrivialExpression(node: ESTree.Expression): boolean {
+  const value = declarationsUnwrapExpression(node)
+
+  if (value.type === 'Identifier' || value.type === 'ThisExpression' || value.type === 'MetaProperty' || value.type.endsWith('Literal')) {
+    return true
+  }
+
+  if (value.type === 'TemplateLiteral') {
+    return value.expressions.length === 0
+  }
+
+  if (value.type === 'MemberExpression' || value.type === 'CallExpression' || value.type === 'NewExpression'
+    || value.type === 'TaggedTemplateExpression') {
+    return true
+  }
+
+  return value.type === 'LogicalExpression'
+    && declarationsIsTrivialExpression(value.left)
+    && declarationsIsTrivialExpression(value.right)
+}
+
+export function declarationsIsTrivialFunction(node: AstRuntimeFunction): boolean {
+  if (node.type === 'ArrowFunctionExpression' && node.body.type !== 'BlockStatement') {
+    return declarationsIsTrivialExpression(node.body)
+  }
+
+  if (!node.body || node.body.type !== 'BlockStatement') {
+    return false
+  }
+
+  const statements = node.body.body.filter((statement) => statement.type !== 'EmptyStatement'
+    && !(statement.type === 'ExpressionStatement' && statement.directive))
+
+  if (statements.length === 0) {
+    return true
+  }
+
+  if (statements.length > 1) {
+    return false
+  }
+
+  const statement = statements[0]
+  if (statement.type === 'ReturnStatement') {
+    return !statement.argument || declarationsIsTrivialExpression(statement.argument)
+  }
+
+  return statement.type === 'ExpressionStatement' && declarationsIsTrivialExpression(statement.expression)
+}
+
+export interface DeclarationsNamed {
+  name: string
+  node: ESTree.Node
+}
+
+export function declarationsCollectNamed(root: ESTree.Node): DeclarationsNamed[] {
+  const result: DeclarationsNamed[] = []
+
+  astVisit(root, [], (node, ancestors) => {
+    if ((node.type === 'FunctionDeclaration' || node.type === 'ClassDeclaration' || node.type === 'TSTypeAliasDeclaration'
+      || node.type === 'TSInterfaceDeclaration' || node.type === 'TSEnumDeclaration') && node.id?.name) {
+      result.push({ name: node.id.name, node })
+      return
+    }
+
+    if (node.type === 'VariableDeclarator' && node.id.type === 'Identifier'
+      && !ancestors.some((ancestor) => ancestor.type === 'ForStatement' || ancestor.type === 'ForInStatement'
+        || ancestor.type === 'ForOfStatement')) {
+      result.push({ name: node.id.name, node })
+    }
+  })
+
+  return result
+}
+
+export function declarationsCollectFunctions(root: ESTree.Node): { name: string, node: AstRuntimeFunction }[] {
+  return declarationsCollectNamed(root).flatMap((item) => {
+    if (item.node.type === 'FunctionDeclaration') {
+      return [{ name: item.name, node: item.node }]
+    }
+
+    if (item.node.type === 'VariableDeclarator'
+      && (item.node.init?.type === 'FunctionExpression' || item.node.init?.type === 'ArrowFunctionExpression')) {
+      return [{ name: item.name, node: item.node.init }]
+    }
+
+    return []
+  })
+}
+

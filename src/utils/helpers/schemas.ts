@@ -13,6 +13,10 @@ function schemasMemberRootName(node: ESTree.MemberExpression): string | undefine
   return node.object.type === 'MemberExpression' ? schemasMemberRootName(node.object) : undefined
 }
 
+export function schemasIsPackage(source: string, packages: ReadonlySet<string>): boolean {
+  return packages.has(source) || [...packages].some((pkg) => source.startsWith(`${pkg}/`))
+}
+
 export function schemasIsCall(node: ESTree.CallExpression, namespaces: Set<string>): boolean {
   return node.callee.type === 'MemberExpression' && node.callee.object.type === 'Identifier' && namespaces.has(node.callee.object.name)
 }
@@ -24,8 +28,18 @@ export function schemasRuntimeImportLocals(node: ESTree.ImportDeclaration): stri
 }
 
 export function schemasIsRuntimeImport(node: ESTree.ImportDeclaration, packages: ReadonlySet<string>): boolean {
-  return packages.has(node.source.value)
+  return schemasIsPackage(node.source.value, packages)
     && (node.specifiers.length === 0 ? node.importKind !== 'type' : schemasRuntimeImportLocals(node).length > 0)
+}
+
+export function schemasIsRuntimeReexport(node: ESTree.ExportNamedDeclaration | ESTree.ExportAllDeclaration, packages: ReadonlySet<string>): boolean {
+  if (!node.source || !schemasIsPackage(node.source.value, packages) || node.exportKind === 'type') {
+    return false
+  }
+
+  return node.type === 'ExportAllDeclaration'
+    || node.specifiers.length === 0
+    || node.specifiers.some((specifier) => specifier.exportKind !== 'type')
 }
 
 export function schemasIsConstruction(node: ESTree.CallExpression, constructors: ReadonlySet<string>): boolean {

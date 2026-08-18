@@ -2,60 +2,56 @@
 
 Configurable, filename-aware architecture rules for Oxlint.
 
-This repository follows anti-slop's vendoring model: `src/` is raw TypeScript, the package is private, and consumers copy the plugin into their own repository so they can inspect and adapt the policy. No npm publication or build step is required.
+Install the package, then put repository paths and policy in your Oxlint config. Rules contain no application-specific names or folders.
+
+## Install
+
+```bash
+bun add -d oxlint-plugin-arch oxlint @oxlint/plugins
+```
+
+Use matching `oxlint` and `@oxlint/plugins` versions. Then register the package:
+
+```ts
+import { defineConfig } from 'oxlint'
+
+export default defineConfig({
+  jsPlugins: [
+    { name: 'arch', specifier: 'oxlint-plugin-arch' },
+  ],
+})
+```
 
 ## Recommended companion: anti-slop
 
-We recommend [Dillon Mulroy's anti-slop](https://github.com/dmmulroy/anti-slop) alongside this plugin. Anti-slop catches low-evidence TypeScript and JavaScript implementation patterns; oxlint-plugin-arch enforces configurable file, export, boundary, and API structure. Both projects vendor readable raw TypeScript so teams can inspect and adapt the rules they adopt.
+We recommend [Dillon Mulroy's anti-slop](https://github.com/dmmulroy/anti-slop) alongside this plugin. Anti-slop catches low-evidence TypeScript and JavaScript implementation patterns; oxlint-plugin-arch enforces configurable file, export, boundary, and API structure.
 
-Use either project independently, or register both vendored plugins in the same Oxlint config under their separate `anti-slop/*` and `arch/*` rule namespaces.
+Register both in the same Oxlint config under their separate `anti-slop/*` and `arch/*` rule namespaces.
 
-## Install with an agent skill
+## Optional: vendor a local copy
+
+If you want to inspect or fork the rules in-tree, copy `src/index.ts`, `src/rules/`, and `src/utils/`, or use the agent skill:
 
 ```bash
 npx skills add nikuscs/oxlint-plugin-arch --skill install-oxlint-arch
 ```
 
-Then ask your agent to install the plugin. The installer accepts the destination that fits the consumer repository:
-
-```bash
-bun <skill-directory>/scripts/install.ts
-bun <skill-directory>/scripts/install.ts packages/tooling/src/oxlint/arch
-bun <skill-directory>/scripts/install.ts --target tools/lint/arch
-```
-
-The default destination is `tools/oxlint/arch`. Relative paths resolve from the consumer repository; absolute paths are also accepted. Existing destinations are never replaced unless `--force` is explicitly supplied.
-
-## Manual installation
-
-Copy `src/index.ts`, `src/rules/`, and `src/utils/` to a consumer-owned directory, install matching versions of `oxlint` and `@oxlint/plugins`, then register the copied entry point:
-
-```ts
-export default defineConfig({
-  jsPlugins: [
-    { name: 'arch', specifier: './tools/oxlint/arch/index.ts' },
-  ],
-})
-```
-
-Rules intentionally contain no repository paths. Consumers choose file globs and options in `oxlint.config.ts`.
+Then point `jsPlugins[].specifier` at the copied entry file instead of the package name.
 
 ## Configuration examples
 
 - [`examples/minimal.oxlint.config.ts`](examples/minimal.oxlint.config.ts) — three small rules showing plugin registration, glob ownership, and options.
-- [`examples/full.oxlint.config.ts`](examples/full.oxlint.config.ts) — all 24 rules across representative component, action, service, route, API, schema, and database scopes.
+- [`examples/full.oxlint.config.ts`](examples/full.oxlint.config.ts) — all 25 rules across representative component, action, service, route, API, schema, and database scopes.
 
-Copy the shapes that match your repository; do not copy globs or naming policy blindly. When vendoring to a different destination, update only the `jsPlugins[].specifier` path.
-
-To use anti-slop as well, add its vendored entry point to the same `jsPlugins` array and keep its `anti-slop/*` rules beside the `arch/*` overrides shown here.
+Copy the shapes that match your repository; do not copy globs or naming policy blindly.
 
 ## Rules
 
-- `export-file-prefix` — require export names to start with a filename-derived prefix.
-- `export-name-pattern` — require exports to match a configured regular expression.
-- `filename-export-name` — derive expected exported function names from filename templates.
+- `export-file-prefix` — require export names, or every function and type, to start with a filename-derived prefix.
+- `export-name-pattern` — require export names, or every function and type, to match a configured regular expression.
+- `filename-export-name` — derive expected function names from filename templates, optionally including locals.
 - `filename-match` — require filenames to match a configured pattern.
-- `folder-prefix` — require filenames to start with their parent folder name.
+- `folder-prefix` — require filenames to start with their parent folder name, or the folders after a configured root.
 - `no-extra-exports` — restrict files to configured export templates.
 - `no-extra-factory-keys` — restrict direct factory return keys.
 - `no-file-level-helpers` — keep unapproved helpers out of module scope.
@@ -68,9 +64,10 @@ To use anti-slop as well, add its vendored entry point to the same `jsPlugins` a
 - `no-runtime-in-types` — keep selected type modules runtime-free.
 - `no-single-use-scalar-schema` — reject local scalar Zod aliases used once where they can be safely inlined.
 - `no-top-level-functions` — reject top-level functions and optional re-exports.
+- `no-trivial-functions` — reject empty or passthrough top-level functions.
 - `no-unescaped-like` — require configured sanitizers for configured query methods.
 - `only-export-components` — allow only React component and type exports.
-- `require-file-factory` — derive and require a filename-based factory export.
+- `require-file-factory` — derive and require a filename-based factory function.
 - `require-object-params` — require exported functions to use object-shaped parameters.
 - `require-orpc-output` — require named oRPC output schemas.
 - `require-paired-call` — require one configured call when another appears.
@@ -86,6 +83,26 @@ bun run check
 ```
 
 After production changes, run `bun run sync:skill-assets`; CI verifies the bundled installer copy matches `src/`.
+
+## Release
+
+Bump with npm's version command. It updates `package.json`, commits, and tags:
+
+```bash
+npm version patch   # 0.2.0 -> 0.2.1
+npm version minor   # 0.2.0 -> 0.3.0
+npm version major   # 0.2.0 -> 1.0.0
+```
+
+Update `CHANGELOG.md` before the bump, then:
+
+```bash
+git push --follow-tags
+npm login           # once per machine
+npm publish
+```
+
+`prepublishOnly` runs `bun run check` before the tarball goes out. Do not publish from a dirty tree.
 
 ## License
 

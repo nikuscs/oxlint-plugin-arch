@@ -16,6 +16,9 @@ export default defineConfig({
           when: 'createForm',
           require: 'schemaResolver',
         }],
+        'arch/no-trivial-functions': ['error', {
+          allowPattern: '^(create|make)[A-Z]',
+        }],
       },
     },
     {
@@ -50,6 +53,12 @@ export default defineConfig({
         'arch/folder-prefix': ['error', {
           singularize: 'trailing-s',
           separators: ['-'],
+          after: 'components',
+        }],
+        'arch/export-file-prefix': ['error', {
+          stem: 'full-basename',
+          normalize: 'remove-separators',
+          allDeclarations: true,
         }],
         'arch/no-file-level-helpers': ['error', {
           detectComponents: true,

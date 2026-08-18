@@ -1,12 +1,17 @@
 {
   "name": "oxlint-plugin-arch",
   "version": "0.2.0",
-  "private": true,
   "description": "Configurable architecture rules for Oxlint JavaScript plugins.",
   "type": "module",
-  "exports": "./src/index.ts",
+  "main": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts"
+  },
   "files": [
-    "src"
+    "CHANGELOG.md",
+    "src/index.ts",
+    "src/rules",
+    "src/utils"
   ],
   "scripts": {
     "check": "bun run lint && bun run test && bun run typecheck && bun run check:examples && bun run check:skill-assets",
@@ -15,10 +20,14 @@
     "typecheck": "tsc --noEmit",
     "sync:skill-assets": "bun scripts/sync-skill-assets.ts",
     "check:examples": "oxlint examples/minimal.oxlint.config.ts -c examples/minimal.oxlint.config.ts --disable-nested-config && oxlint examples/full.oxlint.config.ts -c examples/full.oxlint.config.ts --disable-nested-config",
-    "check:skill-assets": "bun scripts/sync-skill-assets.ts --check"
+    "check:skill-assets": "bun scripts/sync-skill-assets.ts --check",
+    "prepublishOnly": "bun run check"
   },
   "dependencies": {
     "@oxlint/plugins": "1.78.0"
+  },
+  "peerDependencies": {
+    "oxlint": ">=1.78.0"
   },
   "devDependencies": {
     "@types/node": "26.0.1",
@@ -27,5 +36,23 @@
     "vitest": "4.1.9"
   },
   "packageManager": "bun@1.3.14",
-  "license": "MIT"
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nikuscs/oxlint-plugin-arch.git"
+  },
+  "bugs": {
+    "url": "https://github.com/nikuscs/oxlint-plugin-arch/issues"
+  },
+  "homepage": "https://github.com/nikuscs/oxlint-plugin-arch#readme",
+  "keywords": [
+    "oxlint",
+    "eslint",
+    "architecture",
+    "lint",
+    "plugin"
+  ]
 }

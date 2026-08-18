@@ -8,6 +8,42 @@ export function namingFileBasename(filePath: string): string {
   return slash === -1 ? normalized : normalized.slice(slash + 1)
 }
 
+export function namingDirSegments(filePath: string): string[] {
+  const parts = namingPosixPath(filePath).split('/').filter(Boolean)
+  return parts.slice(0, -1)
+}
+
+export function namingSegmentsAfter(filePath: string, after: string): string[] | undefined {
+  const dirs = namingDirSegments(filePath)
+  const marker = after.split('/').filter(Boolean)
+
+  if (marker.length === 0) {
+    return undefined
+  }
+
+  for (let index = dirs.length - marker.length; index >= 0; index -= 1) {
+    if (marker.every((part, offset) => dirs[index + offset] === part)) {
+      return dirs.slice(index + marker.length)
+    }
+  }
+}
+
+export function namingFolderPrefixes(
+  folders: string[],
+  separator: string,
+  singularize: 'none' | 'trailing-s',
+): string[] {
+  const joined = folders.join(separator)
+  const last = folders.at(-1) ?? ''
+  const prefixes = [joined]
+
+  if (singularize === 'trailing-s' && last.endsWith('s') && last.length > 1) {
+    prefixes.push([...folders.slice(0, -1), last.slice(0, -1)].join(separator))
+  }
+
+  return prefixes.filter(Boolean)
+}
+
 export function namingPascalCase(value: string): string {
   return value
     .split(/[-_\s.]+/)

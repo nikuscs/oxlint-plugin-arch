@@ -3,6 +3,7 @@ import { requireFileFactory } from '../rules/require-file-factory.ts'
 import { createRuleTester } from './rule-tester.ts'
 
 const options = [{ factory: 'make{Stem}' }]
+const allDeclarations = [{ factory: 'make{Stem}', allDeclarations: true }]
 const error = { messageId: 'factory' }
 
 test('require-file-factory', () => {
@@ -10,7 +11,6 @@ test('require-file-factory', () => {
     valid: [
       { filename: '/repo/services/workflow/workflow-validation.ts', code: 'export function makeWorkflowValidation() {}', options },
       { filename: '/repo/services/post-generation/post-generation.source.ts', code: 'export const makePostGenerationSource = () => ({})', options },
-      { filename: '/repo/services/workflow/workflow-validation.ts', code: 'export const workflowSchema = {}', options },
     ],
     invalid: [
       {
@@ -23,6 +23,18 @@ test('require-file-factory', () => {
         filename: '/repo/services/workflow/workflow-validation.ts',
         code: 'const wrongFactory = () => ({})\nexport { wrongFactory }',
         options,
+        errors: [error],
+      },
+      {
+        filename: '/repo/services/workflow/workflow-validation.ts',
+        code: 'export const workflowSchema = {}',
+        options,
+        errors: [error],
+      },
+      {
+        filename: '/repo/services/workflow/workflow-validation.ts',
+        code: 'function helper() {}\nexport function makeWorkflowValidation() {}',
+        options: allDeclarations,
         errors: [error],
       },
     ],

@@ -1,10 +1,24 @@
 import { defineRule } from '@oxlint/plugins'
 import { namingPosixPath, optionsFirst } from '../utils/index.ts'
+import type { ESTree } from '@oxlint/plugins'
 
 interface NoRestrictedTokenOptions {
   token: string
   allowIn: string[]
   allowPathPatterns?: string[]
+}
+
+function tokenIsTypeOnlyImport(node: ESTree.Node): boolean {
+  const parent = node.parent
+
+  if (parent?.type === 'ImportSpecifier') {
+    return parent.importKind === 'type'
+      || (parent.parent.type === 'ImportDeclaration' && parent.parent.importKind === 'type')
+  }
+
+  return (parent?.type === 'ImportDefaultSpecifier' || parent?.type === 'ImportNamespaceSpecifier')
+    && parent.parent.type === 'ImportDeclaration'
+    && parent.parent.importKind === 'type'
 }
 
 /**
@@ -44,7 +58,7 @@ export const noRestrictedToken = defineRule({
       Identifier(node) {
         const { token } = optionsFirst<NoRestrictedTokenOptions>(context)
 
-        if (node.name === token) {
+        if (node.name === token && !tokenIsTypeOnlyImport(node)) {
           context.report({
             node,
             messageId: 'restricted',

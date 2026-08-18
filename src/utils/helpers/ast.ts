@@ -70,3 +70,32 @@ export function astCallName(node: ESTree.CallExpression): string | undefined {
 
   return node.callee.type === 'MemberExpression' ? astStaticMemberName(node.callee) : undefined
 }
+
+export function astImportedCallAliases(program: ESTree.Program): Map<string, string> {
+  const aliases = new Map<string, string>()
+
+  for (const statement of program.body) {
+    if (statement.type !== 'ImportDeclaration') {
+      continue
+    }
+
+    for (const specifier of statement.specifiers) {
+      if (specifier.type !== 'ImportSpecifier') {
+        continue
+      }
+
+      const imported = specifier.imported.type === 'Identifier' ? specifier.imported.name : specifier.imported.value
+      if (imported !== specifier.local.name) {
+        aliases.set(specifier.local.name, imported)
+      }
+    }
+  }
+
+  return aliases
+}
+
+export function astResolvedCallName(node: ESTree.CallExpression, aliases: ReadonlyMap<string, string>): string | undefined {
+  const name = astCallName(node)
+  return name ? aliases.get(name) ?? name : undefined
+}
+

@@ -4,6 +4,7 @@ import {
   optionsFirst,
   schemasIsConstruction,
   schemasIsRuntimeImport,
+  schemasIsRuntimeReexport,
   schemasRuntimeImportLocals,
 } from '../utils/index.ts'
 
@@ -85,6 +86,50 @@ export const noLocalSchemaConstruction = defineRule({
 
         for (const name of schemasRuntimeImportLocals(node)) {
           constructors.add(name)
+        }
+
+        context.report({
+          node,
+          messageId: 'runtimeImport',
+          data: {
+            message: formatMessage(
+              runtimeImportMessage ?? message ?? defaultRuntimeImportMessage,
+              { source: node.source.value },
+            ),
+          },
+        })
+      },
+      ExportNamedDeclaration(node) {
+        const {
+          packages = ['zod'],
+          message,
+          runtimeImportMessage,
+        } = optionsFirst<NoLocalSchemaConstructionOptions>(context, {})
+
+        if (!schemasIsRuntimeReexport(node, new Set(packages)) || !node.source) {
+          return
+        }
+
+        context.report({
+          node,
+          messageId: 'runtimeImport',
+          data: {
+            message: formatMessage(
+              runtimeImportMessage ?? message ?? defaultRuntimeImportMessage,
+              { source: node.source.value },
+            ),
+          },
+        })
+      },
+      ExportAllDeclaration(node) {
+        const {
+          packages = ['zod'],
+          message,
+          runtimeImportMessage,
+        } = optionsFirst<NoLocalSchemaConstructionOptions>(context, {})
+
+        if (!schemasIsRuntimeReexport(node, new Set(packages))) {
+          return
         }
 
         context.report({

@@ -23,6 +23,14 @@ test('no-imported-type-alias', () => {
           code: "import type { WorkflowSummaryDto as SummaryDto } from './dto.ts'\nexport type WorkflowSummary = SummaryDto",
           errors: [error],
         },
+        {
+          code: "import type { WorkflowSummaryDto } from './dto.ts'\ntype WorkflowSummary = WorkflowSummaryDto\nexport { WorkflowSummary }",
+          errors: [error],
+        },
+        {
+          code: "import type { WorkflowSummaryDto } from './dto.ts'\ntype WorkflowSummary = WorkflowSummaryDto\nexport type { WorkflowSummary }",
+          errors: [error],
+        },
       ],
     },
   )

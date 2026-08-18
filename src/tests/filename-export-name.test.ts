@@ -11,6 +11,11 @@ const hookOptions = [{
   export: 'use{Name}',
   mode: 'some',
 }]
+const allDeclarations = [{
+  file: '{domain}-action.{name}.ts',
+  export: 'make{Domain}Action{Name}',
+  allDeclarations: true,
+}]
 const error = { messageId: 'mismatch' }
 
 test('filename-export-name', () => {
@@ -39,6 +44,11 @@ test('filename-export-name', () => {
           code: 'export function anything() {}',
           options: actionOptions,
         },
+        {
+          filename: '/repo/actions/persona-action.generate.ts',
+          code: 'function helper() {}\nexport function makePersonaActionGenerate() {}',
+          options: actionOptions,
+        },
       ],
       invalid: [
         {
@@ -51,6 +61,12 @@ test('filename-export-name', () => {
           filename: '/repo/hooks/use-thing.ts',
           code: 'export function useOther() {}',
           options: hookOptions,
+          errors: [error],
+        },
+        {
+          filename: '/repo/actions/persona-action.generate.ts',
+          code: 'function helper() {}\nexport function makePersonaActionGenerate() {}',
+          options: allDeclarations,
           errors: [error],
         },
       ],

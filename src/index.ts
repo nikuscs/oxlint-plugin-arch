@@ -16,6 +16,7 @@ import { noRestrictedToken } from './rules/no-restricted-token.ts'
 import { noRuntimeInTypes } from './rules/no-runtime-in-types.ts'
 import { noSingleUseScalarSchema } from './rules/no-single-use-scalar-schema.ts'
 import { noTopLevelFunctions } from './rules/no-top-level-functions.ts'
+import { noTrivialFunctions } from './rules/no-trivial-functions.ts'
 import { noUnescapedLike } from './rules/no-unescaped-like.ts'
 import { onlyExportComponents } from './rules/only-export-components.ts'
 import { requireFileFactory } from './rules/require-file-factory.ts'
@@ -44,6 +45,7 @@ export default eslintCompatPlugin({
     'no-runtime-in-types': noRuntimeInTypes,
     'no-single-use-scalar-schema': noSingleUseScalarSchema,
     'no-top-level-functions': noTopLevelFunctions,
+    'no-trivial-functions': noTrivialFunctions,
     'no-unescaped-like': noUnescapedLike,
     'only-export-components': onlyExportComponents,
     'require-file-factory': requireFileFactory,

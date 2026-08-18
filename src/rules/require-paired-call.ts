@@ -1,5 +1,5 @@
 import { defineRule } from '@oxlint/plugins'
-import { astCallName, optionsFirst } from '../utils/index.ts'
+import { astImportedCallAliases, astResolvedCallName, optionsFirst } from '../utils/index.ts'
 import type { ESTree } from '@oxlint/plugins'
 
 interface RequirePairedCallOptions {
@@ -29,17 +29,22 @@ export const requirePairedCall = defineRule({
     },
   },
   createOnce(context) {
+    let aliases = new Map<string, string>()
     let firstWhen: ESTree.CallExpression | null = null
     let sawRequired = false
 
     return {
       before() {
+        aliases = new Map()
         firstWhen = null
         sawRequired = false
       },
+      Program(program) {
+        aliases = astImportedCallAliases(program)
+      },
       CallExpression(node) {
         const { when, require } = optionsFirst<RequirePairedCallOptions>(context)
-        const name = astCallName(node)
+        const name = astResolvedCallName(node, aliases)
 
         if (name === when && !firstWhen) {
           firstWhen = node

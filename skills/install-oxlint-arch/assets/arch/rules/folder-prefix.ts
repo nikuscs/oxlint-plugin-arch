@@ -1,15 +1,23 @@
 import { defineRule } from '@oxlint/plugins'
-import { namingFileBasename, namingPosixPath, optionsFirst } from '../utils/index.ts'
+import {
+  namingDirSegments,
+  namingFileBasename,
+  namingFolderPrefixes,
+  namingPosixPath,
+  namingSegmentsAfter,
+  optionsFirst,
+} from '../utils/index.ts'
 
 interface FolderPrefixOptions {
   singularize?: 'none' | 'trailing-s'
   separators?: string[]
+  after?: string
 }
 
 /**
- * Checks that a filename equals or starts with its parent folder name, including an optional singular form.
+ * Checks that a filename equals or starts with its parent folder name, or with the folders after a configured root.
  *
- * Example: Inside `users/`, `user-card.tsx` passes while `profile.tsx` fails.
+ * Example: Inside `users/`, `user-card.tsx` passes. With `after: 'components'`, `components/admin/insights/admin-insights-foo.tsx` passes.
  */
 export const folderPrefix = defineRule({
   meta: {
@@ -20,6 +28,7 @@ export const folderPrefix = defineRule({
       properties: {
         singularize: { type: 'string', enum: ['none', 'trailing-s'] },
         separators: { type: 'array', items: { type: 'string' } },
+        after: { type: 'string' },
       },
     }],
     messages: {
@@ -32,25 +41,30 @@ export const folderPrefix = defineRule({
         const {
           singularize = 'trailing-s',
           separators = ['-'],
+          after,
         } = optionsFirst<FolderPrefixOptions>(context, {})
-        const normalized = namingPosixPath(context.filename)
-        const folder = normalized.split('/').at(-2) ?? ''
-        const prefixes = [folder]
+        const filename = namingPosixPath(context.filename)
+        const folders = after
+          ? namingSegmentsAfter(filename, after)
+          : [namingDirSegments(filename).at(-1) ?? '']
 
-        if (singularize === 'trailing-s' && folder.endsWith('s')) {
-          prefixes.push(folder.slice(0, -1))
+        if (!folders) {
+          return
         }
 
-        const file = namingFileBasename(normalized)
+        const resolved = folders.length > 0 ? folders : [namingDirSegments(filename).at(-1) ?? '']
+        const separator = separators[0] ?? '-'
+        const prefixes = namingFolderPrefixes(resolved, separator, singularize)
+        const file = namingFileBasename(filename)
         const stem = file.replace(/\.(tsx?|jsx?)$/, '')
         const valid = prefixes.some((prefix) => stem === prefix
-          || separators.some((separator) => stem.startsWith(`${prefix}${separator}`)))
+          || separators.some((item) => stem.startsWith(`${prefix}${item}`)))
 
         if (!valid) {
           context.report({
             node: program,
             messageId: 'prefix',
-            data: { file, folder },
+            data: { file, folder: prefixes[0] ?? '' },
           })
         }
       },

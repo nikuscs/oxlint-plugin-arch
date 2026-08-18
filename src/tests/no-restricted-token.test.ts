@@ -21,6 +21,11 @@ test('no-restricted-token', () => {
           code: 'type Client = OtherClient<Router>',
           options,
         },
+        {
+          filename: '/repo/apps/web/src/hooks/use-client.ts',
+          code: "import type { RouterClient } from './client.ts'\ntype Client = OtherClient<Router>",
+          options,
+        },
       ],
       invalid: [
         {
@@ -32,6 +37,12 @@ test('no-restricted-token', () => {
         {
           filename: '/repo/apps/web/src/services/other.ts',
           code: 'const client = RouterClient',
+          options,
+          errors: [error],
+        },
+        {
+          filename: '/repo/apps/web/src/hooks/use-client.ts',
+          code: "import type { RouterClient } from './client.ts'\ntype Client = RouterClient<Router>",
           options,
           errors: [error],
         },

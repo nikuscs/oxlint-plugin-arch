@@ -27,6 +27,10 @@ test('only-export-components', () => {
           filename: '/repo/components/panel/panel-body.tsx',
           code: "import type { PropsWithChildren } from 'react'\nexport function PanelBody({ children }: PropsWithChildren) { return children }",
         },
+        {
+          filename: '/repo/src/components/admin/insights/admin-insights-foo.tsx',
+          code: 'export function AdminInsightsFoo() { return <div /> }\nexport function AdminInsightsFooChart() { return <div /> }',
+        },
       ],
       invalid: [
         {
@@ -42,6 +46,11 @@ test('only-export-components', () => {
         {
           filename: '/repo/components/other/other-card.tsx',
           code: 'export function ExampleCard() { return <div /> }',
+          errors: [nameMismatch],
+        },
+        {
+          filename: '/repo/src/components/admin/insights/admin-insights-foo.tsx',
+          code: 'export function Foo() { return <div /> }',
           errors: [nameMismatch],
         },
       ],
