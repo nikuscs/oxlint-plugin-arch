@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.2.2
+
+- Publish compiled `dist/index.js` so Oxlint can load the package from `node_modules`.
+
+## 0.2.1
+
+- First npm tarball. Raw TypeScript entry could not load from `node_modules`.
+
 ## 0.2.0
 
 First npm release.

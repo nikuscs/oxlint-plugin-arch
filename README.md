@@ -2,7 +2,7 @@
 
 Configurable, filename-aware architecture rules for Oxlint.
 
-Install the package, then put repository paths and policy in your Oxlint config. Rules contain no application-specific names or folders.
+Install the package, then put repository paths and policy in your Oxlint config. The npm package ships compiled JavaScript; `src/` stays TypeScript for development. Rules contain no application-specific names or folders.
 
 ## Install
 

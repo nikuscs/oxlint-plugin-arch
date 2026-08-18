@@ -3,23 +3,22 @@
   "version": "0.2.1",
   "description": "Configurable architecture rules for Oxlint JavaScript plugins.",
   "type": "module",
-  "main": "./src/index.ts",
+  "main": "./dist/index.js",
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./dist/index.js"
   },
   "files": [
     "CHANGELOG.md",
-    "src/index.ts",
-    "src/rules",
-    "src/utils"
+    "dist"
   ],
   "scripts": {
-    "check": "bun run lint && bun run test && bun run typecheck && bun run check:examples && bun run check:skill-assets",
+    "build": "bun build src/index.ts --outfile dist/index.js --target node --format esm --external @oxlint/plugins",
+    "check": "bun run lint && bun run test && bun run typecheck && bun run build && bun run check:examples && bun run check:skill-assets",
     "lint": "oxlint src examples scripts skills/install-oxlint-arch/scripts",
     "test": "vitest run src/tests",
     "typecheck": "tsc --noEmit",
     "sync:skill-assets": "bun scripts/sync-skill-assets.ts",
-    "check:examples": "oxlint examples/minimal.oxlint.config.ts -c examples/minimal.oxlint.config.ts --disable-nested-config && oxlint examples/full.oxlint.config.ts -c examples/full.oxlint.config.ts --disable-nested-config",
+    "check:examples": "oxlint examples/minimal.oxlint.config.ts -c examples/minimal.oxlint.config.ts --disable-nested-config && oxlint examples/full.oxlint.config.ts -c examples/full.oxlint.config.ts --disable-nested-config && oxlint examples/dist.oxlint.config.ts -c examples/dist.oxlint.config.ts --disable-nested-config",
     "check:skill-assets": "bun scripts/sync-skill-assets.ts --check",
     "prepublishOnly": "bun run check",
     "release": "bash scripts/release.sh",
