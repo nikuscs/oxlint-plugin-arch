@@ -1,9 +1,16 @@
 import { defineRule } from '@oxlint/plugins'
-import { declarationsCollectNamed, exportsCollect, namingFileBasename, optionsFirst } from '../utils/index.ts'
+import {
+  declarationsCollectNamed,
+  exportsCollect,
+  namingFileBasename,
+  namingFilePrefixes,
+  optionsFirst,
+} from '../utils/index.ts'
 
 interface ExportFilePrefixOptions {
   stem?: 'before-first-dot' | 'full-basename'
   normalize?: 'remove-separators' | 'none'
+  singularize?: 'none' | 'trailing-s'
   allDeclarations?: boolean
   allowPattern?: string
 }
@@ -22,6 +29,7 @@ export const exportFilePrefix = defineRule({
       properties: {
         stem: { type: 'string', enum: ['before-first-dot', 'full-basename'] },
         normalize: { type: 'string', enum: ['remove-separators', 'none'] },
+        singularize: { type: 'string', enum: ['none', 'trailing-s'] },
         allDeclarations: { type: 'boolean' },
         allowPattern: { type: 'string' },
       },
@@ -39,7 +47,7 @@ export const exportFilePrefix = defineRule({
         })
         const basename = namingFileBasename(context.filename).replace(/\.(tsx?|jsx?)$/, '')
         const stem = options.stem === 'full-basename' ? basename : (basename.split('.')[0] ?? '')
-        const prefix = options.normalize === 'none' ? stem : stem.replaceAll(/[-_]/g, '').toLowerCase()
+        const prefixes = namingFilePrefixes(stem, options.normalize ?? 'remove-separators', options.singularize ?? 'none')
         const allowed = options.allowPattern ? new RegExp(options.allowPattern) : null
         const names = options.allDeclarations
           ? declarationsCollectNamed(program)
@@ -53,7 +61,7 @@ export const exportFilePrefix = defineRule({
           const key = `${item.name}:${item.node.start}:${item.node.end}`
           const comparableName = options.normalize === 'none' ? item.name : item.name.replaceAll('_', '').toLowerCase()
 
-          if (seen.has(key) || allowed?.test(item.name) || comparableName.startsWith(prefix)) {
+          if (seen.has(key) || allowed?.test(item.name) || prefixes.some((prefix) => comparableName.startsWith(prefix))) {
             continue
           }
 
@@ -61,7 +69,7 @@ export const exportFilePrefix = defineRule({
           context.report({
             node: item.node,
             messageId: 'prefix',
-            data: { name: item.name, prefix },
+            data: { name: item.name, prefix: prefixes.join(' or ') },
           })
         }
       },

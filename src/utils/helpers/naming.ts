@@ -87,3 +87,24 @@ export function namingMatchTemplate(
 
   return new RegExp(`^${pattern}$`).exec(basename)?.groups ?? null
 }
+
+export function namingNormalized(value: string, normalize: 'remove-separators' | 'none'): string {
+  return normalize === 'none' ? value : value.replaceAll(/[-_]/g, '').toLowerCase()
+}
+
+export function namingFilePrefixes(
+  stem: string,
+  normalize: 'remove-separators' | 'none' = 'remove-separators',
+  singularize: 'none' | 'trailing-s' = 'none',
+): string[] {
+  const prefixes = [namingNormalized(stem, normalize)]
+  const parts = stem.split(/[-_]+/).filter(Boolean)
+  const last = parts.at(-1) ?? ''
+
+  if (singularize === 'trailing-s' && last.endsWith('s') && last.length > 1) {
+    prefixes.push(namingNormalized([...parts.slice(0, -1), last.slice(0, -1)].join('-'), normalize))
+  }
+
+  return [...new Set(prefixes.filter(Boolean))]
+}
+

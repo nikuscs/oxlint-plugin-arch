@@ -161,26 +161,68 @@ export function declarationsIsTrivialFunction(node: AstRuntimeFunction): boolean
   return statement.type === 'ExpressionStatement' && declarationsIsTrivialExpression(statement.expression)
 }
 
+export const declarationsKinds = ['function', 'const', 'let', 'var', 'class', 'type', 'interface', 'enum'] as const
+
+export type DeclarationsKind = (typeof declarationsKinds)[number]
+
 export interface DeclarationsNamed {
   name: string
   node: ESTree.Node
+  kind?: DeclarationsKind
 }
 
-export function declarationsCollectNamed(root: ESTree.Node): DeclarationsNamed[] {
+export function declarationsNamedKind(node: ESTree.Node, ancestors: ESTree.Node[]): DeclarationsKind | undefined {
+  if (node.type === 'FunctionDeclaration') {
+    return 'function'
+  }
+
+  if (node.type === 'ClassDeclaration') {
+    return 'class'
+  }
+
+  if (node.type === 'TSTypeAliasDeclaration') {
+    return 'type'
+  }
+
+  if (node.type === 'TSInterfaceDeclaration') {
+    return 'interface'
+  }
+
+  if (node.type === 'TSEnumDeclaration') {
+    return 'enum'
+  }
+
+  if (node.type !== 'VariableDeclarator') {
+    return undefined
+  }
+
+  const declaration = ancestors.findLast((ancestor) => ancestor.type === 'VariableDeclaration')
+  return declaration?.type === 'VariableDeclaration' && (declaration.kind === 'const' || declaration.kind === 'let'
+    || declaration.kind === 'var')
+    ? declaration.kind
+    : undefined
+}
+
+export function declarationsCollectNamed(root: ESTree.Node, kinds?: readonly DeclarationsKind[]): DeclarationsNamed[] {
+  const allowed = kinds && kinds.length > 0 ? new Set(kinds) : null
   const result: DeclarationsNamed[] = []
 
   astVisit(root, [], (node, ancestors) => {
-    if ((node.type === 'FunctionDeclaration' || node.type === 'ClassDeclaration' || node.type === 'TSTypeAliasDeclaration'
-      || node.type === 'TSInterfaceDeclaration' || node.type === 'TSEnumDeclaration') && node.id?.name) {
-      result.push({ name: node.id.name, node })
+    const kind = declarationsNamedKind(node, ancestors)
+    const name = node.type === 'VariableDeclarator' && node.id.type === 'Identifier'
+      ? node.id.name
+      : 'id' in node && node.id && 'name' in node.id ? node.id.name : undefined
+
+    if (!kind || !name || allowed && !allowed.has(kind)) {
       return
     }
 
-    if (node.type === 'VariableDeclarator' && node.id.type === 'Identifier'
-      && !ancestors.some((ancestor) => ancestor.type === 'ForStatement' || ancestor.type === 'ForInStatement'
-        || ancestor.type === 'ForOfStatement')) {
-      result.push({ name: node.id.name, node })
+    if (node.type === 'VariableDeclarator' && ancestors.some((ancestor) => ancestor.type === 'ForStatement'
+      || ancestor.type === 'ForInStatement' || ancestor.type === 'ForOfStatement')) {
+      return
     }
+
+    result.push({ name, node, kind })
   })
 
   return result

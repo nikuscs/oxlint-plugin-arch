@@ -8,6 +8,12 @@ const allDeclarations = [{
   normalize: 'remove-separators' as const,
   allDeclarations: true,
 }]
+const singularTypes = [{
+  stem: 'before-first-dot' as const,
+  normalize: 'remove-separators' as const,
+  singularize: 'trailing-s' as const,
+  allDeclarations: true,
+}]
 
 test('export-file-prefix', () => {
   createRuleTester().run(
@@ -37,6 +43,21 @@ test('export-file-prefix', () => {
           code: 'function useFooChartData() { return null }\nexport function FooChart() { return null }',
           options: [{ ...allDeclarations[0], allowPattern: '^use' }],
         },
+        {
+          filename: '/repo/src/api/agent-setups.types.ts',
+          code: 'type AgentSetupTimeTrigger = {}\nexport type AgentSetupList = {}',
+          options: singularTypes,
+        },
+        {
+          filename: '/repo/src/api/agent-setup-drafts.types.ts',
+          code: 'type AgentSetupDraftStatus = {}\nexport function AgentSetupDraftLoad() { return null }',
+          options: singularTypes,
+        },
+        {
+          filename: '/repo/src/api/agent-setups.ts',
+          code: 'export function AgentSetupList() { return null }',
+          options: singularTypes,
+        },
       ],
       invalid: [
         {
@@ -59,6 +80,12 @@ test('export-file-prefix', () => {
           filename: '/repo/components/foo-chart.tsx',
           code: 'export function FooChart() { function handle() { return null } return null }',
           options: allDeclarations,
+          errors: [error],
+        },
+        {
+          filename: '/repo/src/api/agent-setup-drafts.types.ts',
+          code: 'type DraftStatus = {}\nexport type AgentSetupDraftStatus = {}',
+          options: singularTypes,
           errors: [error],
         },
       ],

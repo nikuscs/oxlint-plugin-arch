@@ -41,13 +41,14 @@ Then point `jsPlugins[].specifier` at the copied entry file instead of the packa
 ## Configuration examples
 
 - [`examples/minimal.oxlint.config.ts`](examples/minimal.oxlint.config.ts) — three small rules showing plugin registration, glob ownership, and options.
-- [`examples/full.oxlint.config.ts`](examples/full.oxlint.config.ts) — all 25 rules across representative component, action, service, route, API, schema, and database scopes.
+- [`examples/full.oxlint.config.ts`](examples/full.oxlint.config.ts) — all 27 rules across representative component, action, service, route, API, schema, and database scopes.
 
 Copy the shapes that match your repository; do not copy globs or naming policy blindly.
 
 ## Rules
 
-- `export-file-prefix` — require export names, or every function and type, to start with a filename-derived prefix.
+- `declaration-name` — require selected declarations to match a filename-derived prefix or a consumer pattern.
+- `export-file-prefix` — require export names, or every function and type, to start with a filename-derived prefix, optionally singularized.
 - `export-name-pattern` — require export names, or every function and type, to match a configured regular expression.
 - `filename-export-name` — derive expected function names from filename templates, optionally including locals.
 - `filename-match` — require filenames to match a configured pattern.
@@ -65,6 +66,7 @@ Copy the shapes that match your repository; do not copy globs or naming policy b
 - `no-single-use-scalar-schema` — reject local scalar Zod aliases used once where they can be safely inlined.
 - `no-top-level-functions` — reject top-level functions and optional re-exports.
 - `no-trivial-functions` — reject empty or passthrough top-level functions.
+- `no-type-declarations` — reject type aliases and interfaces in matched files.
 - `no-unescaped-like` — require configured sanitizers for configured query methods.
 - `only-export-components` — allow only React component and type exports.
 - `require-file-factory` — derive and require a filename-based factory function.

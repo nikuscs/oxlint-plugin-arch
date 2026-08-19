@@ -32,6 +32,10 @@ export default defineConfig({
       rules: {
         'arch/no-runtime-in-types': 'error',
         'arch/no-imported-type-alias': 'error',
+        'arch/declaration-name': ['error', {
+          kinds: ['type', 'interface', 'enum'],
+          singularize: 'trailing-s',
+        }],
       },
     },
     {
@@ -58,6 +62,7 @@ export default defineConfig({
         'arch/export-file-prefix': ['error', {
           stem: 'full-basename',
           normalize: 'remove-separators',
+          singularize: 'trailing-s',
           allDeclarations: true,
         }],
         'arch/no-file-level-helpers': ['error', {
@@ -137,6 +142,13 @@ export default defineConfig({
           composers: ['paginatedOutput'],
           handlerMethod: 'handler',
           outputMethod: 'output',
+        }],
+        'arch/declaration-name': ['error', {
+          kinds: ['const', 'function'],
+          singularize: 'trailing-s',
+        }],
+        'arch/no-type-declarations': ['error', {
+          allowPattern: 'ErrorKind$',
         }],
       },
     },

@@ -1,75 +1,84 @@
 import { defineRule } from '@oxlint/plugins'
 import {
   declarationsCollectNamed,
-  exportsCollect,
+  declarationsKinds,
   namingFileBasename,
   namingFilePrefixes,
   optionsFirst,
+  type DeclarationsKind,
 } from '../utils/index.ts'
 
-interface ExportFilePrefixOptions {
+interface DeclarationNameOptions {
+  kinds?: DeclarationsKind[]
+  pattern?: string
+  flags?: string
   stem?: 'before-first-dot' | 'full-basename'
   normalize?: 'remove-separators' | 'none'
   singularize?: 'none' | 'trailing-s'
-  allDeclarations?: boolean
   allowPattern?: string
 }
 
 /**
- * Checks that exported names start with a prefix taken from the filename, and can also check every function and type in the file.
+ * Checks selected declarations in a file against a filename-derived prefix or a consumer pattern.
  *
- * Example: In `foo-chart.tsx`, `fooChartPreview` and `interface FooChartPreviewProps` pass; `preview` fails when `allDeclarations` is on.
+ * Example: On `agent-setups.types.ts`, `kinds: ['type']` and `singularize: 'trailing-s'` accepts `AgentSetupTimeTrigger` and rejects `DraftStatus`.
  */
-export const exportFilePrefix = defineRule({
+export const declarationName = defineRule({
   meta: {
     type: 'problem',
     schema: [{
       type: 'object',
       additionalProperties: false,
       properties: {
+        kinds: {
+          type: 'array',
+          items: { type: 'string', enum: [...declarationsKinds] },
+        },
+        pattern: { type: 'string' },
+        flags: { type: 'string' },
         stem: { type: 'string', enum: ['before-first-dot', 'full-basename'] },
         normalize: { type: 'string', enum: ['remove-separators', 'none'] },
         singularize: { type: 'string', enum: ['none', 'trailing-s'] },
-        allDeclarations: { type: 'boolean' },
         allowPattern: { type: 'string' },
       },
     }],
     messages: {
       prefix: "'{{name}}' must start with file prefix '{{prefix}}'.",
+      pattern: "'{{name}}' must match {{pattern}}.",
     },
   },
   createOnce(context) {
     return {
       Program(program) {
-        const options = optionsFirst<ExportFilePrefixOptions>(context, {
+        const options = optionsFirst<DeclarationNameOptions>(context, {
           stem: 'before-first-dot',
           normalize: 'remove-separators',
         })
+        const allowed = options.allowPattern ? new RegExp(options.allowPattern) : null
+        const expected = options.pattern ? new RegExp(options.pattern, options.flags) : null
         const basename = namingFileBasename(context.filename).replace(/\.(tsx?|jsx?)$/, '')
         const stem = options.stem === 'full-basename' ? basename : (basename.split('.')[0] ?? '')
         const prefixes = namingFilePrefixes(stem, options.normalize ?? 'remove-separators', options.singularize ?? 'none')
-        const allowed = options.allowPattern ? new RegExp(options.allowPattern) : null
-        const names = options.allDeclarations
-          ? declarationsCollectNamed(program)
-          : exportsCollect(program).map((binding) => ({
-              name: binding.localName ?? binding.exportedName,
-              node: binding.node,
-            }))
         const seen = new Set<string>()
 
-        for (const item of names) {
+        for (const item of declarationsCollectNamed(program, options.kinds)) {
           const key = `${item.name}:${item.node.start}:${item.node.end}`
           const comparableName = options.normalize === 'none' ? item.name : item.name.replaceAll('_', '').toLowerCase()
+          const matches = expected
+            ? expected.test(item.name)
+            : prefixes.some((prefix) => comparableName.startsWith(prefix))
 
-          if (seen.has(key) || allowed?.test(item.name) || prefixes.some((prefix) => comparableName.startsWith(prefix))) {
+          if (seen.has(key) || allowed?.test(item.name) || matches) {
             continue
           }
 
           seen.add(key)
           context.report({
             node: item.node,
-            messageId: 'prefix',
-            data: { name: item.name, prefix: prefixes.join(' or ') },
+            messageId: expected ? 'pattern' : 'prefix',
+            data: expected
+              ? { name: item.name, pattern: options.pattern ?? '' }
+              : { name: item.name, prefix: prefixes.join(' or ') },
           })
         }
       },

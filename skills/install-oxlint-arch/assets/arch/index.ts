@@ -1,4 +1,5 @@
 import { eslintCompatPlugin } from '@oxlint/plugins'
+import { declarationName } from './rules/declaration-name.ts'
 import { exportFilePrefix } from './rules/export-file-prefix.ts'
 import { exportNamePattern } from './rules/export-name-pattern.ts'
 import { filenameExportName } from './rules/filename-export-name.ts'
@@ -17,6 +18,7 @@ import { noRuntimeInTypes } from './rules/no-runtime-in-types.ts'
 import { noSingleUseScalarSchema } from './rules/no-single-use-scalar-schema.ts'
 import { noTopLevelFunctions } from './rules/no-top-level-functions.ts'
 import { noTrivialFunctions } from './rules/no-trivial-functions.ts'
+import { noTypeDeclarations } from './rules/no-type-declarations.ts'
 import { noUnescapedLike } from './rules/no-unescaped-like.ts'
 import { onlyExportComponents } from './rules/only-export-components.ts'
 import { requireFileFactory } from './rules/require-file-factory.ts'
@@ -28,6 +30,7 @@ import { routeSurface } from './rules/route-surface.ts'
 export default eslintCompatPlugin({
   meta: { name: 'arch' },
   rules: {
+    'declaration-name': declarationName,
     'export-file-prefix': exportFilePrefix,
     'export-name-pattern': exportNamePattern,
     'filename-export-name': filenameExportName,
@@ -46,6 +49,7 @@ export default eslintCompatPlugin({
     'no-single-use-scalar-schema': noSingleUseScalarSchema,
     'no-top-level-functions': noTopLevelFunctions,
     'no-trivial-functions': noTrivialFunctions,
+    'no-type-declarations': noTypeDeclarations,
     'no-unescaped-like': noUnescapedLike,
     'only-export-components': onlyExportComponents,
     'require-file-factory': requireFileFactory,
