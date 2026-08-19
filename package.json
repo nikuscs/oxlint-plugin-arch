@@ -1,6 +1,6 @@
 {
   "name": "oxlint-plugin-arch",
-  "version": "0.2.2",
+  "version": "0.2.3",
   "description": "Configurable architecture rules for Oxlint JavaScript plugins.",
   "type": "module",
   "main": "./dist/index.js",
