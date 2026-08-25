@@ -5,6 +5,10 @@ import { createRuleTester } from './rule-tester.ts'
 const options = [{
   names: ['make{Domain}Service', '{Domain}Service', '{domain}ServiceDefinition', 'default'],
 }]
+const trailingUtils = [{
+  names: ['make{Domain}Service'],
+  trailingRoles: ['utils'],
+}]
 const error = { messageId: 'extraExport' }
 
 test('no-extra-exports', () => {
@@ -28,6 +32,16 @@ test('no-extra-exports', () => {
           code: 'const local = 1\nexport function makeNewsService() {}',
           options,
         },
+        {
+          filename: '/repo/src/lib/onchain-utils.ts',
+          code: 'export function makeOnchainService() {}',
+          options: trailingUtils,
+        },
+        {
+          filename: '/repo/src/lib/onchain.utils.ts',
+          code: 'export function makeOnchainService() {}',
+          options: trailingUtils,
+        },
       ],
       invalid: [
         {
@@ -40,6 +54,12 @@ test('no-extra-exports', () => {
           filename: '/repo/services/news/news.service.ts',
           code: 'const helper = 1\nexport { helper }',
           options,
+          errors: [error],
+        },
+        {
+          filename: '/repo/src/lib/onchain-utils.ts',
+          code: 'export function makeOnchainUtilsService() {}',
+          options: trailingUtils,
           errors: [error],
         },
       ],

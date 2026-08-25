@@ -47,13 +47,13 @@ Copy the shapes that match your repository; do not copy globs or naming policy b
 
 ## Rules
 
-- `declaration-name` — require selected declarations to match a filename-derived prefix or a consumer pattern.
-- `export-file-prefix` — require export names, or every function and type, to start with a filename-derived prefix, optionally singularized.
+- `declaration-name` — require selected declarations to match a filename-derived prefix or a consumer pattern. Optional `trailingRoles` treat `onchain-utils.ts` like `onchain.utils.ts`.
+- `export-file-prefix` — require export names, or every function and type, to start with a filename-derived prefix, optionally singularized. Optional `trailingRoles` drop a configured role suffix from that prefix.
 - `export-name-pattern` — require export names, or every function and type, to match a configured regular expression.
 - `filename-export-name` — derive expected function names from filename templates, optionally including locals.
 - `filename-match` — require filenames to match a configured pattern.
 - `folder-prefix` — require filenames to start with their parent folder name, or the folders after a configured root.
-- `no-extra-exports` — restrict files to configured export templates.
+- `no-extra-exports` — restrict files to configured export templates. Optional `trailingRoles` apply to `{Domain}` the same way as the prefix rules.
 - `no-extra-factory-keys` — restrict direct factory return keys.
 - `no-file-level-helpers` — keep unapproved helpers out of module scope.
 - `no-imported-type-alias` — reject exported aliases that only rename imported types.

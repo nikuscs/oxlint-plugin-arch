@@ -4,11 +4,15 @@ import {
   exportsCollect,
   namingFileBasename,
   namingFilePrefixes,
+  namingFileStem,
+  namingStemModes,
   optionsFirst,
 } from '../utils/index.ts'
 
 interface ExportFilePrefixOptions {
   stem?: 'before-first-dot' | 'full-basename'
+  trailingRoles?: string[]
+  roleSeparators?: string[]
   normalize?: 'remove-separators' | 'none'
   singularize?: 'none' | 'trailing-s'
   allDeclarations?: boolean
@@ -19,6 +23,7 @@ interface ExportFilePrefixOptions {
  * Checks that exported names start with a prefix taken from the filename, and can also check every function and type in the file.
  *
  * Example: In `foo-chart.tsx`, `fooChartPreview` and `interface FooChartPreviewProps` pass; `preview` fails when `allDeclarations` is on.
+ * Example: With `trailingRoles: ['utils']`, `onchain-utils.ts` and `onchain.utils.ts` both use prefix `onchain`.
  */
 export const exportFilePrefix = defineRule({
   meta: {
@@ -27,7 +32,9 @@ export const exportFilePrefix = defineRule({
       type: 'object',
       additionalProperties: false,
       properties: {
-        stem: { type: 'string', enum: ['before-first-dot', 'full-basename'] },
+        stem: { type: 'string', enum: [...namingStemModes] },
+        trailingRoles: { type: 'array', items: { type: 'string' } },
+        roleSeparators: { type: 'array', items: { type: 'string' } },
         normalize: { type: 'string', enum: ['remove-separators', 'none'] },
         singularize: { type: 'string', enum: ['none', 'trailing-s'] },
         allDeclarations: { type: 'boolean' },
@@ -46,7 +53,7 @@ export const exportFilePrefix = defineRule({
           normalize: 'remove-separators',
         })
         const basename = namingFileBasename(context.filename).replace(/\.(tsx?|jsx?)$/, '')
-        const stem = options.stem === 'full-basename' ? basename : (basename.split('.')[0] ?? '')
+        const stem = namingFileStem(basename, options.stem, options.trailingRoles, options.roleSeparators)
         const prefixes = namingFilePrefixes(stem, options.normalize ?? 'remove-separators', options.singularize ?? 'none')
         const allowed = options.allowPattern ? new RegExp(options.allowPattern) : null
         const names = options.allDeclarations

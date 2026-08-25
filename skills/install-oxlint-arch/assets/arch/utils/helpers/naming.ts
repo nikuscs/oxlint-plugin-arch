@@ -88,8 +88,51 @@ export function namingMatchTemplate(
   return new RegExp(`^${pattern}$`).exec(basename)?.groups ?? null
 }
 
+export const namingStemModes = ['before-first-dot', 'full-basename'] as const
+export type NamingStemMode = (typeof namingStemModes)[number]
+
 export function namingNormalized(value: string, normalize: 'remove-separators' | 'none'): string {
   return normalize === 'none' ? value : value.replaceAll(/[-_]/g, '').toLowerCase()
+}
+
+export function namingFileStem(
+  basename: string,
+  mode: NamingStemMode = 'before-first-dot',
+  trailingRoles: readonly string[] = [],
+  roleSeparators: readonly string[] = ['.', '-'],
+): string {
+  const stem = mode === 'full-basename' ? basename : (basename.split('.')[0] ?? '')
+  const roles = [...new Set(trailingRoles.filter(Boolean))].sort((left, right) => right.length - left.length)
+  const separators = [...new Set(roleSeparators.filter(Boolean))]
+
+  if (roles.length === 0 || separators.length === 0) {
+    return stem
+  }
+
+  let remaining = stem
+  let changed = true
+
+  while (changed) {
+    changed = false
+
+    for (const role of roles) {
+      for (const separator of separators) {
+        const suffix = `${separator}${role}`
+
+        if (remaining.length > suffix.length && remaining.endsWith(suffix)) {
+          remaining = remaining.slice(0, -suffix.length)
+          changed = true
+          break
+        }
+      }
+
+      if (changed) {
+        break
+      }
+    }
+  }
+
+  return remaining
 }
 
 export function namingFilePrefixes(

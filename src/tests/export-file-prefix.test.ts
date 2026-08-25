@@ -14,6 +14,10 @@ const singularTypes = [{
   singularize: 'trailing-s' as const,
   allDeclarations: true,
 }]
+const trailingUtils = [{
+  stem: 'before-first-dot' as const,
+  trailingRoles: ['utils'],
+}]
 
 test('export-file-prefix', () => {
   createRuleTester().run(
@@ -58,6 +62,26 @@ test('export-file-prefix', () => {
           code: 'export function AgentSetupList() { return null }',
           options: singularTypes,
         },
+        {
+          filename: '/repo/src/lib/onchain-utils.ts',
+          code: 'export function onchainGet() { return null }',
+          options: trailingUtils,
+        },
+        {
+          filename: '/repo/src/lib/onchain.utils.ts',
+          code: 'export function onchainGet() { return null }',
+          options: trailingUtils,
+        },
+        {
+          filename: '/repo/src/lib/onchain-utils.client.ts',
+          code: 'export function onchainGet() { return null }',
+          options: trailingUtils,
+        },
+        {
+          filename: '/repo/src/lib/agent-setups.types.ts',
+          code: 'export function agentSetupsList() { return null }',
+          options: trailingUtils,
+        },
       ],
       invalid: [
         {
@@ -86,6 +110,17 @@ test('export-file-prefix', () => {
           filename: '/repo/src/api/agent-setup-drafts.types.ts',
           code: 'type DraftStatus = {}\nexport type AgentSetupDraftStatus = {}',
           options: singularTypes,
+          errors: [error],
+        },
+        {
+          filename: '/repo/src/lib/onchain-utils.ts',
+          code: 'export function helper() { return null }',
+          options: trailingUtils,
+          errors: [error],
+        },
+        {
+          filename: '/repo/src/lib/onchain-utils.ts',
+          code: 'export function onchainGet() { return null }',
           errors: [error],
         },
       ],

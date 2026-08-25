@@ -1,9 +1,19 @@
 import { defineRule } from '@oxlint/plugins'
-import { exportsCollect, namingCamelCase, namingFileBasename, namingPascalCase, optionsFirst } from '../utils/index.ts'
+import {
+  exportsCollect,
+  namingCamelCase,
+  namingFileBasename,
+  namingFileStem,
+  namingPascalCase,
+  namingStemModes,
+  optionsFirst,
+} from '../utils/index.ts'
 
 interface NoExtraExportsOptions {
   names: string[]
   domainStem?: 'before-first-dot' | 'full-basename'
+  trailingRoles?: string[]
+  roleSeparators?: string[]
   allowTypeExports?: boolean
 }
 
@@ -11,6 +21,7 @@ interface NoExtraExportsOptions {
  * Allows only the configured export-name templates, with placeholders derived from the filename.
  *
  * Example: `billing.service.ts` may allow `makeBillingService`; an exported `helper` then fails.
+ * Example: With `trailingRoles: ['utils']`, `onchain-utils.ts` allows `makeOnchainService` the same way `onchain.utils.ts` does.
  */
 export const noExtraExports = defineRule({
   meta: {
@@ -20,7 +31,9 @@ export const noExtraExports = defineRule({
       additionalProperties: false,
       properties: {
         names: { type: 'array', items: { type: 'string' } },
-        domainStem: { type: 'string', enum: ['before-first-dot', 'full-basename'] },
+        domainStem: { type: 'string', enum: [...namingStemModes] },
+        trailingRoles: { type: 'array', items: { type: 'string' } },
+        roleSeparators: { type: 'array', items: { type: 'string' } },
         allowTypeExports: { type: 'boolean' },
       },
       required: ['names'],
@@ -34,7 +47,7 @@ export const noExtraExports = defineRule({
       Program(program) {
         const options = optionsFirst<NoExtraExportsOptions>(context)
         const basename = namingFileBasename(context.filename).replace(/\.(tsx?|jsx?)$/, '')
-        const domain = options.domainStem === 'full-basename' ? basename : (basename.split('.')[0] ?? '')
+        const domain = namingFileStem(basename, options.domainStem, options.trailingRoles, options.roleSeparators)
         const allowed = options.names.map((template) => template
           .replaceAll('{Domain}', namingPascalCase(domain))
           .replaceAll('{domain}', namingCamelCase(domain)))

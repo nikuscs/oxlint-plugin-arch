@@ -26,6 +26,11 @@ test('declaration-name', () => {
           code: "const listAccounts = () => []\ntype AccessRequestErrorKind = 'denied'",
           options: [{ kinds: ['const', 'function'], pattern: '^[a-z]+[A-Z]', allowPattern: 'ErrorKind$' }],
         },
+        {
+          filename: '/repo/src/lib/onchain-utils.ts',
+          code: 'type OnchainClient = {}\nfunction leftover() { return null }',
+          options: [{ kinds: ['type'], trailingRoles: ['utils'] }],
+        },
       ],
       invalid: [
         {
@@ -45,6 +50,12 @@ test('declaration-name', () => {
           code: 'const leftover = 1\nfunction listAccounts() { return [] }',
           options: [{ kinds: ['const', 'function'], pattern: '^list[A-Z]' }],
           errors: [pattern],
+        },
+        {
+          filename: '/repo/src/lib/onchain-utils.ts',
+          code: 'type DraftStatus = {}',
+          options: [{ kinds: ['type'], trailingRoles: ['utils'] }],
+          errors: [prefix],
         },
       ],
     },

@@ -35,6 +35,7 @@ export default defineConfig({
         'arch/declaration-name': ['error', {
           kinds: ['type', 'interface', 'enum'],
           singularize: 'trailing-s',
+          trailingRoles: ['types'],
         }],
       },
     },
@@ -108,10 +109,12 @@ export default defineConfig({
         'arch/export-file-prefix': ['error', {
           stem: 'before-first-dot',
           normalize: 'remove-separators',
+          trailingRoles: ['utils'],
         }],
         'arch/no-extra-exports': ['error', {
           names: ['make{Domain}Service', '{Domain}Service', 'default'],
           domainStem: 'before-first-dot',
+          trailingRoles: ['utils'],
           allowTypeExports: true,
         }],
       },

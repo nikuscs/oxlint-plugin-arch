@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.4
+
+- Add `trailingRoles` and `roleSeparators` so `export-file-prefix`, `declaration-name`, and `no-extra-exports` can treat `onchain-utils.ts` like `onchain.utils.ts`.
+
 ## 0.2.3
 
 - Add `declaration-name` so selected declarations can follow a file prefix or pattern per glob.
