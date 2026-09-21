@@ -41,7 +41,7 @@ Then point `jsPlugins[].specifier` at the copied entry file instead of the packa
 ## Configuration examples
 
 - [`examples/minimal.oxlint.config.ts`](examples/minimal.oxlint.config.ts) — three small rules showing plugin registration, glob ownership, and options.
-- [`examples/full.oxlint.config.ts`](examples/full.oxlint.config.ts) — all 27 rules across representative component, action, service, route, API, schema, and database scopes.
+- [`examples/full.oxlint.config.ts`](examples/full.oxlint.config.ts) — all 28 rules across representative component, action, service, route, API, schema, and database scopes.
 
 Copy the shapes that match your repository; do not copy globs or naming policy blindly.
 
@@ -67,6 +67,7 @@ Copy the shapes that match your repository; do not copy globs or naming policy b
 - `no-top-level-functions` — reject top-level functions and optional re-exports.
 - `no-trivial-functions` — reject empty or passthrough top-level functions.
 - `no-type-declarations` — reject type aliases and interfaces in matched files.
+- `no-member-comments` — remove leading and same-line trailing comments on property signatures in interfaces and object type literals, including inline function parameter types. Autofix removes standalone comment lines and following blank lines without removing members. `allowWhy` defaults to `true`: comments beginning with `Why: ` (after whitespace/JSDoc decoration), including contiguous `//` continuation lines, are preserved. Set `{ allowWhy: false }` to ban those too. The rule checks the prefix, not whether the rationale is meaningful. Declaration, function-body, method, class-field, and runtime object comments are out of scope. Enable with `'arch/no-member-comments': ['error', { allowWhy: true }]` in a `**/*.{ts,tsx}` override.
 - `no-unescaped-like` — require configured sanitizers for configured query methods.
 - `only-export-components` — allow only React component and type exports.
 - `require-file-factory` — derive and require a filename-based factory function.

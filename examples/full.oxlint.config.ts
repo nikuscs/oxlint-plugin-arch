@@ -6,6 +6,12 @@ export default defineConfig({
   ],
   overrides: [
     {
+      files: ['**/*.{ts,tsx}'],
+      rules: {
+        'arch/no-member-comments': ['error', { allowWhy: true }],
+      },
+    },
+    {
       files: ['**/src/**/*.ts'],
       rules: {
         'arch/no-restricted-token': ['error', {
