@@ -10,6 +10,7 @@ import { noExtraFactoryKeys } from './rules/no-extra-factory-keys.ts'
 import { noFileLevelHelpers } from './rules/no-file-level-helpers.ts'
 import { noImportedTypeAlias } from './rules/no-imported-type-alias.ts'
 import { noInlineSchemaElements } from './rules/no-inline-schema-elements.ts'
+import { noInlineTypes } from './rules/no-inline-types.ts'
 import { noLocalSchemaConstruction } from './rules/no-local-schema-construction.ts'
 import { noMemberComments } from './rules/no-member-comments.ts'
 import { noRederiveSchema } from './rules/no-rederive-schema.ts'
@@ -22,6 +23,7 @@ import { noTrivialFunctions } from './rules/no-trivial-functions.ts'
 import { noTypeDeclarations } from './rules/no-type-declarations.ts'
 import { noUnescapedLike } from './rules/no-unescaped-like.ts'
 import { onlyExportComponents } from './rules/only-export-components.ts'
+import { onlyExportConstants } from './rules/only-export-constants.ts'
 import { requireFileFactory } from './rules/require-file-factory.ts'
 import { requireObjectParams } from './rules/require-object-params.ts'
 import { requireOrpcOutput } from './rules/require-orpc-output.ts'
@@ -42,6 +44,7 @@ export default eslintCompatPlugin({
     'no-file-level-helpers': noFileLevelHelpers,
     'no-imported-type-alias': noImportedTypeAlias,
     'no-inline-schema-elements': noInlineSchemaElements,
+    'no-inline-types': noInlineTypes,
     'no-local-schema-construction': noLocalSchemaConstruction,
     'no-member-comments': noMemberComments,
     'no-rederive-schema': noRederiveSchema,
@@ -54,6 +57,7 @@ export default eslintCompatPlugin({
     'no-type-declarations': noTypeDeclarations,
     'no-unescaped-like': noUnescapedLike,
     'only-export-components': onlyExportComponents,
+    'only-export-constants': onlyExportConstants,
     'require-file-factory': requireFileFactory,
     'require-object-params': requireObjectParams,
     'require-orpc-output': requireOrpcOutput,

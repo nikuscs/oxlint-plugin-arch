@@ -110,8 +110,23 @@ export default defineConfig({
       },
     },
     {
+      files: ['**/src/**/*.constants.ts'],
+      rules: {
+        'arch/only-export-constants': ['error', {
+          allowFunctionValues: false,
+          allowTypeExports: false,
+          allowReExports: false,
+        }],
+      },
+    },
+    {
       files: ['**/src/services/*.ts'],
       rules: {
+        'arch/no-inline-types': ['error', {
+          parameters: true,
+          returns: true,
+          functionTypes: true,
+        }],
         'arch/export-file-prefix': ['error', {
           stem: 'before-first-dot',
           normalize: 'remove-separators',
