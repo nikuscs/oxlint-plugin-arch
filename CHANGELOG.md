@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.2.5
 
 - Add `no-inline-types` to require named object and function types in function signatures, with separate parameter, return, and function-type options.
 - Add `only-export-constants` to restrict exports to local `const` bindings, with opt-ins for function values, type exports, and re-exports.
