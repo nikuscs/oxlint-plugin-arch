@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.3.0
 
 - Add `no-promise-all-mutation`, `no-literal-in`, and `test-title-pattern` to replace hand-written `no-restricted-syntax` selectors with scope-aware, configurable rules.
 - Add `no-module-mutable-state`, `no-restricted-constructor`, and `no-comments` (directives, bundler annotations, and `Why:` comments kept; one-pass autofix that skips JSX comments and directive-adjacent lines).
