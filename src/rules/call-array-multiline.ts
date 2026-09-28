@@ -1,5 +1,5 @@
 import { defineRule } from '@oxlint/plugins'
-import type { Context, ESTree, Scope } from '@oxlint/plugins'
+import type { Context, ESTree, Scope, SourceCode } from '@oxlint/plugins'
 import {
   layoutIndentSchema,
   layoutIndentUnit,
@@ -41,8 +41,24 @@ function callArrayMultilineIsShadowed(context: Context, root: ESTree.Expression)
   return false
 }
 
+// Why: ESTree drops parentheses; an element's neighbours are only `[` `,` `]` or wrapping parens.
+function callArrayMultilineOuterRange(source: SourceCode, node: ESTree.Node): [number, number] {
+  let range: [number, number] = [node.range[0], node.range[1]]
+  let before = source.getTokenBefore(node)
+  let after = source.getTokenAfter(node)
+
+  while (before?.value === '(' && after?.value === ')') {
+    range = [before.range[0], after.range[1]]
+    before = source.getTokenBefore(before)
+    after = source.getTokenAfter(after)
+  }
+
+  return range
+}
+
 function callArrayMultilineEdits(
   array: ESTree.ArrayExpression,
+  source: SourceCode,
   text: string,
   elementIndent: string,
   baseIndent: string,
@@ -51,28 +67,30 @@ function callArrayMultilineEdits(
   const elements = array.elements
   if (elements.some(element => element === null)) return null
 
-  const present = elements.filter((element): element is Exclude<typeof element, null> => element !== null)
+  const present = elements
+    .filter((element): element is Exclude<typeof element, null> => element !== null)
+    .map(element => callArrayMultilineOuterRange(source, element))
   const first = present[0]
   const last = present.at(-1)
   if (!first || !last) return null
 
   const edits: CallArrayMultilineEdit[] = []
-  const openingRange: [number, number] = [array.range[0] + 1, first.range[0]]
+  const openingRange: [number, number] = [array.range[0] + 1, first[0]]
   if (!/^\s*$/.test(text.slice(...openingRange))) return null
   edits.push({ range: openingRange, text: `${newline}${elementIndent}` })
 
   for (let index = 1; index < present.length; index++) {
     const previous = present[index - 1]
     const current = present[index]
-    const gap = text.slice(previous.range[1], current.range[0])
+    const gap = text.slice(previous[1], current[0])
     if (!/^,\s*$/.test(gap)) return null
     edits.push({
-      range: [previous.range[1] + 1, current.range[0]],
+      range: [previous[1] + 1, current[0]],
       text: `${newline}${elementIndent}`,
     })
   }
 
-  const closingRange: [number, number] = [last.range[1], array.range[1] - 1]
+  const closingRange: [number, number] = [last[1], array.range[1] - 1]
   const closingGap = text.slice(...closingRange)
   if (!/^,?\s*$/.test(closingGap)) return null
   edits.push({
@@ -142,7 +160,7 @@ export const callArrayMultiline = defineRule({
         const hasComments = source.getCommentsInside(array).length > 0
         const edits = hasComments
           ? null
-          : callArrayMultilineEdits(array, text, baseIndent + indentUnit, baseIndent, newline)
+          : callArrayMultilineEdits(array, source, text, baseIndent + indentUnit, baseIndent, newline)
 
         context.report({
           node: array,

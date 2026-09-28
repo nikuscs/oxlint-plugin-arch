@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.2
+
+- Fix `chain-newline` reporting already-wrapped chains whose root is parenthesized, like `(db as TestDb)\n  .insertInto()`, spans several lines, or has a comment between two links.
+- Autofix `call-array-multiline` arrays with parenthesized elements, like `Promise.all([(a), (b)])`.
+
 ## 0.3.1
 
 - Fix `key-value-same-line` reporting `key: (` values whose parenthesized expression starts on the next line.

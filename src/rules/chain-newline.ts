@@ -157,7 +157,8 @@ export const chainNewline = defineRule({
 
         const source = context.sourceCode
         const text = source.text
-        const chainIndent = layoutLineIndent(text, root.range[0]) + indentUnit
+        // Why: `node` starts at a root's opening `(`; the root itself may start on a later, deeper line.
+        const chainIndent = layoutLineIndent(text, node.range[0]) + indentUnit
         const replacements: Array<{ range: [number, number], text: string }> = []
         let fixable = true
         let needsFix = false
@@ -169,15 +170,24 @@ export const chainNewline = defineRule({
             continue
           }
 
-          const range: [number, number] = [link.member.object.range[1], link.member.property.range[0]]
+          // Why: ESTree drops parentheses, so measure from the token before `.` to skip a closing `)`.
+          const operatorToken = source.getTokenBefore(link.member.property)
+          const objectEnd = (operatorToken && source.getTokenBefore(operatorToken)) ?? link.member.object
+          const range: [number, number] = [objectEnd.range[1], link.member.property.range[0]]
           const gap = text.slice(...range)
           const operator = link.member.optional ? '?.' : '.'
           const expected = `${newline}${chainIndent}${operator}`
 
-          if (source.commentsExistBetween(link.member.object, link.member.property) || gap.trim() !== operator) {
+          const hasComments = source.commentsExistBetween(objectEnd, link.member.property)
+          if (hasComments || gap.trim() !== operator) {
             fixable = false
           }
-          if (gap !== expected) {
+          const lastComment = hasComments && operatorToken
+            ? source.getTokenBefore(operatorToken, { includeComments: true })
+            : null
+          const alignedAfterComment = lastComment !== null
+            && text.slice(lastComment.range[1], link.member.property.range[0]) === expected
+          if (gap !== expected && !alignedAfterComment) {
             needsFix = true
             replacements.push({ range, text: expected })
           }

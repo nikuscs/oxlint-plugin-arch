@@ -33,6 +33,11 @@ test('call-array-multiline', () => {
         errors: [error],
       },
       {
+        code: 'Promise.all([(first), ((second as Task))])',
+        output: 'Promise.all([\n  (first),\n  ((second as Task))\n])',
+        errors: [error],
+      },
+      {
         code: 'Promise.allSettled([first, second,])',
         output: settledOutput,
         errors: [error],

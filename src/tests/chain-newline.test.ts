@@ -51,6 +51,7 @@ const procedureOutput = 'userProcedure\n  .input(schema)\n  .handler(run)'
 const arrayOutput = 'items\n  .filter(active)\n  .map(toName)\n  .sort()'
 const optionalOutput = 'items\n  ?.filter(active)\n  .map(toName)\n  .sort()'
 const nestedOutput = 'wrap(items\n  .filter(active)\n  .map(toName)\n  .sort())'
+const parenOutput = 'await (db as TestDb)\n  .insertInto("users")\n  .values(row)\n  .execute()'
 
 test('chain-newline rejects invalid root patterns during setup', () => {
   expect(() => createRuleTester().run('arch/chain-newline-invalid-regex', chainNewline, {
@@ -72,12 +73,29 @@ test('chain-newline', () => {
       { code: arrayOutput, options },
       { code: optionalOutput, options },
       { code: nestedOutput, options },
+      { code: parenOutput, options },
+      { code: '(items ?? [])\n  .filter(active)\n  .map(toName)\n  .sort()', options },
+      { code: 'const names = (\n  items ??\n  []\n)\n  .filter(active)\n  .map(toName)\n  .sort()', options },
+      { code: 'items\n  .filter(active)\n  // keep\n  .map(toName)\n  .sort()', options },
+      { code: 'items\n  .filter(active) // keep\n  .map(toName)\n  .sort()', options },
       {
         code: 'items\n\t.filter(active)\n\t.map(toName)\n\t.sort()',
         options: [{ groups: [{ minDepth: 3 }], indent: 'tab' }],
       },
     ],
     invalid: [
+      {
+        code: 'const names = (\n  items ??\n  []\n).filter(active).map(toName).sort()',
+        output: 'const names = (\n  items ??\n  []\n)\n  .filter(active)\n  .map(toName)\n  .sort()',
+        options,
+        errors: [error],
+      },
+      {
+        code: 'await (db as TestDb).insertInto("users").values(row).execute()',
+        output: parenOutput,
+        options,
+        errors: [error],
+      },
       {
         code: 'db.selectFrom("users").where("active", "=", true).execute()',
         output: queryOutput,
