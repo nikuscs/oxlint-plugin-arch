@@ -4,12 +4,16 @@ import {
   declarationsTopLevelUnexportedFunctions,
   exportsCollectFunctions,
   optionsFirst,
+  optionsOptionalPatterns,
+  optionsPatternSchema,
+  optionsPatternsTest,
 } from '../utils/index.ts'
+import type { OptionsPattern } from '../utils/index.ts'
 
 interface RequireObjectParamsOptions {
   maxParams?: number
   allDeclarations?: boolean
-  allowPattern?: string
+  allowPattern?: OptionsPattern
 }
 
 /**
@@ -26,7 +30,7 @@ export const requireObjectParams = defineRule({
       properties: {
         maxParams: { type: 'integer', minimum: 1 },
         allDeclarations: { type: 'boolean' },
-        allowPattern: { type: 'string' },
+        allowPattern: optionsPatternSchema,
       },
     }],
     messages: {
@@ -37,7 +41,7 @@ export const requireObjectParams = defineRule({
     return {
       Program(program) {
         const { maxParams = 1, allDeclarations = false, allowPattern } = optionsFirst<RequireObjectParamsOptions>(context, {})
-        const allowed = allowPattern ? new RegExp(allowPattern) : null
+        const allowed = optionsOptionalPatterns(allowPattern)
         const seen = new Set<string>()
         const functions = allDeclarations
           ? [...exportsCollectFunctions(program), ...declarationsTopLevelUnexportedFunctions(program)]
@@ -46,7 +50,7 @@ export const requireObjectParams = defineRule({
         for (const item of functions) {
           const key = `${item.name}:${item.node.start}:${item.node.end}`
 
-          if (seen.has(key) || allowed?.test(item.name)) {
+          if (seen.has(key) || optionsPatternsTest(allowed, item.name)) {
             continue
           }
 

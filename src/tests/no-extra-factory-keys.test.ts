@@ -26,6 +26,7 @@ test('no-extra-factory-keys', () => {
         { code: 'export function makeAction() { function run() { return { preview: true } } return { run } }', options: actionOptions },
         { code: 'export function helper() { return { preview: true } }', options: actionOptions },
         { code: 'export function makeAction() { return { run() {} } }', options: requireRun },
+        { code: 'export function createAction() { return { run() {} } }', options: [{ keys: ['run'], factoryPattern: ['^make', '^create'] }] },
         { code: 'export function makeAction() { return { run() {} } }\nexport const makeQuery = () => ({ get() {}, list() {} })', options: keySets },
         {
           code: 'export function makeAction() { return { run() {} } }\nexport function helper() { return { preview: true } }',

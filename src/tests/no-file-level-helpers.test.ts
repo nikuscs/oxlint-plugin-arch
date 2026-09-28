@@ -13,6 +13,8 @@ test('no-file-level-helpers', () => {
         'export function ContentForm() { return <form /> }',
         'export function useContentForm() { return null }',
         { code: 'export function makeContentForm() { return null }', options: [{ allowPattern: '^make[A-Z]' }] },
+        { code: 'export function makeContentForm() { return null }', options: [{ allowPattern: ['^build[A-Z]', '^make[A-Z]'] }] },
+        { code: 'export function withContentForm() { return null }', options: [{ hookPattern: ['^use[A-Z]', '^with[A-Z]'] }] },
         'export function ContentForm() { function handleSubmit() {} return <form /> }',
       ],
       invalid: [

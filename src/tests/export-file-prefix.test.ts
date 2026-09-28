@@ -48,6 +48,11 @@ test('export-file-prefix', () => {
           options: [{ ...allDeclarations[0], allowPattern: '^use' }],
         },
         {
+          filename: '/repo/components/foo-chart.tsx',
+          code: 'function useFooChartData() { return null }\nexport function FooChart() { return null }',
+          options: [{ ...allDeclarations[0], allowPattern: ['^never', '^use'] }],
+        },
+        {
           filename: '/repo/src/api/agent-setups.types.ts',
           code: 'type AgentSetupTimeTrigger = {}\nexport type AgentSetupList = {}',
           options: singularTypes,

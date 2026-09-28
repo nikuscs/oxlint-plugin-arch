@@ -1,11 +1,12 @@
 import { defineRule } from '@oxlint/plugins'
 import type { ESTree } from '@oxlint/plugins'
-import { astDottedName, optionsFirst } from '../utils/index.ts'
+import { astDottedName, optionsFirst, optionsPatternLabel, optionsPatternSchema } from '../utils/index.ts'
+import type { OptionsPattern } from '../utils/index.ts'
 
 interface TestTitlePatternOptions {
   callees: string[]
-  forbid?: string
-  require?: string
+  forbid?: OptionsPattern
+  require?: OptionsPattern
   flags: string
 }
 
@@ -52,13 +53,24 @@ function titleText(node: ESTree.Expression | ESTree.SpreadElement): string | und
   }
 }
 
+interface TitlePattern {
+  regex: RegExp
+  pattern: string
+}
+
 function regexMatches(regex: RegExp, value: string): boolean {
   regex.lastIndex = 0
   return regex.test(value)
 }
 
+// Why: messages name the pattern that matched, so each source stays next to its regex.
+function titlePatterns(pattern: OptionsPattern | undefined, flags: string): TitlePattern[] {
+  return pattern === undefined ? [] : [pattern].flat().map(source => ({ regex: new RegExp(source, flags), pattern: source }))
+}
+
 /**
- * Enforces configurable forbidden and required patterns on static test titles.
+ * Enforces configurable forbidden and required patterns on static test titles. Each option takes one regex or a list:
+ * a title fails when it matches any `forbid` pattern, or matches none of the `require` patterns.
  *
  * Example: with `forbid: '^should '`, `test('should save', fn)` fails.
  */
@@ -70,8 +82,8 @@ export const testTitlePattern = defineRule({
       additionalProperties: false,
       properties: {
         callees: { type: 'array', items: { type: 'string' } },
-        forbid: { type: 'string' },
-        require: { type: 'string' },
+        forbid: optionsPatternSchema,
+        require: optionsPatternSchema,
         flags: { type: 'string', pattern: '^[dgimsuvy]*$' },
       },
     }],
@@ -86,18 +98,20 @@ export const testTitlePattern = defineRule({
   },
   createOnce(context) {
     let callees: string[] = []
-    let forbid: { regex: RegExp, pattern: string } | undefined
-    let required: { regex: RegExp, pattern: string } | undefined
+    let forbid: TitlePattern[] = []
+    let required: TitlePattern[] = []
+    let requiredLabel = ''
 
     return {
       before() {
         const options = optionsFirst<TestTitlePatternOptions>(context)
         callees = options.callees
         const flags = options.flags ?? ''
-        forbid = options.forbid === undefined ? undefined : { regex: new RegExp(options.forbid, flags), pattern: options.forbid }
-        required = options.require === undefined ? undefined : { regex: new RegExp(options.require, flags), pattern: options.require }
+        forbid = titlePatterns(options.forbid, flags)
+        required = titlePatterns(options.require, flags)
+        requiredLabel = optionsPatternLabel(options.require)
 
-        if (forbid === undefined && required === undefined) {
+        if (forbid.length === 0 && required.length === 0) {
           return false
         }
       },
@@ -116,19 +130,20 @@ export const testTitlePattern = defineRule({
           return
         }
 
-        if (forbid && regexMatches(forbid.regex, text)) {
+        const forbidden = forbid.find(item => regexMatches(item.regex, text))
+        if (forbidden) {
           context.report({
             node: title,
             messageId: 'forbidden',
-            data: { pattern: forbid.pattern },
+            data: { pattern: forbidden.pattern },
           })
         }
 
-        if (required && !regexMatches(required.regex, text)) {
+        if (required.length > 0 && !required.some(item => regexMatches(item.regex, text))) {
           context.report({
             node: title,
             messageId: 'required',
-            data: { pattern: required.pattern },
+            data: { pattern: requiredLabel },
           })
         }
       },

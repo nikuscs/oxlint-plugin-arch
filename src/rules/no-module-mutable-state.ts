@@ -1,12 +1,13 @@
 import { defineRule } from '@oxlint/plugins'
 import type { ESTree } from '@oxlint/plugins'
-import { optionsFirst } from '../utils/index.ts'
+import { optionsFirst, optionsOptionalPatterns, optionsPatternSchema, optionsPatternsTest } from '../utils/index.ts'
+import type { OptionsPattern } from '../utils/index.ts'
 
 type ModuleMutableKind = 'let' | 'var'
 
 interface NoModuleMutableStateOptions {
   kinds?: ModuleMutableKind[]
-  allowNamePattern?: string
+  allowNamePattern?: OptionsPattern
 }
 
 function moduleMutableStateBindings(
@@ -85,7 +86,7 @@ export const noModuleMutableState = defineRule({
           type: 'array',
           items: { type: 'string', enum: ['let', 'var'] },
         },
-        allowNamePattern: { type: 'string' },
+        allowNamePattern: optionsPatternSchema,
       },
     }],
     messages: {
@@ -94,13 +95,13 @@ export const noModuleMutableState = defineRule({
   },
   createOnce(context) {
     let kindSet = new Set<ModuleMutableKind>(['let', 'var'])
-    let allowed: RegExp | null = null
+    let allowed: RegExp[] = []
 
     return {
       before() {
         const { kinds = ['let', 'var'], allowNamePattern } = optionsFirst<NoModuleMutableStateOptions>(context, {})
         kindSet = new Set(kinds)
-        allowed = allowNamePattern ? new RegExp(allowNamePattern) : null
+        allowed = optionsOptionalPatterns(allowNamePattern)
       },
       VariableDeclaration(node) {
         if (node.declare || !kindSet.has(node.kind as ModuleMutableKind)) {
@@ -115,7 +116,7 @@ export const noModuleMutableState = defineRule({
 
         for (const declarator of node.declarations) {
           for (const binding of moduleMutableStateBindings(declarator.id)) {
-            if (!allowed?.test(binding.name)) {
+            if (!optionsPatternsTest(allowed, binding.name)) {
               context.report({
                 node: binding.node,
                 messageId: 'moduleState',

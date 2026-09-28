@@ -4,32 +4,36 @@ import {
   factoriesDirectlyReturnedObjects,
   factoriesObjectPropertyName,
   optionsFirst,
+  optionsPatterns,
+  optionsPatternSchema,
+  optionsPatternsTest,
 } from '../utils/index.ts'
+import type { OptionsPattern } from '../utils/index.ts'
 
 interface NoExtraFactoryKeySet {
-  factoryPattern: string
+  factoryPattern: OptionsPattern
   keys: string[]
   requireKeys?: string[]
 }
 
 interface NoExtraFactoryKeysOptions {
   keys?: string[]
-  factoryPattern?: string
+  factoryPattern?: OptionsPattern
   requireKeys?: string[]
   keySets?: NoExtraFactoryKeySet[]
 }
 
 interface CompiledFactoryKeys {
-  pattern: RegExp
+  patterns: RegExp[]
   allowed: Set<string>
   allowedList: string[]
   requireKeys: string[]
 }
 
-function compileFactoryKeys(pattern: string, keys: string[], requireKeys: string[]): CompiledFactoryKeys {
+function compileFactoryKeys(pattern: OptionsPattern, keys: string[], requireKeys: string[]): CompiledFactoryKeys {
   const allowedList = keys.concat(requireKeys.filter((key) => !keys.includes(key)))
   return {
-    pattern: new RegExp(pattern),
+    patterns: optionsPatterns(pattern),
     allowed: new Set(allowedList),
     allowedList,
     requireKeys,
@@ -49,7 +53,7 @@ export const noExtraFactoryKeys = defineRule({
       additionalProperties: false,
       properties: {
         keys: { type: 'array', items: { type: 'string' } },
-        factoryPattern: { type: 'string' },
+        factoryPattern: optionsPatternSchema,
         requireKeys: { type: 'array', items: { type: 'string' } },
         keySets: {
           type: 'array',
@@ -57,7 +61,7 @@ export const noExtraFactoryKeys = defineRule({
             type: 'object',
             additionalProperties: false,
             properties: {
-              factoryPattern: { type: 'string' },
+              factoryPattern: optionsPatternSchema,
               keys: { type: 'array', items: { type: 'string' } },
               requireKeys: { type: 'array', items: { type: 'string' } },
             },
@@ -77,12 +81,12 @@ export const noExtraFactoryKeys = defineRule({
     let fallback: CompiledFactoryKeys | undefined
 
     function resolveFactoryKeys(name: string): CompiledFactoryKeys | undefined {
-      const matched = keySets.find((item) => item.pattern.test(name))
+      const matched = keySets.find((item) => optionsPatternsTest(item.patterns, name))
       if (matched) {
         return matched
       }
 
-      if (fallback?.pattern.test(name)) {
+      if (fallback && optionsPatternsTest(fallback.patterns, name)) {
         return fallback
       }
     }

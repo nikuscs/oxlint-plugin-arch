@@ -76,6 +76,8 @@ export default defineConfig({
 
 42 rules in 9 groups. 🔧 means the rule can autofix. Each rule file in [`src/rules/`](src/rules) explains its behavior in plain English, and the tests in [`src/tests/`](src/tests) show every option shape.
 
+Options that take one regex string (`pattern`, `allowPattern`, `forbid`, `require`, and the other `*Pattern` options) also take a non-empty list; any pattern in the list may match. Options that were already lists, such as `allowPatterns` and `allowCallees`, are unchanged.
+
 ### 📁 Files & folders
 
 | Rule | What it enforces |
@@ -197,6 +199,21 @@ function save(input: { id: string }): { ok: boolean } { return persist(input) }
 Use `no-type-declarations` separately to control where named types may live. With `functionTypes: false`, object types nested inside function types are still checked.
 
 </details>
+
+### `no-type-declarations`
+
+Rejects type aliases and interfaces in matched files, so types live in one place.
+
+| Option | Default | What it does |
+| --- | --- | --- |
+| `allowPattern` | none | Keep a declaration whose **name** matches. A pattern that starts with `=` or `^=` matches a type alias's **value** instead: `= ` followed by the value's source text, without surrounding parentheses or comments. Interfaces have no value, so only name patterns apply to them. |
+
+```ts
+// allowPattern: ['(Service|Deps)$', '^= ReturnType<typeof ']
+export type AiRetry = ReturnType<typeof makeAiRetry>  // ✅ value matches
+export interface OrderDeps { db: Database }            // ✅ name matches
+export type OrderCreateParams = { id: string }         // ❌ move it to your types file
+```
 
 ### `only-export-constants`
 

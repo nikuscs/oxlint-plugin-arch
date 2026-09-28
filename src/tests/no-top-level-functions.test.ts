@@ -20,6 +20,11 @@ test('no-top-level-functions', () => {
           code: "export * from './fixture.ts'",
           options: [{ banReExports: false }],
         },
+        {
+          filename: '/repo/apps/server/src/types/layout.constants.ts',
+          code: 'export function getLayout() { return 1 }\nexport function makeLayout() { return 2 }',
+          options: [{ allowPattern: ['^get', '^make'] }],
+        },
       ],
       invalid: [
         {

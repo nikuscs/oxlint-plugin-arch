@@ -27,12 +27,28 @@ test('declaration-name', () => {
           options: [{ kinds: ['const', 'function'], pattern: '^[a-z]+[A-Z]', allowPattern: 'ErrorKind$' }],
         },
         {
+          filename: '/repo/src/api/accounts.ts',
+          code: 'const listAccounts = () => []\nfunction getAccount() {}',
+          options: [{ kinds: ['const', 'function'], pattern: ['^list[A-Z]', '^get[A-Z]'] }],
+        },
+        {
+          filename: '/repo/src/api/accounts.ts',
+          code: 'const goodOne = 1\nconst goodTwo = 2',
+          options: [{ kinds: ['const'], pattern: '^good', flags: 'g' }],
+        },
+        {
           filename: '/repo/src/lib/onchain-utils.ts',
           code: 'type OnchainClient = {}\nfunction leftover() { return null }',
           options: [{ kinds: ['type'], trailingRoles: ['utils'] }],
         },
       ],
       invalid: [
+        {
+          filename: '/repo/src/api/accounts.ts',
+          code: 'const badOne = 1',
+          options: [{ kinds: ['const'], pattern: ['', '^good'] }],
+          errors: [{ message: "'badOne' must match ^good." }],
+        },
         {
           filename: '/repo/src/api/agent-setups.types.ts',
           code: 'type DraftStatus = {}\nconst leftover = 1',

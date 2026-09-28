@@ -1,9 +1,10 @@
 import { defineRule } from '@oxlint/plugins'
-import { declarationsFunctionName, optionsFirst } from '../utils/index.ts'
+import { declarationsFunctionName, optionsFirst, optionsOptionalPatterns, optionsPatternSchema, optionsPatternsTest } from '../utils/index.ts'
+import type { OptionsPattern } from '../utils/index.ts'
 
 interface NoTopLevelFunctionsOptions {
   banReExports: boolean
-  allowPattern?: string
+  allowPattern?: OptionsPattern
 }
 
 /**
@@ -19,7 +20,7 @@ export const noTopLevelFunctions = defineRule({
       additionalProperties: false,
       properties: {
         banReExports: { type: 'boolean' },
-        allowPattern: { type: 'string' },
+        allowPattern: optionsPatternSchema,
       },
     }],
     defaultOptions: [{ banReExports: true }],
@@ -32,7 +33,7 @@ export const noTopLevelFunctions = defineRule({
     return {
       Program(program) {
         const { banReExports, allowPattern } = optionsFirst<NoTopLevelFunctionsOptions>(context)
-        const allowed = allowPattern ? new RegExp(allowPattern) : null
+        const allowed = optionsOptionalPatterns(allowPattern)
 
         for (const statement of program.body) {
           if (banReExports && (statement.type === 'ExportAllDeclaration'
@@ -46,7 +47,7 @@ export const noTopLevelFunctions = defineRule({
             : statement
 
           if (declaration?.type === 'FunctionDeclaration') {
-            if (!allowed?.test(declarationsFunctionName(declaration))) {
+            if (!optionsPatternsTest(allowed, declarationsFunctionName(declaration))) {
               context.report({
                 node: declaration,
                 messageId: 'noFunction',
@@ -62,7 +63,7 @@ export const noTopLevelFunctions = defineRule({
 
           for (const item of declaration.declarations) {
             if ((item.init?.type === 'FunctionExpression' || item.init?.type === 'ArrowFunctionExpression')
-              && !allowed?.test(declarationsFunctionName(item))) {
+              && !optionsPatternsTest(allowed, declarationsFunctionName(item))) {
               context.report({
                 node: item,
                 messageId: 'noFunction',

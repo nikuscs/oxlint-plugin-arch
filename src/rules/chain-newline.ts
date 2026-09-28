@@ -6,14 +6,17 @@ import {
   layoutLineIndent,
   layoutNewline,
   optionsFirst,
+  optionsPatterns,
+  optionsPatternSchema,
+  optionsPatternsTest,
 } from '../utils/index.ts'
-import type { LayoutIndent } from '../utils/index.ts'
+import type { LayoutIndent, OptionsPattern } from '../utils/index.ts'
 
 interface ChainGroup {
   minDepth: number
   methods?: string[]
   onlyMethods?: string[]
-  rootPattern?: string
+  rootPattern?: OptionsPattern
 }
 
 interface ChainNewlineOptions {
@@ -25,7 +28,7 @@ interface ChainGroupCompiled {
   minDepth: number
   methods?: Set<string>
   onlyMethods?: Set<string>
-  rootPattern?: RegExp
+  rootPatterns: RegExp[]
 }
 
 interface ChainLink {
@@ -67,7 +70,7 @@ function chainNewlineMatches(root: ESTree.Expression, links: ChainLink[], group:
 
   const hasCriteria = group.methods !== undefined
     || group.onlyMethods !== undefined
-    || group.rootPattern !== undefined
+    || group.rootPatterns.length > 0
   if (!hasCriteria) return true
 
   // Criteria within one group deliberately use OR semantics.
@@ -80,7 +83,7 @@ function chainNewlineMatches(root: ESTree.Expression, links: ChainLink[], group:
   ) return true
 
   const rootName = chainNewlineRootIdentifier(root)
-  return rootName !== null && group.rootPattern !== undefined && group.rootPattern.test(rootName)
+  return rootName !== null && optionsPatternsTest(group.rootPatterns, rootName)
 }
 
 /**
@@ -106,7 +109,7 @@ export const chainNewline = defineRule({
               minDepth: { type: 'integer', minimum: 1 },
               methods: { type: 'array', items: { type: 'string' } },
               onlyMethods: { type: 'array', items: { type: 'string' } },
-              rootPattern: { type: 'string' },
+              rootPattern: optionsPatternSchema,
             },
             required: ['minDepth'],
           },
@@ -132,7 +135,7 @@ export const chainNewline = defineRule({
           minDepth: group.minDepth,
           methods: group.methods ? new Set(group.methods) : undefined,
           onlyMethods: group.onlyMethods ? new Set(group.onlyMethods) : undefined,
-          rootPattern: group.rootPattern === undefined ? undefined : new RegExp(group.rootPattern),
+          rootPatterns: optionsPatterns(group.rootPattern),
         }))
         indentUnit = layoutIndentUnit(options.indent)
         newline = layoutNewline(context.sourceCode.text)

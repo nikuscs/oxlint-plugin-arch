@@ -17,6 +17,11 @@ test('filename-match', () => {
         { filename: '/repo/apps/web/tests/e2e/tests/billing.auth.spec.ts', code: 'export {}', options },
         { filename: '/repo/apps/web/tests/e2e/tests/homepage.public.spec.ts', code: 'export {}', options },
         { filename: '/repo/apps/web/tests/e2e/tests/skew.production.spec.ts', code: 'export {}', options },
+        {
+          filename: '/repo/apps/web/tests/e2e/tests/billing.spec.ts',
+          code: 'export {}',
+          options: [{ pattern: ['\\.auth\\.spec\\.ts$', '^billing\\.spec\\.ts$'], message: 'Named specs only.' }],
+        },
       ],
       invalid: [
         { filename: '/repo/apps/web/tests/e2e/tests/billing.spec.ts', code: 'export {}', options, errors: [error] },

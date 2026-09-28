@@ -5,11 +5,15 @@ import {
   declarationsTopLevelUnexportedFunctions,
   exportsCollectFunctions,
   optionsFirst,
+  optionsOptionalPatterns,
+  optionsPatternSchema,
+  optionsPatternsTest,
 } from '../utils/index.ts'
+import type { OptionsPattern } from '../utils/index.ts'
 import type { ESTree } from '@oxlint/plugins'
 
 interface NoTrivialFunctionsOptions {
-  allowPattern?: string
+  allowPattern?: OptionsPattern
   allowCallees?: string[]
   allowAsync?: boolean
 }
@@ -63,7 +67,7 @@ export const noTrivialFunctions = defineRule({
       type: 'object',
       additionalProperties: false,
       properties: {
-        allowPattern: { type: 'string' },
+        allowPattern: optionsPatternSchema,
         allowCallees: { type: 'array', items: { type: 'string' } },
         allowAsync: { type: 'boolean' },
       },
@@ -73,7 +77,7 @@ export const noTrivialFunctions = defineRule({
     },
   },
   createOnce(context) {
-    let allowed: RegExp | null = null
+    let allowed: RegExp[] = []
     let allowedCallees: RegExp[] = []
     let allowAsync = false
 
@@ -81,7 +85,7 @@ export const noTrivialFunctions = defineRule({
       before() {
         const { allowPattern, allowCallees: calleePatterns = [], allowAsync: asyncAllowed = false }
           = optionsFirst<NoTrivialFunctionsOptions>(context, {})
-        allowed = allowPattern ? new RegExp(allowPattern) : null
+        allowed = optionsOptionalPatterns(allowPattern)
         allowedCallees = calleePatterns.map((pattern) => new RegExp(pattern))
         allowAsync = asyncAllowed
       },
@@ -91,7 +95,7 @@ export const noTrivialFunctions = defineRule({
         for (const item of [...exportsCollectFunctions(program), ...declarationsTopLevelUnexportedFunctions(program)]) {
           const key = `${item.name}:${item.node.start}:${item.node.end}`
 
-          if (seen.has(key) || allowed?.test(item.name) || !declarationsIsTrivialFunction(item.node)) {
+          if (seen.has(key) || optionsPatternsTest(allowed, item.name) || !declarationsIsTrivialFunction(item.node)) {
             continue
           }
 

@@ -1,10 +1,19 @@
 import { defineRule } from '@oxlint/plugins'
-import { declarationsFileLevelFunctionCandidates, optionsFirst, reactComponentsIsLike } from '../utils/index.ts'
+import {
+  declarationsFileLevelFunctionCandidates,
+  optionsFirst,
+  optionsOptionalPatterns,
+  optionsPatterns,
+  optionsPatternSchema,
+  optionsPatternsTest,
+  reactComponentsIsLike,
+} from '../utils/index.ts'
+import type { OptionsPattern } from '../utils/index.ts'
 
 interface NoFileLevelHelpersOptions {
-  allowPattern?: string
+  allowPattern?: OptionsPattern
   detectComponents?: boolean
-  hookPattern?: string
+  hookPattern?: OptionsPattern
 }
 
 /**
@@ -19,9 +28,9 @@ export const noFileLevelHelpers = defineRule({
       type: 'object',
       additionalProperties: false,
       properties: {
-        allowPattern: { type: 'string' },
+        allowPattern: optionsPatternSchema,
         detectComponents: { type: 'boolean' },
-        hookPattern: { type: 'string' },
+        hookPattern: optionsPatternSchema,
       },
     }],
     messages: {
@@ -36,13 +45,13 @@ export const noFileLevelHelpers = defineRule({
           detectComponents = true,
           hookPattern = '^use[A-Z]',
         } = optionsFirst<NoFileLevelHelpersOptions>(context, {})
-        const allowed = allowPattern ? new RegExp(allowPattern) : null
-        const hooks = new RegExp(hookPattern)
+        const allowed = optionsOptionalPatterns(allowPattern)
+        const hooks = optionsPatterns(hookPattern)
 
         for (const candidate of declarationsFileLevelFunctionCandidates(program)) {
           if ((detectComponents && reactComponentsIsLike(program, candidate))
-            || hooks.test(candidate.name)
-            || allowed?.test(candidate.name)) {
+            || optionsPatternsTest(hooks, candidate.name)
+            || optionsPatternsTest(allowed, candidate.name)) {
             continue
           }
 

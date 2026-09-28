@@ -1,12 +1,22 @@
 import { defineRule } from '@oxlint/plugins'
-import { declarationsCollectNamed, exportsCollect, optionsFirst } from '../utils/index.ts'
+import {
+  declarationsCollectNamed,
+  exportsCollect,
+  optionsFirst,
+  optionsOptionalPatterns,
+  optionsPatternLabel,
+  optionsPatterns,
+  optionsPatternSchema,
+  optionsPatternsTest,
+} from '../utils/index.ts'
+import type { OptionsPattern } from '../utils/index.ts'
 
 interface ExportNamePatternOptions {
-  pattern: string
+  pattern: OptionsPattern
   flags?: string
   ignoreTypeExports?: boolean
   allDeclarations?: boolean
-  allowPattern?: string
+  allowPattern?: OptionsPattern
 }
 
 /**
@@ -21,11 +31,11 @@ export const exportNamePattern = defineRule({
       type: 'object',
       additionalProperties: false,
       properties: {
-        pattern: { type: 'string' },
+        pattern: optionsPatternSchema,
         flags: { type: 'string' },
         ignoreTypeExports: { type: 'boolean' },
         allDeclarations: { type: 'boolean' },
-        allowPattern: { type: 'string' },
+        allowPattern: optionsPatternSchema,
       },
       required: ['pattern'],
     }],
@@ -43,7 +53,8 @@ export const exportNamePattern = defineRule({
           allDeclarations = false,
           allowPattern,
         } = optionsFirst<ExportNamePatternOptions>(context)
-        const allowed = allowPattern ? new RegExp(allowPattern) : null
+        const allowed = optionsOptionalPatterns(allowPattern)
+        const expected = optionsPatterns(pattern, flags)
         const names = allDeclarations
           ? declarationsCollectNamed(program)
           : exportsCollect(program).flatMap((binding) => ignoreTypeExports && binding.typeOnly
@@ -54,7 +65,8 @@ export const exportNamePattern = defineRule({
         for (const item of names) {
           const key = `${item.name}:${item.node.start}:${item.node.end}`
 
-          if (seen.has(key) || allowed?.test(item.name) || new RegExp(pattern, flags).test(item.name)) {
+          if (seen.has(key) || optionsPatternsTest(allowed, item.name)
+            || optionsPatternsTest(expected, item.name)) {
             continue
           }
 
@@ -62,7 +74,7 @@ export const exportNamePattern = defineRule({
           context.report({
             node: item.node,
             messageId: 'pattern',
-            data: { name: item.name, pattern },
+            data: { name: item.name, pattern: optionsPatternLabel(pattern) },
           })
         }
       },

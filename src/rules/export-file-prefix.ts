@@ -7,7 +7,11 @@ import {
   namingFileStem,
   namingStemModes,
   optionsFirst,
+  optionsOptionalPatterns,
+  optionsPatternSchema,
+  optionsPatternsTest,
 } from '../utils/index.ts'
+import type { OptionsPattern } from '../utils/index.ts'
 
 interface ExportFilePrefixOptions {
   stem?: 'before-first-dot' | 'full-basename'
@@ -16,7 +20,7 @@ interface ExportFilePrefixOptions {
   normalize?: 'remove-separators' | 'none'
   singularize?: 'none' | 'trailing-s'
   allDeclarations?: boolean
-  allowPattern?: string
+  allowPattern?: OptionsPattern
 }
 
 /**
@@ -38,7 +42,7 @@ export const exportFilePrefix = defineRule({
         normalize: { type: 'string', enum: ['remove-separators', 'none'] },
         singularize: { type: 'string', enum: ['none', 'trailing-s'] },
         allDeclarations: { type: 'boolean' },
-        allowPattern: { type: 'string' },
+        allowPattern: optionsPatternSchema,
       },
     }],
     messages: {
@@ -55,7 +59,7 @@ export const exportFilePrefix = defineRule({
         const basename = namingFileBasename(context.filename).replace(/\.(tsx?|jsx?)$/, '')
         const stem = namingFileStem(basename, options.stem, options.trailingRoles, options.roleSeparators)
         const prefixes = namingFilePrefixes(stem, options.normalize ?? 'remove-separators', options.singularize ?? 'none')
-        const allowed = options.allowPattern ? new RegExp(options.allowPattern) : null
+        const allowed = optionsOptionalPatterns(options.allowPattern)
         const names = options.allDeclarations
           ? declarationsCollectNamed(program)
           : exportsCollect(program).map((binding) => ({
@@ -68,7 +72,7 @@ export const exportFilePrefix = defineRule({
           const key = `${item.name}:${item.node.start}:${item.node.end}`
           const comparableName = options.normalize === 'none' ? item.name : item.name.replaceAll('_', '').toLowerCase()
 
-          if (seen.has(key) || allowed?.test(item.name) || prefixes.some((prefix) => comparableName.startsWith(prefix))) {
+          if (seen.has(key) || optionsPatternsTest(allowed, item.name) || prefixes.some((prefix) => comparableName.startsWith(prefix))) {
             continue
           }
 

@@ -2,15 +2,19 @@ import { defineRule } from '@oxlint/plugins'
 import {
   namingFileBasename,
   optionsFirst,
+  optionsOptionalPatterns,
+  optionsPatternSchema,
+  optionsPatternsTest,
   reactComponentsExportCandidates,
   reactComponentsIsLike,
   reactComponentsPascalFromBasename,
 } from '../utils/index.ts'
+import type { OptionsPattern } from '../utils/index.ts'
 
 interface OnlyExportComponentsOptions {
   matchFileName?: boolean
   allowTypeExports?: boolean
-  denyTypePattern?: string
+  denyTypePattern?: OptionsPattern
 }
 
 /**
@@ -27,7 +31,7 @@ export const onlyExportComponents = defineRule({
       properties: {
         matchFileName: { type: 'boolean' },
         allowTypeExports: { type: 'boolean' },
-        denyTypePattern: { type: 'string' },
+        denyTypePattern: optionsPatternSchema,
       },
     }],
     messages: {
@@ -46,7 +50,7 @@ export const onlyExportComponents = defineRule({
           denyTypePattern,
         } = optionsFirst<OnlyExportComponentsOptions>(context, {})
         const expected = reactComponentsPascalFromBasename(namingFileBasename(context.filename))
-        const denied = denyTypePattern ? new RegExp(denyTypePattern) : null
+        const denied = optionsOptionalPatterns(denyTypePattern)
         const components = []
 
         for (const candidate of reactComponentsExportCandidates(program)) {
@@ -57,7 +61,7 @@ export const onlyExportComponents = defineRule({
                 messageId: 'typeExport',
                 data: { name: candidate.name, expected },
               })
-            } else if (denied?.test(candidate.name)) {
+            } else if (optionsPatternsTest(denied, candidate.name)) {
               context.report({
                 node: candidate.node,
                 messageId: 'deniedType',

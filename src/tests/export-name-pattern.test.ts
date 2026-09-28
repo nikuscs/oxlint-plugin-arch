@@ -16,6 +16,9 @@ test('export-name-pattern', () => {
         { code: 'const blogRscListPosts = () => []\nexport { blogRscListPosts }', options },
         { code: 'function helper() {}\nexport async function blogRscGetPost() {}', options },
         { code: 'function blogRscHelper() {}\nexport async function blogRscGetPost() {}', options: allDeclarations },
+        { code: 'export async function blogRscGetPost() {}\nexport function getPost() {}', options: [{ pattern: ['Rsc[A-Z]', '^get[A-Z]'] }] },
+        { code: 'export const goodOne = 1\nexport const goodTwo = 2', options: [{ pattern: '^good', flags: 'g' }] },
+        { code: 'export const goodOne = 1\nexport const goodTwo = 2', options: [{ pattern: ['^none', '^good'], flags: 'y' }] },
       ],
       invalid: [
         { code: 'export async function getPost() {}', options, errors: [error] },

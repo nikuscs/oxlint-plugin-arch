@@ -1,14 +1,15 @@
 import { defineRule } from '@oxlint/plugins'
-import { namingFileBasename, optionsFirst } from '../utils/index.ts'
+import { namingFileBasename, optionsFirst, optionsPatterns, optionsPatternSchema, optionsPatternsTest } from '../utils/index.ts'
+import type { OptionsPattern } from '../utils/index.ts'
 
 interface FilenameMatchOptions {
-  pattern: string
+  pattern: OptionsPattern
   message: string
   flags?: string
 }
 
 /**
- * Checks the current filename against a configurable regular expression and reports the configured message.
+ * Checks the current filename against one or more regular expressions (any may match) and reports the configured message.
  *
  * Example: A pattern ending in `.spec.ts` accepts `login.spec.ts` and rejects `login.test.ts`.
  */
@@ -19,7 +20,7 @@ export const filenameMatch = defineRule({
       type: 'object',
       additionalProperties: false,
       properties: {
-        pattern: { type: 'string' },
+        pattern: optionsPatternSchema,
         message: { type: 'string' },
         flags: { type: 'string' },
       },
@@ -34,7 +35,8 @@ export const filenameMatch = defineRule({
       Program(program) {
         const { pattern, message, flags } = optionsFirst<FilenameMatchOptions>(context)
 
-        if (!new RegExp(pattern, flags).test(namingFileBasename(context.filename))) {
+        const patterns = optionsPatterns(pattern, flags)
+        if (!optionsPatternsTest(patterns, namingFileBasename(context.filename))) {
           context.report({
             node: program,
             messageId: 'mismatch',

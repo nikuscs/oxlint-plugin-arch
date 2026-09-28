@@ -19,6 +19,10 @@ test('no-trivial-functions', () => {
           options: [{ allowPattern: '^(create|make)[A-Z]' }],
         },
         {
+          code: 'export function makeClient() { return createClient() }',
+          options: [{ allowPattern: ['^build[A-Z]', '^make[A-Z]'] }],
+        },
+        {
           code: 'export function loadUser(id: string) { return fetchUser(id) }',
           options: [{ allowCallees: ['^fetchUser$'] }],
         },

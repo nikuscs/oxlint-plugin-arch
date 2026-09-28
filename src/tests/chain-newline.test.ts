@@ -109,6 +109,12 @@ test('chain-newline', () => {
         errors: [error],
       },
       {
+        code: 'jobProcedure.input(schema).handler(run)',
+        output: 'jobProcedure\n  .input(schema)\n  .handler(run)',
+        options: [{ groups: [{ minDepth: 2, rootPattern: ['^never$', 'Procedure$'] }] }],
+        errors: [error],
+      },
+      {
         code: 'service.input(schema).use(auth).output(result)',
         output: 'service\n  .input(schema)\n  .use(auth)\n  .output(result)',
         options,

@@ -21,6 +21,10 @@ test('test-title-pattern', () => {
           options: [{ callees: ['test'], require: '^saves', flags: 'i' }],
         },
         {
+          code: "test('loads a record', fn)",
+          options: [{ callees: ['test'], require: ['^saves', '^loads'], flags: '' }],
+        },
+        {
           code: "spec('works', fn); test('ignored', fn)",
           options: [{ callees: ['spec'], require: '^works$', flags: '' }],
         },
@@ -100,6 +104,11 @@ test('test-title-pattern', () => {
           code: "test('bad title', fn)",
           options: [{ callees: ['test'], forbid: '^bad', require: '^good', flags: '' }],
           errors: [forbidden, required],
+        },
+        {
+          code: "test('should save', fn)",
+          options: [{ callees: ['test'], forbid: ['^bad', '^should'], flags: '' }],
+          errors: [forbidden],
         },
       ],
     },

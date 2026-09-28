@@ -131,6 +131,12 @@ test('only-export-components', () => {
         },
         {
           filename: '/repo/components/example/example-card.tsx',
+          code: 'export interface ExampleCardProps { label: string }\nexport function ExampleCard() { return <div /> }',
+          options: [{ denyTypePattern: ['State$', 'Props$'] }],
+          errors: [deniedType],
+        },
+        {
+          filename: '/repo/components/example/example-card.tsx',
           code: 'interface ExampleCardProps { label: string }\nexport type { ExampleCardProps }\nexport function ExampleCard() { return <div /> }',
           options: denyProps,
           errors: [deniedType],

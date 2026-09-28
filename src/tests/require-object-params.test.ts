@@ -45,6 +45,10 @@ test('require-object-params', () => {
           options: [{ allowPattern: '^create' }],
         },
         {
+          code: 'export function makeUser(name: string, email: string) {}',
+          options: [{ allowPattern: ['^create', '^make'] }],
+        },
+        {
           code: 'function helper(first: string, second: string) {}\nexport function createUser(params: { name: string }) {}',
           options: [{ allDeclarations: true, allowPattern: '^helper$' }],
         },

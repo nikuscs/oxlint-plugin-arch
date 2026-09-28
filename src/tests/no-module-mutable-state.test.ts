@@ -36,6 +36,10 @@ test('no-module-mutable-state', () => {
         code: 'let { cache, rest } = values',
         options: [{ allowNamePattern: '^(cache|rest)$' }],
       },
+      {
+        code: 'let cache = {}\nlet store = 1',
+        options: [{ allowNamePattern: ['^cache$', '^store$'] }],
+      },
     ],
     invalid: [
       { code: 'let count = 0', errors: [error] },
