@@ -37,7 +37,10 @@ export const keyValueSameLine = defineRule({
           }
         }
 
-        if (keyEndLine === node.value.loc.start.line) {
+        // Why: ESTree drops parentheses, so `key: (` would look like the value starts on the next line.
+        const tokens = source.getTokensBetween(node.key, node.value)
+        const valueStart = tokens[tokens.findIndex(token => token.value === ':') + 1] ?? node.value
+        if (keyEndLine === valueStart.loc.start.line) {
           return
         }
 

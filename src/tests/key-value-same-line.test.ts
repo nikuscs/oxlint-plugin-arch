@@ -10,6 +10,8 @@ test('key-value-same-line', () => {
       'const row = { id: 1, name: "a" }',
       'const row = {\n  id: 1,\n  name: "a"\n}',
       'const row = {\n  nested: {\n    id: 1\n  }\n}',
+      'const row = {\n  value: (\n    1 + 2\n  ),\n}',
+      'const row = {\n  [key]: (\n    1\n  ),\n}',
       'const { id,\n  name } = row',
       '({ id,\n  name } = row)',
       'const row = { id, name }',
@@ -18,6 +20,11 @@ test('key-value-same-line', () => {
       'const row = {\n  [\n    key\n  ]: 1\n}',
     ],
     invalid: [
+      {
+        code: 'const row = {\n  id:\n    (1)\n}',
+        output: null,
+        errors: [error],
+      },
       {
         code: 'const row = {\n  id:\n    1\n}',
         output: 'const row = {\n  id: 1\n}',

@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.1
+
+- Fix `key-value-same-line` reporting `key: (` values whose parenthesized expression starts on the next line.
+
 ## 0.3.0
 
 - Add `no-promise-all-mutation`, `no-literal-in`, and `test-title-pattern` to replace hand-written `no-restricted-syntax` selectors with scope-aware, configurable rules.
