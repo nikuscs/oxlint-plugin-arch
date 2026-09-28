@@ -1,11 +1,23 @@
 import { defineRule } from '@oxlint/plugins'
-import { namingPosixPath, optionsFirst } from '../utils/index.ts'
+import { astDottedName, astStaticMemberName, namingPosixPath, optionsFirst } from '../utils/index.ts'
 import type { ESTree } from '@oxlint/plugins'
 
-interface NoRestrictedTokenOptions {
-  token: string
-  allowIn: string[]
+interface NoRestrictedTokenRestriction {
+  token?: string
+  member?: string
+  allowIn?: string[]
   allowPathPatterns?: string[]
+  message?: string
+}
+
+interface NoRestrictedTokenOptions extends NoRestrictedTokenRestriction {
+  restrictions?: NoRestrictedTokenRestriction[]
+}
+
+interface NormalizedRestriction {
+  kind: 'token' | 'member'
+  value: string
+  message?: string
 }
 
 function tokenIsTypeOnlyImport(node: ESTree.Node): boolean {
@@ -21,10 +33,18 @@ function tokenIsTypeOnlyImport(node: ESTree.Node): boolean {
     && parent.parent.importKind === 'type'
 }
 
+// Why: a `*.` wildcard must match any receiver, including `this.db`, call results
+// in builder chains, and computed objects, so only the property name is compared.
+function memberMatches(node: ESTree.MemberExpression, restriction: string): boolean {
+  return restriction.startsWith('*.')
+    ? astStaticMemberName(node) === restriction.slice(2)
+    : astDottedName(node) === restriction
+}
+
 /**
- * Restricts one identifier to configured owner paths while leaving path selection to the consumer.
+ * Restricts identifiers or dotted member accesses to configured owner paths while leaving path selection to the consumer.
  *
- * Example: `RouterClient` can be allowed in `rpc.client.ts` and rejected everywhere else.
+ * Example: `RouterClient` can be allowed in `rpc.client.ts`, and `*.insertInto` in repository files, and rejected everywhere else.
  */
 export const noRestrictedToken = defineRule({
   meta: {
@@ -36,34 +56,96 @@ export const noRestrictedToken = defineRule({
         token: { type: 'string' },
         allowIn: { type: 'array', items: { type: 'string' } },
         allowPathPatterns: { type: 'array', items: { type: 'string' } },
+        restrictions: {
+          type: 'array',
+          items: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+              token: { type: 'string' },
+              member: { type: 'string' },
+              allowIn: { type: 'array', items: { type: 'string' } },
+              allowPathPatterns: { type: 'array', items: { type: 'string' } },
+              message: { type: 'string' },
+            },
+            oneOf: [
+              { required: ['token'], not: { required: ['member'] } },
+              { required: ['member'], not: { required: ['token'] } },
+            ],
+          },
+        },
       },
-      required: ['token', 'allowIn'],
+      anyOf: [
+        { required: ['token'] },
+        { required: ['restrictions'] },
+      ],
     }],
     messages: {
       restricted: "'{{token}}' may only appear in configured owner paths.",
+      restrictedWithMessage: "'{{token}}' may only appear in configured owner paths. {{custom}}",
     },
   },
   createOnce(context) {
+    let restrictions: NormalizedRestriction[] = []
+
+    function report(node: ESTree.Node, restriction: NormalizedRestriction): void {
+      context.report({
+        node,
+        messageId: restriction.message === undefined ? 'restricted' : 'restrictedWithMessage',
+        data: { token: restriction.value, custom: restriction.message ?? '' },
+      })
+    }
+
     return {
       before() {
         const options = optionsFirst<NoRestrictedTokenOptions>(context)
+        const configured = [
+          ...(options.token ? [{
+            token: options.token,
+            allowIn: options.allowIn,
+            allowPathPatterns: options.allowPathPatterns,
+          }] : []),
+          ...(options.restrictions ?? []),
+        ]
         const filename = namingPosixPath(context.filename)
-        const allowed = options.allowIn.some((suffix) => filename.endsWith(suffix))
-          || (options.allowPathPatterns ?? []).some((pattern) => new RegExp(pattern).test(filename))
 
-        if (allowed) {
+        restrictions = configured.flatMap((restriction): NormalizedRestriction[] => {
+          const allowed = (restriction.allowIn ?? []).some((suffix) => filename.endsWith(suffix))
+            || (restriction.allowPathPatterns ?? []).some((pattern) => new RegExp(pattern).test(filename))
+
+          if (allowed) {
+            return []
+          }
+
+          if (restriction.token) {
+            return [{ kind: 'token', value: restriction.token, message: restriction.message }]
+          }
+
+          return restriction.member
+            ? [{ kind: 'member', value: restriction.member, message: restriction.message }]
+            : []
+        })
+
+        if (restrictions.length === 0) {
           return false
         }
       },
       Identifier(node) {
-        const { token } = optionsFirst<NoRestrictedTokenOptions>(context)
+        if (tokenIsTypeOnlyImport(node)) {
+          return
+        }
 
-        if (node.name === token && !tokenIsTypeOnlyImport(node)) {
-          context.report({
-            node,
-            messageId: 'restricted',
-            data: { token },
-          })
+        for (const restriction of restrictions) {
+          if (restriction.kind === 'token' && node.name === restriction.value) {
+            report(node, restriction)
+          }
+        }
+      },
+      MemberExpression(node) {
+        for (const restriction of restrictions) {
+          if (restriction.kind === 'member' && memberMatches(node, restriction.value)) {
+            report(node, restriction)
+          }
         }
       },
     }

@@ -1,14 +1,10 @@
 import { defineRule } from '@oxlint/plugins'
 import type { ESTree } from '@oxlint/plugins'
-import { optionsFirst } from '../utils/index.ts'
+import { commentsIsDirective, commentsIsWhy, commentsNormalizedValue, optionsFirst } from '../utils/index.ts'
 
 interface NoMemberCommentsOptions {
   allowWhy?: boolean
 }
-
-// Why: these comments change how other tools compile or lint the next line, so
-// deleting one silently re-enables a rule or a type error somewhere else.
-const DIRECTIVE = /^\s*(?:@ts-(?:ignore|expect-error|nocheck)|(?:es|ox)lint-(?:disable|enable)|prettier-ignore|biome-ignore|[cv]8 ignore|istanbul ignore|webpack[A-Z])/
 
 export const noMemberComments = defineRule({
   meta: {
@@ -61,17 +57,15 @@ export const noMemberComments = defineRule({
         let previousLine = -1
         const removable: typeof comments = []
         for (const comment of comments) {
-          const value = (comment.type === 'Block'
-            ? comment.value.replace(/^\s*\* ?/gm, '')
-            : comment.value).trimStart()
-          const isWhy: boolean = value.startsWith('Why: ')
+          const value = commentsNormalizedValue(comment)
+          const isWhy: boolean = commentsIsWhy(value)
             || (comment.type === 'Line' && whyContinuation && comment.loc.start.line === previousLine + 1)
           whyContinuation = comment.type === 'Line' && isWhy
           previousLine = comment.loc.end.line
           if (reported.has(comment.range[0])) continue
           reported.add(comment.range[0])
           if (allowWhy && isWhy) continue
-          if (DIRECTIVE.test(value)) continue
+          if (commentsIsDirective(value)) continue
           removable.push(comment)
         }
 

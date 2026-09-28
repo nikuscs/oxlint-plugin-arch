@@ -1,5 +1,18 @@
 # Changelog
 
+## Unreleased
+
+- Add `no-promise-all-mutation`, `no-literal-in`, and `test-title-pattern` to replace hand-written `no-restricted-syntax` selectors with scope-aware, configurable rules.
+- Add `no-module-mutable-state`, `no-restricted-constructor`, and `no-comments` (directives, bundler annotations, and `Why:` comments kept; one-pass autofix that skips JSX comments and directive-adjacent lines).
+- Add layout rules `padding-between-statements`, `object-multiline`, `key-value-same-line`, `chain-newline`, `call-array-multiline`, and `jsx-attributes-multiline`. Fixes only change whitespace and are skipped when comments or unusual syntax make them unsafe.
+- Extend `no-extra-exports` with regex `patterns`, `no-restricted-token` with multiple `restrictions` and `member` matching, and `require-paired-call` with `pairs`.
+- Extend `require-object-params` with `maxParams`, `allDeclarations`, and `allowPattern`; `only-export-components` with `allowTypeExports` and `denyTypePattern`; and `no-extra-factory-keys` with `requireKeys` and `keySets`.
+- Extend `no-runtime-in-types` with opt-in `runtimeImports`, `allowImportSources`, and `banReExports`; `no-trivial-functions` with `allowCallees` and `allowAsync`; and `no-inline-types` with `minMembers`.
+- All option changes are backward compatible; existing configs keep today's behavior.
+- Speed up `declaration-name`, `no-type-declarations`, `no-inline-types`, and `no-promise-all-mutation` by using native visitors and per-file option setup instead of whole-AST JavaScript walks.
+- Add `examples/monorepo.oxlint.config.ts`, a strict copy-ready config for `apps/server` + `apps/web` monorepos.
+- Remove the `install-oxlint-arch` agent skill and vendored copy; install the npm package instead.
+
 ## 0.2.5
 
 - Add `no-inline-types` to require named object and function types in function signatures, with separate parameter, return, and function-type options.

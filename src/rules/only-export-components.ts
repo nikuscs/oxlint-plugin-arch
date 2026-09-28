@@ -9,12 +9,14 @@ import {
 
 interface OnlyExportComponentsOptions {
   matchFileName?: boolean
+  allowTypeExports?: boolean
+  denyTypePattern?: string
 }
 
 /**
- * Allows only React components and type exports, with optional matching between component names and filenames.
+ * Allows only React components and, by default, type exports, with optional matching between component names and filenames.
  *
- * Example: `button.tsx` exporting `Button` passes; exporting a plain `buttonConfig` value fails.
+ * Example: `button.tsx` exporting `Button` passes; exporting a plain `buttonConfig` value fails. Set `allowTypeExports: false` to reject types.
  */
 export const onlyExportComponents = defineRule({
   meta: {
@@ -24,22 +26,44 @@ export const onlyExportComponents = defineRule({
       additionalProperties: false,
       properties: {
         matchFileName: { type: 'boolean' },
+        allowTypeExports: { type: 'boolean' },
+        denyTypePattern: { type: 'string' },
       },
     }],
     messages: {
       nonComponent: "Export '{{name}}' must be a React component or type.",
       nameMismatch: "Component export '{{name}}' must match '{{expected}}' or its prefix.",
+      typeExport: "Type export '{{name}}' is not allowed.",
+      deniedType: "Type export '{{name}}' is denied by denyTypePattern.",
     },
   },
   createOnce(context) {
     return {
       Program(program) {
-        const { matchFileName = true } = optionsFirst<OnlyExportComponentsOptions>(context, {})
+        const {
+          matchFileName = true,
+          allowTypeExports = true,
+          denyTypePattern,
+        } = optionsFirst<OnlyExportComponentsOptions>(context, {})
         const expected = reactComponentsPascalFromBasename(namingFileBasename(context.filename))
+        const denied = denyTypePattern ? new RegExp(denyTypePattern) : null
         const components = []
 
         for (const candidate of reactComponentsExportCandidates(program)) {
           if (candidate.typeOnly) {
+            if (!allowTypeExports) {
+              context.report({
+                node: candidate.node,
+                messageId: 'typeExport',
+                data: { name: candidate.name, expected },
+              })
+            } else if (denied?.test(candidate.name)) {
+              context.report({
+                node: candidate.node,
+                messageId: 'deniedType',
+                data: { name: candidate.name, expected },
+              })
+            }
             continue
           }
 

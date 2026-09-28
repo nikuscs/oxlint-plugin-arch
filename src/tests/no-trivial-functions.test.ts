@@ -18,6 +18,18 @@ test('no-trivial-functions', () => {
           code: 'export function makeClient() { return createClient() }',
           options: [{ allowPattern: '^(create|make)[A-Z]' }],
         },
+        {
+          code: 'export function loadUser(id: string) { return fetchUser(id) }',
+          options: [{ allowCallees: ['^fetchUser$'] }],
+        },
+        {
+          code: 'function loadUser(id: string) { return http.client.get(id) }\nfunction ping() { http.get() }',
+          options: [{ allowCallees: ['^http\\.(?:client\\.)?get$'] }],
+        },
+        {
+          code: 'export async function loadUser(id: string) { return await fetchUser(id) }',
+          options: [{ allowAsync: true }],
+        },
       ],
       invalid: [
         { code: 'export function load() {}', errors: [error] },
@@ -31,6 +43,30 @@ test('no-trivial-functions', () => {
           errors: [error],
         },
         { code: 'const toName = (user: User) => user.name', errors: [error] },
+        {
+          code: 'export function loadUser(id: string) { return otherClient.get(id) }',
+          options: [{ allowCallees: ['^http\\.get$'] }],
+          errors: [error],
+        },
+        {
+          code: 'export function loadUser(id: string) { return clients[provider].get(id) }',
+          options: [{ allowCallees: ['get'] }],
+          errors: [error],
+        },
+        {
+          code: 'export async function loadUser(id: string) { return await fetchUser(id) }',
+          errors: [error],
+        },
+        {
+          code: 'export async function load() {}',
+          options: [{ allowAsync: true }],
+          errors: [error],
+        },
+        {
+          code: 'export async function load() { return 1 }',
+          options: [{ allowAsync: true }],
+          errors: [error],
+        },
       ],
     },
   )

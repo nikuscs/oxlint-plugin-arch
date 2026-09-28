@@ -6,9 +6,10 @@ interface NoInlineTypesOptions {
   parameters?: boolean
   returns?: boolean
   functionTypes?: boolean
+  minMembers?: number
 }
 
-function parameterAnnotation(parameter: ESTree.ParamPattern): ESTree.TSTypeAnnotation | null | undefined {
+function parameterAnnotation(parameter: ESTree.ParamPattern | ESTree.BindingPattern): ESTree.TSTypeAnnotation | null | undefined {
   if (parameter.type === 'TSParameterProperty') {
     return parameterAnnotation(parameter.parameter)
   }
@@ -36,6 +37,7 @@ export const noInlineTypes = defineRule({
         parameters: { type: 'boolean' },
         returns: { type: 'boolean' },
         functionTypes: { type: 'boolean' },
+        minMembers: { type: 'integer', minimum: 1 },
       },
     }],
     messages: {
@@ -43,44 +45,60 @@ export const noInlineTypes = defineRule({
     },
   },
   createOnce(context) {
-    return {
-      Program(program) {
-        const { parameters = true, returns = true, functionTypes = true } = optionsFirst<NoInlineTypesOptions>(context, {})
-        const isInline = (node: ESTree.Node) => node.type === 'TSTypeLiteral'
-          || functionTypes && (node.type === 'TSFunctionType' || node.type === 'TSConstructorType')
+    let checkParameters = true
+    let checkReturns = true
+    let checkFunctionTypes = true
+    let minMembers = 1
 
-        function check(annotation: ESTree.TSTypeAnnotation | null | undefined, position: string) {
-          astVisit(annotation, [], (node, ancestors) => {
-            if (!isInline(node) || ancestors.some(isInline)) {
-              return
-            }
+    function isInline(node: ESTree.Node): boolean {
+      return node.type === 'TSTypeLiteral'
+        && (minMembers === 1 || node.members.length >= minMembers)
+        || checkFunctionTypes && (node.type === 'TSFunctionType' || node.type === 'TSConstructorType')
+    }
 
-            context.report({
-              node,
-              messageId: 'inlineType',
-              data: { kind: node.type === 'TSTypeLiteral' ? 'object' : 'function', position },
-            })
-          })
+    function check(annotation: ESTree.TSTypeAnnotation | null | undefined, position: string) {
+      astVisit(annotation, [], (node, ancestors) => {
+        if (!isInline(node) || ancestors.some(isInline)) {
+          return
         }
 
-        astVisit(program, [], (node) => {
-          if (node.type !== 'FunctionDeclaration' && node.type !== 'FunctionExpression'
-            && node.type !== 'ArrowFunctionExpression' && node.type !== 'TSDeclareFunction'
-            && node.type !== 'TSEmptyBodyFunctionExpression') {
-            return
-          }
-
-          if (parameters) {
-            for (const parameter of node.params) {
-              check(parameterAnnotation(parameter), 'parameter')
-            }
-          }
-
-          if (returns) {
-            check(node.returnType, 'return')
-          }
+        context.report({
+          node,
+          messageId: 'inlineType',
+          data: { kind: node.type === 'TSTypeLiteral' ? 'object' : 'function', position },
         })
+      })
+    }
+
+    function checkFunction(node: ESTree.Function | ESTree.ArrowFunctionExpression) {
+      if (checkParameters) {
+        for (const parameter of node.params) {
+          check(parameterAnnotation(parameter), 'parameter')
+        }
+      }
+
+      if (checkReturns) {
+        check(node.returnType, 'return')
+      }
+    }
+
+    return {
+      before() {
+        const options = optionsFirst<NoInlineTypesOptions>(context, {})
+        checkParameters = options.parameters ?? true
+        checkReturns = options.returns ?? true
+        checkFunctionTypes = options.functionTypes ?? true
+        minMembers = options.minMembers ?? 1
+
+        if (!checkParameters && !checkReturns) {
+          return false
+        }
       },
+      FunctionDeclaration: checkFunction,
+      FunctionExpression: checkFunction,
+      ArrowFunctionExpression: checkFunction,
+      TSDeclareFunction: checkFunction,
+      TSEmptyBodyFunctionExpression: checkFunction,
     }
   },
 })

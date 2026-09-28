@@ -4,6 +4,10 @@ import { createRuleTester } from './rule-tester.ts'
 
 const nonComponent = { messageId: 'nonComponent' }
 const nameMismatch = { messageId: 'nameMismatch' }
+const typeExport = { messageId: 'typeExport' }
+const deniedType = { messageId: 'deniedType' }
+const denyTypes = [{ allowTypeExports: false }]
+const denyProps = [{ denyTypePattern: 'Props$' }]
 
 test('only-export-components', () => {
   createRuleTester('tsx').run(
@@ -31,6 +35,36 @@ test('only-export-components', () => {
           filename: '/repo/src/components/admin/insights/admin-insights-foo.tsx',
           code: 'export function AdminInsightsFoo() { return <div /> }\nexport function AdminInsightsFooChart() { return <div /> }',
         },
+        {
+          filename: '/repo/components/example/example-card.tsx',
+          code: 'export type ExampleCardMode = "compact"\nexport function ExampleCard() { return <div /> }',
+        },
+        {
+          filename: '/repo/components/example/example-card.tsx',
+          code: 'type ExampleCardMode = "compact"\nexport type { ExampleCardMode }\nexport function ExampleCard() { return <div /> }',
+        },
+        {
+          filename: '/repo/components/example/example-card.tsx',
+          code: 'export type { ExampleCardMode } from "./types"\nexport function ExampleCard() { return <div /> }',
+        },
+        {
+          filename: '/repo/components/example/example-card.tsx',
+          code: 'type ExampleCardMode = "compact"\nexport { type ExampleCardMode }\nexport function ExampleCard() { return <div /> }',
+        },
+        {
+          filename: '/repo/components/example/example-card.tsx',
+          code: 'export type * from "./types"\nexport function ExampleCard() { return <div /> }',
+        },
+        {
+          filename: '/repo/components/example/example-card.tsx',
+          code: 'export type ExampleCardMode = "compact"\nexport function ExampleCard() { return <div /> }',
+          options: denyProps,
+        },
+        {
+          filename: '/repo/components/example/example-card.tsx',
+          code: 'export function ExampleCard() { return <div /> }',
+          options: denyTypes,
+        },
       ],
       invalid: [
         {
@@ -52,6 +86,60 @@ test('only-export-components', () => {
           filename: '/repo/src/components/admin/insights/admin-insights-foo.tsx',
           code: 'export function Foo() { return <div /> }',
           errors: [nameMismatch],
+        },
+        {
+          filename: '/repo/components/example/example-card.tsx',
+          code: 'export type ExampleCardMode = "compact"\nexport function ExampleCard() { return <div /> }',
+          options: denyTypes,
+          errors: [typeExport],
+        },
+        {
+          filename: '/repo/components/example/example-card.tsx',
+          code: 'export interface ExampleCardProps { label: string }\nexport function ExampleCard() { return <div /> }',
+          options: denyTypes,
+          errors: [typeExport],
+        },
+        {
+          filename: '/repo/components/example/example-card.tsx',
+          code: 'interface ExampleCardProps { label: string }\nexport type { ExampleCardProps }\nexport function ExampleCard() { return <div /> }',
+          options: denyTypes,
+          errors: [typeExport],
+        },
+        {
+          filename: '/repo/components/example/example-card.tsx',
+          code: 'export type { ExampleCardMode } from "./types"\nexport function ExampleCard() { return <div /> }',
+          options: denyTypes,
+          errors: [typeExport],
+        },
+        {
+          filename: '/repo/components/example/example-card.tsx',
+          code: 'type ExampleCardMode = "compact"\nexport { type ExampleCardMode }\nexport function ExampleCard() { return <div /> }',
+          options: denyTypes,
+          errors: [typeExport],
+        },
+        {
+          filename: '/repo/components/example/example-card.tsx',
+          code: 'export type * from "./types"\nexport function ExampleCard() { return <div /> }',
+          options: denyTypes,
+          errors: [typeExport],
+        },
+        {
+          filename: '/repo/components/example/example-card.tsx',
+          code: 'export interface ExampleCardProps { label: string }\nexport type ExampleCardMode = "compact"\nexport function ExampleCard() { return <div /> }',
+          options: denyProps,
+          errors: [deniedType],
+        },
+        {
+          filename: '/repo/components/example/example-card.tsx',
+          code: 'interface ExampleCardProps { label: string }\nexport type { ExampleCardProps }\nexport function ExampleCard() { return <div /> }',
+          options: denyProps,
+          errors: [deniedType],
+        },
+        {
+          filename: '/repo/components/example/example-card.tsx',
+          code: 'export type { ExampleCardProps } from "./types"\nexport function ExampleCard() { return <div /> }',
+          options: denyProps,
+          errors: [deniedType],
         },
       ],
     },

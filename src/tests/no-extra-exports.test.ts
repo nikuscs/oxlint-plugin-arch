@@ -9,6 +9,17 @@ const trailingUtils = [{
   names: ['make{Domain}Service'],
   trailingRoles: ['utils'],
 }]
+const compound = [{
+  names: ['{Domain}'],
+  patterns: ['{Domain}[A-Z]\\w*'],
+}]
+const patternRole = [{
+  names: [],
+  patterns: ['{domain}[A-Z]\\w*'],
+  domainStem: 'full-basename',
+  trailingRoles: ['widget'],
+  roleSeparators: ['_'],
+}]
 const error = { messageId: 'extraExport' }
 
 test('no-extra-exports', () => {
@@ -42,6 +53,21 @@ test('no-extra-exports', () => {
           code: 'export function makeOnchainService() {}',
           options: trailingUtils,
         },
+        {
+          filename: '/repo/components/chat-message.tsx',
+          code: 'export const ChatMessage = {}\nexport const ChatMessageContent = {}',
+          options: compound,
+        },
+        {
+          filename: '/repo/components/chat-message_widget.ts',
+          code: 'export const chatMessageContent = {}',
+          options: patternRole,
+        },
+        {
+          filename: '/repo/components/cash$value.ts',
+          code: 'export const Cash$valueContent = {}',
+          options: [{ names: [], patterns: ['{Domain}[A-Z]\\w*'] }],
+        },
       ],
       invalid: [
         {
@@ -60,6 +86,18 @@ test('no-extra-exports', () => {
           filename: '/repo/src/lib/onchain-utils.ts',
           code: 'export function makeOnchainUtilsService() {}',
           options: trailingUtils,
+          errors: [error],
+        },
+        {
+          filename: '/repo/components/chat-message.tsx',
+          code: 'export const FooChatMessageContent = {}\nexport const ChatMessageContentExtra = {}',
+          options: [{ names: [], patterns: ['{Domain}Content'] }],
+          errors: [error, error],
+        },
+        {
+          filename: '/repo/components/chat-message-widget.ts',
+          code: 'export const chatMessageContent = {}',
+          options: patternRole,
           errors: [error],
         },
       ],

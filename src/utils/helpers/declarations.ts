@@ -228,6 +228,31 @@ export function declarationsCollectNamed(root: ESTree.Node, kinds?: readonly Dec
   return result
 }
 
+function declarationsInsideForLoop(node: ESTree.Node): boolean {
+  for (let current = node.parent; current; current = current.parent) {
+    if (current.type === 'ForStatement' || current.type === 'ForInStatement' || current.type === 'ForOfStatement') {
+      return true
+    }
+  }
+
+  return false
+}
+
+// Why: same result as one `declarationsCollectNamed` entry, but for a single node reached by a native
+// visitor, so rules avoid walking the whole AST in JavaScript.
+export function declarationsNamedFromNode(node: ESTree.Node): Required<DeclarationsNamed> | undefined {
+  if (node.type === 'VariableDeclarator') {
+    const kind = declarationsNamedKind(node, [node.parent])
+    return kind && node.id.type === 'Identifier' && !declarationsInsideForLoop(node)
+      ? { name: node.id.name, node, kind }
+      : undefined
+  }
+
+  const kind = declarationsNamedKind(node, [])
+  const name = 'id' in node && node.id && 'name' in node.id ? node.id.name : undefined
+  return kind && name ? { name, node, kind } : undefined
+}
+
 export function declarationsCollectFunctions(root: ESTree.Node): { name: string, node: AstRuntimeFunction }[] {
   return declarationsCollectNamed(root).flatMap((item) => {
     if (item.node.type === 'FunctionDeclaration') {

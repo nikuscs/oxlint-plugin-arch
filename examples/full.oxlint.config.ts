@@ -9,22 +9,56 @@ export default defineConfig({
       files: ['**/*.{ts,tsx}'],
       rules: {
         'arch/no-member-comments': ['error', { allowWhy: true }],
+        'arch/no-literal-in': ['error', { allow: ['serviceWorker'] }],
+        'arch/no-promise-all-mutation': ['error', {
+          combinators: ['Promise.all', 'Promise.allSettled'],
+          methods: ['push', 'unshift', 'splice', 'set', 'add'],
+          checkAssignments: true,
+        }],
+        'arch/padding-between-statements': ['error', { returnMinStatements: 3 }],
+        'arch/key-value-same-line': 'error',
+        'arch/object-multiline': ['error', { minProperties: 3, scope: 'call-args', indent: 2 }],
+        'arch/call-array-multiline': ['error', {
+          callees: ['Promise.all', 'Promise.allSettled'],
+          minElements: 2,
+        }],
+        'arch/chain-newline': ['error', {
+          groups: [
+            { minDepth: 3, methods: ['selectFrom', 'insertInto', 'updateTable', 'deleteFrom'] },
+            { minDepth: 2, rootPattern: 'Procedure$' },
+            { minDepth: 3, methods: ['map', 'filter', 'reduce'] },
+          ],
+        }],
+      },
+    },
+    {
+      files: ['**/*.{test,spec}.{ts,tsx}'],
+      rules: {
+        'arch/test-title-pattern': ['error', {
+          callees: ['describe', 'it', 'test'],
+          forbid: '^should\\b',
+          flags: 'i',
+        }],
       },
     },
     {
       files: ['**/src/**/*.ts'],
       rules: {
         'arch/no-restricted-token': ['error', {
-          token: 'InternalClient',
-          allowIn: ['/src/client.ts'],
+          restrictions: [
+            { token: 'InternalClient', allowIn: ['/src/client.ts'] },
+            { member: 'process.platform', allowIn: ['/src/runtime.ts'] },
+            { member: '*.insertInto', allowPathPatterns: ['/src/actions/'], message: 'Only actions write.' },
+          ],
         }],
         'arch/require-paired-call': ['error', {
-          when: 'createForm',
-          require: 'schemaResolver',
+          pairs: [{ when: 'createForm', require: 'schemaResolver' }],
         }],
         'arch/no-trivial-functions': ['error', {
           allowPattern: '^(create|make)[A-Z]',
+          allowCallees: ['^http\\.'],
         }],
+        'arch/no-module-mutable-state': ['error', { allowNamePattern: 'Cache$' }],
       },
     },
     {
@@ -36,7 +70,11 @@ export default defineConfig({
     {
       files: ['**/src/types/**/*.ts'],
       rules: {
-        'arch/no-runtime-in-types': 'error',
+        'arch/no-runtime-in-types': ['error', {
+          runtimeImports: 'ban',
+          allowImportSources: ['^zod$'],
+          banReExports: true,
+        }],
         'arch/no-imported-type-alias': 'error',
         'arch/declaration-name': ['error', {
           kinds: ['type', 'interface', 'enum'],
@@ -48,6 +86,7 @@ export default defineConfig({
     {
       files: ['**/*.tsx'],
       rules: {
+        'arch/jsx-attributes-multiline': ['error', { minAttributes: 3 }],
         'arch/no-local-schema-construction': ['warn', {
           packages: ['zod'],
           namespaces: ['z'],
@@ -60,7 +99,12 @@ export default defineConfig({
     {
       files: ['**/src/components/**/*.tsx'],
       rules: {
-        'arch/only-export-components': ['error', { matchFileName: true }],
+        'arch/only-export-components': ['error', { matchFileName: true, denyTypePattern: 'Props$' }],
+        'arch/no-extra-exports': ['error', {
+          names: ['{Domain}'],
+          patterns: ['{Domain}[A-Z]\\w*'],
+          domainStem: 'full-basename',
+        }],
         'arch/folder-prefix': ['error', {
           singularize: 'trailing-s',
           separators: ['-'],
@@ -102,10 +146,11 @@ export default defineConfig({
         'arch/require-file-factory': ['error', {
           factory: 'make{Stem}',
         }],
-        'arch/require-object-params': 'error',
+        'arch/require-object-params': ['error', { maxParams: 2 }],
         'arch/no-extra-factory-keys': ['error', {
           keys: ['run'],
           factoryPattern: '^make[A-Z]',
+          requireKeys: ['run'],
         }],
       },
     },
@@ -126,7 +171,13 @@ export default defineConfig({
           parameters: true,
           returns: true,
           functionTypes: true,
+          minMembers: 2,
         }],
+        'arch/no-restricted-constructor': ['error', {
+          constructors: ['Error'],
+          message: 'Throw a domain error instead.',
+        }],
+        'arch/no-comments': ['error', { allowWhy: true }],
         'arch/export-file-prefix': ['error', {
           stem: 'before-first-dot',
           normalize: 'remove-separators',

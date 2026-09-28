@@ -1,7 +1,8 @@
 import { defineRule } from '@oxlint/plugins'
+import type { ESTree } from '@oxlint/plugins'
 import {
-  declarationsCollectNamed,
   declarationsKinds,
+  declarationsNamedFromNode,
   namingFileBasename,
   namingFilePrefixes,
   namingFileStem,
@@ -55,40 +56,55 @@ export const declarationName = defineRule({
     },
   },
   createOnce(context) {
+    let options: DeclarationNameOptions = {}
+    let kinds: Set<DeclarationsKind> | null = null
+    let allowed: RegExp | null = null
+    let expected: RegExp | null = null
+    let prefixes: string[] = []
+
+    function check(node: ESTree.Node) {
+      const item = declarationsNamedFromNode(node)
+      if (!item || kinds && !kinds.has(item.kind) || allowed?.test(item.name)) {
+        return
+      }
+
+      const comparableName = options.normalize === 'none' ? item.name : item.name.replaceAll('_', '').toLowerCase()
+      const matches = expected
+        ? expected.test(item.name)
+        : prefixes.some((prefix) => comparableName.startsWith(prefix))
+
+      if (matches) {
+        return
+      }
+
+      context.report({
+        node: item.node,
+        messageId: expected ? 'pattern' : 'prefix',
+        data: expected
+          ? { name: item.name, pattern: options.pattern ?? '' }
+          : { name: item.name, prefix: prefixes.join(' or ') },
+      })
+    }
+
     return {
-      Program(program) {
-        const options = optionsFirst<DeclarationNameOptions>(context, {
+      before() {
+        options = optionsFirst<DeclarationNameOptions>(context, {
           stem: 'before-first-dot',
           normalize: 'remove-separators',
         })
-        const allowed = options.allowPattern ? new RegExp(options.allowPattern) : null
-        const expected = options.pattern ? new RegExp(options.pattern, options.flags) : null
+        kinds = options.kinds && options.kinds.length > 0 ? new Set(options.kinds) : null
+        allowed = options.allowPattern ? new RegExp(options.allowPattern) : null
+        expected = options.pattern ? new RegExp(options.pattern, options.flags) : null
         const basename = namingFileBasename(context.filename).replace(/\.(tsx?|jsx?)$/, '')
         const stem = namingFileStem(basename, options.stem, options.trailingRoles, options.roleSeparators)
-        const prefixes = namingFilePrefixes(stem, options.normalize ?? 'remove-separators', options.singularize ?? 'none')
-        const seen = new Set<string>()
-
-        for (const item of declarationsCollectNamed(program, options.kinds)) {
-          const key = `${item.name}:${item.node.start}:${item.node.end}`
-          const comparableName = options.normalize === 'none' ? item.name : item.name.replaceAll('_', '').toLowerCase()
-          const matches = expected
-            ? expected.test(item.name)
-            : prefixes.some((prefix) => comparableName.startsWith(prefix))
-
-          if (seen.has(key) || allowed?.test(item.name) || matches) {
-            continue
-          }
-
-          seen.add(key)
-          context.report({
-            node: item.node,
-            messageId: expected ? 'pattern' : 'prefix',
-            data: expected
-              ? { name: item.name, pattern: options.pattern ?? '' }
-              : { name: item.name, prefix: prefixes.join(' or ') },
-          })
-        }
+        prefixes = namingFilePrefixes(stem, options.normalize ?? 'remove-separators', options.singularize ?? 'none')
       },
+      FunctionDeclaration: check,
+      ClassDeclaration: check,
+      TSTypeAliasDeclaration: check,
+      TSInterfaceDeclaration: check,
+      TSEnumDeclaration: check,
+      VariableDeclarator: check,
     }
   },
 })

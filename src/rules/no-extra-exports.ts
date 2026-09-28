@@ -11,6 +11,7 @@ import {
 
 interface NoExtraExportsOptions {
   names: string[]
+  patterns?: string[]
   domainStem?: 'before-first-dot' | 'full-basename'
   trailingRoles?: string[]
   roleSeparators?: string[]
@@ -31,6 +32,7 @@ export const noExtraExports = defineRule({
       additionalProperties: false,
       properties: {
         names: { type: 'array', items: { type: 'string' } },
+        patterns: { type: 'array', items: { type: 'string' } },
         domainStem: { type: 'string', enum: [...namingStemModes] },
         trailingRoles: { type: 'array', items: { type: 'string' } },
         roleSeparators: { type: 'array', items: { type: 'string' } },
@@ -48,9 +50,19 @@ export const noExtraExports = defineRule({
         const options = optionsFirst<NoExtraExportsOptions>(context)
         const basename = namingFileBasename(context.filename).replace(/\.(tsx?|jsx?)$/, '')
         const domain = namingFileStem(basename, options.domainStem, options.trailingRoles, options.roleSeparators)
+        const replacements = {
+          Domain: namingPascalCase(domain),
+          domain: namingCamelCase(domain),
+        }
         const allowed = options.names.map((template) => template
-          .replaceAll('{Domain}', namingPascalCase(domain))
-          .replaceAll('{domain}', namingCamelCase(domain)))
+          .replaceAll('{Domain}', replacements.Domain)
+          .replaceAll('{domain}', replacements.domain))
+        const patterns = (options.patterns ?? []).map((template) => {
+          const source = template
+            .replaceAll('{Domain}', replacements.Domain.replaceAll(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+            .replaceAll('{domain}', replacements.domain.replaceAll(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+          return new RegExp(`^(?:${source})$`)
+        })
 
         for (const binding of exportsCollect(program)) {
           if (options.allowTypeExports && binding.typeOnly) {
@@ -59,11 +71,14 @@ export const noExtraExports = defineRule({
 
           const name = binding.localName ?? binding.exportedName
 
-          if (!allowed.includes(name)) {
+          if (!allowed.includes(name) && !patterns.some((pattern) => pattern.test(name))) {
             context.report({
               node: binding.node,
               messageId: 'extraExport',
-              data: { name, allowed: allowed.join(', ') },
+              data: {
+                name,
+                allowed: [...allowed, ...patterns.map((pattern) => pattern.toString())].join(', '),
+              },
             })
           }
         }

@@ -34,9 +34,22 @@ test('no-inline-types', () => {
         code: 'function save(input: { id: string }): { ok: boolean } { return { ok: true } }',
         options: [{ parameters: false, returns: false }],
       },
+      {
+        code: 'function save(input: {}): { ok: boolean } { return { ok: true } }',
+        options: [{ minMembers: 2 }],
+      },
+      {
+        code: 'function save(input: { id: string }): { ok: boolean } { return { ok: true } }',
+        options: [{ minMembers: 2 }],
+      },
+      {
+        code: 'function save(input: { nested: { id: string } }) {}',
+        options: [{ minMembers: 2 }],
+      },
       'function save(input: Input = make({ id: "one" })) {}',
     ],
     invalid: [
+      { code: 'function save(input: {}) {}', errors: [error] },
       { code: 'function save(input: { id: string }) {}', errors: [error] },
       { code: 'function save({ id }: { id: string }) {}', errors: [error] },
       { code: 'const save = (input: { id: string }) => input', errors: [error] },
@@ -72,6 +85,21 @@ test('no-inline-types', () => {
       {
         code: 'function save(input: { id: string }): { ok: boolean } { return { ok: true } }',
         options: [{ returns: false }],
+        errors: [error],
+      },
+      {
+        code: 'function save(input: { id: string; name: string }) {}',
+        options: [{ minMembers: 2 }],
+        errors: [error],
+      },
+      {
+        code: 'function save(input: { nested: { id: string; name: string } }) {}',
+        options: [{ minMembers: 2 }],
+        errors: [error],
+      },
+      {
+        code: 'function save(callback: (input: Input) => Result) {}',
+        options: [{ minMembers: 10 }],
         errors: [error],
       },
       { code: 'items.map((item: { id: string }) => item.id)', errors: [error] },

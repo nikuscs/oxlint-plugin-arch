@@ -1,5 +1,6 @@
 import { defineRule } from '@oxlint/plugins'
-import { declarationsCollectNamed, optionsFirst } from '../utils/index.ts'
+import type { ESTree } from '@oxlint/plugins'
+import { optionsFirst } from '../utils/index.ts'
 
 interface NoTypeDeclarationsOptions {
   allowPattern?: string
@@ -25,24 +26,27 @@ export const noTypeDeclarations = defineRule({
     },
   },
   createOnce(context) {
+    let allowed: RegExp | null = null
+
+    function check(node: ESTree.TSTypeAliasDeclaration | ESTree.TSInterfaceDeclaration) {
+      if (allowed?.test(node.id.name)) {
+        return
+      }
+
+      context.report({
+        node,
+        messageId: 'typeDeclaration',
+        data: { name: node.id.name },
+      })
+    }
+
     return {
-      Program(program) {
+      before() {
         const { allowPattern } = optionsFirst<NoTypeDeclarationsOptions>(context, {})
-        const allowed = allowPattern ? new RegExp(allowPattern) : null
-
-        for (const item of declarationsCollectNamed(program)) {
-          if ((item.node.type !== 'TSTypeAliasDeclaration' && item.node.type !== 'TSInterfaceDeclaration')
-            || allowed?.test(item.name)) {
-            continue
-          }
-
-          context.report({
-            node: item.node,
-            messageId: 'typeDeclaration',
-            data: { name: item.name },
-          })
-        }
+        allowed = allowPattern ? new RegExp(allowPattern) : null
       },
+      TSTypeAliasDeclaration: check,
+      TSInterfaceDeclaration: check,
     }
   },
 })

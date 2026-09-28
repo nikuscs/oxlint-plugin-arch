@@ -2,9 +2,20 @@ import { defineRule } from '@oxlint/plugins'
 import { astImportedCallAliases, astResolvedCallName, optionsFirst } from '../utils/index.ts'
 import type { ESTree } from '@oxlint/plugins'
 
-interface RequirePairedCallOptions {
+interface RequirePairedCallPair {
   when: string
   require: string
+}
+
+interface RequirePairedCallOptions {
+  when?: string
+  require?: string
+  pairs?: RequirePairedCallPair[]
+}
+
+interface PairState extends RequirePairedCallPair {
+  firstWhen: ESTree.CallExpression | null
+  sawRequired: boolean
 }
 
 /**
@@ -21,8 +32,23 @@ export const requirePairedCall = defineRule({
       properties: {
         when: { type: 'string' },
         require: { type: 'string' },
+        pairs: {
+          type: 'array',
+          items: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+              when: { type: 'string' },
+              require: { type: 'string' },
+            },
+            required: ['when', 'require'],
+          },
+        },
       },
-      required: ['when', 'require'],
+      anyOf: [
+        { required: ['when', 'require'] },
+        { required: ['pairs'] },
+      ],
     }],
     messages: {
       paired: '{{when}} requires a call to {{require}} in the same file.',
@@ -30,41 +56,47 @@ export const requirePairedCall = defineRule({
   },
   createOnce(context) {
     let aliases = new Map<string, string>()
-    let firstWhen: ESTree.CallExpression | null = null
-    let sawRequired = false
+    let pairs: PairState[] = []
 
     return {
       before() {
+        const options = optionsFirst<RequirePairedCallOptions>(context)
+        const configured = [
+          ...(options.when && options.require ? [{ when: options.when, require: options.require }] : []),
+          ...(options.pairs ?? []),
+        ]
+
         aliases = new Map()
-        firstWhen = null
-        sawRequired = false
+        pairs = configured.map((pair) => ({ ...pair, firstWhen: null, sawRequired: false }))
       },
       Program(program) {
         aliases = astImportedCallAliases(program)
       },
       CallExpression(node) {
-        const { when, require } = optionsFirst<RequirePairedCallOptions>(context)
         const name = astResolvedCallName(node, aliases)
 
-        if (name === when && !firstWhen) {
-          firstWhen = node
-        }
+        for (const pair of pairs) {
+          if (name === pair.when && !pair.firstWhen) {
+            pair.firstWhen = node
+          }
 
-        if (name === require) {
-          sawRequired = true
+          if (name === pair.require) {
+            pair.sawRequired = true
+          }
         }
       },
       after() {
-        if (!firstWhen || sawRequired) {
-          return
-        }
+        for (const pair of pairs) {
+          if (!pair.firstWhen || pair.sawRequired) {
+            continue
+          }
 
-        const { when, require } = optionsFirst<RequirePairedCallOptions>(context)
-        context.report({
-          node: firstWhen,
-          messageId: 'paired',
-          data: { when, require },
-        })
+          context.report({
+            node: pair.firstWhen,
+            messageId: 'paired',
+            data: { when: pair.when, require: pair.require },
+          })
+        }
       },
     }
   },
