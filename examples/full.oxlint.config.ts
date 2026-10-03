@@ -8,6 +8,7 @@ export default defineConfig({
     {
       files: ['**/*.{ts,tsx}'],
       rules: {
+        'arch/prefer-namespace-type-import': ['error', { max: 3, names: { './shared.types': 'SharedTypes' } }],
         'arch/no-member-comments': ['error', { allowWhy: true }],
         'arch/no-literal-in': ['error', { allow: ['serviceWorker'] }],
         'arch/no-promise-all-mutation': ['error', {

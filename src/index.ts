@@ -35,6 +35,7 @@ import { objectMultiline } from './rules/object-multiline.ts'
 import { onlyExportComponents } from './rules/only-export-components.ts'
 import { onlyExportConstants } from './rules/only-export-constants.ts'
 import { paddingBetweenStatements } from './rules/padding-between-statements.ts'
+import { preferNamespaceTypeImport } from './rules/prefer-namespace-type-import.ts'
 import { requireFileFactory } from './rules/require-file-factory.ts'
 import { requireObjectParams } from './rules/require-object-params.ts'
 import { requireOrpcOutput } from './rules/require-orpc-output.ts'
@@ -81,6 +82,7 @@ export default eslintCompatPlugin({
     'only-export-components': onlyExportComponents,
     'only-export-constants': onlyExportConstants,
     'padding-between-statements': paddingBetweenStatements,
+    'prefer-namespace-type-import': preferNamespaceTypeImport,
     'require-file-factory': requireFileFactory,
     'require-object-params': requireObjectParams,
     'require-orpc-output': requireOrpcOutput,

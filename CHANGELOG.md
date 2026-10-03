@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Add `prefer-namespace-type-import` with a configurable named-type-import limit (default 3), module-specific namespace names, and scope-aware autofixes that qualify type references while reporting unsafe rewrites without a fix.
+
 - Options that took one regex string now also take a non-empty list, where any pattern may match: `pattern`, `allowPattern`, `allowNamePattern`, `denyTypePattern`, `hookPattern`, `rootPattern`, `factoryPattern`, `forbid`, and `require`. Single strings keep their behavior.
 - `no-type-declarations` `allowPattern` entries starting with `=` or `^=` match a type alias's value (`= ` plus its source text) instead of its name, so `'^= ReturnType<typeof '` keeps factory return types next to their factory. A name pattern that starts with `=` or `^=` is now read as a value pattern.
 - Fix `declaration-name` `pattern` with `g` or `y` flags rejecting every name after the first match.

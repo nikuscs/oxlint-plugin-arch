@@ -6,7 +6,7 @@ Keep a codebase shaped the way you designed it: files in the right folders, expo
 
 - 🗂️ **Filename-aware.** Rules derive expected names from the file they run on (`user-action.create.ts` → `makeUserActionCreate`).
 - 🎛️ **Configurable.** No app names, folders, or libraries are baked in. Globs and policy live in your config.
-- 🛟 **Safe autofix.** Fixable rules only touch whitespace or comments, and never guess when a fix could change your code.
+- 🛟 **Safe autofix.** Layout and comment rules only touch whitespace or comments. Type-import fixes qualify scope-resolved references and skip unsafe rewrites.
 - ⚡ **Fast.** Built on Oxlint's JS plugin API and ESTree, with no extra parser.
 
 ---
@@ -65,7 +65,7 @@ export default defineConfig({
 | --- | --- |
 | [`minimal.oxlint.config.ts`](examples/minimal.oxlint.config.ts) | You want the smallest possible starting point. |
 | [`monorepo.oxlint.config.ts`](examples/monorepo.oxlint.config.ts) | ⭐ You are starting an `apps/server` + `apps/web` monorepo and want a strict, copy-ready setup. |
-| [`full.oxlint.config.ts`](examples/full.oxlint.config.ts) | You want to see every one of the 42 rules with its options. |
+| [`full.oxlint.config.ts`](examples/full.oxlint.config.ts) | You want to see every one of the 43 rules with its options. |
 
 > [!TIP]
 > `monorepo.oxlint.config.ts` already loads `oxlint-plugin-arch`, so you can copy it as-is and adjust globs and names. The other two load `../src/index.ts`; change that specifier to `oxlint-plugin-arch` when you copy them.
@@ -74,7 +74,7 @@ export default defineConfig({
 
 ## 🧩 Rules
 
-42 rules in 9 groups. 🔧 means the rule can autofix. Each rule file in [`src/rules/`](src/rules) explains its behavior in plain English, and the tests in [`src/tests/`](src/tests) show every option shape.
+43 rules in 9 groups. 🔧 means the rule can autofix. Each rule file in [`src/rules/`](src/rules) explains its behavior in plain English, and the tests in [`src/tests/`](src/tests) show every option shape.
 
 Options that take one regex string (`pattern`, `allowPattern`, `forbid`, `require`, and the other `*Pattern` options) also take a non-empty list; any pattern in the list may match. Options that were already lists, such as `allowPatterns` and `allowCallees`, are unchanged.
 
@@ -117,6 +117,7 @@ Options that take one regex string (`pattern`, `allowPattern`, `forbid`, `requir
 | `no-type-declarations` | No type aliases or interfaces in matched files, so types live in one place. |
 | `no-runtime-in-types` | Type modules stay free of runtime code. Opt in to also ban runtime imports and re-exports. |
 | `no-imported-type-alias` | No exported aliases that only rename an imported type. |
+| `prefer-namespace-type-import` 🔧 | Long type-only named imports become a namespace import with qualified references. [Details ↓](#prefer-namespace-type-import) |
 
 ### 🧪 Schemas & APIs
 
@@ -199,6 +200,31 @@ function save(input: { id: string }): { ok: boolean } { return persist(input) }
 Use `no-type-declarations` separately to control where named types may live. With `functionTypes: false`, object types nested inside function types are still checked.
 
 </details>
+
+### `prefer-namespace-type-import`
+
+Prefers a namespace when a type-only import has **more than** `max` named specifiers. Both `import type { A, B }` and `import { type A, type B }` are checked; any runtime or default binding leaves the declaration alone.
+
+| Option | Default | What it does |
+| --- | --- | --- |
+| `max` | `3` | Maximum named specifiers allowed (non-negative integer). Three passes; four fails. |
+| `names` | `{}` | Exact module-path-to-namespace-name map, such as `{ '#/types/room.types': 'RoomTypes' }`. Values must be ASCII binding identifiers, not reserved words. |
+
+The default name is the last path segment in PascalCase, stripping JS/TS extensions and adding `Types` unless already present: `#/types/room.types` → `RoomTypes`, `./harness.types.ts` → `HarnessTypes`, `@orbs/server/client` → `ClientTypes`. Other punctuation separates words; names starting with a digit get a `Module` prefix.
+
+```ts
+// Before
+import type { A, B as LocalB, C, D } from './room.types'
+export type Result = [A, LocalB, C, D]
+
+// After
+import type * as RoomTypes from './room.types'
+export type Result = [RoomTypes.A, RoomTypes.B, RoomTypes.C, RoomTypes.D]
+```
+
+The autofix updates scope-resolved type references, generics, indexed access, type-position `typeof`, interface heritage, and class implementations, including TSX. Shadowed local names are untouched. Exported type declarations are updated, but local export lists (`export type { A }`, `export { type A }`, or `export { A }`) are **report-only**; direct re-exports from another module are untouched.
+
+The diagnostic explains why an autofix was skipped: comments inside the import, an existing namespace import from the same module (no merging), a namespace name colliding with any binding/reference in the file or another proposed namespace, an unsupported imported name, or a reference outside the supported type syntax. Multiple qualifying imports from the same module are report-only too. Choose distinct `names` overrides to resolve collisions between different modules. Fixes preserve the module string, import attributes, semicolon, and comments outside the import.
 
 ### `no-type-declarations`
 

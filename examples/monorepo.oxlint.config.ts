@@ -58,6 +58,7 @@ export default defineConfig({
   ],
   rules: {
     'no-restricted-imports': ['error', { patterns: restrictedImportPatterns }],
+    'arch/prefer-namespace-type-import': ['error', { max: 3 }],
     'arch/no-literal-in': 'error',
     'arch/no-promise-all-mutation': 'error',
     'arch/padding-between-statements': 'error',
