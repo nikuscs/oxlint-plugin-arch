@@ -1,0 +1,1 @@
+import { chatMessageSchema } from '@fixture/server/client'; import { z } from 'zod'; export type Local = z.infer<typeof chatMessageSchema>;

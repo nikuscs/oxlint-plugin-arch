@@ -1,0 +1,1 @@
+withSpaces.replaceAll(/\s+/, ',');

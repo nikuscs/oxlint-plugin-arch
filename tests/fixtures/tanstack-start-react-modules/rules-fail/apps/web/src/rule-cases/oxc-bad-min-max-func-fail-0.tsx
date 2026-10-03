@@ -1,0 +1,1 @@
+Math.min(Math.max(100, x), 0)

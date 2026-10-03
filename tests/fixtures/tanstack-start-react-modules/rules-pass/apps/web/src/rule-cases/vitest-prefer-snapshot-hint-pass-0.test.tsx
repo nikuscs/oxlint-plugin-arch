@@ -1,0 +1,1 @@
+import {test,expect} from 'vitest'; test('works',()=>{expect(1).toMatchSnapshot('one');});

@@ -1,0 +1,1 @@
+const view = <div>{Boolean(count) && <span />}</div>;

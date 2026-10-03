@@ -1,0 +1,1 @@
+import { type Foo, type Bar } from 'Foo'

@@ -1,0 +1,1 @@
+import type { ChatMessage } from '@fixture/server/client'; export type Local = Pick<ChatMessage, 'id'>;

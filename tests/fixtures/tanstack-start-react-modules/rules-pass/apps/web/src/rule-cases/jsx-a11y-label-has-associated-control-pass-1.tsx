@@ -1,0 +1,1 @@
+<label htmlFor="js_id" aria-label="A label" />

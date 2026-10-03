@@ -4,6 +4,7 @@ import type { ESTree, SourceCode } from '@oxlint/plugins'
 
 interface PaddingBetweenStatementsOptions {
   returnMinStatements?: number
+  multilineVariables?: boolean
 }
 
 type PaddingKind = 'variable' | 'block' | 'control' | 'return' | 'other'
@@ -89,6 +90,7 @@ export const paddingBetweenStatements = defineRule({
       additionalProperties: false,
       properties: {
         returnMinStatements: { type: 'integer', minimum: 1, default: 3 },
+        multilineVariables: { type: 'boolean' },
       },
     }],
     messages: {
@@ -99,10 +101,12 @@ export const paddingBetweenStatements = defineRule({
       controlAndVariable: 'Expected a blank line between control flow and a variable declaration.',
       consecutiveControl: 'Expected a blank line between control flow statements.',
       beforeReturn: 'Expected a blank line before return statement.',
+      multilineVariable: 'Expected a blank line around a multiline variable declaration.',
     },
   },
   createOnce(context) {
     let returnMinStatements = 3
+    let multilineVariables = false
     let newline = '\n'
     let source: SourceCode
 
@@ -118,7 +122,9 @@ export const paddingBetweenStatements = defineRule({
 
         const prevKind = paddingKind(prev)
         const currKind = paddingKind(curr)
-        const messageId = (prevKind === 'variable' && currKind === 'block') || (prevKind === 'block' && currKind === 'variable')
+        const multiline = multilineVariables && ((prevKind === 'variable' && prev.loc.start.line !== prev.loc.end.line)
+          || (currKind === 'variable' && curr.loc.start.line !== curr.loc.end.line))
+        const messageId = multiline ? 'multilineVariable' : (prevKind === 'variable' && currKind === 'block') || (prevKind === 'block' && currKind === 'variable')
           ? 'variableAndBlock'
           : currKind === 'block'
             ? 'beforeBlock'
@@ -154,6 +160,7 @@ export const paddingBetweenStatements = defineRule({
       before() {
         const options = optionsFirst<PaddingBetweenStatementsOptions>(context, {})
         returnMinStatements = options.returnMinStatements ?? 3
+        multilineVariables = options.multilineVariables ?? false
         source = context.sourceCode
         newline = layoutNewline(source.text)
       },

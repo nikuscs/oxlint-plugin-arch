@@ -1,0 +1,1 @@
+import { useState } from 'react'; function Component() { const value = useState(0); return <p>{value[0]}</p>; }

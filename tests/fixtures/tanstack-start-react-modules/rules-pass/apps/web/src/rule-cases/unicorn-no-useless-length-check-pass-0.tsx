@@ -1,0 +1,1 @@
+array.length === 0 ?? array.every(Boolean)

@@ -1,0 +1,1 @@
+const String = { raw: () => 'foo' }; it(String.raw`foo`, () => {})

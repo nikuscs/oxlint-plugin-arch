@@ -10,6 +10,7 @@ interface NoUnescapedLikeOptions {
   methods: string[]
   sanitizers: string[]
   allowSanitizedBindings?: boolean
+  operatorMethods?: string[]
 }
 
 /**
@@ -27,6 +28,7 @@ export const noUnescapedLike = defineRule({
         methods: { type: 'array', items: { type: 'string' } },
         sanitizers: { type: 'array', items: { type: 'string' } },
         allowSanitizedBindings: { type: 'boolean' },
+        operatorMethods: { type: 'array', items: { type: 'string' } },
       },
       required: ['methods', 'sanitizers'],
     }],
@@ -44,10 +46,13 @@ export const noUnescapedLike = defineRule({
           return
         }
 
-        const { methods, sanitizers } = optionsFirst<NoUnescapedLikeOptions>(context)
+        const { methods, sanitizers, operatorMethods = [] } = optionsFirst<NoUnescapedLikeOptions>(context)
         const method = astStaticMemberName(node.callee)
+        const operator = node.arguments[1]
+        const operatorCall = method && operatorMethods.includes(method) && operator?.type === 'Literal'
+          && typeof operator.value === 'string' && methods.includes(operator.value)
 
-        if (!method || !methods.includes(method)) {
+        if (!method || (!methods.includes(method) && !operatorCall)) {
           return
         }
 

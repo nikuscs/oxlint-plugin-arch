@@ -1,0 +1,1294 @@
+[
+  {
+    "name": "blank lines around declarations",
+    "project": "invalid",
+    "file": "scripts/layout-padding.ts",
+    "rules": [
+      "arch/padding-between-statements"
+    ],
+    "decisions": [
+      1
+    ]
+  },
+  {
+    "name": "multiline constants separated",
+    "project": "invalid",
+    "file": "scripts/layout-const.ts",
+    "rules": [
+      "arch/padding-between-statements"
+    ],
+    "decisions": [
+      1
+    ]
+  },
+  {
+    "name": "Promise.all elements expand",
+    "project": "invalid",
+    "file": "scripts/layout-promises.ts",
+    "rules": [
+      "arch/call-array-multiline"
+    ],
+    "decisions": [
+      2
+    ]
+  },
+  {
+    "name": "call objects expand at three properties",
+    "project": "invalid",
+    "file": "scripts/layout-object.ts",
+    "rules": [
+      "arch/object-multiline"
+    ],
+    "decisions": [
+      2
+    ]
+  },
+  {
+    "name": "object key and value begin together",
+    "project": "invalid",
+    "file": "scripts/layout-key.ts",
+    "rules": [
+      "arch/key-value-same-line"
+    ],
+    "decisions": [
+      3
+    ]
+  },
+  {
+    "name": "line length is 160",
+    "project": "invalid",
+    "file": "scripts/layout-length.ts",
+    "rules": [
+      "eslint-js/max-len"
+    ],
+    "decisions": [
+      4
+    ]
+  },
+  {
+    "name": "single quotes and semicolons",
+    "project": "invalid",
+    "file": "scripts/layout-quotes.ts",
+    "rules": [
+      "eslint-js/quotes",
+      "eslint-js/semi"
+    ],
+    "decisions": [
+      76
+    ]
+  },
+  {
+    "name": "braces and newlines on control flow",
+    "project": "invalid",
+    "file": "scripts/layout-braces.ts",
+    "rules": [
+      "eslint/curly"
+    ],
+    "decisions": [
+      64,
+      77
+    ]
+  },
+  {
+    "name": "arrow parameter parentheses",
+    "project": "invalid",
+    "file": "scripts/layout-arrow.ts",
+    "rules": [
+      "eslint-js/arrow-parens"
+    ],
+    "decisions": [
+      77
+    ]
+  },
+  {
+    "name": "component folders contain TSX only",
+    "project": "invalid",
+    "file": "apps/web/src/components/chats/helper.ts",
+    "rules": [
+      "arch/no-restricted-files"
+    ],
+    "decisions": [
+      6
+    ]
+  },
+  {
+    "name": "hooks stay flat",
+    "project": "invalid",
+    "file": "apps/web/src/hooks/chat/use-message.ts",
+    "rules": [
+      "arch/no-restricted-files"
+    ],
+    "decisions": [
+      7
+    ]
+  },
+  {
+    "name": "hooks use ts",
+    "project": "invalid",
+    "file": "apps/web/src/hooks/use-window.tsx",
+    "rules": [
+      "arch/no-restricted-files"
+    ],
+    "decisions": [
+      7
+    ]
+  },
+  {
+    "name": "hook filenames start with use",
+    "project": "invalid",
+    "file": "apps/web/src/hooks/message.ts",
+    "rules": [
+      "arch/filename-match"
+    ],
+    "decisions": [
+      7,
+      90
+    ]
+  },
+  {
+    "name": "hooks cannot live beside components",
+    "project": "invalid",
+    "file": "apps/web/src/components/chats/use-message.ts",
+    "rules": [
+      "arch/no-restricted-files"
+    ],
+    "decisions": [
+      6,
+      7
+    ]
+  },
+  {
+    "name": "hook exports match filename",
+    "project": "invalid",
+    "file": "apps/web/src/hooks/use-label.ts",
+    "rules": [
+      "arch/export-file-prefix"
+    ],
+    "decisions": [
+      9
+    ]
+  },
+  {
+    "name": "domain types live in types",
+    "project": "invalid",
+    "file": "apps/server/src/lib/customer.types.ts",
+    "rules": [
+      "arch/no-restricted-files"
+    ],
+    "decisions": [
+      8
+    ]
+  },
+  {
+    "name": "ordinary files cannot declare types",
+    "project": "invalid",
+    "file": "apps/server/src/lib/local-contract.ts",
+    "rules": [
+      "arch/no-type-declarations"
+    ],
+    "decisions": [
+      8,
+      12
+    ]
+  },
+  {
+    "name": "domain type filenames have their role suffix",
+    "project": "invalid",
+    "file": "apps/server/src/types/wrong-name.ts",
+    "rules": [
+      "arch/filename-match"
+    ],
+    "decisions": [
+      8,
+      90
+    ]
+  },
+  {
+    "name": "export names carry domain prefix",
+    "project": "invalid",
+    "file": "apps/server/src/types/customer.types.ts",
+    "rules": [
+      "arch/export-file-prefix"
+    ],
+    "decisions": [
+      9
+    ]
+  },
+  {
+    "name": "component file names carry singular folder prefix",
+    "project": "invalid",
+    "file": "apps/web/src/components/chats/message.tsx",
+    "rules": [
+      "arch/folder-prefix"
+    ],
+    "decisions": [
+      10
+    ]
+  },
+  {
+    "name": "component exports match their filename",
+    "project": "invalid",
+    "file": "apps/web/src/components/chats/chat-mismatch.tsx",
+    "rules": [
+      "arch/only-export-components"
+    ],
+    "decisions": [
+      10
+    ]
+  },
+  {
+    "name": "component local aliases move to domain",
+    "project": "invalid",
+    "file": "apps/web/src/components/chats/chat-status.tsx",
+    "rules": [
+      "modules/local-type-alias"
+    ],
+    "decisions": [
+      11,
+      16
+    ]
+  },
+  {
+    "name": "local interfaces carry their component prefix",
+    "project": "invalid",
+    "file": "apps/web/src/components/chats/chat-options.tsx",
+    "rules": [
+      "arch/declaration-name"
+    ],
+    "decisions": [
+      17
+    ]
+  },
+  {
+    "name": "local hook aliases move to domain",
+    "project": "invalid",
+    "file": "apps/web/src/hooks/use-status.ts",
+    "rules": [
+      "modules/local-type-alias"
+    ],
+    "decisions": [
+      16
+    ]
+  },
+  {
+    "name": "service Deps move to domain types",
+    "project": "invalid",
+    "file": "apps/server/src/services/deps/deps.service.ts",
+    "rules": [
+      "modules/service-types"
+    ],
+    "decisions": [
+      13
+    ]
+  },
+  {
+    "name": "service aliases must derive from the matching factory",
+    "project": "invalid",
+    "file": "apps/server/src/services/alias/alias.service.ts",
+    "rules": [
+      "modules/service-types"
+    ],
+    "decisions": [
+      13
+    ]
+  },
+  {
+    "name": "imported type aliases cannot just rename",
+    "project": "invalid",
+    "file": "apps/web/src/types/alias.types.ts",
+    "rules": [
+      "arch/no-imported-type-alias"
+    ],
+    "decisions": [
+      14
+    ]
+  },
+  {
+    "name": "service signatures use named types",
+    "project": "invalid",
+    "file": "apps/server/src/services/inline/inline-action.send.ts",
+    "rules": [
+      "arch/no-inline-types"
+    ],
+    "decisions": [
+      15
+    ]
+  },
+  {
+    "name": "runtime schemas live with backend domain types",
+    "project": "invalid",
+    "file": "apps/server/src/services/schema/schema-action.send.ts",
+    "rules": [
+      "arch/no-local-schema-construction"
+    ],
+    "decisions": [
+      18
+    ]
+  },
+  {
+    "name": "public endpoints declare output schemas",
+    "project": "invalid",
+    "file": "apps/server/src/rpc/public/missing-output.ts",
+    "rules": [
+      "arch/require-orpc-output"
+    ],
+    "decisions": [
+      20
+    ]
+  },
+  {
+    "name": "frontend type imports respect server boundary",
+    "project": "invalid",
+    "file": "apps/web/src/types/private.types.ts",
+    "rules": [
+      "modules/import-boundaries"
+    ],
+    "decisions": [
+      21
+    ]
+  },
+  {
+    "name": "package imports cannot reach apps",
+    "project": "invalid",
+    "file": "packages/logger/src/private.ts",
+    "rules": [
+      "modules/import-boundaries"
+    ],
+    "decisions": [
+      22
+    ]
+  },
+  {
+    "name": "RPC handlers do not query the database",
+    "project": "invalid",
+    "file": "apps/server/src/rpc/private-query.ts",
+    "rules": [
+      "modules/rpc-database"
+    ],
+    "decisions": [
+      23
+    ]
+  },
+  {
+    "name": "services do not import the global registry",
+    "project": "invalid",
+    "file": "apps/server/src/services/registry/registry-action.send.ts",
+    "rules": [
+      "modules/import-boundaries"
+    ],
+    "decisions": [
+      24
+    ]
+  },
+  {
+    "name": "types cannot runtime import implementations",
+    "project": "invalid",
+    "file": "apps/server/src/types/runtime.types.ts",
+    "rules": [
+      "modules/import-boundaries"
+    ],
+    "decisions": [
+      25
+    ]
+  },
+  {
+    "name": "action exports match their filename",
+    "project": "invalid",
+    "file": "apps/server/src/services/action/action-action.send.ts",
+    "rules": [
+      "arch/filename-export-name"
+    ],
+    "decisions": [
+      26
+    ]
+  },
+  {
+    "name": "query exports match their filename",
+    "project": "invalid",
+    "file": "apps/server/src/services/query/query-query.list.ts",
+    "rules": [
+      "arch/filename-export-name"
+    ],
+    "decisions": [
+      26
+    ]
+  },
+  {
+    "name": "service operations use object arguments",
+    "project": "invalid",
+    "file": "apps/server/src/services/params/params-action.send.ts",
+    "rules": [
+      "arch/require-object-params"
+    ],
+    "decisions": [
+      27
+    ]
+  },
+  {
+    "name": "module constants leave service implementation",
+    "project": "invalid",
+    "file": "apps/server/src/services/constants/constants-action.send.ts",
+    "rules": [
+      "modules/domain-constants"
+    ],
+    "decisions": [
+      28
+    ]
+  },
+  {
+    "name": "component helpers belong in service modules",
+    "project": "invalid",
+    "file": "apps/web/src/components/chats/chat-helper.tsx",
+    "rules": [
+      "arch/no-file-level-helpers"
+    ],
+    "decisions": [
+      29
+    ]
+  },
+  {
+    "name": "pass-through wrappers are rejected",
+    "project": "invalid",
+    "file": "apps/server/src/services/wrapper/wrapper-action.send.ts",
+    "rules": [
+      "arch/no-trivial-functions"
+    ],
+    "decisions": [
+      30
+    ]
+  },
+  {
+    "name": "private service helpers are rejected",
+    "project": "invalid",
+    "file": "apps/server/src/services/helper/helper-action.send.ts",
+    "rules": [
+      "modules/service-functions"
+    ],
+    "decisions": [
+      31
+    ]
+  },
+  {
+    "name": "runtime typeof checks are rejected",
+    "project": "invalid",
+    "file": "apps/server/src/lib/runtime-type.ts",
+    "rules": [
+      "dillon-anti-slop/no-runtime-typeof"
+    ],
+    "decisions": [
+      32
+    ]
+  },
+  {
+    "name": "unknown is rejected in app code",
+    "project": "invalid",
+    "file": "apps/web/src/types/unknown.types.ts",
+    "rules": [
+      "modules/no-unknown"
+    ],
+    "decisions": [
+      33
+    ]
+  },
+  {
+    "name": "single assertions require safety comments",
+    "project": "invalid",
+    "file": "apps/server/src/lib/assertion.ts",
+    "rules": [
+      "dillon-anti-slop/require-safety-comment-for-type-assertion"
+    ],
+    "decisions": [
+      34
+    ]
+  },
+  {
+    "name": "double assertions are rejected",
+    "project": "invalid",
+    "file": "apps/server/src/lib/double-assertion.ts",
+    "rules": [
+      "dillon-anti-slop/no-chained-type-assertions"
+    ],
+    "decisions": [
+      34
+    ]
+  },
+  {
+    "name": "Reflect get is rejected",
+    "project": "invalid",
+    "file": "apps/server/src/lib/reflect-get.ts",
+    "rules": [
+      "dillon-anti-slop/no-reflect-get"
+    ],
+    "decisions": [
+      35
+    ]
+  },
+  {
+    "name": "Reflect apply is rejected",
+    "project": "invalid",
+    "file": "apps/server/src/lib/reflect-apply.ts",
+    "rules": [
+      "dillon-anti-slop/no-reflect-apply"
+    ],
+    "decisions": [
+      35
+    ]
+  },
+  {
+    "name": "ordinary app comments are rejected",
+    "project": "invalid",
+    "file": "apps/server/src/lib/comment.ts",
+    "rules": [
+      "arch/no-comments"
+    ],
+    "decisions": [
+      36
+    ]
+  },
+  {
+    "name": "React memoization is rejected",
+    "project": "invalid",
+    "file": "apps/web/src/hooks/use-cache.ts",
+    "rules": [
+      "modules/memoization"
+    ],
+    "decisions": [
+      37
+    ]
+  },
+  {
+    "name": "empty effects are rejected",
+    "project": "invalid",
+    "file": "apps/web/src/hooks/use-empty.ts",
+    "rules": [
+      "modules/empty-effect"
+    ],
+    "decisions": [
+      38
+    ]
+  },
+  {
+    "name": "derived state effects are rejected",
+    "project": "invalid",
+    "file": "apps/web/src/hooks/use-derived.ts",
+    "rules": [
+      "react-you-might-not-need-an-effect/no-derived-state"
+    ],
+    "decisions": [
+      38
+    ]
+  },
+  {
+    "name": "Promise.all cannot mutate outer state",
+    "project": "invalid",
+    "file": "apps/server/src/lib/parallel.ts",
+    "rules": [
+      "arch/no-promise-all-mutation"
+    ],
+    "decisions": [
+      39
+    ]
+  },
+  {
+    "name": "conditional empty object spreads are rejected",
+    "project": "invalid",
+    "file": "apps/server/src/lib/conditional.ts",
+    "rules": [
+      "dillon-anti-slop/no-conditional-empty-object-spread"
+    ],
+    "decisions": [
+      40
+    ]
+  },
+  {
+    "name": "Tailwind duplicates rejected",
+    "project": "invalid",
+    "file": "apps/web/src/components/chats/chat-duplicate.tsx",
+    "rules": [
+      "better-tailwindcss/no-duplicate-classes"
+    ],
+    "decisions": [
+      41
+    ]
+  },
+  {
+    "name": "Tailwind shorthand enforced",
+    "project": "invalid",
+    "file": "apps/web/src/components/chats/chat-shorthand.tsx",
+    "rules": [
+      "better-tailwindcss/enforce-shorthand-classes"
+    ],
+    "decisions": [
+      41
+    ]
+  },
+  {
+    "name": "arbitrary appearance values rejected",
+    "project": "invalid",
+    "file": "apps/web/src/components/chats/chat-arbitrary.tsx",
+    "rules": [
+      "shadcn/no-arbitrary-values"
+    ],
+    "decisions": [
+      42
+    ]
+  },
+  {
+    "name": "primitive appearance cannot be overridden",
+    "project": "invalid",
+    "file": "apps/web/src/components/chats/chat-button.tsx",
+    "rules": [
+      "shadcn/no-restyle"
+    ],
+    "decisions": [
+      43
+    ]
+  },
+  {
+    "name": "dynamic Tailwind classes rejected",
+    "project": "invalid",
+    "file": "apps/web/src/components/chats/chat-dynamic.tsx",
+    "rules": [
+      "modules/dynamic-classes"
+    ],
+    "decisions": [
+      44
+    ]
+  },
+  {
+    "name": "unknown classes rejected",
+    "project": "invalid",
+    "file": "apps/web/src/components/chats/chat-unknown.tsx",
+    "rules": [
+      "shadcn/no-unknown-classes"
+    ],
+    "decisions": [
+      44
+    ]
+  },
+  {
+    "name": "module mocks rejected in tests",
+    "project": "invalid",
+    "file": "apps/server/tests/mock.test.ts",
+    "rules": [
+      "dillon-anti-slop/no-module-mocking"
+    ],
+    "decisions": [
+      46
+    ]
+  },
+  {
+    "name": "test shared mutable state rejected",
+    "project": "invalid",
+    "file": "apps/server/tests/state.test.ts",
+    "rules": [
+      "arch/no-module-mutable-state"
+    ],
+    "decisions": [
+      47
+    ]
+  },
+  {
+    "name": "test assertions need safety too",
+    "project": "invalid",
+    "file": "apps/server/tests/assertion.test.ts",
+    "rules": [
+      "dillon-anti-slop/require-safety-comment-for-type-assertion"
+    ],
+    "decisions": [
+      49
+    ]
+  },
+  {
+    "name": "test only rejected",
+    "project": "invalid",
+    "file": "apps/server/tests/only.test.ts",
+    "rules": [
+      "modules/test-modifiers"
+    ],
+    "decisions": [
+      50
+    ]
+  },
+  {
+    "name": "test skip rejected",
+    "project": "invalid",
+    "file": "apps/server/tests/skip.test.ts",
+    "rules": [
+      "modules/test-modifiers"
+    ],
+    "decisions": [
+      50
+    ]
+  },
+  {
+    "name": "test todo rejected",
+    "project": "invalid",
+    "file": "apps/server/tests/todo.test.ts",
+    "rules": [
+      "modules/test-modifiers"
+    ],
+    "decisions": [
+      50
+    ]
+  },
+  {
+    "name": "file size cap covers frontend",
+    "project": "invalid",
+    "file": "apps/web/src/lib/large.ts",
+    "rules": [
+      "eslint/max-lines"
+    ],
+    "decisions": [
+      63
+    ]
+  },
+  {
+    "name": "backend switch rejected",
+    "project": "invalid",
+    "file": "apps/server/src/lib/switch.ts",
+    "rules": [
+      "modules/backend-switch"
+    ],
+    "decisions": [
+      65
+    ]
+  },
+  {
+    "name": "route files cannot render raw HTML",
+    "project": "invalid",
+    "file": "apps/web/src/routes/raw.tsx",
+    "rules": [
+      "arch/route-surface"
+    ],
+    "decisions": [
+      66
+    ]
+  },
+  {
+    "name": "forms need an approved resolver",
+    "project": "invalid",
+    "file": "apps/web/src/hooks/use-form-missing.ts",
+    "rules": [
+      "arch/require-paired-call"
+    ],
+    "decisions": [
+      67
+    ]
+  },
+  {
+    "name": "context creation has an owner folder",
+    "project": "invalid",
+    "file": "apps/web/src/lib/context.ts",
+    "rules": [
+      "arch/no-restricted-token"
+    ],
+    "decisions": [
+      68
+    ]
+  },
+  {
+    "name": "frontend service role suffix enforced",
+    "project": "invalid",
+    "file": "apps/web/src/services/chat/other.service.ts",
+    "rules": [
+      "arch/no-restricted-files"
+    ],
+    "decisions": [
+      69
+    ]
+  },
+  {
+    "name": "frontend services cannot be TSX",
+    "project": "invalid",
+    "file": "apps/web/src/services/chat/view.client.tsx",
+    "rules": [
+      "arch/no-restricted-files"
+    ],
+    "decisions": [
+      69
+    ]
+  },
+  {
+    "name": "client service cannot import React runtime",
+    "project": "invalid",
+    "file": "apps/web/src/services/client/client.client.ts",
+    "rules": [
+      "modules/import-boundaries"
+    ],
+    "decisions": [
+      69
+    ]
+  },
+  {
+    "name": "frontend types cannot import runtime values",
+    "project": "invalid",
+    "file": "apps/web/src/types/runtime.types.ts",
+    "rules": [
+      "arch/no-runtime-in-types"
+    ],
+    "decisions": [
+      70
+    ]
+  },
+  {
+    "name": "literal in checks rejected",
+    "project": "invalid",
+    "file": "apps/server/src/lib/literal-in.ts",
+    "rules": [
+      "arch/no-literal-in"
+    ],
+    "decisions": [
+      72
+    ]
+  },
+  {
+    "name": "Shape suffix rejected",
+    "project": "invalid",
+    "file": "apps/server/src/types/shape.types.ts",
+    "rules": [
+      "modules/shape-suffix"
+    ],
+    "decisions": [
+      73
+    ]
+  },
+  {
+    "name": "generic Error rejected",
+    "project": "invalid",
+    "file": "apps/server/src/lib/generic-error.ts",
+    "rules": [
+      "arch/no-restricted-constructor"
+    ],
+    "decisions": [
+      74
+    ]
+  },
+  {
+    "name": "SQL LIKE input must be escaped",
+    "project": "invalid",
+    "file": "apps/server/src/services/search/search-action.find.ts",
+    "rules": [
+      "arch/no-unescaped-like"
+    ],
+    "decisions": [
+      75
+    ]
+  },
+  {
+    "name": "lint disables require reasons",
+    "project": "invalid",
+    "file": "apps/server/src/lib/directive.ts",
+    "rules": [
+      "modules/reasoned-directives"
+    ],
+    "decisions": [
+      78
+    ]
+  },
+  {
+    "name": "TypeScript suppression rejected",
+    "project": "invalid",
+    "file": "apps/server/src/lib/suppression.ts",
+    "rules": [
+      "typescript/ban-ts-comment"
+    ],
+    "decisions": [
+      79
+    ]
+  },
+  {
+    "name": "backend console rejected",
+    "project": "invalid",
+    "file": "apps/server/src/lib/console.ts",
+    "rules": [
+      "eslint/no-console"
+    ],
+    "decisions": [
+      80
+    ]
+  },
+  {
+    "name": "test titles do not start with should",
+    "project": "invalid",
+    "file": "apps/server/tests/title.test.ts",
+    "rules": [
+      "arch/test-title-pattern"
+    ],
+    "decisions": [
+      81
+    ]
+  },
+  {
+    "name": "backend tests use support not helpers",
+    "project": "invalid",
+    "file": "apps/server/tests/helper-import.test.ts",
+    "rules": [
+      "eslint/no-restricted-imports"
+    ],
+    "decisions": [
+      82
+    ]
+  },
+  {
+    "name": "concurrent tests cannot destructure shared db",
+    "project": "invalid",
+    "file": "apps/server/tests/concurrent.test.ts",
+    "rules": [
+      "modules/concurrent-db"
+    ],
+    "decisions": [
+      82
+    ]
+  },
+  {
+    "name": "app shared mutable state rejected",
+    "project": "invalid",
+    "file": "apps/server/src/lib/shared-state.ts",
+    "rules": [
+      "arch/no-module-mutable-state"
+    ],
+    "decisions": [
+      83
+    ]
+  },
+  {
+    "name": "complexity threshold applies",
+    "project": "invalid",
+    "file": "apps/web/src/lib/complex.ts",
+    "rules": [
+      "eslint/complexity"
+    ],
+    "decisions": [
+      84
+    ]
+  },
+  {
+    "name": "named components use declarations",
+    "project": "invalid",
+    "file": "apps/web/src/components/chats/chat-arrow.tsx",
+    "rules": [
+      "react-extra/function-component-definition"
+    ],
+    "decisions": [
+      86
+    ]
+  },
+  {
+    "name": "service factories cannot export extra values",
+    "project": "invalid",
+    "file": "apps/server/src/services/extra/extra.service.ts",
+    "rules": [
+      "arch/no-extra-exports"
+    ],
+    "decisions": [
+      88
+    ]
+  },
+  {
+    "name": "explicit any rejected in frontend",
+    "project": "invalid",
+    "file": "apps/web/src/types/any.types.ts",
+    "rules": [
+      "typescript/no-explicit-any"
+    ],
+    "decisions": [
+      89
+    ]
+  },
+  {
+    "name": "filenames use kebab case",
+    "project": "invalid",
+    "file": "apps/server/src/lib/WrongName.ts",
+    "rules": [
+      "unicorn/filename-case"
+    ],
+    "decisions": [
+      90
+    ]
+  },
+  {
+    "name": "component depth is one group",
+    "project": "invalid",
+    "file": "apps/web/src/components/chats/nested/chat-deep.tsx",
+    "rules": [
+      "arch/no-restricted-files"
+    ],
+    "decisions": [
+      91
+    ]
+  },
+  {
+    "name": "frontend service depth is one domain",
+    "project": "invalid",
+    "file": "apps/web/src/services/chat/deep/chat.client.ts",
+    "rules": [
+      "arch/no-restricted-files"
+    ],
+    "decisions": [
+      92,
+      96
+    ]
+  },
+  {
+    "name": "backend service depth is one domain",
+    "project": "invalid",
+    "file": "apps/server/src/services/chat/deep/chat-action.send.ts",
+    "rules": [
+      "arch/no-restricted-files"
+    ],
+    "decisions": [
+      96
+    ]
+  },
+  {
+    "name": "RouterClient has one owner",
+    "project": "invalid",
+    "file": "apps/web/src/types/rpc.types.ts",
+    "rules": [
+      "arch/no-restricted-token"
+    ],
+    "decisions": [
+      94
+    ]
+  },
+  {
+    "name": "known values cannot be widened then asserted",
+    "project": "invalid",
+    "file": "apps/server/src/lib/widen-assert.ts",
+    "rules": [
+      "dillon-anti-slop/no-widen-then-assert"
+    ],
+    "decisions": [
+      95
+    ]
+  },
+  {
+    "name": "double negation rejected",
+    "project": "invalid",
+    "file": "apps/server/src/lib/double-not.ts",
+    "rules": [
+      "modules/double-negation"
+    ],
+    "decisions": [
+      97
+    ]
+  },
+  {
+    "name": "relative package imports rejected",
+    "project": "invalid",
+    "file": "packages/logger/src/relative.ts",
+    "rules": [
+      "import-extra/no-relative-packages"
+    ],
+    "decisions": [
+      98
+    ]
+  },
+  {
+    "name": "unsafe dictionaries rejected",
+    "project": "invalid",
+    "file": "apps/server/src/types/dictionary.types.ts",
+    "rules": [
+      "dillon-anti-slop/no-unsafe-dictionary-type"
+    ],
+    "decisions": [
+      99
+    ]
+  },
+  {
+    "name": "known values retain their precise types",
+    "project": "invalid",
+    "file": "apps/server/src/lib/widen.ts",
+    "rules": [
+      "dillon-anti-slop/no-known-value-widening"
+    ],
+    "decisions": [
+      99
+    ]
+  },
+  {
+    "name": "Zod transition import rejected",
+    "project": "invalid",
+    "file": "apps/server/src/types/zod.types.ts",
+    "rules": [
+      "eslint/no-restricted-imports"
+    ],
+    "decisions": [
+      100
+    ]
+  },
+  {
+    "name": "JSX attributes wrap at three",
+    "project": "invalid",
+    "file": "apps/web/src/components/chats/chat-attrs.tsx",
+    "rules": [
+      "arch/jsx-attributes-multiline"
+    ],
+    "decisions": [
+      5
+    ]
+  },
+  {
+    "name": "backend types reject helper functions",
+    "project": "invalid",
+    "file": "apps/server/src/types/helper.types.ts",
+    "rules": [
+      "arch/no-top-level-functions"
+    ],
+    "decisions": []
+  },
+  {
+    "name": "constant files reject helper functions",
+    "project": "invalid",
+    "file": "apps/server/src/types/helper.constants.ts",
+    "rules": [
+      "arch/no-top-level-functions"
+    ],
+    "decisions": []
+  },
+  {
+    "name": "service utilities cannot hide interfaces",
+    "project": "invalid",
+    "file": "apps/server/src/services/chat/chat.utils.ts",
+    "rules": [
+      "arch/no-type-declarations"
+    ],
+    "decisions": []
+  },
+  {
+    "name": "service constants cannot hide aliases",
+    "project": "invalid",
+    "file": "apps/server/src/services/chat/chat.constants.ts",
+    "rules": [
+      "arch/no-type-declarations"
+    ],
+    "decisions": []
+  },
+  {
+    "name": "type files reject SAFETY comments",
+    "project": "invalid",
+    "file": "apps/server/src/types/comment.types.ts",
+    "rules": [
+      "arch/no-comments"
+    ],
+    "decisions": []
+  },
+  {
+    "name": "constant files reject SAFETY comments",
+    "project": "invalid",
+    "file": "apps/server/src/types/comment.constants.ts",
+    "rules": [
+      "arch/no-comments"
+    ],
+    "decisions": []
+  },
+  {
+    "name": "prompt files need explicit comment exceptions",
+    "project": "invalid",
+    "file": "apps/server/src/lib/message.prompts.ts",
+    "rules": [
+      "arch/no-comments"
+    ],
+    "decisions": []
+  },
+  {
+    "name": "UI kit still rejects any",
+    "project": "invalid",
+    "file": "apps/web/src/components/ui/unsafe.tsx",
+    "rules": [
+      "typescript/no-explicit-any"
+    ],
+    "decisions": []
+  },
+  {
+    "name": "UI kit still rejects unknown",
+    "project": "invalid",
+    "file": "apps/web/src/components/ui/unknown.tsx",
+    "rules": [
+      "modules/no-unknown"
+    ],
+    "decisions": []
+  },
+  {
+    "name": "UI kit still requires assertion explanations",
+    "project": "invalid",
+    "file": "apps/web/src/components/ui/assertion.tsx",
+    "rules": [
+      "dillon-anti-slop/require-safety-comment-for-type-assertion"
+    ],
+    "decisions": []
+  },
+  {
+    "name": "UI kit follows quote formatting",
+    "project": "invalid",
+    "file": "apps/web/src/components/ui/quotes.tsx",
+    "rules": [
+      "eslint-js/quotes"
+    ],
+    "decisions": []
+  },
+  {
+    "name": "UI kit follows object layout",
+    "project": "invalid",
+    "file": "apps/web/src/components/ui/layout.tsx",
+    "rules": [
+      "arch/object-multiline"
+    ],
+    "decisions": []
+  },
+  {
+    "name": "frontend console warns are banned",
+    "project": "invalid",
+    "file": "apps/web/src/lib/logging.ts",
+    "rules": [
+      "eslint/no-console"
+    ],
+    "decisions": []
+  },
+  {
+    "name": "backend console errors are banned",
+    "project": "invalid",
+    "file": "apps/server/src/lib/logging.ts",
+    "rules": [
+      "eslint/no-console"
+    ],
+    "decisions": []
+  },
+  {
+    "name": "test mocks require type parameters",
+    "project": "invalid",
+    "file": "apps/server/tests/typed-mock.test.ts",
+    "rules": [
+      "vitest/require-mock-type-parameters"
+    ],
+    "decisions": []
+  },
+  {
+    "name": "tests respect file-size limit",
+    "project": "invalid",
+    "file": "apps/server/tests/large.test.ts",
+    "rules": [
+      "eslint/max-lines"
+    ],
+    "decisions": []
+  },
+  {
+    "name": "tests respect complexity limit",
+    "project": "invalid",
+    "file": "apps/server/tests/complex.test.ts",
+    "rules": [
+      "eslint/complexity"
+    ],
+    "decisions": []
+  },
+  {
+    "name": "route handlers delegate helpers",
+    "project": "invalid",
+    "file": "apps/web/src/routes/handlers/process.ts",
+    "rules": [
+      "arch/no-file-level-helpers"
+    ],
+    "decisions": []
+  }
+]

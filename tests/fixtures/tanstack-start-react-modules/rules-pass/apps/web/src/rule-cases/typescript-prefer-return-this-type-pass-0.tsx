@@ -1,0 +1,1 @@
+class Box { run(): this { return this; } }

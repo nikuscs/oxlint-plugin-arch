@@ -1,0 +1,1 @@
+function foo() { throw new Error() }

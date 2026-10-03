@@ -2,6 +2,24 @@
 
 ## Unreleased
 
+- Restore missing type-file/helper restrictions and close utility-type, prompt-comment and UI-kit safety/formatting exceptions. Type and constant files reject ordinary and SAFETY comments; constants cannot hide functions.
+- Enable unbound-method, catch-callback typing, noninteractive-tabindex and render-time object/function prop checks. Require typed mocks, enforce file-size/complexity limits in tests, and restrict all console methods to configured scripts/CLI or explicit adapter exceptions.
+- Compare Crauler's enabled rules, disabled rules, exclusions and options against the baseline; retain its route-handler helper restriction without copying product-specific ignores. Add scope regressions and retain passing/failing fixtures for every enabled preset rule.
+
+- Cover all 475 enabled preset rules, including implicit Oxlint defaults, with positive and negative CLI fixtures. Compare the manifest to resolved configuration and verify fixture discovery so newly enabled rules cannot silently lack coverage.
+- Recognize SAFETY comments immediately above exported assertions without allowing comments to leak across statement boundaries.
+
+- Add checked-in valid, invalid and customized preset mini-projects with real CLI diagnostics and a TypeScript-clean baseline. Fix public-entry export naming, domain type filename scopes, intrinsic JSX dynamic classes and TypeScript package import resolution.
+- Add opt-in `multilineVariables` padding and `operatorMethods` SQL sanitizer checks without changing either rule's existing defaults. The preset enables both.
+
+- Keep preset entry points under `src/presets`, explicit configuration groups under `src/configs`, and named contracts under `src/types`. Separate plugin loading, architecture resolution and policy composition; remove runtime rule-name classification and nested preset helpers.
+
+- Keep Dillon Mulroy's vendored rules under `src/rules/dillon-anti-slop`, using the `dillon-anti-slop/*` namespace, with upstream attribution and the original MIT license included in the package.
+
+- Verify standalone frontend paths, custom import-alias boundaries, exported Props interfaces, public endpoint scopes and policy switches in preset mini projects. Promote native correctness defaults without repeating their rule entries.
+
+- Add the typed `tanstack-start-react-modules-preset` export with configurable architecture roots, error/warn level, boolean/callback policies, rule-specific exclusions and native Oxlint composition. Include React, effects, Tailwind/shadcn, formatting, module boundaries and supporting safety rules; verify behavior with CLI mini projects. The preset requires Oxlint 1.85+ and its type-aware engine.
+
 - Add `prefer-namespace-type-import` with a configurable named-type-import limit (default 3), module-specific namespace names, and scope-aware autofixes that qualify type references while reporting unsafe rewrites without a fix.
 
 - Options that took one regex string now also take a non-empty list, where any pattern may match: `pattern`, `allowPattern`, `allowNamePattern`, `denyTypePattern`, `hookPattern`, `rootPattern`, `factoryPattern`, `forbid`, and `require`. Single strings keep their behavior.

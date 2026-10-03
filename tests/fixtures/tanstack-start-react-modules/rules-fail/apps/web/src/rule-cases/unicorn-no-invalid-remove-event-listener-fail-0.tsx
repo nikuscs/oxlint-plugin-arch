@@ -1,0 +1,1 @@
+window.removeEventListener("scroll", handler.bind(abc))

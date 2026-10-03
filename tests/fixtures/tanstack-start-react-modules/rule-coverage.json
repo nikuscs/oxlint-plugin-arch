@@ -1,0 +1,5551 @@
+[
+  {
+    "rule": "@eslint-community/eslint-comments/no-aggregating-enable",
+    "pass": {
+      "project": "rules-pass",
+      "file": "scripts/eslint-community-eslint-comments-no-aggregating-enable.ts"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "scripts/eslint-community-eslint-comments-no-aggregating-enable.ts"
+    }
+  },
+  {
+    "rule": "@eslint-community/eslint-comments/no-duplicate-disable",
+    "pass": {
+      "project": "rules-pass",
+      "file": "scripts/eslint-community-eslint-comments-no-duplicate-disable.ts"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "scripts/eslint-community-eslint-comments-no-duplicate-disable.ts"
+    }
+  },
+  {
+    "rule": "@eslint-community/eslint-comments/no-unused-enable",
+    "pass": {
+      "project": "rules-pass",
+      "file": "scripts/eslint-community-eslint-comments-no-unused-enable.ts"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "scripts/eslint-community-eslint-comments-no-unused-enable.ts"
+    }
+  },
+  {
+    "rule": "@regru/prefer-early-return/prefer-early-return",
+    "pass": {
+      "project": "rules-pass",
+      "file": "scripts/regru-prefer-early-return-prefer-early-return.ts"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "scripts/regru-prefer-early-return-prefer-early-return.ts"
+    }
+  },
+  {
+    "rule": "arch/call-array-multiline",
+    "pass": {
+      "project": "rules-pass",
+      "file": "scripts/layout-promises.ts"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "scripts/layout-promises.ts"
+    }
+  },
+  {
+    "rule": "arch/declaration-name",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/components/chats/chat-options.tsx"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/web/src/components/chats/chat-options.tsx"
+    }
+  },
+  {
+    "rule": "arch/export-file-prefix",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/hooks/use-label.ts"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/web/src/hooks/use-label.ts"
+    }
+  },
+  {
+    "rule": "arch/export-name-pattern",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/hooks/arch-export-name-pattern-pass-0.ts"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/hooks/arch-export-name-pattern-fail-0.ts"
+    }
+  },
+  {
+    "rule": "arch/filename-export-name",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/server/src/services/action/action-action.send.ts"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/server/src/services/action/action-action.send.ts"
+    }
+  },
+  {
+    "rule": "arch/filename-match",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/hooks/use-message.ts"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/web/src/hooks/message.ts"
+    }
+  },
+  {
+    "rule": "arch/folder-prefix",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/components/chats/chat-message.tsx"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/web/src/components/chats/message.tsx"
+    }
+  },
+  {
+    "rule": "arch/jsx-attributes-multiline",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/components/chats/chat-attrs.tsx"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/web/src/components/chats/chat-attrs.tsx"
+    }
+  },
+  {
+    "rule": "arch/key-value-same-line",
+    "pass": {
+      "project": "rules-pass",
+      "file": "scripts/layout-key.ts"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "scripts/layout-key.ts"
+    }
+  },
+  {
+    "rule": "arch/no-comments",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/server/src/lib/comment.ts"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/server/src/lib/comment.ts"
+    }
+  },
+  {
+    "rule": "arch/no-extra-exports",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/server/src/services/extra/extra.service.ts"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/server/src/services/extra/extra.service.ts"
+    }
+  },
+  {
+    "rule": "arch/no-file-level-helpers",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/components/chats/chat-helper.tsx"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/web/src/components/chats/chat-helper.tsx"
+    }
+  },
+  {
+    "rule": "arch/no-imported-type-alias",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/types/alias.types.ts"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/web/src/types/alias.types.ts"
+    }
+  },
+  {
+    "rule": "arch/no-inline-types",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/server/src/services/inline/inline-action.send.ts"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/server/src/services/inline/inline-action.send.ts"
+    }
+  },
+  {
+    "rule": "arch/no-literal-in",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/server/src/lib/literal-in.ts"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/server/src/lib/literal-in.ts"
+    }
+  },
+  {
+    "rule": "arch/no-local-schema-construction",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/server/src/services/schema/schema-action.send.ts"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/server/src/services/schema/schema-action.send.ts"
+    }
+  },
+  {
+    "rule": "arch/no-module-mutable-state",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/server/tests/state.test.ts"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/server/tests/state.test.ts"
+    }
+  },
+  {
+    "rule": "arch/no-promise-all-mutation",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/server/src/lib/parallel.ts"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/server/src/lib/parallel.ts"
+    }
+  },
+  {
+    "rule": "arch/no-rederive-schema",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/arch-no-rederive-schema-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/arch-no-rederive-schema-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "arch/no-restricted-constructor",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/server/src/lib/generic-error.ts"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/server/src/lib/generic-error.ts"
+    }
+  },
+  {
+    "rule": "arch/no-restricted-files",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/components/chats/chat-allowed.tsx"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/web/src/components/chats/helper.ts"
+    }
+  },
+  {
+    "rule": "arch/no-restricted-token",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/lib/context.ts"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/web/src/lib/context.ts"
+    }
+  },
+  {
+    "rule": "arch/no-runtime-in-types",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/types/runtime.types.ts"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/web/src/types/runtime.types.ts"
+    }
+  },
+  {
+    "rule": "arch/no-top-level-functions",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/server/src/types/schema.types.ts"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/server/src/types/schema.types.ts"
+    }
+  },
+  {
+    "rule": "arch/no-trivial-functions",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/server/src/services/wrapper/wrapper-action.send.ts"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/server/src/services/wrapper/wrapper-action.send.ts"
+    }
+  },
+  {
+    "rule": "arch/no-type-declarations",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/server/src/lib/local-contract.ts"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/server/src/lib/local-contract.ts"
+    }
+  },
+  {
+    "rule": "arch/no-unescaped-like",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/server/src/services/search/search-action.find.ts"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/server/src/services/search/search-action.find.ts"
+    }
+  },
+  {
+    "rule": "arch/object-multiline",
+    "pass": {
+      "project": "rules-pass",
+      "file": "scripts/layout-object.ts"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "scripts/layout-object.ts"
+    }
+  },
+  {
+    "rule": "arch/only-export-components",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/components/chats/chat-mismatch.tsx"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/web/src/components/chats/chat-mismatch.tsx"
+    }
+  },
+  {
+    "rule": "arch/padding-between-statements",
+    "pass": {
+      "project": "rules-pass",
+      "file": "scripts/layout-padding.ts"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "scripts/layout-padding.ts"
+    }
+  },
+  {
+    "rule": "arch/require-object-params",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/server/src/services/params/params-action.send.ts"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/server/src/services/params/params-action.send.ts"
+    }
+  },
+  {
+    "rule": "arch/require-orpc-output",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/server/src/rpc/public/missing-output.ts"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/server/src/rpc/public/missing-output.ts"
+    }
+  },
+  {
+    "rule": "arch/require-paired-call",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/hooks/use-form-missing.ts"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/web/src/hooks/use-form-missing.ts"
+    }
+  },
+  {
+    "rule": "arch/route-surface",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/routes/raw.tsx"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/web/src/routes/raw.tsx"
+    }
+  },
+  {
+    "rule": "arch/test-title-pattern",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/server/tests/title.test.ts"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/server/tests/title.test.ts"
+    }
+  },
+  {
+    "rule": "better-tailwindcss/enforce-canonical-classes",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/better-tailwindcss-enforce-canonical-classes-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/better-tailwindcss-enforce-canonical-classes-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "better-tailwindcss/enforce-consistent-class-order",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/better-tailwindcss-enforce-consistent-class-order-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/better-tailwindcss-enforce-consistent-class-order-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "better-tailwindcss/enforce-shorthand-classes",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/components/chats/chat-shorthand.tsx"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/web/src/components/chats/chat-shorthand.tsx"
+    }
+  },
+  {
+    "rule": "better-tailwindcss/no-conflicting-classes",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/better-tailwindcss-no-conflicting-classes-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/better-tailwindcss-no-conflicting-classes-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "better-tailwindcss/no-deprecated-classes",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/better-tailwindcss-no-deprecated-classes-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/better-tailwindcss-no-deprecated-classes-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "better-tailwindcss/no-duplicate-classes",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/components/chats/chat-duplicate.tsx"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/web/src/components/chats/chat-duplicate.tsx"
+    }
+  },
+  {
+    "rule": "better-tailwindcss/no-unnecessary-whitespace",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/better-tailwindcss-no-unnecessary-whitespace-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/better-tailwindcss-no-unnecessary-whitespace-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "dillon-anti-slop/no-chained-type-assertions",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/server/src/lib/double-assertion.ts"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/server/src/lib/double-assertion.ts"
+    }
+  },
+  {
+    "rule": "dillon-anti-slop/no-conditional-empty-object-spread",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/server/src/lib/conditional.ts"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/server/src/lib/conditional.ts"
+    }
+  },
+  {
+    "rule": "dillon-anti-slop/no-known-value-widening",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/server/src/lib/widen.ts"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/server/src/lib/widen.ts"
+    }
+  },
+  {
+    "rule": "dillon-anti-slop/no-module-mocking",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/server/tests/mock.test.ts"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/server/tests/mock.test.ts"
+    }
+  },
+  {
+    "rule": "dillon-anti-slop/no-reflect-apply",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/server/src/lib/reflect-apply.ts"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/server/src/lib/reflect-apply.ts"
+    }
+  },
+  {
+    "rule": "dillon-anti-slop/no-reflect-get",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/server/src/lib/reflect-get.ts"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/server/src/lib/reflect-get.ts"
+    }
+  },
+  {
+    "rule": "dillon-anti-slop/no-runtime-typeof",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/server/src/lib/runtime-type.ts"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/server/src/lib/runtime-type.ts"
+    }
+  },
+  {
+    "rule": "dillon-anti-slop/no-unknown-parameters",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/dillon-anti-slop-no-unknown-parameters-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/dillon-anti-slop-no-unknown-parameters-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "dillon-anti-slop/no-unknown-returns",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/dillon-anti-slop-no-unknown-returns-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/dillon-anti-slop-no-unknown-returns-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "dillon-anti-slop/no-unknown-type-aliases",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/dillon-anti-slop-no-unknown-type-aliases-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/dillon-anti-slop-no-unknown-type-aliases-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "dillon-anti-slop/no-unsafe-dictionary-type",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/server/src/types/dictionary.types.ts"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/server/src/types/dictionary.types.ts"
+    }
+  },
+  {
+    "rule": "dillon-anti-slop/no-widen-then-assert",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/server/src/lib/widen-assert.ts"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/server/src/lib/widen-assert.ts"
+    }
+  },
+  {
+    "rule": "dillon-anti-slop/require-safety-comment-for-type-assertion",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/server/src/lib/assertion.ts"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/server/src/lib/assertion.ts"
+    }
+  },
+  {
+    "rule": "eslint-js/arrow-parens",
+    "pass": {
+      "project": "rules-pass",
+      "file": "scripts/layout-arrow.ts"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "scripts/layout-arrow.ts"
+    }
+  },
+  {
+    "rule": "eslint-js/arrow-spacing",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-js-arrow-spacing-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-js-arrow-spacing-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "eslint-js/block-spacing",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-js-block-spacing-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-js-block-spacing-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "eslint-js/brace-style",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-js-brace-style-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-js-brace-style-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "eslint-js/comma-dangle",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-js-comma-dangle-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-js-comma-dangle-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "eslint-js/comma-spacing",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-js-comma-spacing-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-js-comma-spacing-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "eslint-js/computed-property-spacing",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-js-computed-property-spacing-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-js-computed-property-spacing-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "eslint-js/dot-location",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-js-dot-location-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-js-dot-location-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "eslint-js/eol-last",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-js-eol-last-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-js-eol-last-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "eslint-js/indent",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-js-indent-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-js-indent-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "eslint-js/key-spacing",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-js-key-spacing-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-js-key-spacing-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "eslint-js/keyword-spacing",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-js-keyword-spacing-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-js-keyword-spacing-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "eslint-js/max-len",
+    "pass": {
+      "project": "rules-pass",
+      "file": "scripts/layout-length.ts"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "scripts/layout-length.ts"
+    }
+  },
+  {
+    "rule": "eslint-js/no-extra-semi",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-js-no-extra-semi-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-js-no-extra-semi-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "eslint-js/no-floating-decimal",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-js-no-floating-decimal-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-js-no-floating-decimal-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "eslint-js/no-multi-spaces",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-js-no-multi-spaces-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-js-no-multi-spaces-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "eslint-js/no-multiple-empty-lines",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-js-no-multiple-empty-lines-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-js-no-multiple-empty-lines-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "eslint-js/no-trailing-spaces",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-js-no-trailing-spaces-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-js-no-trailing-spaces-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "eslint-js/no-whitespace-before-property",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-js-no-whitespace-before-property-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-js-no-whitespace-before-property-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "eslint-js/object-curly-newline",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-js-object-curly-newline-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-js-object-curly-newline-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "eslint-js/object-curly-spacing",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-js-object-curly-spacing-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-js-object-curly-spacing-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "eslint-js/object-property-newline",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-js-object-property-newline-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-js-object-property-newline-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "eslint-js/padding-line-between-statements",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-js-padding-line-between-statements-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-js-padding-line-between-statements-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "eslint-js/quotes",
+    "pass": {
+      "project": "rules-pass",
+      "file": "scripts/layout-quotes.ts"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "scripts/layout-quotes.ts"
+    }
+  },
+  {
+    "rule": "eslint-js/rest-spread-spacing",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-js-rest-spread-spacing-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-js-rest-spread-spacing-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "eslint-js/semi",
+    "pass": {
+      "project": "rules-pass",
+      "file": "scripts/layout-quotes.ts"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "scripts/layout-quotes.ts"
+    }
+  },
+  {
+    "rule": "eslint-js/semi-spacing",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-js-semi-spacing-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-js-semi-spacing-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "eslint-js/space-before-blocks",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-js-space-before-blocks-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-js-space-before-blocks-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "eslint-js/space-before-function-paren",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-js-space-before-function-paren-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-js-space-before-function-paren-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "eslint-js/space-in-parens",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-js-space-in-parens-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-js-space-in-parens-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "eslint-js/space-infix-ops",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-js-space-infix-ops-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-js-space-infix-ops-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "eslint-js/template-curly-spacing",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-js-template-curly-spacing-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-js-template-curly-spacing-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "eslint/array-callback-return",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-array-callback-return-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-array-callback-return-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/array_callback_return.rs"
+  },
+  {
+    "rule": "eslint/complexity",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/lib/complex.ts"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/web/src/lib/complex.ts"
+    }
+  },
+  {
+    "rule": "eslint/constructor-super",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-constructor-super-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-constructor-super-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/constructor_super.rs"
+  },
+  {
+    "rule": "eslint/curly",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-curly-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-curly-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/curly.rs"
+  },
+  {
+    "rule": "eslint/default-case-last",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-default-case-last-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-default-case-last-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/default_case_last.rs"
+  },
+  {
+    "rule": "eslint/default-param-last",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-default-param-last-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-default-param-last-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/default_param_last.rs"
+  },
+  {
+    "rule": "eslint/eqeqeq",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-eqeqeq-pass-5.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-eqeqeq-fail-1.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/eqeqeq.rs"
+  },
+  {
+    "rule": "eslint/for-direction",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-for-direction-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-for-direction-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/for_direction.rs"
+  },
+  {
+    "rule": "eslint/getter-return",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-getter-return-pass-0.cjs"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-getter-return-fail-0.cjs"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/getter_return.rs"
+  },
+  {
+    "rule": "eslint/max-lines",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/lib/large.ts"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/web/src/lib/large.ts"
+    }
+  },
+  {
+    "rule": "eslint/new-cap",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-new-cap-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-new-cap-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/new_cap.rs"
+  },
+  {
+    "rule": "eslint/no-alert",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-alert-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-alert-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_alert.rs"
+  },
+  {
+    "rule": "eslint/no-array-constructor",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-array-constructor-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-array-constructor-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_array_constructor.rs"
+  },
+  {
+    "rule": "eslint/no-async-promise-executor",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-async-promise-executor-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-async-promise-executor-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_async_promise_executor.rs"
+  },
+  {
+    "rule": "eslint/no-await-in-loop",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-await-in-loop-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-await-in-loop-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_await_in_loop.rs"
+  },
+  {
+    "rule": "eslint/no-caller",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-caller-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-caller-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_caller.rs"
+  },
+  {
+    "rule": "eslint/no-case-declarations",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-case-declarations-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-case-declarations-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_case_declarations.rs"
+  },
+  {
+    "rule": "eslint/no-class-assign",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-class-assign-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-class-assign-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_class_assign.rs"
+  },
+  {
+    "rule": "eslint/no-compare-neg-zero",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-compare-neg-zero-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-compare-neg-zero-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_compare_neg_zero.rs"
+  },
+  {
+    "rule": "eslint/no-cond-assign",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-cond-assign-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-cond-assign-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_cond_assign.rs"
+  },
+  {
+    "rule": "eslint/no-console",
+    "pass": {
+      "project": "rules-pass",
+      "file": "scripts/console-output.ts"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/server/src/lib/console.ts"
+    }
+  },
+  {
+    "rule": "eslint/no-const-assign",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-const-assign-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-const-assign-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_const_assign.rs"
+  },
+  {
+    "rule": "eslint/no-constant-binary-expression",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-constant-binary-expression-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-constant-binary-expression-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_constant_binary_expression.rs"
+  },
+  {
+    "rule": "eslint/no-constant-condition",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-constant-condition-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-constant-condition-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_constant_condition.rs"
+  },
+  {
+    "rule": "eslint/no-constructor-return",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-constructor-return-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-constructor-return-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_constructor_return.rs"
+  },
+  {
+    "rule": "eslint/no-control-regex",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-control-regex-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-control-regex-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_control_regex.rs"
+  },
+  {
+    "rule": "eslint/no-debugger",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-debugger-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-debugger-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_debugger.rs"
+  },
+  {
+    "rule": "eslint/no-delete-var",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-delete-var-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-delete-var-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_delete_var.rs"
+  },
+  {
+    "rule": "eslint/no-dupe-class-members",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-dupe-class-members-pass-0.cjs"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-dupe-class-members-fail-0.cjs"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_dupe_class_members.rs"
+  },
+  {
+    "rule": "eslint/no-dupe-else-if",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-dupe-else-if-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-dupe-else-if-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_dupe_else_if.rs"
+  },
+  {
+    "rule": "eslint/no-dupe-keys",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-dupe-keys-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-dupe-keys-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_dupe_keys.rs"
+  },
+  {
+    "rule": "eslint/no-duplicate-case",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-duplicate-case-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-duplicate-case-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_duplicate_case.rs"
+  },
+  {
+    "rule": "eslint/no-else-return",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-else-return-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-else-return-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_else_return.rs"
+  },
+  {
+    "rule": "eslint/no-empty",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-empty-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-empty-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_empty.rs"
+  },
+  {
+    "rule": "eslint/no-empty-character-class",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-empty-character-class-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-empty-character-class-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_empty_character_class.rs"
+  },
+  {
+    "rule": "eslint/no-empty-function",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-empty-function-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-empty-function-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_empty_function.rs"
+  },
+  {
+    "rule": "eslint/no-empty-pattern",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-empty-pattern-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-empty-pattern-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_empty_pattern.rs"
+  },
+  {
+    "rule": "eslint/no-empty-static-block",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-empty-static-block-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-empty-static-block-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_empty_static_block.rs"
+  },
+  {
+    "rule": "eslint/no-eval",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-eval-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-eval-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_eval.rs"
+  },
+  {
+    "rule": "eslint/no-ex-assign",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-ex-assign-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-ex-assign-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_ex_assign.rs"
+  },
+  {
+    "rule": "eslint/no-extend-native",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-extend-native-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-extend-native-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_extend_native.rs"
+  },
+  {
+    "rule": "eslint/no-extra-bind",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-extra-bind-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-extra-bind-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_extra_bind.rs"
+  },
+  {
+    "rule": "eslint/no-extra-boolean-cast",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-extra-boolean-cast-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-extra-boolean-cast-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_extra_boolean_cast.rs"
+  },
+  {
+    "rule": "eslint/no-extra-label",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-extra-label-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-extra-label-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_extra_label.rs"
+  },
+  {
+    "rule": "eslint/no-fallthrough",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-fallthrough-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-fallthrough-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_fallthrough.rs"
+  },
+  {
+    "rule": "eslint/no-func-assign",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-func-assign-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-func-assign-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_func_assign.rs"
+  },
+  {
+    "rule": "eslint/no-global-assign",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-global-assign-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-global-assign-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_global_assign.rs"
+  },
+  {
+    "rule": "eslint/no-import-assign",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-import-assign-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-import-assign-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_import_assign.rs"
+  },
+  {
+    "rule": "eslint/no-invalid-regexp",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-invalid-regexp-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-invalid-regexp-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_invalid_regexp.rs"
+  },
+  {
+    "rule": "eslint/no-irregular-whitespace",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-irregular-whitespace-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-irregular-whitespace-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_irregular_whitespace.rs"
+  },
+  {
+    "rule": "eslint/no-iterator",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-iterator-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-iterator-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_iterator.rs"
+  },
+  {
+    "rule": "eslint/no-label-var",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-label-var-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-label-var-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_label_var.rs"
+  },
+  {
+    "rule": "eslint/no-labels",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-labels-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-labels-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_labels.rs"
+  },
+  {
+    "rule": "eslint/no-lone-blocks",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-lone-blocks-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-lone-blocks-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_lone_blocks.rs"
+  },
+  {
+    "rule": "eslint/no-lonely-if",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-lonely-if-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-lonely-if-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_lonely_if.rs"
+  },
+  {
+    "rule": "eslint/no-loop-func",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-loop-func-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-loop-func-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_loop_func.rs"
+  },
+  {
+    "rule": "eslint/no-loss-of-precision",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-loss-of-precision-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-loss-of-precision-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_loss_of_precision.rs"
+  },
+  {
+    "rule": "eslint/no-misleading-character-class",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-misleading-character-class-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-misleading-character-class-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_misleading_character_class.rs"
+  },
+  {
+    "rule": "eslint/no-multi-assign",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-multi-assign-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-multi-assign-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_multi_assign.rs"
+  },
+  {
+    "rule": "eslint/no-nested-ternary",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-nested-ternary-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-nested-ternary-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_nested_ternary.rs"
+  },
+  {
+    "rule": "eslint/no-new",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-new-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-new-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_new.rs"
+  },
+  {
+    "rule": "eslint/no-new-func",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-new-func-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-new-func-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_new_func.rs"
+  },
+  {
+    "rule": "eslint/no-new-native-nonconstructor",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-new-native-nonconstructor-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-new-native-nonconstructor-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_new_native_nonconstructor.rs"
+  },
+  {
+    "rule": "eslint/no-new-wrappers",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-new-wrappers-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-new-wrappers-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_new_wrappers.rs"
+  },
+  {
+    "rule": "eslint/no-nonoctal-decimal-escape",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-nonoctal-decimal-escape-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-nonoctal-decimal-escape-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_nonoctal_decimal_escape.rs"
+  },
+  {
+    "rule": "eslint/no-obj-calls",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-obj-calls-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-obj-calls-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_obj_calls.rs"
+  },
+  {
+    "rule": "eslint/no-param-reassign",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-param-reassign-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-param-reassign-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_param_reassign.rs"
+  },
+  {
+    "rule": "eslint/no-promise-executor-return",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-promise-executor-return-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-promise-executor-return-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_promise_executor_return.rs"
+  },
+  {
+    "rule": "eslint/no-proto",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-proto-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-proto-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_proto.rs"
+  },
+  {
+    "rule": "eslint/no-prototype-builtins",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-prototype-builtins-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-prototype-builtins-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_prototype_builtins.rs"
+  },
+  {
+    "rule": "eslint/no-regex-spaces",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-regex-spaces-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-regex-spaces-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_regex_spaces.rs"
+  },
+  {
+    "rule": "eslint/no-restricted-imports",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-restricted-imports-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-restricted-imports-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_restricted_imports.rs"
+  },
+  {
+    "rule": "eslint/no-return-assign",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-return-assign-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-return-assign-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_return_assign.rs"
+  },
+  {
+    "rule": "eslint/no-script-url",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-script-url-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-script-url-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_script_url.rs"
+  },
+  {
+    "rule": "eslint/no-self-assign",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-self-assign-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-self-assign-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_self_assign.rs"
+  },
+  {
+    "rule": "eslint/no-self-compare",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-self-compare-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-self-compare-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_self_compare.rs"
+  },
+  {
+    "rule": "eslint/no-sequences",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-sequences-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-sequences-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_sequences.rs"
+  },
+  {
+    "rule": "eslint/no-setter-return",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-setter-return-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-setter-return-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_setter_return.rs"
+  },
+  {
+    "rule": "eslint/no-shadow",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-shadow-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-shadow-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_shadow.rs"
+  },
+  {
+    "rule": "eslint/no-shadow-restricted-names",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-shadow-restricted-names-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-shadow-restricted-names-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_shadow_restricted_names.rs"
+  },
+  {
+    "rule": "eslint/no-sparse-arrays",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-sparse-arrays-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-sparse-arrays-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_sparse_arrays.rs"
+  },
+  {
+    "rule": "eslint/no-template-curly-in-string",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-template-curly-in-string-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-template-curly-in-string-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_template_curly_in_string.rs"
+  },
+  {
+    "rule": "eslint/no-this-before-super",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-this-before-super-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-this-before-super-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_this_before_super.rs"
+  },
+  {
+    "rule": "eslint/no-unassigned-vars",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-unassigned-vars-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-unassigned-vars-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_unassigned_vars.rs"
+  },
+  {
+    "rule": "eslint/no-unneeded-ternary",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-unneeded-ternary-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-unneeded-ternary-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_unneeded_ternary.rs"
+  },
+  {
+    "rule": "eslint/no-unreachable",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-unreachable-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-unreachable-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_unreachable.rs"
+  },
+  {
+    "rule": "eslint/no-unsafe-finally",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-unsafe-finally-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-unsafe-finally-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_unsafe_finally.rs"
+  },
+  {
+    "rule": "eslint/no-unsafe-negation",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-unsafe-negation-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-unsafe-negation-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_unsafe_negation.rs"
+  },
+  {
+    "rule": "eslint/no-unsafe-optional-chaining",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-unsafe-optional-chaining-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-unsafe-optional-chaining-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_unsafe_optional_chaining.rs"
+  },
+  {
+    "rule": "eslint/no-unused-expressions",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-unused-expressions-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-unused-expressions-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_unused_expressions.rs"
+  },
+  {
+    "rule": "eslint/no-unused-labels",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-unused-labels-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-unused-labels-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_unused_labels.rs"
+  },
+  {
+    "rule": "eslint/no-unused-private-class-members",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-unused-private-class-members-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-unused-private-class-members-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_unused_private_class_members.rs"
+  },
+  {
+    "rule": "eslint/no-unused-vars",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-unused-vars-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-unused-vars-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_unused_vars.rs"
+  },
+  {
+    "rule": "eslint/no-useless-backreference",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-useless-backreference-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-useless-backreference-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_useless_backreference.rs"
+  },
+  {
+    "rule": "eslint/no-useless-call",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-useless-call-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-useless-call-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_useless_call.rs"
+  },
+  {
+    "rule": "eslint/no-useless-catch",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-useless-catch-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-useless-catch-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_useless_catch.rs"
+  },
+  {
+    "rule": "eslint/no-useless-computed-key",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-useless-computed-key-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-useless-computed-key-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_useless_computed_key.rs"
+  },
+  {
+    "rule": "eslint/no-useless-concat",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-useless-concat-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-useless-concat-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_useless_concat.rs"
+  },
+  {
+    "rule": "eslint/no-useless-constructor",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-useless-constructor-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-useless-constructor-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_useless_constructor.rs"
+  },
+  {
+    "rule": "eslint/no-useless-escape",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-useless-escape-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-useless-escape-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_useless_escape.rs"
+  },
+  {
+    "rule": "eslint/no-useless-rename",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-useless-rename-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-useless-rename-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_useless_rename.rs"
+  },
+  {
+    "rule": "eslint/no-useless-return",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-useless-return-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-useless-return-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_useless_return.rs"
+  },
+  {
+    "rule": "eslint/no-var",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-var-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-var-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_var.rs"
+  },
+  {
+    "rule": "eslint/no-with",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-no-with-pass-0.cjs"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-no-with-fail-0.cjs"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/no_with.rs"
+  },
+  {
+    "rule": "eslint/object-shorthand",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-object-shorthand-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-object-shorthand-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/object_shorthand.rs"
+  },
+  {
+    "rule": "eslint/prefer-const",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-prefer-const-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-prefer-const-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/prefer_const.rs"
+  },
+  {
+    "rule": "eslint/prefer-numeric-literals",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-prefer-numeric-literals-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-prefer-numeric-literals-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/prefer_numeric_literals.rs"
+  },
+  {
+    "rule": "eslint/prefer-object-spread",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-prefer-object-spread-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-prefer-object-spread-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/prefer_object_spread.rs"
+  },
+  {
+    "rule": "eslint/prefer-rest-params",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-prefer-rest-params-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-prefer-rest-params-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/prefer_rest_params.rs"
+  },
+  {
+    "rule": "eslint/prefer-spread",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-prefer-spread-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-prefer-spread-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/prefer_spread.rs"
+  },
+  {
+    "rule": "eslint/prefer-template",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-prefer-template-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-prefer-template-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/prefer_template.rs"
+  },
+  {
+    "rule": "eslint/require-yield",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-require-yield-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-require-yield-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/require_yield.rs"
+  },
+  {
+    "rule": "eslint/symbol-description",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-symbol-description-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-symbol-description-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/symbol_description.rs"
+  },
+  {
+    "rule": "eslint/use-isnan",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-use-isnan-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-use-isnan-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/use_isnan.rs"
+  },
+  {
+    "rule": "eslint/valid-typeof",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/eslint-valid-typeof-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/eslint-valid-typeof-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/eslint/valid_typeof.rs"
+  },
+  {
+    "rule": "import-extra/newline-after-import",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/import-extra-newline-after-import-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/import-extra-newline-after-import-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "import-extra/no-relative-packages",
+    "pass": {
+      "project": "rules-pass",
+      "file": "packages/logger/src/relative.ts"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "packages/logger/src/relative.ts"
+    }
+  },
+  {
+    "rule": "import-extra/no-useless-path-segments",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/import-extra-no-useless-path-segments-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/import-extra-no-useless-path-segments-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "import/consistent-type-specifier-style",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/import-consistent-type-specifier-style-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/import-consistent-type-specifier-style-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/import/consistent_type_specifier_style.rs"
+  },
+  {
+    "rule": "import/default",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/import-default-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/import-default-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/import/default.rs"
+  },
+  {
+    "rule": "import/first",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/import-first-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/import-first-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/import/first.rs"
+  },
+  {
+    "rule": "import/namespace",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/import-namespace-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/import-namespace-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/import/namespace.rs"
+  },
+  {
+    "rule": "import/no-absolute-path",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/import-no-absolute-path-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/import-no-absolute-path-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/import/no_absolute_path.rs"
+  },
+  {
+    "rule": "import/no-duplicates",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/import-no-duplicates-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/import-no-duplicates-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/import/no_duplicates.rs"
+  },
+  {
+    "rule": "import/no-mutable-exports",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/import-no-mutable-exports-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/import-no-mutable-exports-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/import/no_mutable_exports.rs"
+  },
+  {
+    "rule": "import/no-named-as-default",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/import-no-named-as-default-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/import-no-named-as-default-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/import/no_named_as_default.rs"
+  },
+  {
+    "rule": "import/no-named-as-default-member",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/import-no-named-as-default-member-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/import-no-named-as-default-member-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/import/no_named_as_default_member.rs"
+  },
+  {
+    "rule": "import/no-self-import",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/import-no-self-import-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/import-no-self-import-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/import/no_self_import.rs"
+  },
+  {
+    "rule": "jsx-a11y/alt-text",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/jsx-a11y-alt-text-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/jsx-a11y-alt-text-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/jsx_a11y/alt_text.rs"
+  },
+  {
+    "rule": "jsx-a11y/anchor-has-content",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/jsx-a11y-anchor-has-content-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/jsx-a11y-anchor-has-content-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/jsx_a11y/anchor_has_content.rs"
+  },
+  {
+    "rule": "jsx-a11y/anchor-is-valid",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/jsx-a11y-anchor-is-valid-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/jsx-a11y-anchor-is-valid-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/jsx_a11y/anchor_is_valid.rs"
+  },
+  {
+    "rule": "jsx-a11y/aria-activedescendant-has-tabindex",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/jsx-a11y-aria-activedescendant-has-tabindex-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/jsx-a11y-aria-activedescendant-has-tabindex-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/jsx_a11y/aria_activedescendant_has_tabindex.rs"
+  },
+  {
+    "rule": "jsx-a11y/aria-props",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/jsx-a11y-aria-props-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/jsx-a11y-aria-props-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/jsx_a11y/aria_props.rs"
+  },
+  {
+    "rule": "jsx-a11y/aria-proptypes",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/jsx-a11y-aria-proptypes-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/jsx-a11y-aria-proptypes-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/jsx_a11y/aria_proptypes.rs"
+  },
+  {
+    "rule": "jsx-a11y/aria-role",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/jsx-a11y-aria-role-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/jsx-a11y-aria-role-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/jsx_a11y/aria_role.rs"
+  },
+  {
+    "rule": "jsx-a11y/aria-unsupported-elements",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/jsx-a11y-aria-unsupported-elements-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/jsx-a11y-aria-unsupported-elements-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/jsx_a11y/aria_unsupported_elements.rs"
+  },
+  {
+    "rule": "jsx-a11y/autocomplete-valid",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/jsx-a11y-autocomplete-valid-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/jsx-a11y-autocomplete-valid-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/jsx_a11y/autocomplete_valid.rs"
+  },
+  {
+    "rule": "jsx-a11y/click-events-have-key-events",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/jsx-a11y-click-events-have-key-events-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/jsx-a11y-click-events-have-key-events-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/jsx_a11y/click_events_have_key_events.rs"
+  },
+  {
+    "rule": "jsx-a11y/control-has-associated-label",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/jsx-a11y-control-has-associated-label-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/jsx-a11y-control-has-associated-label-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/jsx_a11y/control_has_associated_label.rs"
+  },
+  {
+    "rule": "jsx-a11y/heading-has-content",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/jsx-a11y-heading-has-content-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/jsx-a11y-heading-has-content-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/jsx_a11y/heading_has_content.rs"
+  },
+  {
+    "rule": "jsx-a11y/html-has-lang",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/jsx-a11y-html-has-lang-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/jsx-a11y-html-has-lang-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/jsx_a11y/html_has_lang.rs"
+  },
+  {
+    "rule": "jsx-a11y/iframe-has-title",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/jsx-a11y-iframe-has-title-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/jsx-a11y-iframe-has-title-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/jsx_a11y/iframe_has_title.rs"
+  },
+  {
+    "rule": "jsx-a11y/img-redundant-alt",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/jsx-a11y-img-redundant-alt-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/jsx-a11y-img-redundant-alt-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/jsx_a11y/img_redundant_alt.rs"
+  },
+  {
+    "rule": "jsx-a11y/interactive-supports-focus",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/jsx-a11y-interactive-supports-focus-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/jsx-a11y-interactive-supports-focus-fail-1.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/jsx_a11y/interactive_supports_focus.rs"
+  },
+  {
+    "rule": "jsx-a11y/label-has-associated-control",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/jsx-a11y-label-has-associated-control-pass-1.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/jsx-a11y-label-has-associated-control-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/jsx_a11y/label_has_associated_control.rs"
+  },
+  {
+    "rule": "jsx-a11y/lang",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/jsx-a11y-lang-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/jsx-a11y-lang-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/jsx_a11y/lang.rs"
+  },
+  {
+    "rule": "jsx-a11y/media-has-caption",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/jsx-a11y-media-has-caption-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/jsx-a11y-media-has-caption-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/jsx_a11y/media_has_caption.rs"
+  },
+  {
+    "rule": "jsx-a11y/mouse-events-have-key-events",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/jsx-a11y-mouse-events-have-key-events-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/jsx-a11y-mouse-events-have-key-events-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/jsx_a11y/mouse_events_have_key_events.rs"
+  },
+  {
+    "rule": "jsx-a11y/no-access-key",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/jsx-a11y-no-access-key-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/jsx-a11y-no-access-key-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/jsx_a11y/no_access_key.rs"
+  },
+  {
+    "rule": "jsx-a11y/no-aria-hidden-on-focusable",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/jsx-a11y-no-aria-hidden-on-focusable-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/jsx-a11y-no-aria-hidden-on-focusable-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/jsx_a11y/no_aria_hidden_on_focusable.rs"
+  },
+  {
+    "rule": "jsx-a11y/no-autofocus",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/jsx-a11y-no-autofocus-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/jsx-a11y-no-autofocus-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/jsx_a11y/no_autofocus.rs"
+  },
+  {
+    "rule": "jsx-a11y/no-distracting-elements",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/jsx-a11y-no-distracting-elements-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/jsx-a11y-no-distracting-elements-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/jsx_a11y/no_distracting_elements.rs"
+  },
+  {
+    "rule": "jsx-a11y/no-interactive-element-to-noninteractive-role",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/jsx-a11y-no-interactive-element-to-noninteractive-role-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/jsx-a11y-no-interactive-element-to-noninteractive-role-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/jsx_a11y/no_interactive_element_to_noninteractive_role.rs"
+  },
+  {
+    "rule": "jsx-a11y/no-noninteractive-element-interactions",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/jsx-a11y-no-noninteractive-element-interactions-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/jsx-a11y-no-noninteractive-element-interactions-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/jsx_a11y/no_noninteractive_element_interactions.rs"
+  },
+  {
+    "rule": "jsx-a11y/no-noninteractive-element-to-interactive-role",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/jsx-a11y-no-noninteractive-element-to-interactive-role-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/jsx-a11y-no-noninteractive-element-to-interactive-role-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/jsx_a11y/no_noninteractive_element_to_interactive_role.rs"
+  },
+  {
+    "rule": "jsx-a11y/no-noninteractive-tabindex",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/tabindex.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/tabindex.tsx"
+    }
+  },
+  {
+    "rule": "jsx-a11y/no-redundant-roles",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/jsx-a11y-no-redundant-roles-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/jsx-a11y-no-redundant-roles-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/jsx_a11y/no_redundant_roles.rs"
+  },
+  {
+    "rule": "jsx-a11y/no-static-element-interactions",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/jsx-a11y-no-static-element-interactions-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/jsx-a11y-no-static-element-interactions-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/jsx_a11y/no_static_element_interactions.rs"
+  },
+  {
+    "rule": "jsx-a11y/prefer-tag-over-role",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/jsx-a11y-prefer-tag-over-role-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/jsx-a11y-prefer-tag-over-role-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/jsx_a11y/prefer_tag_over_role.rs"
+  },
+  {
+    "rule": "jsx-a11y/role-has-required-aria-props",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/jsx-a11y-role-has-required-aria-props-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/jsx-a11y-role-has-required-aria-props-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/jsx_a11y/role_has_required_aria_props.rs"
+  },
+  {
+    "rule": "jsx-a11y/role-supports-aria-props",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/jsx-a11y-role-supports-aria-props-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/jsx-a11y-role-supports-aria-props-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/jsx_a11y/role_supports_aria_props.rs"
+  },
+  {
+    "rule": "jsx-a11y/scope",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/jsx-a11y-scope-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/jsx-a11y-scope-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/jsx_a11y/scope.rs"
+  },
+  {
+    "rule": "jsx-a11y/tabindex-no-positive",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/jsx-a11y-tabindex-no-positive-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/jsx-a11y-tabindex-no-positive-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/jsx_a11y/tabindex_no_positive.rs"
+  },
+  {
+    "rule": "modules/backend-switch",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/server/src/lib/switch.ts"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/server/src/lib/switch.ts"
+    }
+  },
+  {
+    "rule": "modules/concurrent-db",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/server/tests/concurrent.test.ts"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/server/tests/concurrent.test.ts"
+    }
+  },
+  {
+    "rule": "modules/domain-constants",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/server/src/services/constants/constants-action.send.ts"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/server/src/services/constants/constants-action.send.ts"
+    }
+  },
+  {
+    "rule": "modules/double-negation",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/server/src/lib/double-not.ts"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/server/src/lib/double-not.ts"
+    }
+  },
+  {
+    "rule": "modules/dynamic-classes",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/components/chats/chat-dynamic.tsx"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/web/src/components/chats/chat-dynamic.tsx"
+    }
+  },
+  {
+    "rule": "modules/empty-effect",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/hooks/use-empty.ts"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/web/src/hooks/use-empty.ts"
+    }
+  },
+  {
+    "rule": "modules/import-boundaries",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/types/private.types.ts"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/web/src/types/private.types.ts"
+    }
+  },
+  {
+    "rule": "modules/local-type-alias",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/components/chats/chat-status.tsx"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/web/src/components/chats/chat-status.tsx"
+    }
+  },
+  {
+    "rule": "modules/memoization",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/hooks/use-cache.ts"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/web/src/hooks/use-cache.ts"
+    }
+  },
+  {
+    "rule": "modules/no-unknown",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/types/unknown.types.ts"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/web/src/types/unknown.types.ts"
+    }
+  },
+  {
+    "rule": "modules/pascal-interface",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/components/cases/modules-pascal-interface-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/components/cases/modules-pascal-interface-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "modules/reasoned-directives",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/server/src/lib/directive.ts"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/server/src/lib/directive.ts"
+    }
+  },
+  {
+    "rule": "modules/rpc-database",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/server/src/rpc/private-query.ts"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/server/src/rpc/private-query.ts"
+    }
+  },
+  {
+    "rule": "modules/service-functions",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/server/src/services/helper/helper-action.send.ts"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/server/src/services/helper/helper-action.send.ts"
+    }
+  },
+  {
+    "rule": "modules/service-types",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/server/src/services/deps/deps.service.ts"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/server/src/services/deps/deps.service.ts"
+    }
+  },
+  {
+    "rule": "modules/shape-suffix",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/server/src/types/shape.types.ts"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/server/src/types/shape.types.ts"
+    }
+  },
+  {
+    "rule": "modules/test-modifiers",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/server/tests/only.test.ts"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/server/tests/only.test.ts"
+    }
+  },
+  {
+    "rule": "oxc/bad-array-method-on-arguments",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/oxc-bad-array-method-on-arguments-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/oxc-bad-array-method-on-arguments-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/oxc/bad_array_method_on_arguments.rs"
+  },
+  {
+    "rule": "oxc/bad-char-at-comparison",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/oxc-bad-char-at-comparison-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/oxc-bad-char-at-comparison-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/oxc/bad_char_at_comparison.rs"
+  },
+  {
+    "rule": "oxc/bad-comparison-sequence",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/oxc-bad-comparison-sequence-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/oxc-bad-comparison-sequence-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/oxc/bad_comparison_sequence.rs"
+  },
+  {
+    "rule": "oxc/bad-match-all-arg",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/oxc-bad-match-all-arg-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/oxc-bad-match-all-arg-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/oxc/bad_match_all_arg.rs"
+  },
+  {
+    "rule": "oxc/bad-min-max-func",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/oxc-bad-min-max-func-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/oxc-bad-min-max-func-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/oxc/bad_min_max_func.rs"
+  },
+  {
+    "rule": "oxc/bad-object-literal-comparison",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/oxc-bad-object-literal-comparison-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/oxc-bad-object-literal-comparison-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/oxc/bad_object_literal_comparison.rs"
+  },
+  {
+    "rule": "oxc/bad-replace-all-arg",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/oxc-bad-replace-all-arg-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/oxc-bad-replace-all-arg-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/oxc/bad_replace_all_arg.rs"
+  },
+  {
+    "rule": "oxc/const-comparisons",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/oxc-const-comparisons-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/oxc-const-comparisons-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/oxc/const_comparisons.rs"
+  },
+  {
+    "rule": "oxc/double-comparisons",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/oxc-double-comparisons-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/oxc-double-comparisons-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/oxc/double_comparisons.rs"
+  },
+  {
+    "rule": "oxc/erasing-op",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/oxc-erasing-op-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/oxc-erasing-op-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/oxc/erasing_op.rs"
+  },
+  {
+    "rule": "oxc/missing-throw",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/oxc-missing-throw-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/oxc-missing-throw-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/oxc/missing_throw.rs"
+  },
+  {
+    "rule": "oxc/no-accumulating-spread",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/oxc-no-accumulating-spread-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/oxc-no-accumulating-spread-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/oxc/no_accumulating_spread.rs"
+  },
+  {
+    "rule": "oxc/number-arg-out-of-range",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/oxc-number-arg-out-of-range-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/oxc-number-arg-out-of-range-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/oxc/number_arg_out_of_range.rs"
+  },
+  {
+    "rule": "oxc/only-used-in-recursion",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/oxc-only-used-in-recursion-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/oxc-only-used-in-recursion-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/oxc/only_used_in_recursion.rs"
+  },
+  {
+    "rule": "oxc/uninvoked-array-callback",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/oxc-uninvoked-array-callback-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/oxc-uninvoked-array-callback-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/oxc/uninvoked_array_callback.rs"
+  },
+  {
+    "rule": "perfectionist/sort-imports",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/perfectionist-sort-imports-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/perfectionist-sort-imports-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "perfectionist/sort-named-imports",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/perfectionist-sort-named-imports-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/perfectionist-sort-named-imports-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "promise/no-callback-in-promise",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/promise-no-callback-in-promise-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/promise-no-callback-in-promise-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/promise/no_callback_in_promise.rs"
+  },
+  {
+    "rule": "promise/no-new-statics",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/promise-no-new-statics-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/promise-no-new-statics-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/promise/no_new_statics.rs"
+  },
+  {
+    "rule": "promise/valid-params",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/promise-valid-params-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/promise-valid-params-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/promise/valid_params.rs"
+  },
+  {
+    "rule": "react-extra/function-component-definition",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/components/chats/chat-arrow.tsx"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/web/src/components/chats/chat-arrow.tsx"
+    }
+  },
+  {
+    "rule": "react-extra/hook-use-state",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/react-extra-hook-use-state-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/react-extra-hook-use-state-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "react-extra/jsx-closing-bracket-location",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/react-extra-jsx-closing-bracket-location-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/react-extra-jsx-closing-bracket-location-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "react-extra/jsx-curly-newline",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/react-extra-jsx-curly-newline-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/react-extra-jsx-curly-newline-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "react-extra/jsx-first-prop-new-line",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/react-extra-jsx-first-prop-new-line-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/react-extra-jsx-first-prop-new-line-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "react-extra/jsx-indent-props",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/react-extra-jsx-indent-props-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/react-extra-jsx-indent-props-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "react-extra/jsx-max-props-per-line",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/react-extra-jsx-max-props-per-line-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/react-extra-jsx-max-props-per-line-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "react-extra/jsx-no-leaked-render",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/react-extra-jsx-no-leaked-render-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/react-extra-jsx-no-leaked-render-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "react-extra/jsx-sort-props",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/react-extra-jsx-sort-props-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/react-extra-jsx-sort-props-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "react-extra/jsx-wrap-multilines",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/react-extra-jsx-wrap-multilines-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/react-extra-jsx-wrap-multilines-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "react-extra/no-deprecated",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/react-extra-no-deprecated-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/react-extra-no-deprecated-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "react-extra/no-unstable-nested-components",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/react-extra-no-unstable-nested-components-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/react-extra-no-unstable-nested-components-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "react-extra/require-render-return",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/react-extra-require-render-return-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/react-extra-require-render-return-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "react-perf/jsx-no-jsx-as-prop",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/react-perf-jsx-no-jsx-as-prop-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/react-perf-jsx-no-jsx-as-prop-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/react_perf/jsx_no_jsx_as_prop.rs"
+  },
+  {
+    "rule": "react-perf/jsx-no-new-array-as-prop",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/react-perf-jsx-no-new-array-as-prop-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/react-perf-jsx-no-new-array-as-prop-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/react_perf/jsx_no_new_array_as_prop.rs"
+  },
+  {
+    "rule": "react-perf/jsx-no-new-function-as-prop",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/function-prop.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/function-prop.tsx"
+    }
+  },
+  {
+    "rule": "react-perf/jsx-no-new-object-as-prop",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/object-prop.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/object-prop.tsx"
+    }
+  },
+  {
+    "rule": "react-you-might-not-need-an-effect/no-adjust-state-on-prop-change",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/react-you-might-not-need-an-effect-no-adjust-state-on-prop-change-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/react-you-might-not-need-an-effect-no-adjust-state-on-prop-change-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "react-you-might-not-need-an-effect/no-chain-state-updates",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/react-you-might-not-need-an-effect-no-chain-state-updates-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/react-you-might-not-need-an-effect-no-chain-state-updates-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "react-you-might-not-need-an-effect/no-derived-state",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/hooks/use-derived.ts"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/web/src/hooks/use-derived.ts"
+    }
+  },
+  {
+    "rule": "react-you-might-not-need-an-effect/no-event-handler",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/react-you-might-not-need-an-effect-no-event-handler-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/react-you-might-not-need-an-effect-no-event-handler-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "react-you-might-not-need-an-effect/no-initialize-state",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/react-you-might-not-need-an-effect-no-initialize-state-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/react-you-might-not-need-an-effect-no-initialize-state-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "react-you-might-not-need-an-effect/no-pass-data-to-parent",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/react-you-might-not-need-an-effect-no-pass-data-to-parent-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/react-you-might-not-need-an-effect-no-pass-data-to-parent-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "react-you-might-not-need-an-effect/no-pass-live-state-to-parent",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/react-you-might-not-need-an-effect-no-pass-live-state-to-parent-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/react-you-might-not-need-an-effect-no-pass-live-state-to-parent-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "react-you-might-not-need-an-effect/no-reset-all-state-on-prop-change",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/react-you-might-not-need-an-effect-no-reset-all-state-on-prop-change-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/react-you-might-not-need-an-effect-no-reset-all-state-on-prop-change-fail-1.tsx"
+    }
+  },
+  {
+    "rule": "react/button-has-type",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/react-button-has-type-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/react-button-has-type-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/react/button_has_type.rs"
+  },
+  {
+    "rule": "react/display-name",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/react-display-name-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/react-display-name-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/react/display_name.rs"
+  },
+  {
+    "rule": "react/error-boundaries",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/react-error-boundaries-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/react-error-boundaries-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/react/error_boundaries.rs"
+  },
+  {
+    "rule": "react/exhaustive-deps",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/react-exhaustive-deps-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/react-exhaustive-deps-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/react/exhaustive_deps.rs"
+  },
+  {
+    "rule": "react/forward-ref-uses-ref",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/react-forward-ref-uses-ref-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/react-forward-ref-uses-ref-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/react/forward_ref_uses_ref.rs"
+  },
+  {
+    "rule": "react/globals",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/react-globals-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/react-globals-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/react/globals.rs"
+  },
+  {
+    "rule": "react/immutability",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/react-immutability-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/react-immutability-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/react/immutability.rs"
+  },
+  {
+    "rule": "react/incompatible-library",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/react-incompatible-library-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/react-incompatible-library-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/react/incompatible_library.rs"
+  },
+  {
+    "rule": "react/jsx-boolean-value",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/react-jsx-boolean-value-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/react-jsx-boolean-value-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/react/jsx_boolean_value.rs"
+  },
+  {
+    "rule": "react/jsx-curly-brace-presence",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/react-jsx-curly-brace-presence-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/react-jsx-curly-brace-presence-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/react/jsx_curly_brace_presence.rs"
+  },
+  {
+    "rule": "react/jsx-fragments",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/react-jsx-fragments-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/react-jsx-fragments-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/react/jsx_fragments.rs"
+  },
+  {
+    "rule": "react/jsx-key",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/react-jsx-key-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/react-jsx-key-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/react/jsx_key.rs"
+  },
+  {
+    "rule": "react/jsx-no-comment-textnodes",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/react-jsx-no-comment-textnodes-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/react-jsx-no-comment-textnodes-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/react/jsx_no_comment_textnodes.rs"
+  },
+  {
+    "rule": "react/jsx-no-duplicate-props",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/react-jsx-no-duplicate-props-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/react-jsx-no-duplicate-props-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/react/jsx_no_duplicate_props.rs"
+  },
+  {
+    "rule": "react/jsx-no-target-blank",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/react-jsx-no-target-blank-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/react-jsx-no-target-blank-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/react/jsx_no_target_blank.rs"
+  },
+  {
+    "rule": "react/jsx-no-undef",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/react-jsx-no-undef-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/react-jsx-no-undef-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/react/jsx_no_undef.rs"
+  },
+  {
+    "rule": "react/jsx-no-useless-fragment",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/react-jsx-no-useless-fragment-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/react-jsx-no-useless-fragment-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/react/jsx_no_useless_fragment.rs"
+  },
+  {
+    "rule": "react/jsx-pascal-case",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/react-jsx-pascal-case-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/react-jsx-pascal-case-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/react/jsx_pascal_case.rs"
+  },
+  {
+    "rule": "react/jsx-props-no-spread-multi",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/react-jsx-props-no-spread-multi-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/react-jsx-props-no-spread-multi-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/react/jsx_props_no_spread_multi.rs"
+  },
+  {
+    "rule": "react/no-children-prop",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/react-no-children-prop-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/react-no-children-prop-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/react/no_children_prop.rs"
+  },
+  {
+    "rule": "react/no-danger-with-children",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/react-no-danger-with-children-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/react-no-danger-with-children-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/react/no_danger_with_children.rs"
+  },
+  {
+    "rule": "react/no-did-mount-set-state",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/react-no-did-mount-set-state-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/react-no-did-mount-set-state-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/react/no_did_mount_set_state.rs"
+  },
+  {
+    "rule": "react/no-did-update-set-state",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/react-no-did-update-set-state-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/react-no-did-update-set-state-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/react/no_did_update_set_state.rs"
+  },
+  {
+    "rule": "react/no-direct-mutation-state",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/react-no-direct-mutation-state-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/react-no-direct-mutation-state-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/react/no_direct_mutation_state.rs"
+  },
+  {
+    "rule": "react/no-find-dom-node",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/react-no-find-dom-node-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/react-no-find-dom-node-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/react/no_find_dom_node.rs"
+  },
+  {
+    "rule": "react/no-is-mounted",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/react-no-is-mounted-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/react-no-is-mounted-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/react/no_is_mounted.rs"
+  },
+  {
+    "rule": "react/no-render-return-value",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/react-no-render-return-value-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/react-no-render-return-value-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/react/no_render_return_value.rs"
+  },
+  {
+    "rule": "react/no-string-refs",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/react-no-string-refs-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/react-no-string-refs-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/react/no_string_refs.rs"
+  },
+  {
+    "rule": "react/no-this-in-sfc",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/react-no-this-in-sfc-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/react-no-this-in-sfc-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/react/no_this_in_sfc.rs"
+  },
+  {
+    "rule": "react/no-unknown-property",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/react-no-unknown-property-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/react-no-unknown-property-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/react/no_unknown_property.rs"
+  },
+  {
+    "rule": "react/no-unsafe",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/react-no-unsafe-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/react-no-unsafe-fail-1.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/react/no_unsafe.rs"
+  },
+  {
+    "rule": "react/no-will-update-set-state",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/react-no-will-update-set-state-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/react-no-will-update-set-state-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/react/no_will_update_set_state.rs"
+  },
+  {
+    "rule": "react/preserve-manual-memoization",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/react-preserve-manual-memoization-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/react-preserve-manual-memoization-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/react/preserve_manual_memoization.rs"
+  },
+  {
+    "rule": "react/purity",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/react-purity-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/react-purity-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/react/purity.rs"
+  },
+  {
+    "rule": "react/refs",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/react-refs-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/react-refs-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/react/refs.rs"
+  },
+  {
+    "rule": "react/rules-of-hooks",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/react-rules-of-hooks-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/react-rules-of-hooks-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/react/rules_of_hooks.rs"
+  },
+  {
+    "rule": "react/self-closing-comp",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/react-self-closing-comp-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/react-self-closing-comp-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/react/self_closing_comp.rs"
+  },
+  {
+    "rule": "react/set-state-in-effect",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/react-set-state-in-effect-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/react-set-state-in-effect-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/react/set_state_in_effect.rs"
+  },
+  {
+    "rule": "react/set-state-in-render",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/react-set-state-in-render-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/react-set-state-in-render-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/react/set_state_in_render.rs"
+  },
+  {
+    "rule": "react/static-components",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/react-static-components-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/react-static-components-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/react/static_components.rs"
+  },
+  {
+    "rule": "react/use-memo",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/react-use-memo-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/react-use-memo-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/react/use_memo.rs"
+  },
+  {
+    "rule": "react/void-dom-elements-no-children",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/react-void-dom-elements-no-children-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/react-void-dom-elements-no-children-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/react/void_dom_elements_no_children.rs"
+  },
+  {
+    "rule": "react/void-use-memo",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/react-void-use-memo-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/react-void-use-memo-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/react/void_use_memo.rs"
+  },
+  {
+    "rule": "shadcn/no-arbitrary-values",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/components/chats/chat-arbitrary.tsx"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/web/src/components/chats/chat-arbitrary.tsx"
+    }
+  },
+  {
+    "rule": "shadcn/no-restyle",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/components/chats/chat-button.tsx"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/web/src/components/chats/chat-button.tsx"
+    }
+  },
+  {
+    "rule": "shadcn/no-unknown-classes",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/components/chats/chat-unknown.tsx"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/web/src/components/chats/chat-unknown.tsx"
+    }
+  },
+  {
+    "rule": "shadcn/require-static-classes",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/shadcn-require-static-classes-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/shadcn-require-static-classes-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "svg-jsx/camel-case-colon",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/svg-jsx-camel-case-colon-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/svg-jsx-camel-case-colon-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "svg-jsx/no-style-string",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/svg-jsx-no-style-string-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/svg-jsx-no-style-string-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "tsdoc/syntax",
+    "pass": {
+      "project": "rules-pass",
+      "file": "scripts/tsdoc-syntax.ts"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "scripts/tsdoc-syntax.ts"
+    }
+  },
+  {
+    "rule": "typescript/adjacent-overload-signatures",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-adjacent-overload-signatures-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-adjacent-overload-signatures-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/adjacent_overload_signatures.rs"
+  },
+  {
+    "rule": "typescript/array-type",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-array-type-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-array-type-fail-1.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/array_type.rs"
+  },
+  {
+    "rule": "typescript/await-thenable",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-await-thenable-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-await-thenable-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/await_thenable.rs"
+  },
+  {
+    "rule": "typescript/ban-ts-comment",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-ban-ts-comment-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-ban-ts-comment-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/ban_ts_comment.rs"
+  },
+  {
+    "rule": "typescript/ban-tslint-comment",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-ban-tslint-comment-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-ban-tslint-comment-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/ban_tslint_comment.rs"
+  },
+  {
+    "rule": "typescript/class-literal-property-style",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-class-literal-property-style-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-class-literal-property-style-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/class_literal_property_style.rs"
+  },
+  {
+    "rule": "typescript/consistent-generic-constructors",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-consistent-generic-constructors-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-consistent-generic-constructors-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/consistent_generic_constructors.rs"
+  },
+  {
+    "rule": "typescript/consistent-indexed-object-style",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-consistent-indexed-object-style-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-consistent-indexed-object-style-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/consistent_indexed_object_style.rs"
+  },
+  {
+    "rule": "typescript/consistent-type-assertions",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-consistent-type-assertions-pass-0.ts"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-consistent-type-assertions-fail-0.ts"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/consistent_type_assertions.rs"
+  },
+  {
+    "rule": "typescript/consistent-type-definitions",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-consistent-type-definitions-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-consistent-type-definitions-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/consistent_type_definitions.rs"
+  },
+  {
+    "rule": "typescript/consistent-type-exports",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-consistent-type-exports-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-consistent-type-exports-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/consistent_type_exports.rs"
+  },
+  {
+    "rule": "typescript/consistent-type-imports",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-consistent-type-imports-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-consistent-type-imports-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/consistent_type_imports.rs"
+  },
+  {
+    "rule": "typescript/no-array-delete",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-no-array-delete-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-no-array-delete-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/no_array_delete.rs"
+  },
+  {
+    "rule": "typescript/no-base-to-string",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-no-base-to-string-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-no-base-to-string-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/no_base_to_string.rs"
+  },
+  {
+    "rule": "typescript/no-confusing-non-null-assertion",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-no-confusing-non-null-assertion-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-no-confusing-non-null-assertion-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/no_confusing_non_null_assertion.rs"
+  },
+  {
+    "rule": "typescript/no-duplicate-enum-values",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-no-duplicate-enum-values-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-no-duplicate-enum-values-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/no_duplicate_enum_values.rs"
+  },
+  {
+    "rule": "typescript/no-duplicate-type-constituents",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-no-duplicate-type-constituents-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-no-duplicate-type-constituents-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/no_duplicate_type_constituents.rs"
+  },
+  {
+    "rule": "typescript/no-dynamic-delete",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-no-dynamic-delete-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-no-dynamic-delete-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/no_dynamic_delete.rs"
+  },
+  {
+    "rule": "typescript/no-empty-object-type",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-no-empty-object-type-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-no-empty-object-type-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/no_empty_object_type.rs"
+  },
+  {
+    "rule": "typescript/no-explicit-any",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-no-explicit-any-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-no-explicit-any-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/no_explicit_any.rs"
+  },
+  {
+    "rule": "typescript/no-extra-non-null-assertion",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-no-extra-non-null-assertion-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-no-extra-non-null-assertion-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/no_extra_non_null_assertion.rs"
+  },
+  {
+    "rule": "typescript/no-floating-promises",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-no-floating-promises-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-no-floating-promises-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/no_floating_promises.rs"
+  },
+  {
+    "rule": "typescript/no-for-in-array",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-no-for-in-array-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-no-for-in-array-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/no_for_in_array.rs"
+  },
+  {
+    "rule": "typescript/no-implied-eval",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-no-implied-eval-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-no-implied-eval-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/no_implied_eval.rs"
+  },
+  {
+    "rule": "typescript/no-inferrable-types",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-no-inferrable-types-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-no-inferrable-types-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/no_inferrable_types.rs"
+  },
+  {
+    "rule": "typescript/no-invalid-void-type",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-no-invalid-void-type-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-no-invalid-void-type-fail-1.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/no_invalid_void_type.rs"
+  },
+  {
+    "rule": "typescript/no-meaningless-void-operator",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-no-meaningless-void-operator-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-no-meaningless-void-operator-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/no_meaningless_void_operator.rs"
+  },
+  {
+    "rule": "typescript/no-misused-new",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-no-misused-new-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-no-misused-new-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/no_misused_new.rs"
+  },
+  {
+    "rule": "typescript/no-misused-spread",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-no-misused-spread-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-no-misused-spread-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/no_misused_spread.rs"
+  },
+  {
+    "rule": "typescript/no-mixed-enums",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-no-mixed-enums-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-no-mixed-enums-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/no_mixed_enums.rs"
+  },
+  {
+    "rule": "typescript/no-namespace",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-no-namespace-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-no-namespace-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/no_namespace.rs"
+  },
+  {
+    "rule": "typescript/no-non-null-asserted-nullish-coalescing",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-no-non-null-asserted-nullish-coalescing-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-no-non-null-asserted-nullish-coalescing-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/no_non_null_asserted_nullish_coalescing.rs"
+  },
+  {
+    "rule": "typescript/no-non-null-asserted-optional-chain",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-no-non-null-asserted-optional-chain-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-no-non-null-asserted-optional-chain-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/no_non_null_asserted_optional_chain.rs"
+  },
+  {
+    "rule": "typescript/no-non-null-assertion",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-no-non-null-assertion-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-no-non-null-assertion-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/no_non_null_assertion.rs"
+  },
+  {
+    "rule": "typescript/no-redundant-type-constituents",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-no-redundant-type-constituents-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-no-redundant-type-constituents-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/no_redundant_type_constituents.rs"
+  },
+  {
+    "rule": "typescript/no-require-imports",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-no-require-imports-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-no-require-imports-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/no_require_imports.rs"
+  },
+  {
+    "rule": "typescript/no-this-alias",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-no-this-alias-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-no-this-alias-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/no_this_alias.rs"
+  },
+  {
+    "rule": "typescript/no-unnecessary-boolean-literal-compare",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-no-unnecessary-boolean-literal-compare-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-no-unnecessary-boolean-literal-compare-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/no_unnecessary_boolean_literal_compare.rs"
+  },
+  {
+    "rule": "typescript/no-unnecessary-condition",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-no-unnecessary-condition-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-no-unnecessary-condition-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/no_unnecessary_condition.rs"
+  },
+  {
+    "rule": "typescript/no-unnecessary-parameter-property-assignment",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-no-unnecessary-parameter-property-assignment-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-no-unnecessary-parameter-property-assignment-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/no_unnecessary_parameter_property_assignment.rs"
+  },
+  {
+    "rule": "typescript/no-unnecessary-template-expression",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-no-unnecessary-template-expression-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-no-unnecessary-template-expression-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/no_unnecessary_template_expression.rs"
+  },
+  {
+    "rule": "typescript/no-unnecessary-type-arguments",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-no-unnecessary-type-arguments-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-no-unnecessary-type-arguments-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/no_unnecessary_type_arguments.rs"
+  },
+  {
+    "rule": "typescript/no-unnecessary-type-assertion",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-no-unnecessary-type-assertion-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-no-unnecessary-type-assertion-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/no_unnecessary_type_assertion.rs"
+  },
+  {
+    "rule": "typescript/no-unnecessary-type-constraint",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-no-unnecessary-type-constraint-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-no-unnecessary-type-constraint-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/no_unnecessary_type_constraint.rs"
+  },
+  {
+    "rule": "typescript/no-unsafe-declaration-merging",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-no-unsafe-declaration-merging-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-no-unsafe-declaration-merging-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/no_unsafe_declaration_merging.rs"
+  },
+  {
+    "rule": "typescript/no-unsafe-enum-comparison",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-no-unsafe-enum-comparison-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-no-unsafe-enum-comparison-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/no_unsafe_enum_comparison.rs"
+  },
+  {
+    "rule": "typescript/no-unsafe-function-type",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-no-unsafe-function-type-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-no-unsafe-function-type-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/no_unsafe_function_type.rs"
+  },
+  {
+    "rule": "typescript/no-unsafe-unary-minus",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-no-unsafe-unary-minus-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-no-unsafe-unary-minus-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/no_unsafe_unary_minus.rs"
+  },
+  {
+    "rule": "typescript/no-useless-default-assignment",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-no-useless-default-assignment-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-no-useless-default-assignment-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/no_useless_default_assignment.rs"
+  },
+  {
+    "rule": "typescript/no-useless-empty-export",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-no-useless-empty-export-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-no-useless-empty-export-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/no_useless_empty_export.rs"
+  },
+  {
+    "rule": "typescript/no-wrapper-object-types",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-no-wrapper-object-types-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-no-wrapper-object-types-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/no_wrapper_object_types.rs"
+  },
+  {
+    "rule": "typescript/non-nullable-type-assertion-style",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-non-nullable-type-assertion-style-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-non-nullable-type-assertion-style-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/non_nullable_type_assertion_style.rs"
+  },
+  {
+    "rule": "typescript/prefer-as-const",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-prefer-as-const-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-prefer-as-const-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/prefer_as_const.rs"
+  },
+  {
+    "rule": "typescript/prefer-find",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-prefer-find-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-prefer-find-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/prefer_find.rs"
+  },
+  {
+    "rule": "typescript/prefer-for-of",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-prefer-for-of-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-prefer-for-of-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/prefer_for_of.rs"
+  },
+  {
+    "rule": "typescript/prefer-function-type",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-prefer-function-type-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-prefer-function-type-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/prefer_function_type.rs"
+  },
+  {
+    "rule": "typescript/prefer-includes",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-prefer-includes-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-prefer-includes-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/prefer_includes.rs"
+  },
+  {
+    "rule": "typescript/prefer-literal-enum-member",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-prefer-literal-enum-member-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-prefer-literal-enum-member-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/prefer_literal_enum_member.rs"
+  },
+  {
+    "rule": "typescript/prefer-namespace-keyword",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-prefer-namespace-keyword-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-prefer-namespace-keyword-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/prefer_namespace_keyword.rs"
+  },
+  {
+    "rule": "typescript/prefer-nullish-coalescing",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-prefer-nullish-coalescing-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-prefer-nullish-coalescing-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/prefer_nullish_coalescing.rs"
+  },
+  {
+    "rule": "typescript/prefer-optional-chain",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-prefer-optional-chain-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-prefer-optional-chain-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/prefer_optional_chain.rs"
+  },
+  {
+    "rule": "typescript/prefer-promise-reject-errors",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-prefer-promise-reject-errors-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-prefer-promise-reject-errors-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/prefer_promise_reject_errors.rs"
+  },
+  {
+    "rule": "typescript/prefer-reduce-type-parameter",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-prefer-reduce-type-parameter-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-prefer-reduce-type-parameter-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/prefer_reduce_type_parameter.rs"
+  },
+  {
+    "rule": "typescript/prefer-regexp-exec",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-prefer-regexp-exec-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-prefer-regexp-exec-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/prefer_regexp_exec.rs"
+  },
+  {
+    "rule": "typescript/prefer-return-this-type",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-prefer-return-this-type-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-prefer-return-this-type-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/prefer_return_this_type.rs"
+  },
+  {
+    "rule": "typescript/prefer-string-starts-ends-with",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-prefer-string-starts-ends-with-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-prefer-string-starts-ends-with-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/prefer_string_starts_ends_with.rs"
+  },
+  {
+    "rule": "typescript/require-array-sort-compare",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-require-array-sort-compare-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-require-array-sort-compare-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/require_array_sort_compare.rs"
+  },
+  {
+    "rule": "typescript/restrict-plus-operands",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-restrict-plus-operands-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-restrict-plus-operands-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/restrict_plus_operands.rs"
+  },
+  {
+    "rule": "typescript/restrict-template-expressions",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-restrict-template-expressions-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-restrict-template-expressions-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/restrict_template_expressions.rs"
+  },
+  {
+    "rule": "typescript/return-await",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-return-await-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-return-await-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/return_await.rs"
+  },
+  {
+    "rule": "typescript/switch-exhaustiveness-check",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-switch-exhaustiveness-check-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-switch-exhaustiveness-check-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/switch_exhaustiveness_check.rs"
+  },
+  {
+    "rule": "typescript/triple-slash-reference",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-triple-slash-reference-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-triple-slash-reference-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/triple_slash_reference.rs"
+  },
+  {
+    "rule": "typescript/unbound-method",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/unbound-method.ts"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/unbound-method.ts"
+    }
+  },
+  {
+    "rule": "typescript/unified-signatures",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/typescript-unified-signatures-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/typescript-unified-signatures-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/typescript/unified_signatures.rs"
+  },
+  {
+    "rule": "typescript/use-unknown-in-catch-callback-variable",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/catch-value.ts"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/catch-value.ts"
+    }
+  },
+  {
+    "rule": "unicorn/filename-case",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/server/src/lib/correct-name.ts"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/server/src/lib/WrongName.ts"
+    }
+  },
+  {
+    "rule": "unicorn/no-await-in-promise-methods",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/unicorn-no-await-in-promise-methods-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/unicorn-no-await-in-promise-methods-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/unicorn/no_await_in_promise_methods.rs"
+  },
+  {
+    "rule": "unicorn/no-empty-file",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/unicorn-no-empty-file-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/unicorn-no-empty-file-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/unicorn/no_empty_file.rs"
+  },
+  {
+    "rule": "unicorn/no-invalid-fetch-options",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/unicorn-no-invalid-fetch-options-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/unicorn-no-invalid-fetch-options-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/unicorn/no_invalid_fetch_options.rs"
+  },
+  {
+    "rule": "unicorn/no-invalid-remove-event-listener",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/unicorn-no-invalid-remove-event-listener-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/unicorn-no-invalid-remove-event-listener-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/unicorn/no_invalid_remove_event_listener.rs"
+  },
+  {
+    "rule": "unicorn/no-new-array",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/unicorn-no-new-array-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/unicorn-no-new-array-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/unicorn/no_new_array.rs"
+  },
+  {
+    "rule": "unicorn/no-single-promise-in-promise-methods",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/unicorn-no-single-promise-in-promise-methods-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/unicorn-no-single-promise-in-promise-methods-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/unicorn/no_single_promise_in_promise_methods.rs"
+  },
+  {
+    "rule": "unicorn/no-thenable",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/unicorn-no-thenable-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/unicorn-no-thenable-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/unicorn/no_thenable.rs"
+  },
+  {
+    "rule": "unicorn/no-unnecessary-await",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/unicorn-no-unnecessary-await-pass-1.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/unicorn-no-unnecessary-await-fail-7.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/unicorn/no_unnecessary_await.rs"
+  },
+  {
+    "rule": "unicorn/no-useless-fallback-in-spread",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/unicorn-no-useless-fallback-in-spread-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/unicorn-no-useless-fallback-in-spread-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/unicorn/no_useless_fallback_in_spread.rs"
+  },
+  {
+    "rule": "unicorn/no-useless-length-check",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/unicorn-no-useless-length-check-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/unicorn-no-useless-length-check-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/unicorn/no_useless_length_check.rs"
+  },
+  {
+    "rule": "unicorn/no-useless-spread",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/unicorn-no-useless-spread-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/unicorn-no-useless-spread-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/unicorn/no_useless_spread.rs"
+  },
+  {
+    "rule": "unicorn/prefer-at",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/unicorn-prefer-at-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/unicorn-prefer-at-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/unicorn/prefer_at.rs"
+  },
+  {
+    "rule": "unicorn/prefer-node-protocol",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/unicorn-prefer-node-protocol-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/unicorn-prefer-node-protocol-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/unicorn/prefer_node_protocol.rs"
+  },
+  {
+    "rule": "unicorn/prefer-set-size",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/unicorn-prefer-set-size-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/unicorn-prefer-set-size-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/unicorn/prefer_set_size.rs"
+  },
+  {
+    "rule": "unicorn/prefer-string-starts-ends-with",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/unicorn-prefer-string-starts-ends-with-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/unicorn-prefer-string-starts-ends-with-fail-0.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/unicorn/prefer_string_starts_ends_with.rs"
+  },
+  {
+    "rule": "unused-imports/no-unused-imports",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/unused-imports-no-unused-imports-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/unused-imports-no-unused-imports-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "vitest/expect-expect",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/vitest-expect-expect-pass-0.test.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/vitest-expect-expect-fail-0.test.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/vitest/expect_expect.rs"
+  },
+  {
+    "rule": "vitest/hoisted-apis-on-top",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/vitest-hoisted-apis-on-top-pass-0.test.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/vitest-hoisted-apis-on-top-fail-0.test.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/vitest/hoisted_apis_on_top.rs"
+  },
+  {
+    "rule": "vitest/no-conditional-expect",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/vitest-no-conditional-expect-pass-0.test.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/vitest-no-conditional-expect-fail-0.test.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/vitest/no_conditional_expect.rs"
+  },
+  {
+    "rule": "vitest/no-conditional-tests",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/vitest-no-conditional-tests-pass-0.test.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/vitest-no-conditional-tests-fail-0.test.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/vitest/no_conditional_tests.rs"
+  },
+  {
+    "rule": "vitest/no-disabled-tests",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/vitest-no-disabled-tests-pass-0.test.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/vitest-no-disabled-tests-fail-0.test.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/vitest/no_disabled_tests.rs"
+  },
+  {
+    "rule": "vitest/no-focused-tests",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/vitest-no-focused-tests-pass-0.test.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/vitest-no-focused-tests-fail-0.test.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/vitest/no_focused_tests.rs"
+  },
+  {
+    "rule": "vitest/no-standalone-expect",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/vitest-no-standalone-expect-pass-0.test.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/vitest-no-standalone-expect-fail-0.test.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/vitest/no_standalone_expect.rs"
+  },
+  {
+    "rule": "vitest/prefer-snapshot-hint",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/vitest-prefer-snapshot-hint-pass-0.test.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/vitest-prefer-snapshot-hint-fail-0.test.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/vitest/prefer_snapshot_hint.rs"
+  },
+  {
+    "rule": "vitest/require-awaited-expect-poll",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/vitest-require-awaited-expect-poll-pass-0.test.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/vitest-require-awaited-expect-poll-fail-0.test.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/vitest/require_awaited_expect_poll.rs"
+  },
+  {
+    "rule": "vitest/require-local-test-context-for-concurrent-snapshots",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/vitest-require-local-test-context-for-concurrent-snapshots-pass-0.test.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/vitest-require-local-test-context-for-concurrent-snapshots-fail-0.test.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/vitest/require_local_test_context_for_concurrent_snapshots.rs"
+  },
+  {
+    "rule": "vitest/require-mock-type-parameters",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/vitest-require-mock-type-parameters-pass-0.ts"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/vitest-require-mock-type-parameters-fail-0.ts"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/vitest/require_mock_type_parameters.rs"
+  },
+  {
+    "rule": "vitest/require-to-throw-message",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/vitest-require-to-throw-message-pass-0.test.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/vitest-require-to-throw-message-fail-0.test.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/vitest/require_to_throw_message.rs"
+  },
+  {
+    "rule": "vitest/valid-describe-callback",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/vitest-valid-describe-callback-pass-0.test.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/vitest-valid-describe-callback-fail-0.test.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/vitest/valid_describe_callback.rs"
+  },
+  {
+    "rule": "vitest/valid-expect",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/vitest-valid-expect-pass-0.test.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/vitest-valid-expect-fail-0.test.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/vitest/valid_expect.rs"
+  },
+  {
+    "rule": "vitest/valid-expect-in-promise",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/vitest-valid-expect-in-promise-pass-0.test.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/vitest-valid-expect-in-promise-fail-0.test.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/vitest/valid_expect_in_promise.rs"
+  },
+  {
+    "rule": "vitest/valid-title",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/vitest-valid-title-pass-0.test.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/vitest-valid-title-fail-0.test.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/vitest/valid_title.rs"
+  },
+  {
+    "rule": "vitest/warn-todo",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/vitest-warn-todo-pass-0.test.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/vitest-warn-todo-fail-1.test.tsx"
+    },
+    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/vitest/warn_todo.rs"
+  }
+]

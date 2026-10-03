@@ -1,0 +1,1 @@
+declare const value: {id:string} | null; value?.id;

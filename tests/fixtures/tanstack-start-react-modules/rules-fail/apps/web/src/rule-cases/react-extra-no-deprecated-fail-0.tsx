@@ -1,0 +1,1 @@
+import React from 'react'; const view = React.createClass({ render() { return <div />; } });

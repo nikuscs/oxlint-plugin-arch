@@ -1,0 +1,1 @@
+<TestComponent onClick={doFoo} />

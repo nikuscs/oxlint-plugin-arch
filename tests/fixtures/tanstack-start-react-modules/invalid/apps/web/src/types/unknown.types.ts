@@ -1,0 +1,1 @@
+export type UnknownValue = unknown;

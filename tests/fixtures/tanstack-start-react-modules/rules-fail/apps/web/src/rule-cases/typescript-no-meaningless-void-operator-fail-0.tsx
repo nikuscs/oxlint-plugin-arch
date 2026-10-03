@@ -1,0 +1,1 @@
+void console.log(1);

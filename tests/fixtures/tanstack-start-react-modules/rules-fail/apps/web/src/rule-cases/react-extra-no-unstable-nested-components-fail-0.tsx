@@ -1,0 +1,1 @@
+function Parent() { function Child() { return <p />; } return <Child />; }

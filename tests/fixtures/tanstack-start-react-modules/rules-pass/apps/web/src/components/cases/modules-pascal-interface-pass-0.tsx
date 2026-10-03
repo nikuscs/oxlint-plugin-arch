@@ -1,0 +1,1 @@
+interface Value { id: string }

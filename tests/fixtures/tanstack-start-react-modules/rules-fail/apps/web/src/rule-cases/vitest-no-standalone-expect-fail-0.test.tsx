@@ -1,0 +1,1 @@
+(() => {})('testing', () => expect(true).toBe(false))

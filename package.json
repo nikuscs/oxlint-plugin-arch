@@ -5,19 +5,29 @@
   "type": "module",
   "main": "./dist/index.js",
   "exports": {
-    ".": "./dist/index.js"
+    ".": "./dist/index.js",
+    "./presets": {
+      "types": "./dist/presets/index.d.ts",
+      "default": "./dist/presets/index.js"
+    },
+    "./presets/tanstack-start-react-modules-preset": {
+      "types": "./dist/presets/tanstack-start-react-modules-preset.d.ts",
+      "default": "./dist/presets/tanstack-start-react-modules-preset.js"
+    }
   },
   "files": [
     "CHANGELOG.md",
+    "src/rules/dillon-anti-slop/LICENSE",
+    "src/rules/dillon-anti-slop/UPSTREAM.md",
     "dist"
   ],
   "scripts": {
-    "build": "bun build src/index.ts --outfile dist/index.js --target node --format esm --external @oxlint/plugins",
-    "check": "bun run lint && bun run test && bun run typecheck && bun run build && bun run check:examples",
+    "build": "bun build src/index.ts src/presets/index.ts src/presets/tanstack-start-react-modules-preset.ts src/rules/dillon-anti-slop/index.ts src/rules/module-policy/index.ts --root src --outdir dist --target node --format esm --packages external && tsc --project tsconfig.build.json",
+    "check": "bun run lint && bun run build && bun run typecheck && bun run test && bun run check:examples",
     "lint": "oxlint src examples scripts",
     "test": "vitest run src/tests",
     "typecheck": "tsc --noEmit",
-    "check:examples": "oxlint examples/minimal.oxlint.config.ts -c examples/minimal.oxlint.config.ts --disable-nested-config && oxlint examples/full.oxlint.config.ts -c examples/full.oxlint.config.ts --disable-nested-config && oxlint examples/dist.oxlint.config.ts -c examples/dist.oxlint.config.ts --disable-nested-config && oxlint examples/monorepo.oxlint.config.ts -c examples/monorepo.oxlint.config.ts --disable-nested-config",
+    "check:examples": "oxlint examples/minimal.oxlint.config.ts -c examples/minimal.oxlint.config.ts --disable-nested-config && oxlint examples/full.oxlint.config.ts -c examples/full.oxlint.config.ts --disable-nested-config && oxlint examples/dist.oxlint.config.ts -c examples/dist.oxlint.config.ts --disable-nested-config && oxlint examples/monorepo.oxlint.config.ts -c examples/monorepo.oxlint.config.ts --disable-nested-config && oxlint --print-config -c examples/preset.oxlint.config.ts > /dev/null",
     "prepublishOnly": "bun run check",
     "release": "bash scripts/release.sh",
     "release:dry-run": "bash scripts/release.sh --dry-run",
@@ -26,17 +36,37 @@
     "release:major": "bash scripts/release.sh major --yes"
   },
   "dependencies": {
-    "@oxlint/plugins": "1.78.0"
+    "@eslint-community/eslint-plugin-eslint-comments": "4.8.1",
+    "@oxlint/plugins": "1.85.0",
+    "@regru/eslint-plugin-prefer-early-return": "1.0.0",
+    "@shadcn/lint": "0.1.5",
+    "eslint-plugin-better-tailwindcss": "4.7.0",
+    "eslint-plugin-import": "2.32.0",
+    "eslint-plugin-perfectionist": "5.12.1",
+    "eslint-plugin-react": "7.37.5",
+    "eslint-plugin-react-you-might-not-need-an-effect": "1.0.2",
+    "eslint-plugin-svg-jsx": "1.3.0",
+    "eslint-plugin-tsdoc": "0.5.3",
+    "eslint-plugin-unused-imports": "4.4.1",
+    "oxlint-plugin-eslint": "1.85.0"
   },
   "peerDependencies": {
-    "oxlint": ">=1.78.0"
+    "oxlint": ">=1.85.0",
+    "oxlint-tsgolint": ">=7.0.2003"
   },
   "devDependencies": {
+    "@orpc/server": "1.15.4",
+    "@tanstack/react-router": "1.170.41",
     "@types/node": "26.0.1",
+    "@types/react": "19.3.0",
     "bumpp": "10.4.1",
-    "oxlint": "1.78.0",
+    "oxlint": "1.85.0",
+    "oxlint-tsgolint": "7.0.2003",
+    "react": "19.3.0",
+    "tailwindcss": "4.3.3",
     "typescript": "6.0.3",
-    "vitest": "4.1.9"
+    "vitest": "4.1.9",
+    "zod": "4.6.5"
   },
   "packageManager": "bun@1.3.14",
   "license": "MIT",
@@ -57,5 +87,10 @@
     "architecture",
     "lint",
     "plugin"
-  ]
+  ],
+  "peerDependenciesMeta": {
+    "oxlint-tsgolint": {
+      "optional": true
+    }
+  }
 }

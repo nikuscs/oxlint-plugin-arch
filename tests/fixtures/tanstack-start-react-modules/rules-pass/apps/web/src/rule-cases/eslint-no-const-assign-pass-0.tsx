@@ -1,0 +1,1 @@
+const x = 0; { let x; x = 1; }

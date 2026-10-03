@@ -1,0 +1,1 @@
+if (a == b == c) { console.log('foo') }

@@ -1,0 +1,1 @@
+import * as values from './exports'; console.log(values.missing);

@@ -147,6 +147,7 @@ export default defineConfig({
         }],
         'arch/no-unescaped-like': ['error', {
           methods: ['like', 'ilike'],
+          operatorMethods: ['where'],
           sanitizers: ['escapeLikeWildcards'],
           allowSanitizedBindings: true,
         }],

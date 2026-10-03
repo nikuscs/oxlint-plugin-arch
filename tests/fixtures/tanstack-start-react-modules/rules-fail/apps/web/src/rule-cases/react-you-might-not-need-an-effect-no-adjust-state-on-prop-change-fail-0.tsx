@@ -1,0 +1,2 @@
+import { useEffect, useState } from 'react';
+function Component({items}) { const [reverse,setReverse] = useState(false); const [selection,setSelection] = useState(null); useEffect(() => {setSelection(null);}, [items]); return <div>{selection}</div>; }

@@ -1,0 +1,1 @@
+import mod1 from 'mod'; mod1 = 0

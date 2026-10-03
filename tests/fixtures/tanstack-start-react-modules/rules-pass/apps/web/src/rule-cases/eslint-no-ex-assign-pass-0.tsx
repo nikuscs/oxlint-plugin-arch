@@ -1,0 +1,1 @@
+try { } catch (e) { three = 2 + 1; }

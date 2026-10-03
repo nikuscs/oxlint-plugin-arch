@@ -1,0 +1,1 @@
+var foo = { get bar(){return true;} };

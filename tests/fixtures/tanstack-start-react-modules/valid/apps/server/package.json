@@ -1,0 +1,7 @@
+{
+  "name": "@fixture/server",
+  "type": "module",
+  "exports": {
+    "./client": "./src/entry.client.ts"
+  }
+}

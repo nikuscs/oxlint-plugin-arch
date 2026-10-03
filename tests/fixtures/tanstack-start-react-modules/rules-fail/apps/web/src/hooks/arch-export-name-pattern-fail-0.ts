@@ -1,0 +1,1 @@
+export function chat() { return 1; }

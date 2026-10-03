@@ -1,0 +1,1 @@
+import {test,expect} from 'vitest'; test('works',()=>{if(value){expect(1).toBe(1);}});

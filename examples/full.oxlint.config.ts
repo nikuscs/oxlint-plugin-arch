@@ -16,7 +16,7 @@ export default defineConfig({
           methods: ['push', 'unshift', 'splice', 'set', 'add'],
           checkAssignments: true,
         }],
-        'arch/padding-between-statements': ['error', { returnMinStatements: 3 }],
+        'arch/padding-between-statements': ['error', { returnMinStatements: 3, multilineVariables: true }],
         'arch/key-value-same-line': 'error',
         'arch/object-multiline': ['error', { minProperties: 3, scope: 'call-args', indent: 2 }],
         'arch/call-array-multiline': ['error', {
@@ -255,6 +255,7 @@ export default defineConfig({
       rules: {
         'arch/no-unescaped-like': ['error', {
           methods: ['like', 'ilike'],
+          operatorMethods: ['where'],
           sanitizers: ['escapeLikeWildcards'],
           allowSanitizedBindings: true,
         }],

@@ -1,0 +1,2 @@
+import { useEffect, useState } from 'react';
+function Component() { const [round,setRound] = useState(1); const [isOver,setIsOver] = useState(false); useEffect(() => {if(round > 10) {setIsOver(true);}}, [round]); return <div>{isOver}</div>; }

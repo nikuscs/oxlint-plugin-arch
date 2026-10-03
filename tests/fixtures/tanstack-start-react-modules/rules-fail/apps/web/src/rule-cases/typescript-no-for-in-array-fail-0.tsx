@@ -1,0 +1,1 @@
+for (const n in [1,2]) { console.log(n); }

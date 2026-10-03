@@ -1,0 +1,1 @@
+export default () => { const view = <div/>; return view; };

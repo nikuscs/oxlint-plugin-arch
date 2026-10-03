@@ -1,0 +1,1 @@
+const view = <svg xmlSpace="preserve" />;

@@ -1,0 +1,1 @@
+import {test,expect} from 'vitest'; test('works',()=>{return Promise.resolve(1).then(value=>{expect(value).toBe(1);});});

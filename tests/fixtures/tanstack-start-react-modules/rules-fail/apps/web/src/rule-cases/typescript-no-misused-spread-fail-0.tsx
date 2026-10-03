@@ -1,0 +1,1 @@
+const value = { ...Promise.resolve(1) };

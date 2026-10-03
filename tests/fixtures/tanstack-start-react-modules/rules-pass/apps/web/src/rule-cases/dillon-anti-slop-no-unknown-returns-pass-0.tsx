@@ -1,0 +1,1 @@
+function process(): string { return "value"; }

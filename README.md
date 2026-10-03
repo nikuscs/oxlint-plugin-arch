@@ -11,6 +11,130 @@ Keep a codebase shaped the way you designed it: files in the right folders, expo
 
 ---
 
+## TanStack Start React modules preset
+
+The optional **`tanstack-start-react-modules-preset`** supplies an opinionated application policy. The individual `arch` rules remain generic; importing the plugin alone does not enable the preset.
+
+```sh
+bun add -d oxlint oxlint-tsgolint oxlint-plugin-arch
+```
+
+In your root `oxlint.config.ts`:
+
+```ts
+import preset from 'oxlint-plugin-arch/presets/tanstack-start-react-modules-preset';
+
+export default preset({ root: import.meta.dirname });
+```
+
+The equivalent named import is `tanstackStartReactModulesPreset` from `oxlint-plugin-arch/presets`. Both return a normal `OxlintConfig` object. The preset ships its JS-plugin dependencies and resolves them from its own package, including React, effects, Tailwind, shadcn, import ordering, formatting and type-safety rules. Type-aware linting is enabled; install `oxlint-tsgolint` and provide a tsconfig for the files you lint. Oxlint 1.85 or newer is required.
+
+### Architecture
+
+Paths are relative **app roots**, not `src` directories. These are the defaults:
+
+```ts
+export default preset({
+  root: import.meta.dirname,
+  architecture: {
+    web: 'apps/web',
+    server: 'apps/server',
+    scripts: 'scripts',
+    packages: 'packages',
+  },
+});
+```
+
+The preset applies frontend rules under `apps/web/src`, backend rules under `apps/server/src`, and package import boundaries under `packages`. Add `runner: 'apps/runner'` for another backend app. Set a role to `false` when absent. A standalone frontend can use `web: '.', server: false, packages: false`. The default CSS entry point is `<web>/src/application/styles.css`; configure `tailwind.entryPoint` when different, or `tailwind: false` for a project without Tailwind. `root` makes asset and package resolution independent of the lint command's working directory; invoke the root config from its real filesystem location.
+
+### Configure policies
+
+Each policy accepts `true` (default configuration), `false` (disabled), or a callback receiving fresh native Oxlint override objects. Callbacks run before the overall severity is applied. They never mutate another preset invocation.
+
+```ts
+export default preset({
+  root: import.meta.dirname,
+  level: 'warn',
+  complexity: 24,
+  banTypes: (current) => current.map((scope) => ({
+    ...scope,
+    excludeFiles: [...(scope.excludeFiles ?? []), '**/portable/**'],
+  })),
+});
+```
+
+Use `banTypes: false` to disable type **location** restrictions, or `banTypes: true` to retain them. Other policies such as `typeSafety` continue to reject explicit `any`/`unknown`. To extend rather than modify a policy, append an override with its own `files` and `rules`:
+
+```ts
+export default preset({
+  banTypes: (current) => [
+    ...current,
+    {
+      files: ['tools/**/*.ts'],
+      rules: { 'arch/no-type-declarations': 'error' },
+    },
+  ],
+});
+```
+
+Available policies: `banTypes`, `typeSafety`, `serviceModules`, `moduleLayout`, `naming`, `comments`, `formatting`, `layout`, `imports`, `reactRules`, `effects`, `memoization`, `routes`, `forms`, `schemas`, `boundaries`, `tests`, `wrappers`, `mutableState`, `backendRules`, `clientOwnership`, `tailwindRules`, and `shadcnRules`.
+
+`level` is `error` by default and can be `warn`. Deliberately disabled rules remain disabled. `complexity` defaults to 32. `reactCompiler: false` disables the manual-memoization ban. `shadcn: false` disables shadcn integration while retaining Tailwind checks. `tailwind` accepts `entryPoint` and `rootFontSize`; `shadcn` accepts `ui` and `componentImports`. UI-kit files remain linted, with architecture/appearance exceptions rather than a global ignore.
+
+### Exceptions and native customization
+
+`exclude` disables only the named rule in the selected files, including rules enabled through several scopes. `ignorePatterns` adds whole-file ignores to the generated/build/dependency defaults.
+
+```ts
+export default preset({
+  exclude: {
+    'arch/no-trivial-functions': ['apps/web/src/services/adapter.client.ts'],
+    'modules/service-types': ['apps/server/src/services/portable-parser.ts'],
+  },
+  ignorePatterns: ['vendor/**'],
+});
+```
+
+Native composition remains available; later matching overrides can change an individual rule without a policy callback:
+
+```ts
+import { defineConfig } from 'oxlint';
+import preset from 'oxlint-plugin-arch/presets/tanstack-start-react-modules-preset';
+
+export default defineConfig({
+  options: { typeAware: true },
+  extends: [preset({ root: import.meta.dirname })],
+  overrides: [{
+    files: ['scripts/**/*.ts'],
+    rules: { 'unicorn/filename-case': 'off' },
+  }],
+});
+```
+
+Rule-specific inline disables are allowed with a reason after `--`. The preset does not force warnings to fail or define a CI/Fallow/compiler workflow.
+
+Oxlint reads `typeAware` from the root config only. The direct `export default preset(...)` form already sets it; when using `extends`, keep the explicit root option shown above.
+
+### Application conventions
+
+- Single quotes, semicolons, two spaces, braced multiline control flow, early returns, 160-character lines and 400-line app and test files. Promise arrays and call objects expand; method chains are not forced multiline.
+- Components live in one group folder with matching prefixed names. Hooks are flat `use-*.ts` files. Local React types are prefixed interfaces; exported Props interfaces are allowed. Other types belong in domain `types/*.types.ts` files.
+- Backend operations use `domain-action.name.ts` / `domain-query.name.ts`. Services allow one domain folder, one exported operation without private helpers, object parameters and named signature types. Explicit `.utils.ts` files can hold generic helpers, but their types still belong in domain type files. Domain type and constant files cannot contain top-level functions. Frontend services use `.client.ts`, `.server.ts` or `.rsc.ts`.
+- Routes wire components, forms use a schema resolver, context creation has an owner directory, and effects cannot replace derived values or event handlers. React Compiler projects reject manual memoization. Test IDs are allowed. JSX rejects new object/function props inside render, and noninteractive elements cannot receive a tab index.
+- Safety rules reject unknown/any, chained assertions, unjustified assertions, loose dictionaries, module mocks, shared mutable bindings and focused/skipped/placeholder tests. Comments are limited to supported directives, SAFETY notes and explicit exceptions. Type/constant files do not allow SAFETY comments; prompt files require explicit comment exceptions. UI-kit code retains type-safety, formatting and layout checks.
+- Unbound methods and untyped mocks are rejected, including in tests. Console calls require an explicit script/CLI scope or adapter exclusion. Promise rejection callbacks must not receive implicit `any`; omitting the error parameter is allowed. App code needing an `unknown` boundary must use an explicit rule-specific exception.
+- Backend owns shared schemas and exposes a public client entry point; frontend type files are runtime-free. Packages cannot import app internals, RPC handlers delegate database work, and service dependencies are injected.
+
+Provide `publicApi: ['apps/server/src/rpc/api/**/*.ts']` for externally exposed oRPC endpoints requiring output schemas; exposure cannot be inferred from filenames or authentication. `publicEntrypoints` defaults to `<backend package name>/client` read from each configured backend manifest. Configure it for another public API. Other targeted settings are `rpcClient`, `formResolver`, `schemaComposers`, `sanitizers`, `internalPatterns`, and `cli` (explicit console/CLI exceptions).
+
+For custom import aliases, supply `aliases: { '@backend': 'apps/server/src' }`. Keys are import prefixes without wildcards, and values are directories relative to `root`. Boundary checks then treat `@backend/services/chat.service` like its relative path. `internalPatterns` controls import sorting only.
+
+Native correctness defaults are promoted through `categories.correctness`; redundant rule entries are omitted after checking Oxlint's resolved configuration. Framework policies add the opinionated options on top. Other future presets can have their own named subpath under `/presets`; this factory does not enable any other preset.
+
+The preset has [paired CLI fixtures for every enabled rule](tests/fixtures/tanstack-start-react-modules/README.md), including Oxlint defaults, plus architecture and consumer-override scenarios. The coverage guard detects newly enabled rules without fixtures.
+
+The preset's supporting `modules/*` rules keep independent policies from overwriting one another: service type/factory matching, helper restrictions, import boundaries, reasoned lint directives, Shape-suffix names, empty effects, memoization and test modifiers. Dillon Mulroy's vendored [anti-slop rules](https://github.com/dmmulroy/anti-slop) live in `src/rules/dillon-anti-slop` and use the `dillon-anti-slop/*` namespace. They ship in this package; consumers do not need local plugin files. These supporting plugins are loaded by the preset, not registered by the generic plugin entry point.
+
 ## 📦 Install
 
 ```bash
@@ -128,7 +252,7 @@ Options that take one regex string (`pattern`, `allowPattern`, `forbid`, `requir
 | `no-rederive-schema` | No re-deriving types from schemas imported from elsewhere. |
 | `no-single-use-scalar-schema` | Scalar Zod aliases used once get inlined. |
 | `require-orpc-output` | oRPC procedures declare a named `.output()` schema. |
-| `no-unescaped-like` | `LIKE` / `ILIKE` values pass through your sanitizer. |
+| `no-unescaped-like` | `LIKE` / `ILIKE` values pass through your sanitizer; optional `operatorMethods` covers calls such as `.where(column, 'like', value)`. |
 
 ### 🚧 Boundaries & safety
 
@@ -159,7 +283,7 @@ Options that take one regex string (`pattern`, `allowPattern`, `forbid`, `requir
 
 | Rule | What it enforces |
 | --- | --- |
-| `padding-between-statements` 🔧 | Blank lines around functions and classes, around control flow, and before `return` in longer blocks. |
+| `padding-between-statements` 🔧 | Blank lines around functions and classes, around control flow, and before `return` in longer blocks; `multilineVariables: true` also separates multiline declarations, including exports (default `false`). |
 | `object-multiline` 🔧 | Objects with 3+ properties passed to a call go one property per line (`scope: 'all'` for every object). |
 | `key-value-same-line` 🔧 | An object key and the start of its value stay on the same line. |
 | `chain-newline` 🔧 | Long method chains go one call per line. You pick which chains with `groups`. |

@@ -1,0 +1,1 @@
+declare const value: string | null; if (value) { console.log(value); }

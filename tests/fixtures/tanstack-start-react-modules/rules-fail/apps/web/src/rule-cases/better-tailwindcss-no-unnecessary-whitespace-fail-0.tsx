@@ -1,0 +1,1 @@
+const view = <div className="flex  p-4" />;

@@ -1,0 +1,1 @@
+declare const value: string; const label = `${value}`;

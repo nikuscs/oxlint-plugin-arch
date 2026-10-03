@@ -1,0 +1,1 @@
+switch(foo) { case 0: a(); /* falls through */ case 1: b(); }

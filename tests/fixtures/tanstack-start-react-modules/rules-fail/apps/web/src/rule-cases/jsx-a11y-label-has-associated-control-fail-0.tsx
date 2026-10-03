@@ -1,0 +1,1 @@
+<label htmlFor="js_id"><span><span><span>A label</span></span></span></label>

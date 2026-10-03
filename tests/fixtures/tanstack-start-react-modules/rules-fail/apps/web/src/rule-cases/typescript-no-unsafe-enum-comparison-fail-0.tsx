@@ -1,0 +1,1 @@
+enum Value { First }; declare const value: Value; value === 0;

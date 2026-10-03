@@ -1,0 +1,1 @@
+declare const value: boolean; if (value === true) { console.log(value); }

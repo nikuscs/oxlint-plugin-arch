@@ -1,0 +1,1 @@
+const view = <div role="list" onClick={() => {}} />;
