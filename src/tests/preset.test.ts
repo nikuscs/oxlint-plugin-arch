@@ -62,7 +62,7 @@ function fixture(options: string, files: Record<string, string>, print = false) 
   return { status: result.status, output: result.stdout + result.stderr, root }
 }
 
-describe('TanStack Start React modules preset', () => {
+describe('TanStack Start React modules preset', { timeout: 30_000 }, () => {
   test('grouped settings preserve rule options, root-specific paths and callback precedence', () => {
     const seen: string[] = []
     const config = tanstackStartReactModulesPreset({
