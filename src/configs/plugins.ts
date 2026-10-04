@@ -48,7 +48,8 @@ export function presetPluginsConfig(context: PresetContext): OxlintConfig {
   }
 
   if (Object.keys(css).length && options.tailwind !== false) {
-    jsPlugins.push(require.resolve('eslint-plugin-better-tailwindcss'))
+    jsPlugins.push(require.resolve('oxlint-tailwindcss'))
+    settings.tailwindcss = { rootFontSize: options.tailwind?.rootFontSize ?? 16 }
 
     if (options.shadcn !== false) {
       jsPlugins.push(require.resolve('@shadcn/lint'))

@@ -117,13 +117,9 @@ export function presetReactConfig(context: PresetContext): PresetPolicies {
         Object.fromEntries(
           Object.entries(presetTailwindRules).map(([rule, severity]) => [
             rule,
-            [
-              severity,
-              {
-                entryPoint,
-                rootFontSize: options.tailwind === false ? 16 : (options.tailwind?.rootFontSize ?? 16),
-              },
-            ],
+            rule === 'tailwindcss/no-duplicate-classes' || rule === 'tailwindcss/no-unnecessary-whitespace'
+              ? severity
+              : [severity, { entryPoint }],
           ]),
         ),
       ),

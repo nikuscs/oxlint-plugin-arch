@@ -29,6 +29,10 @@ export default preset({ root: import.meta.dirname });
 
 The equivalent named import is `tanstackStartReactModulesPreset` from `oxlint-plugin-arch/presets`. Both return a normal `OxlintConfig` object. The preset ships its JS-plugin dependencies and resolves them from its own package, including React, effects, Tailwind, shadcn, import ordering, formatting and type-safety rules. Type-aware linting is enabled; install `oxlint-tsgolint` and provide a tsconfig for the files you lint. Oxlint 1.85 or newer is required.
 
+Tailwind checks use `oxlint-tailwindcss`: canonical names, ordering, shorthand, conflicts, duplicates, deprecated classes and whitespace. Shadcn retains unknown-class validation and component styling contracts. The Tailwind plugin caches compiled theme data on disk; cold runs can cost more than subsequent runs. Set `OXLINT_TAILWINDCSS_CACHE_DIR` to control its cache location. Existing `better-tailwindcss/*` consumer overrides must migrate to `tailwindcss/*`: `enforce-canonical-classes` becomes `enforce-canonical`, `enforce-consistent-class-order` becomes `enforce-sort-order`, and `enforce-shorthand-classes` becomes `enforce-shorthand`; the other enabled rule suffixes remain the same.
+
+Custom utilities must be declared in the configured CSS entry point or its imports. Conflicts with properties defined by those utilities are still reported. Review intentional property overrides instead of globally allowing custom class names. In Oxlint 1.85, overlapping autofixes to the same class string can require another `--fix` run before it is clean.
+
 ### Architecture
 
 Paths are relative **app roots**, not `src` directories. These are the defaults:

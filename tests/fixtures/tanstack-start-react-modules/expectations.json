@@ -605,7 +605,7 @@
     "project": "invalid",
     "file": "apps/web/src/components/chats/chat-duplicate.tsx",
     "rules": [
-      "better-tailwindcss/no-duplicate-classes"
+      "tailwindcss/no-duplicate-classes"
     ],
     "decisions": [
       41
@@ -616,7 +616,7 @@
     "project": "invalid",
     "file": "apps/web/src/components/chats/chat-shorthand.tsx",
     "rules": [
-      "better-tailwindcss/enforce-shorthand-classes"
+      "tailwindcss/enforce-shorthand"
     ],
     "decisions": [
       41

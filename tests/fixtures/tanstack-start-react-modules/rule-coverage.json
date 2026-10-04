@@ -440,83 +440,6 @@
     }
   },
   {
-    "rule": "better-tailwindcss/enforce-canonical-classes",
-    "pass": {
-      "project": "rules-pass",
-      "file": "apps/web/src/rule-cases/better-tailwindcss-enforce-canonical-classes-pass-0.tsx"
-    },
-    "fail": {
-      "project": "rules-fail",
-      "file": "apps/web/src/rule-cases/better-tailwindcss-enforce-canonical-classes-fail-0.tsx"
-    }
-  },
-  {
-    "rule": "better-tailwindcss/enforce-consistent-class-order",
-    "pass": {
-      "project": "rules-pass",
-      "file": "apps/web/src/rule-cases/better-tailwindcss-enforce-consistent-class-order-pass-0.tsx"
-    },
-    "fail": {
-      "project": "rules-fail",
-      "file": "apps/web/src/rule-cases/better-tailwindcss-enforce-consistent-class-order-fail-0.tsx"
-    }
-  },
-  {
-    "rule": "better-tailwindcss/enforce-shorthand-classes",
-    "pass": {
-      "project": "rules-pass",
-      "file": "apps/web/src/components/chats/chat-shorthand.tsx"
-    },
-    "fail": {
-      "project": "invalid",
-      "file": "apps/web/src/components/chats/chat-shorthand.tsx"
-    }
-  },
-  {
-    "rule": "better-tailwindcss/no-conflicting-classes",
-    "pass": {
-      "project": "rules-pass",
-      "file": "apps/web/src/rule-cases/better-tailwindcss-no-conflicting-classes-pass-0.tsx"
-    },
-    "fail": {
-      "project": "rules-fail",
-      "file": "apps/web/src/rule-cases/better-tailwindcss-no-conflicting-classes-fail-0.tsx"
-    }
-  },
-  {
-    "rule": "better-tailwindcss/no-deprecated-classes",
-    "pass": {
-      "project": "rules-pass",
-      "file": "apps/web/src/rule-cases/better-tailwindcss-no-deprecated-classes-pass-0.tsx"
-    },
-    "fail": {
-      "project": "rules-fail",
-      "file": "apps/web/src/rule-cases/better-tailwindcss-no-deprecated-classes-fail-0.tsx"
-    }
-  },
-  {
-    "rule": "better-tailwindcss/no-duplicate-classes",
-    "pass": {
-      "project": "rules-pass",
-      "file": "apps/web/src/components/chats/chat-duplicate.tsx"
-    },
-    "fail": {
-      "project": "invalid",
-      "file": "apps/web/src/components/chats/chat-duplicate.tsx"
-    }
-  },
-  {
-    "rule": "better-tailwindcss/no-unnecessary-whitespace",
-    "pass": {
-      "project": "rules-pass",
-      "file": "apps/web/src/rule-cases/better-tailwindcss-no-unnecessary-whitespace-pass-0.tsx"
-    },
-    "fail": {
-      "project": "rules-fail",
-      "file": "apps/web/src/rule-cases/better-tailwindcss-no-unnecessary-whitespace-fail-0.tsx"
-    }
-  },
-  {
     "rule": "dillon-anti-slop/no-chained-type-assertions",
     "pass": {
       "project": "rules-pass",
@@ -4207,6 +4130,83 @@
     "fail": {
       "project": "rules-fail",
       "file": "apps/web/src/rule-cases/svg-jsx-no-style-string-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "tailwindcss/enforce-canonical",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/tailwindcss-enforce-canonical-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/tailwindcss-enforce-canonical-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "tailwindcss/enforce-shorthand",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/components/chats/chat-shorthand.tsx"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/web/src/components/chats/chat-shorthand.tsx"
+    }
+  },
+  {
+    "rule": "tailwindcss/enforce-sort-order",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/tailwindcss-enforce-sort-order-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/tailwindcss-enforce-sort-order-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "tailwindcss/no-conflicting-classes",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/tailwindcss-no-conflicting-classes-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/tailwindcss-no-conflicting-classes-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "tailwindcss/no-deprecated-classes",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/tailwindcss-no-deprecated-classes-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/tailwindcss-no-deprecated-classes-fail-0.tsx"
+    }
+  },
+  {
+    "rule": "tailwindcss/no-duplicate-classes",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/components/chats/chat-duplicate.tsx"
+    },
+    "fail": {
+      "project": "invalid",
+      "file": "apps/web/src/components/chats/chat-duplicate.tsx"
+    }
+  },
+  {
+    "rule": "tailwindcss/no-unnecessary-whitespace",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/tailwindcss-no-unnecessary-whitespace-pass-0.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/tailwindcss-no-unnecessary-whitespace-fail-0.tsx"
     }
   },
   {

@@ -371,14 +371,14 @@ export const presetEffectsRules: PresetRules = {
 }
 
 export const presetTailwindRules = {
-  'better-tailwindcss/enforce-canonical-classes': 'error',
-  'better-tailwindcss/enforce-consistent-class-order': 'error',
-  'better-tailwindcss/enforce-shorthand-classes': 'error',
-  'better-tailwindcss/no-conflicting-classes': 'error',
-  'better-tailwindcss/no-duplicate-classes': 'error',
-  'better-tailwindcss/no-unknown-classes': 'off',
-  'better-tailwindcss/no-unnecessary-whitespace': 'error',
-  'better-tailwindcss/no-deprecated-classes': 'error',
+  'tailwindcss/enforce-canonical': 'error',
+  'tailwindcss/enforce-sort-order': 'error',
+  'tailwindcss/enforce-shorthand': 'error',
+  'tailwindcss/no-conflicting-classes': 'error',
+  'tailwindcss/no-duplicate-classes': 'error',
+  'tailwindcss/no-unknown-classes': 'off',
+  'tailwindcss/no-unnecessary-whitespace': 'error',
+  'tailwindcss/no-deprecated-classes': 'error',
 } satisfies PresetRules
 
 export const presetImportRules: PresetRules = {

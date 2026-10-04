@@ -1,1 +1,0 @@
-const view = <div className="flex-grow" />;

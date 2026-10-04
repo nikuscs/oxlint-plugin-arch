@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Replace the preset's `eslint-plugin-better-tailwindcss` dependency with `oxlint-tailwindcss` 1.14.0. Preserve seven Tailwind checks, per-root CSS themes and root font size, with shadcn retaining unknown-class and component checks. Consumer rule overrides must use the new `tailwindcss/*` IDs documented in the README. Add real autofix/idempotence coverage; deprecated classes now belong to the dedicated deprecation diagnostic.
+
 - Breaking unreleased preset API cleanup: grouped limits, modules, imports, oRPC, SQL, forms, React and TanStack Start settings; all boolean/callback policies now live under `policies`. Use `severity`, `cliFiles` and `ruleExclusions`; Tailwind/shadcn leaves use explicit names. Old flat preset keys are removed. Rule behavior, defaults, callback order and standalone rule APIs are unchanged.
 
 - Configure per-root folder layouts through role/object architecture entries; keep shorthand defaults, exact flat/domain structure, hook/component naming and layout-derived RPC ownership.

@@ -146,7 +146,7 @@ describe('TanStack Start React modules preset', { timeout: 30_000 }, () => {
       policies: { react: false, imports: false, statementLayout: false },
     })
     const contents = JSON.stringify(config)
-    expect(contents).not.toContain('eslint-plugin-better-tailwindcss')
+    expect(contents).not.toContain('oxlint-tailwindcss')
     expect(contents).not.toContain('@shadcn/lint')
     expect(contents).not.toContain('perfectionist/sort-imports')
     expect(contents).not.toContain('react/display-name')
@@ -857,16 +857,16 @@ describe('TanStack Start React modules preset', { timeout: 30_000 }, () => {
     })
     expect(
       config.overrides
-        ?.filter((scope) => scope.rules?.['better-tailwindcss/enforce-canonical-classes'])
-        .map((scope) => ({ files: scope.files, rule: scope.rules?.['better-tailwindcss/enforce-canonical-classes'] })),
+        ?.filter((scope) => scope.rules?.['tailwindcss/enforce-canonical'])
+        .map((scope) => ({ files: scope.files, rule: scope.rules?.['tailwindcss/enforce-canonical'] })),
     ).toEqual([
       {
         files: ['apps/dashboard/src/**/*.{ts,tsx,mts,cts}'],
-        rule: ['error', { entryPoint: '/fixture/apps/dashboard/src/application/styles.css', rootFontSize: 16 }],
+        rule: ['error', { entryPoint: '/fixture/apps/dashboard/src/application/styles.css' }],
       },
       {
         files: ['apps/storefront/src/**/*.{ts,tsx,mts,cts}'],
-        rule: ['error', { entryPoint: '/fixture/themes/store.css', rootFontSize: 16 }],
+        rule: ['error', { entryPoint: '/fixture/themes/store.css' }],
       },
     ])
     const result = fixture("architecture: { dashboard: 'web', storefront: 'web' },\n  tailwind: {  },", {
@@ -1140,6 +1140,35 @@ describe('TanStack Start React modules preset', { timeout: 30_000 }, () => {
       ),
     ).toBe(true)
     expect(config.rules['no-debugger']).toBe('deny')
+  })
+
+  test('Tailwind fixes remain idempotent and recognize theme utilities and invalid classes', () => {
+    const result = fixture('tailwind: { rootFontSize: 18 },', {
+      'apps/web/components.json': '{"tailwind":{"css":"src/application/styles.css"}}',
+      'apps/web/src/application/styles.css':
+        '@import "tailwindcss";\n@theme { --color-brand: #123456; }\n@utility hit-area-2 { position: relative; }\n',
+      'apps/web/src/components/ui/card.tsx':
+        "export function Card() {\n  return <div className='hit-area-2 bg-brand flex flex h-4 w-4'>Hello</div>;\n}\n",
+      'apps/web/src/components/ui/bad.tsx':
+        "export function Bad() {\n  return <div className='itms-center'>Hello</div>;\n}\n",
+    })
+    expect(result.output).toContain('tailwindcss(no-duplicate-classes)')
+    expect(result.output).toContain('tailwindcss(enforce-shorthand)')
+    expect(result.output).toContain('shadcn(no-unknown-classes)')
+    const path = resolve(result.root, 'apps/web/src/components/ui/card.tsx')
+    const args = [binary, '-c', resolve(result.root, 'oxlint.config.ts'), '--fix', '--format', 'json', path]
+    let fixed = spawnSync(process.execPath, args, { cwd: result.root, encoding: 'utf8' })
+    for (let pass = 1; pass < 4 && fixed.status !== 0; pass++) {
+      fixed = spawnSync(process.execPath, args, { cwd: result.root, encoding: 'utf8' })
+    }
+    expect(fixed.status, fixed.stdout + fixed.stderr).toBe(0)
+    const source = readFileSync(path, 'utf8')
+    expect(source).toContain('size-4')
+    expect(source).toContain('bg-brand')
+    expect(source).toContain('hit-area-2')
+    const repeated = spawnSync(process.execPath, args, { cwd: result.root, encoding: 'utf8' })
+    expect(repeated.status, repeated.stdout + repeated.stderr).toBe(0)
+    expect(readFileSync(path, 'utf8')).toBe(source)
   })
 
   test('default React, Tailwind and shadcn plugins lint a real component', () => {
