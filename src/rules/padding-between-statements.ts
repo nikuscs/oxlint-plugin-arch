@@ -62,13 +62,17 @@ function paddingBlankLineFix(
   const newlineStart = prev.range[1] + match.index
   const newlineEnd = newlineStart + match[0].length
   // Why: inserting inside a spanning block comment would corrupt it; that gap is ambiguous.
-  if (comments.some(comment => comment.range[0] < newlineEnd && comment.range[1] > newlineStart)) {
+  if (comments.some((comment) => comment.range[0] < newlineEnd && comment.range[1] > newlineStart)) {
     return null
   }
   // Why: a blank line after this directive would disconnect it from the statement it suppresses.
-  if (comments.some(comment =>
-    comment.loc.start.line === prev.loc.end.line
-    && /^\s*[A-Za-z][\w-]*-disable-next-line\b/.test(commentsNormalizedValue(comment)))) {
+  if (
+    comments.some(
+      (comment) =>
+        comment.loc.start.line === prev.loc.end.line &&
+        /^\s*[A-Za-z][\w-]*-disable-next-line\b/.test(commentsNormalizedValue(comment)),
+    )
+  ) {
     return null
   }
 
@@ -85,14 +89,16 @@ export const paddingBetweenStatements = defineRule({
   meta: {
     type: 'layout',
     fixable: 'whitespace',
-    schema: [{
-      type: 'object',
-      additionalProperties: false,
-      properties: {
-        returnMinStatements: { type: 'integer', minimum: 1, default: 3 },
-        multilineVariables: { type: 'boolean' },
+    schema: [
+      {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          returnMinStatements: { type: 'integer', minimum: 1, default: 3 },
+          multilineVariables: { type: 'boolean' },
+        },
       },
-    }],
+    ],
     messages: {
       variableAndBlock: 'Expected a blank line between a variable declaration and a function/class.',
       beforeBlock: 'Expected a blank line before a function/class declaration.',
@@ -122,35 +128,39 @@ export const paddingBetweenStatements = defineRule({
 
         const prevKind = paddingKind(prev)
         const currKind = paddingKind(curr)
-        const multiline = multilineVariables && ((prevKind === 'variable' && prev.loc.start.line !== prev.loc.end.line)
-          || (currKind === 'variable' && curr.loc.start.line !== curr.loc.end.line))
-        const messageId = multiline ? 'multilineVariable' : (prevKind === 'variable' && currKind === 'block') || (prevKind === 'block' && currKind === 'variable')
-          ? 'variableAndBlock'
-          : currKind === 'block'
-            ? 'beforeBlock'
-            : prevKind === 'block'
-              ? 'afterBlock'
-              : prevKind === 'variable' && currKind === 'control'
-                ? 'variableAndControl'
-                : prevKind === 'control' && currKind === 'variable'
-                  ? 'controlAndVariable'
-                  : prevKind === 'control' && currKind === 'control'
-                    ? 'consecutiveControl'
-                    : currKind === 'return' && prevKind !== 'variable' && statements.length >= returnMinStatements
-                      ? 'beforeReturn'
-                      : null
+        const multiline =
+          multilineVariables &&
+          ((prevKind === 'variable' && prev.loc.start.line !== prev.loc.end.line) ||
+            (currKind === 'variable' && curr.loc.start.line !== curr.loc.end.line))
+        const messageId = multiline
+          ? 'multilineVariable'
+          : (prevKind === 'variable' && currKind === 'block') || (prevKind === 'block' && currKind === 'variable')
+            ? 'variableAndBlock'
+            : currKind === 'block'
+              ? 'beforeBlock'
+              : prevKind === 'block'
+                ? 'afterBlock'
+                : prevKind === 'variable' && currKind === 'control'
+                  ? 'variableAndControl'
+                  : prevKind === 'control' && currKind === 'variable'
+                    ? 'controlAndVariable'
+                    : prevKind === 'control' && currKind === 'control'
+                      ? 'consecutiveControl'
+                      : currKind === 'return' && prevKind !== 'variable' && statements.length >= returnMinStatements
+                        ? 'beforeReturn'
+                        : null
 
         if (!messageId) {
           continue
         }
 
-        const comments = source.getCommentsAfter(prev).filter(comment => comment.range[1] <= curr.range[0])
+        const comments = source.getCommentsAfter(prev).filter((comment) => comment.range[1] <= curr.range[0])
         const insert = paddingBlankLineFix(source.text, comments, prev, curr, newline)
         context.report({
           node: curr,
           messageId,
           fix: insert
-            ? fixer => fixer.insertTextAfterRange([insert.newlineEnd, insert.newlineEnd], insert.newline)
+            ? (fixer) => fixer.insertTextAfterRange([insert.newlineEnd, insert.newlineEnd], insert.newline)
             : undefined,
         })
       }

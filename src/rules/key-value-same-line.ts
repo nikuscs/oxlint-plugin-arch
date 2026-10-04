@@ -30,7 +30,7 @@ export const keyValueSameLine = defineRule({
         let keyEnd = node.key.range[1]
         let keyEndLine = node.key.loc.end.line
         if (node.computed) {
-          const bracket = source.getTokensBetween(node.key, node.value).find(token => token.value === ']')
+          const bracket = source.getTokensBetween(node.key, node.value).find((token) => token.value === ']')
           if (bracket) {
             keyEnd = bracket.range[1]
             keyEndLine = bracket.loc.end.line
@@ -39,7 +39,7 @@ export const keyValueSameLine = defineRule({
 
         // Why: ESTree drops parentheses, so `key: (` would look like the value starts on the next line.
         const tokens = source.getTokensBetween(node.key, node.value)
-        const valueStart = tokens[tokens.findIndex(token => token.value === ':') + 1] ?? node.value
+        const valueStart = tokens[tokens.findIndex((token) => token.value === ':') + 1] ?? node.value
         if (keyEndLine === valueStart.loc.start.line) {
           return
         }

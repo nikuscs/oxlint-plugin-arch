@@ -4,7 +4,11 @@ import type { ESTree } from '@oxlint/plugins'
 export function sanitizersCallsConfigured(node: unknown, names: Set<string>): boolean {
   let found = false
   astVisit(node, [], (candidate) => {
-    if (candidate.type === 'CallExpression' && candidate.callee.type === 'Identifier' && names.has(candidate.callee.name)) {
+    if (
+      candidate.type === 'CallExpression' &&
+      candidate.callee.type === 'Identifier' &&
+      names.has(candidate.callee.name)
+    ) {
       found = true
     }
   })

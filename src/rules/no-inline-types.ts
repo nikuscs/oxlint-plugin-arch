@@ -9,7 +9,9 @@ interface NoInlineTypesOptions {
   minMembers?: number
 }
 
-function parameterAnnotation(parameter: ESTree.ParamPattern | ESTree.BindingPattern): ESTree.TSTypeAnnotation | null | undefined {
+function parameterAnnotation(
+  parameter: ESTree.ParamPattern | ESTree.BindingPattern,
+): ESTree.TSTypeAnnotation | null | undefined {
   if (parameter.type === 'TSParameterProperty') {
     return parameterAnnotation(parameter.parameter)
   }
@@ -30,16 +32,18 @@ function parameterAnnotation(parameter: ESTree.ParamPattern | ESTree.BindingPatt
 export const noInlineTypes = defineRule({
   meta: {
     type: 'problem',
-    schema: [{
-      type: 'object',
-      additionalProperties: false,
-      properties: {
-        parameters: { type: 'boolean' },
-        returns: { type: 'boolean' },
-        functionTypes: { type: 'boolean' },
-        minMembers: { type: 'integer', minimum: 1 },
+    schema: [
+      {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          parameters: { type: 'boolean' },
+          returns: { type: 'boolean' },
+          functionTypes: { type: 'boolean' },
+          minMembers: { type: 'integer', minimum: 1 },
+        },
       },
-    }],
+    ],
     messages: {
       inlineType: 'Use a named type instead of an inline {{kind}} type in this {{position}} annotation.',
     },
@@ -51,9 +55,10 @@ export const noInlineTypes = defineRule({
     let minMembers = 1
 
     function isInline(node: ESTree.Node): boolean {
-      return node.type === 'TSTypeLiteral'
-        && (minMembers === 1 || node.members.length >= minMembers)
-        || checkFunctionTypes && (node.type === 'TSFunctionType' || node.type === 'TSConstructorType')
+      return (
+        (node.type === 'TSTypeLiteral' && (minMembers === 1 || node.members.length >= minMembers)) ||
+        (checkFunctionTypes && (node.type === 'TSFunctionType' || node.type === 'TSConstructorType'))
+      )
     }
 
     function check(annotation: ESTree.TSTypeAnnotation | null | undefined, position: string) {

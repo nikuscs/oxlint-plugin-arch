@@ -64,22 +64,23 @@ test('no-restricted-constructor', () => {
       },
       {
         code: 'Error("x")',
-        options: [{
-          constructors: ['Error'],
-          checkCalls: true,
-          message: 'Throw a domain error instead.',
-        }],
+        options: [
+          {
+            constructors: ['Error'],
+            checkCalls: true,
+            message: 'Throw a domain error instead.',
+          },
+        ],
         errors: [{ message: "Do not call 'Error'. Throw a domain error instead." }],
       },
       {
         code: 'new Error("x")\nnew TypeError("y")',
-        options: [{
-          constructors: [
-            { name: 'Error', message: 'Use DomainError.' },
-            'TypeError',
-          ],
-          message: 'Use a domain error.',
-        }],
+        options: [
+          {
+            constructors: [{ name: 'Error', message: 'Use DomainError.' }, 'TypeError'],
+            message: 'Use a domain error.',
+          },
+        ],
         errors: [
           { message: "Do not construct 'Error'. Use DomainError." },
           { message: "Do not construct 'TypeError'. Use a domain error." },

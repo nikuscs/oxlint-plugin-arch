@@ -21,17 +21,19 @@ interface NoUnescapedLikeOptions {
 export const noUnescapedLike = defineRule({
   meta: {
     type: 'problem',
-    schema: [{
-      type: 'object',
-      additionalProperties: false,
-      properties: {
-        methods: { type: 'array', items: { type: 'string' } },
-        sanitizers: { type: 'array', items: { type: 'string' } },
-        allowSanitizedBindings: { type: 'boolean' },
-        operatorMethods: { type: 'array', items: { type: 'string' } },
+    schema: [
+      {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          methods: { type: 'array', items: { type: 'string' } },
+          sanitizers: { type: 'array', items: { type: 'string' } },
+          allowSanitizedBindings: { type: 'boolean' },
+          operatorMethods: { type: 'array', items: { type: 'string' } },
+        },
+        required: ['methods', 'sanitizers'],
       },
-      required: ['methods', 'sanitizers'],
-    }],
+    ],
     messages: { unescaped: '.{{method}}() values must use a configured sanitizer.' },
   },
   createOnce(context) {
@@ -49,8 +51,12 @@ export const noUnescapedLike = defineRule({
         const { methods, sanitizers, operatorMethods = [] } = optionsFirst<NoUnescapedLikeOptions>(context)
         const method = astStaticMemberName(node.callee)
         const operator = node.arguments[1]
-        const operatorCall = method && operatorMethods.includes(method) && operator?.type === 'Literal'
-          && typeof operator.value === 'string' && methods.includes(operator.value)
+        const operatorCall =
+          method &&
+          operatorMethods.includes(method) &&
+          operator?.type === 'Literal' &&
+          typeof operator.value === 'string' &&
+          methods.includes(operator.value)
 
         if (!method || (!methods.includes(method) && !operatorCall)) {
           return

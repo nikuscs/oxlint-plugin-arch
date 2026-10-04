@@ -17,13 +17,15 @@ interface NoTypeDeclarationsOptions {
 export const noTypeDeclarations = defineRule({
   meta: {
     type: 'problem',
-    schema: [{
-      type: 'object',
-      additionalProperties: false,
-      properties: {
-        allowPattern: optionsPatternSchema,
+    schema: [
+      {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          allowPattern: optionsPatternSchema,
+        },
       },
-    }],
+    ],
     messages: {
       typeDeclaration: "Type '{{name}}' must not be declared in this file.",
     },
@@ -35,10 +37,11 @@ export const noTypeDeclarations = defineRule({
     function check(node: ESTree.TSTypeAliasDeclaration | ESTree.TSInterfaceDeclaration) {
       if (optionsPatternsTest(allowedNames, node.id.name)) return
       if (
-        node.type === 'TSTypeAliasDeclaration'
-        && allowedValues.length > 0
-        && optionsPatternsTest(allowedValues, `= ${context.sourceCode.getText(node.typeAnnotation)}`)
-      ) return
+        node.type === 'TSTypeAliasDeclaration' &&
+        allowedValues.length > 0 &&
+        optionsPatternsTest(allowedValues, `= ${context.sourceCode.getText(node.typeAnnotation)}`)
+      )
+        return
 
       context.report({
         node,
@@ -52,7 +55,7 @@ export const noTypeDeclarations = defineRule({
         const { allowPattern } = optionsFirst<NoTypeDeclarationsOptions>(context, {})
         const sources = allowPattern === undefined ? [] : [allowPattern].flat()
         const isValuePattern = (source: string) => /^\^?=/.test(source)
-        allowedNames = optionsOptionalPatterns(sources.filter(source => !isValuePattern(source)))
+        allowedNames = optionsOptionalPatterns(sources.filter((source) => !isValuePattern(source)))
         allowedValues = optionsOptionalPatterns(sources.filter(isValuePattern))
       },
       TSTypeAliasDeclaration: check,

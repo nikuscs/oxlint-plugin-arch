@@ -1,11 +1,7 @@
 import { createRequire } from 'node:module'
 import { fileURLToPath } from 'node:url'
 import type { OxlintConfig } from 'oxlint'
-import type {
-  PresetContext,
-  PresetJsPlugins,
-  PresetSettings,
-} from '../types/preset.types.ts'
+import type { PresetContext, PresetJsPlugins, PresetSettings } from '../types/preset.types.ts'
 
 const require = createRequire(import.meta.url)
 
@@ -28,15 +24,11 @@ export function presetPluginsConfig(context: PresetContext): OxlintConfig {
     },
     {
       name: 'dillon-anti-slop',
-      specifier: fileURLToPath(
-        new URL('../rules/dillon-anti-slop/index.js', import.meta.url),
-      ),
+      specifier: fileURLToPath(new URL('../rules/dillon-anti-slop/index.js', import.meta.url)),
     },
     {
       name: 'modules',
-      specifier: fileURLToPath(
-        new URL('../rules/module-policy/index.js', import.meta.url),
-      ),
+      specifier: fileURLToPath(new URL('../rules/module-policy/index.js', import.meta.url)),
     },
   ]
   const settings: PresetSettings = {
@@ -61,10 +53,8 @@ export function presetPluginsConfig(context: PresetContext): OxlintConfig {
     if (options.shadcn !== false) {
       jsPlugins.push(require.resolve('@shadcn/lint'))
       settings.shadcn = {
-        ui: options.shadcn?.ui ?? '@/components/ui',
-        componentImports: options.shadcn?.componentImports ?? [
-          '^@/components/',
-        ],
+        ui: options.shadcn?.uiImportPath ?? '@/components/ui',
+        componentImports: options.shadcn?.componentImportSources ?? ['^@/components/'],
       }
     }
   }

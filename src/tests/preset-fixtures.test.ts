@@ -16,11 +16,20 @@ test('complete monorepo fixture passes lint and TypeScript', () => {
   expect(result.status).toBe(0)
   expect(result.output.number_of_files).toBe(19)
 
-  const typecheck = spawnSync(process.execPath, [resolve(import.meta.dirname, '../../node_modules/typescript/bin/tsc'), '--noEmit'], { cwd: result.root, encoding: 'utf8', timeout: 30_000 })
+  const typecheck = spawnSync(
+    process.execPath,
+    [resolve(import.meta.dirname, '../../node_modules/typescript/bin/tsc'), '--noEmit'],
+    { cwd: result.root, encoding: 'utf8', timeout: 30_000 },
+  )
   expect(typecheck.status, typecheck.stdout + typecheck.stderr).toBe(0)
 }, 60_000)
 
-const expectations: PresetFixtureExpectation[] = JSON.parse(readFileSync(resolve(import.meta.dirname, '../../tests/fixtures/tanstack-start-react-modules/expectations.json'), 'utf8'))
+const expectations: PresetFixtureExpectation[] = JSON.parse(
+  readFileSync(
+    resolve(import.meta.dirname, '../../tests/fixtures/tanstack-start-react-modules/expectations.json'),
+    'utf8',
+  ),
+)
 let invalid: PresetFixtureResult
 
 beforeAll(() => {

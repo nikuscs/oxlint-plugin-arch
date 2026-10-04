@@ -3,12 +3,17 @@ import type { Context, ESTree } from '@oxlint/plugins'
 
 export function routesInspectFunction(
   context: Context,
-  item: { name: string, node: ESTree.Function | ESTree.ArrowFunctionExpression },
+  item: { name: string; node: ESTree.Function | ESTree.ArrowFunctionExpression },
   bannedHooks: Set<string>,
   banIntrinsicJsx: boolean,
 ): void {
   astVisit(item.node.body, [item.node], (node) => {
-    if (banIntrinsicJsx && node.type === 'JSXOpeningElement' && node.name.type === 'JSXIdentifier' && /^[a-z]/.test(node.name.name)) {
+    if (
+      banIntrinsicJsx &&
+      node.type === 'JSXOpeningElement' &&
+      node.name.type === 'JSXIdentifier' &&
+      /^[a-z]/.test(node.name.name)
+    ) {
       context.report({
         node,
         messageId: 'hostJsx',

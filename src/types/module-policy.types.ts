@@ -23,7 +23,8 @@ export interface ModuleDomainConstantsOptions {
   includeData?: boolean
 }
 
-export interface ModuleRuntimeOptions extends Pick<ModuleBoundaryOptions, 'web' | 'backend' | 'aliases' | 'backendPackages'> {
+export interface ModuleRuntimeOptions
+  extends Pick<ModuleBoundaryOptions, 'web' | 'backend' | 'aliases' | 'backendPackages'> {
   rpcClients: string[]
   serverImports?: string[]
   clientImports?: string[]

@@ -22,17 +22,48 @@ test('frontend service modules expose multiple operations with only operation-lo
   const options = [{ frontend: true }]
   createRuleTester().run('modules/service-functions', serviceFunctions, {
     valid: [
-      { options, code: 'export function chatRead() { function chatNormalize() { return 1 } return chatNormalize() + 1 } export function chatWrite() { const chatSave = () => 2; return chatSave() + 1 }' },
-      { options, code: 'const chatRead = () => { const chatNormalize = () => 1; return chatNormalize() + 2 }; export { chatRead }; export const chatWrite = function () { function chatFormat() { return 2 } return chatFormat() + 1 }' },
-      { options, code: 'export function chatCreateService() { const state = new Map(); function chatRead() { return state.size } return { read: chatRead } } export const chatService = chatCreateService()' },
-      { options, code: 'export function chatRead() { function chatOuter() { const chatInner = () => 1; return chatInner() + 2 } return chatOuter() + 1 }' },
+      {
+        options,
+        code: 'export function chatRead() { function chatNormalize() { return 1 } return chatNormalize() + 1 } export function chatWrite() { const chatSave = () => 2; return chatSave() + 1 }',
+      },
+      {
+        options,
+        code: 'const chatRead = () => { const chatNormalize = () => 1; return chatNormalize() + 2 }; export { chatRead }; export const chatWrite = function () { function chatFormat() { return 2 } return chatFormat() + 1 }',
+      },
+      {
+        options,
+        code: 'export function chatCreateService() { const state = new Map(); function chatRead() { return state.size } return { read: chatRead } } export const chatService = chatCreateService()',
+      },
+      {
+        options,
+        code: 'export function chatRead() { function chatOuter() { const chatInner = () => 1; return chatInner() + 2 } return chatOuter() + 1 }',
+      },
     ],
     invalid: [
-      { options, code: 'function chatPrivate() {} export function chatRead() { chatPrivate() } export function chatWrite() {}', errors: [{ messageId: 'helper' }] },
-      { options, code: 'const chatPrivate = () => 1; export const chatRead = () => chatPrivate() + 1', errors: [{ messageId: 'helper' }] },
-      { options, code: '{ const chatPrivate = () => 1 } export function chatRead() {}', errors: [{ messageId: 'helper' }] },
-      { code: 'export function chatRead() {} export function chatWrite() {}', errors: [{ messageId: 'helper' }, { messageId: 'helper' }] },
-      { options: [{ frontend: true, singleExport: true }], code: 'export function chatRead() {} export function chatWrite() {}', errors: [{ messageId: 'exports' }, { messageId: 'helper' }, { messageId: 'helper' }] },
+      {
+        options,
+        code: 'function chatPrivate() {} export function chatRead() { chatPrivate() } export function chatWrite() {}',
+        errors: [{ messageId: 'helper' }],
+      },
+      {
+        options,
+        code: 'const chatPrivate = () => 1; export const chatRead = () => chatPrivate() + 1',
+        errors: [{ messageId: 'helper' }],
+      },
+      {
+        options,
+        code: '{ const chatPrivate = () => 1 } export function chatRead() {}',
+        errors: [{ messageId: 'helper' }],
+      },
+      {
+        code: 'export function chatRead() {} export function chatWrite() {}',
+        errors: [{ messageId: 'helper' }, { messageId: 'helper' }],
+      },
+      {
+        options: [{ frontend: true, singleExport: true }],
+        code: 'export function chatRead() {} export function chatWrite() {}',
+        errors: [{ messageId: 'exports' }, { messageId: 'helper' }, { messageId: 'helper' }],
+      },
     ],
   })
 })
@@ -41,56 +72,89 @@ test('frontend data constants exclude local calculations and runtime state owner
   const options = [{ includeData: true }]
   createRuleTester().run('modules/domain-constants', domainConstants, {
     valid: [
-      { options, code: 'export function chatCreate() { const defaults = { limit: 3 }; return defaults } export const chatService = chatCreate()' },
-      { options, code: 'const cache = new WeakMap(); const pending = new Map(); const listeners = new Set(); export const chatRead = () => pending.size' },
+      {
+        options,
+        code: 'export function chatCreate() { const defaults = { limit: 3 }; return defaults } export const chatService = chatCreate()',
+      },
+      {
+        options,
+        code: 'const cache = new WeakMap(); const pending = new Map(); const listeners = new Set(); export const chatRead = () => pending.size',
+      },
       { code: 'const labels = { yes: "Yes" }; const limit = 3' },
     ],
     invalid: [
-      ...['const limit = 3', 'export const labels = { yes: translate.yes }', 'const values = [1, 2] as const', 'const defaults = { limit: 3 } satisfies Options', 'const delay = 3 * 1000', 'const pattern = /chat/', 'const labels = new Map([["yes", translate.yes]])', 'const values = new Set(["yes"])'].map((code) => ({ options, code, errors: [{ messageId: 'forbidden' }] })),
+      ...[
+        'const limit = 3',
+        'export const labels = { yes: translate.yes }',
+        'const values = [1, 2] as const',
+        'const defaults = { limit: 3 } satisfies Options',
+        'const delay = 3 * 1000',
+        'const pattern = /chat/',
+        'const labels = new Map([["yes", translate.yes]])',
+        'const values = new Set(["yes"])',
+      ].map((code) => ({ options, code, errors: [{ messageId: 'forbidden' }] })),
       { code: 'const CHAT_LIMIT = 3', errors: [{ messageId: 'forbidden' }] },
     ],
   })
 })
 
 test('portable libraries consume only their own contract without exposing app types', () => {
-  const options = [{
-    ...boundaryOptions,
-    portableLib: true,
-    web: [...boundaryOptions.web, '/repo/apps/admin/src'],
-    aliases: { ...boundaryOptions.aliases, '@web': '/repo/apps/web/src', '@admin': '/repo/apps/admin/src' },
-  }]
+  const options = [
+    {
+      ...boundaryOptions,
+      portableLib: true,
+      web: [...boundaryOptions.web, '/repo/apps/admin/src'],
+      aliases: { ...boundaryOptions.aliases, '@web': '/repo/apps/web/src', '@admin': '/repo/apps/admin/src' },
+    },
+  ]
   const filename = '/repo/apps/web/src/lib/fade.ts'
   createRuleTester().run('modules/import-boundaries', importBoundaries, {
     valid: [
-      ...['@/types/fade.types', '../types/fade.types.ts', '@web/types/fade.types'].map((source) => ({ filename, options, code: `import type { FadeOptions } from '${source}'` })),
+      ...['@/types/fade.types', '../types/fade.types.ts', '@web/types/fade.types'].map((source) => ({
+        filename,
+        options,
+        code: `import type { FadeOptions } from '${source}'`,
+      })),
       { filename, options, code: "import { type FadeOptions } from '@/types/fade.types'" },
-      { filename: '/repo/apps/web/src/lib/fade.utils.ts', options, code: "import type { FadeOptions } from '../types/fade.types'" },
-      { filename: '/repo/apps/admin/src/lib/fade.ts', options, code: "import type { FadeOptions } from '@/types/fade.types'" },
+      {
+        filename: '/repo/apps/web/src/lib/fade.utils.ts',
+        options,
+        code: "import type { FadeOptions } from '../types/fade.types'",
+      },
+      {
+        filename: '/repo/apps/admin/src/lib/fade.ts',
+        options,
+        code: "import type { FadeOptions } from '@/types/fade.types'",
+      },
       { filename, options, code: "type Options = import('../types/fade.types').FadeOptions" },
       { filename, options, code: "import { clsx } from 'clsx'" },
-      { filename: '/repo/apps/server/src/lib/fade.ts', options, code: "import { fade } from '../services/fade/fade.utils'" },
+      {
+        filename: '/repo/apps/server/src/lib/fade.ts',
+        options,
+        code: "import { fade } from '../services/fade/fade.utils'",
+      },
       { filename, options: [boundaryOptions], code: "import { fade } from '../services/fade/fade.utils'" },
     ],
     invalid: [
-        "import type { FadeOptions } from '@/types/chat.types'",
-        "import type { FadeOptions } from '@admin/types/fade.types'",
-        "import type { FadeOptions } from '../../../admin/src/types/fade.types'",
-        "import { FadeOptions } from '../types/fade.types'",
-        "import { type FadeOptions, fade } from '../types/fade.types'",
-        "export type { FadeOptions } from '../types/fade.types'",
-        "export type * from '../types/fade.types'",
-        "export * as fadeTypes from '../types/fade.types'",
-        "import type { FadeOptions } from '../types/fade.types'; export type { FadeOptions }",
-        "import type * as FadeTypes from '../types/fade.types'; export type { FadeTypes }",
-        "import type { FadeOptions } from '../services/fade/fade.types'",
-        "import type { FadeOptions } from '@backend/types/fade.types'",
-        "import type { FadeOptions } from '@app/server/client'",
-        "export * from '../services/fade/fade.utils'",
-        "import { fade } from '@/lib/../services/fade/fade.utils'",
-        "import { fade } from '#/lib/../services/fade/fade.utils'",
-        "import('@web/services/fade/fade.utils')",
-        "type Options = import('../types/chat.types').ChatOptions",
-        "type Options = import('@app/server/client').FadeOptions",
+      "import type { FadeOptions } from '@/types/chat.types'",
+      "import type { FadeOptions } from '@admin/types/fade.types'",
+      "import type { FadeOptions } from '../../../admin/src/types/fade.types'",
+      "import { FadeOptions } from '../types/fade.types'",
+      "import { type FadeOptions, fade } from '../types/fade.types'",
+      "export type { FadeOptions } from '../types/fade.types'",
+      "export type * from '../types/fade.types'",
+      "export * as fadeTypes from '../types/fade.types'",
+      "import type { FadeOptions } from '../types/fade.types'; export type { FadeOptions }",
+      "import type * as FadeTypes from '../types/fade.types'; export type { FadeTypes }",
+      "import type { FadeOptions } from '../services/fade/fade.types'",
+      "import type { FadeOptions } from '@backend/types/fade.types'",
+      "import type { FadeOptions } from '@app/server/client'",
+      "export * from '../services/fade/fade.utils'",
+      "import { fade } from '@/lib/../services/fade/fade.utils'",
+      "import { fade } from '#/lib/../services/fade/fade.utils'",
+      "import('@web/services/fade/fade.utils')",
+      "type Options = import('../types/chat.types').ChatOptions",
+      "type Options = import('@app/server/client').FadeOptions",
     ].map((code) => ({ filename, options, code, errors: [{ messageId: 'boundary' }] })),
   })
 })
@@ -110,9 +174,7 @@ test('service types allow only the matching factory-derived alias', () => {
 
 test('service operations exclude private helpers but retain inline callbacks', () => {
   createRuleTester().run('modules/service-functions', serviceFunctions, {
-    valid: [
-      'export function chatActionSend() { return items.map(item => item.id) }',
-    ],
+    valid: ['export function chatActionSend() { return items.map(item => item.id) }'],
     invalid: [
       {
         code: 'const privateHelper = () => 1',
@@ -136,8 +198,16 @@ test('action/query helpers stay inside their sole exported operation', () => {
       { options, code: 'const run = () => { const format = () => 1; return format() + 2 }; export { run }' },
     ],
     invalid: [
-      { options, code: 'function helper() {} export function run() { helper() }', errors: [{ messageId: 'helper' }, { messageId: 'helper' }] },
-      { options, code: 'export function run() {} export function helper() {}', errors: [{ messageId: 'exports' }, { messageId: 'helper' }, { messageId: 'helper' }] },
+      {
+        options,
+        code: 'function helper() {} export function run() { helper() }',
+        errors: [{ messageId: 'helper' }, { messageId: 'helper' }],
+      },
+      {
+        options,
+        code: 'export function run() {} export function helper() {}',
+        errors: [{ messageId: 'exports' }, { messageId: 'helper' }, { messageId: 'helper' }],
+      },
       { options, code: 'export function run() {} export const extra = 1', errors: [{ messageId: 'exports' }] },
       { options, code: 'export function run() {} export type Extra = string', errors: [{ messageId: 'exports' }] },
       { options, code: 'export function run() {} export { run as other }', errors: [{ messageId: 'exports' }] },
@@ -145,9 +215,17 @@ test('action/query helpers stay inside their sole exported operation', () => {
       { options, code: 'export { run } from "./other"', errors: [{ messageId: 'exports' }] },
       { options, code: 'export const value = 1', errors: [{ messageId: 'exports' }] },
       { options, code: 'const value = 1', errors: [{ messageId: 'exports' }] },
-      { options, code: 'export default function run() {}', errors: [{ messageId: 'exports' }, { messageId: 'helper' }] },
+      {
+        options,
+        code: 'export default function run() {}',
+        errors: [{ messageId: 'exports' }, { messageId: 'helper' }],
+      },
       { options, code: 'export function run() {} { const helper = () => 1 }', errors: [{ messageId: 'helper' }] },
-      { options: [{ ...options[0], message: 'Keep one operation; keep local helpers inside it.' }], code: 'export const extra = 1', errors: [{ message: 'Keep one operation; keep local helpers inside it.' }] },
+      {
+        options: [{ ...options[0], message: 'Keep one operation; keep local helpers inside it.' }],
+        code: 'export const extra = 1',
+        errors: [{ message: 'Keep one operation; keep local helpers inside it.' }],
+      },
     ],
   })
 })
@@ -166,9 +244,7 @@ test('test modifiers recognize renamed test imports', () => {
 
 test('lint exceptions require both a rule name and a reason', () => {
   createRuleTester().run('modules/reasoned-directives', directives, {
-    valid: [
-      '// oxlint-disable-next-line no-console -- CLI output is intentional.\nconsole.log(1)',
-    ],
+    valid: ['// oxlint-disable-next-line no-console -- CLI output is intentional.\nconsole.log(1)'],
     invalid: [
       {
         code: '// oxlint-disable-next-line -- No named rule.\nconsole.log(1)',
@@ -240,18 +316,50 @@ test('service method objects are explicit public method-only forms', () => {
     ].map((code) => ({ options, code, errors: [{ messageId: 'forbidden' }] })),
   })
   createRuleTester().run('modules/service-functions', serviceFunctions, {
-    valid: [{ options: [{ frontend: true }], code: 'export const themeService = { themeApply(value) { function themeNormalize(input) { return input.trim() } return themeNormalize(value) } }' }],
-    invalid: [{ options: [{ frontend: true }], code: 'function themeNormalize(value) { return value.trim() } export const themeService = { themeApply(value) { return themeNormalize(value) } }', errors: [{ messageId: 'helper' }] }],
+    valid: [
+      {
+        options: [{ frontend: true }],
+        code: 'export const themeService = { themeApply(value) { function themeNormalize(input) { return input.trim() } return themeNormalize(value) } }',
+      },
+    ],
+    invalid: [
+      {
+        options: [{ frontend: true }],
+        code: 'function themeNormalize(value) { return value.trim() } export const themeService = { themeApply(value) { return themeNormalize(value) } }',
+        errors: [{ messageId: 'helper' }],
+      },
+    ],
   })
 })
 
 test('ownership diagnostics give scope-correct helper and constant fixes', () => {
   createRuleTester().run('modules/service-functions', serviceFunctions, {
     valid: [],
-    invalid: [{ code: 'function chatHelper() {}', errors: [{ message: 'chatHelper: This service contract does not allow private helpers. Keep its existing factory/operation contract; domain .utils.ts is only for genuinely shared logic. Do not add a fake factory or public helper export.' }] }],
+    invalid: [
+      {
+        code: 'function chatHelper() {}',
+        errors: [
+          {
+            message:
+              'chatHelper: This service contract does not allow private helpers. Keep its existing factory/operation contract; domain .utils.ts is only for genuinely shared logic. Do not add a fake factory or public helper export.',
+          },
+        ],
+      },
+    ],
   })
   createRuleTester().run('modules/domain-constants', domainConstants, {
     valid: [],
-    invalid: [{ filename: '/repo/src/services/chat/chat-action.send.ts', code: 'const CHAT_LIMIT = 3', errors: [{ message: "'CHAT_LIMIT' belongs in 'chat.constants.ts' under this module-data policy. Use a domain-prefixed name; do not invent a factory to silence the rule." }] }],
+    invalid: [
+      {
+        filename: '/repo/src/services/chat/chat-action.send.ts',
+        code: 'const CHAT_LIMIT = 3',
+        errors: [
+          {
+            message:
+              "'CHAT_LIMIT' belongs in 'chat.constants.ts' under this module-data policy. Use a domain-prefixed name; do not invent a factory to silence the rule.",
+          },
+        ],
+      },
+    ],
   })
 })

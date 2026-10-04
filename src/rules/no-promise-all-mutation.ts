@@ -20,12 +20,12 @@ function mutationBinding(node: ESTree.Node): MutationBinding | undefined {
   }
 
   if (
-    node.type === 'ChainExpression'
-    || node.type === 'ParenthesizedExpression'
-    || node.type === 'TSAsExpression'
-    || node.type === 'TSSatisfiesExpression'
-    || node.type === 'TSTypeAssertion'
-    || node.type === 'TSNonNullExpression'
+    node.type === 'ChainExpression' ||
+    node.type === 'ParenthesizedExpression' ||
+    node.type === 'TSAsExpression' ||
+    node.type === 'TSSatisfiesExpression' ||
+    node.type === 'TSTypeAssertion' ||
+    node.type === 'TSNonNullExpression'
   ) {
     return mutationBinding(node.expression)
   }
@@ -34,11 +34,11 @@ function mutationBinding(node: ESTree.Node): MutationBinding | undefined {
 function mutationBindings(node: ESTree.Node): MutationBinding[] {
   switch (node.type) {
     case 'ArrayPattern':
-      return node.elements.flatMap((element) => element ? mutationBindings(element) : [])
+      return node.elements.flatMap((element) => (element ? mutationBindings(element) : []))
     case 'ObjectPattern':
-      return node.properties.flatMap((property) => property.type === 'RestElement'
-        ? mutationBindings(property)
-        : mutationBindings(property.value))
+      return node.properties.flatMap((property) =>
+        property.type === 'RestElement' ? mutationBindings(property) : mutationBindings(property.value),
+      )
     case 'AssignmentPattern':
       return mutationBindings(node.left)
     case 'RestElement':
@@ -58,20 +58,24 @@ function mutationBindings(node: ESTree.Node): MutationBinding[] {
 export const noPromiseAllMutation = defineRule({
   meta: {
     type: 'problem',
-    schema: [{
-      type: 'object',
-      additionalProperties: false,
-      properties: {
-        combinators: { type: 'array', items: { type: 'string' } },
-        methods: { type: 'array', items: { type: 'string' } },
-        checkAssignments: { type: 'boolean' },
+    schema: [
+      {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          combinators: { type: 'array', items: { type: 'string' } },
+          methods: { type: 'array', items: { type: 'string' } },
+          checkAssignments: { type: 'boolean' },
+        },
       },
-    }],
-    defaultOptions: [{
-      combinators: ['Promise.all', 'Promise.allSettled', 'Promise.any', 'Promise.race'],
-      methods: ['push', 'unshift', 'splice', 'set', 'add'],
-      checkAssignments: true,
-    }],
+    ],
+    defaultOptions: [
+      {
+        combinators: ['Promise.all', 'Promise.allSettled', 'Promise.any', 'Promise.race'],
+        methods: ['push', 'unshift', 'splice', 'set', 'add'],
+        checkAssignments: true,
+      },
+    ],
     messages: {
       mutation: "Do not mutate outer binding '{{name}}' inside {{combinator}}().",
     },
@@ -99,11 +103,14 @@ export const noPromiseAllMutation = defineRule({
 
     function isOuterBinding(identifier: MutationBinding, call: ESTree.CallExpression): boolean {
       const variable = references.get(identifier.range[0])
-      return variable !== undefined
-        && variable !== null
-        && variable.identifiers.length > 0
-        && variable.identifiers.every(declaration =>
-          declaration.range[0] < call.range[0] || declaration.range[1] > call.range[1])
+      return (
+        variable !== undefined &&
+        variable !== null &&
+        variable.identifiers.length > 0 &&
+        variable.identifiers.every(
+          (declaration) => declaration.range[0] < call.range[0] || declaration.range[1] > call.range[1],
+        )
+      )
     }
 
     function reportMutation(

@@ -37,7 +37,7 @@ interface ChainLink {
   methodName: string | null
 }
 
-function chainNewlineCollect(node: ESTree.CallExpression): { root: ESTree.Expression, links: ChainLink[] } {
+function chainNewlineCollect(node: ESTree.CallExpression): { root: ESTree.Expression; links: ChainLink[] } {
   const links: ChainLink[] = []
   let current: ESTree.Expression = node
 
@@ -68,19 +68,15 @@ function chainNewlineRootIdentifier(node: ESTree.Expression): string | null {
 function chainNewlineMatches(root: ESTree.Expression, links: ChainLink[], group: ChainGroupCompiled): boolean {
   if (links.length < group.minDepth) return false
 
-  const hasCriteria = group.methods !== undefined
-    || group.onlyMethods !== undefined
-    || group.rootPatterns.length > 0
+  const hasCriteria = group.methods !== undefined || group.onlyMethods !== undefined || group.rootPatterns.length > 0
   if (!hasCriteria) return true
 
   // Criteria within one group deliberately use OR semantics.
-  if (group.methods && links.some(link => link.methodName !== null && group.methods?.has(link.methodName))) {
+  if (group.methods && links.some((link) => link.methodName !== null && group.methods?.has(link.methodName))) {
     return true
   }
-  if (
-    group.onlyMethods
-    && links.every(link => link.methodName !== null && group.onlyMethods?.has(link.methodName))
-  ) return true
+  if (group.onlyMethods && links.every((link) => link.methodName !== null && group.onlyMethods?.has(link.methodName)))
+    return true
 
   const rootName = chainNewlineRootIdentifier(root)
   return rootName !== null && optionsPatternsTest(group.rootPatterns, rootName)
@@ -96,28 +92,30 @@ export const chainNewline = defineRule({
   meta: {
     type: 'layout',
     fixable: 'whitespace',
-    schema: [{
-      type: 'object',
-      additionalProperties: false,
-      properties: {
-        groups: {
-          type: 'array',
-          items: {
-            type: 'object',
-            additionalProperties: false,
-            properties: {
-              minDepth: { type: 'integer', minimum: 1 },
-              methods: { type: 'array', items: { type: 'string' } },
-              onlyMethods: { type: 'array', items: { type: 'string' } },
-              rootPattern: optionsPatternSchema,
+    schema: [
+      {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          groups: {
+            type: 'array',
+            items: {
+              type: 'object',
+              additionalProperties: false,
+              properties: {
+                minDepth: { type: 'integer', minimum: 1 },
+                methods: { type: 'array', items: { type: 'string' } },
+                onlyMethods: { type: 'array', items: { type: 'string' } },
+                rootPattern: optionsPatternSchema,
+              },
+              required: ['minDepth'],
             },
-            required: ['minDepth'],
           },
+          indent: layoutIndentSchema,
         },
-        indent: layoutIndentSchema,
+        required: ['groups'],
       },
-      required: ['groups'],
-    }],
+    ],
     messages: {
       newline: 'Put every method in this call chain on its own line.',
     },
@@ -131,7 +129,7 @@ export const chainNewline = defineRule({
     return {
       before() {
         const options = optionsFirst<ChainNewlineOptions>(context, { groups: [] })
-        groups = (options.groups ?? []).map(group => ({
+        groups = (options.groups ?? []).map((group) => ({
           minDepth: group.minDepth,
           methods: group.methods ? new Set(group.methods) : undefined,
           onlyMethods: group.onlyMethods ? new Set(group.onlyMethods) : undefined,
@@ -147,22 +145,23 @@ export const chainNewline = defineRule({
 
         const parent = node.parent
         if (
-          parent?.type === 'MemberExpression'
-          && parent.object === node
-          && parent.parent?.type === 'CallExpression'
-          && parent.parent.callee === parent
-        ) return
+          parent?.type === 'MemberExpression' &&
+          parent.object === node &&
+          parent.parent?.type === 'CallExpression' &&
+          parent.parent.callee === parent
+        )
+          return
 
         const { root, links } = chainNewlineCollect(node)
         for (const link of links) processed.add(link.call)
 
-        if (!groups.some(group => chainNewlineMatches(root, links, group))) return
+        if (!groups.some((group) => chainNewlineMatches(root, links, group))) return
 
         const source = context.sourceCode
         const text = source.text
         // Why: `node` starts at a root's opening `(`; the root itself may start on a later, deeper line.
         const chainIndent = layoutLineIndent(text, node.range[0]) + indentUnit
-        const replacements: Array<{ range: [number, number], text: string }> = []
+        const replacements: Array<{ range: [number, number]; text: string }> = []
         let fixable = true
         let needsFix = false
 
@@ -185,11 +184,10 @@ export const chainNewline = defineRule({
           if (hasComments || gap.trim() !== operator) {
             fixable = false
           }
-          const lastComment = hasComments && operatorToken
-            ? source.getTokenBefore(operatorToken, { includeComments: true })
-            : null
-          const alignedAfterComment = lastComment !== null
-            && text.slice(lastComment.range[1], link.member.property.range[0]) === expected
+          const lastComment =
+            hasComments && operatorToken ? source.getTokenBefore(operatorToken, { includeComments: true }) : null
+          const alignedAfterComment =
+            lastComment !== null && text.slice(lastComment.range[1], link.member.property.range[0]) === expected
           if (gap !== expected && !alignedAfterComment) {
             needsFix = true
             replacements.push({ range, text: expected })
@@ -202,7 +200,7 @@ export const chainNewline = defineRule({
           node,
           messageId: 'newline',
           fix: fixable
-            ? fixer => replacements.map(replacement => fixer.replaceTextRange(replacement.range, replacement.text))
+            ? (fixer) => replacements.map((replacement) => fixer.replaceTextRange(replacement.range, replacement.text))
             : undefined,
         })
       },

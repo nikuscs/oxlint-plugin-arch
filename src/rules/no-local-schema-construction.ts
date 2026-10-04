@@ -18,7 +18,8 @@ interface NoLocalSchemaConstructionOptions {
   constructionMessage?: string
 }
 
-const defaultRuntimeImportMessage = 'Do not import runtime schema constructors from {{source}}; import a named schema instead.'
+const defaultRuntimeImportMessage =
+  'Do not import runtime schema constructors from {{source}}; import a named schema instead.'
 const defaultConstructionMessage = 'Do not construct schemas locally; import a named schema instead.'
 
 function formatMessage(template: string, data: Record<string, string>): string {
@@ -33,23 +34,27 @@ function formatMessage(template: string, data: Record<string, string>): string {
 export const noLocalSchemaConstruction = defineRule({
   meta: {
     type: 'problem',
-    schema: [{
-      type: 'object',
-      additionalProperties: false,
-      properties: {
-        packages: { type: 'array', items: { type: 'string' } },
-        namespaces: { type: 'array', items: { type: 'string' } },
-        allowIn: { type: 'array', items: { type: 'string' } },
-        allowPathPatterns: { type: 'array', items: { type: 'string' } },
-        message: { type: 'string' },
-        runtimeImportMessage: { type: 'string' },
-        constructionMessage: { type: 'string' },
+    schema: [
+      {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          packages: { type: 'array', items: { type: 'string' } },
+          namespaces: { type: 'array', items: { type: 'string' } },
+          allowIn: { type: 'array', items: { type: 'string' } },
+          allowPathPatterns: { type: 'array', items: { type: 'string' } },
+          message: { type: 'string' },
+          runtimeImportMessage: { type: 'string' },
+          constructionMessage: { type: 'string' },
+        },
       },
-    }],
-    defaultOptions: [{
-      packages: ['zod'],
-      namespaces: ['z'],
-    }],
+    ],
+    defaultOptions: [
+      {
+        packages: ['zod'],
+        namespaces: ['z'],
+      },
+    ],
     messages: {
       runtimeImport: '{{message}}',
       construction: '{{message}}',
@@ -68,8 +73,10 @@ export const noLocalSchemaConstruction = defineRule({
         const filename = namingPosixPath(context.filename)
         constructors = new Set(namespaces)
 
-        if (allowIn.some((suffix) => filename.endsWith(suffix))
-          || allowPathPatterns.some((pattern) => new RegExp(pattern).test(filename))) {
+        if (
+          allowIn.some((suffix) => filename.endsWith(suffix)) ||
+          allowPathPatterns.some((pattern) => new RegExp(pattern).test(filename))
+        ) {
           return false
         }
       },
@@ -92,10 +99,9 @@ export const noLocalSchemaConstruction = defineRule({
           node,
           messageId: 'runtimeImport',
           data: {
-            message: formatMessage(
-              runtimeImportMessage ?? message ?? defaultRuntimeImportMessage,
-              { source: node.source.value },
-            ),
+            message: formatMessage(runtimeImportMessage ?? message ?? defaultRuntimeImportMessage, {
+              source: node.source.value,
+            }),
           },
         })
       },
@@ -114,10 +120,9 @@ export const noLocalSchemaConstruction = defineRule({
           node,
           messageId: 'runtimeImport',
           data: {
-            message: formatMessage(
-              runtimeImportMessage ?? message ?? defaultRuntimeImportMessage,
-              { source: node.source.value },
-            ),
+            message: formatMessage(runtimeImportMessage ?? message ?? defaultRuntimeImportMessage, {
+              source: node.source.value,
+            }),
           },
         })
       },
@@ -136,10 +141,9 @@ export const noLocalSchemaConstruction = defineRule({
           node,
           messageId: 'runtimeImport',
           data: {
-            message: formatMessage(
-              runtimeImportMessage ?? message ?? defaultRuntimeImportMessage,
-              { source: node.source.value },
-            ),
+            message: formatMessage(runtimeImportMessage ?? message ?? defaultRuntimeImportMessage, {
+              source: node.source.value,
+            }),
           },
         })
       },

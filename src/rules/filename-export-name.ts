@@ -25,19 +25,21 @@ interface FilenameExportNameOptions {
 export const filenameExportName = defineRule({
   meta: {
     type: 'problem',
-    schema: [{
-      type: 'object',
-      additionalProperties: false,
-      properties: {
-        file: { type: 'string' },
-        export: { type: 'string' },
-        mode: { type: 'string', enum: ['all', 'some'] },
-        placeholderPattern: { type: 'string' },
-        camelCase: { type: 'boolean' },
-        allDeclarations: { type: 'boolean' },
+    schema: [
+      {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          file: { type: 'string' },
+          export: { type: 'string' },
+          mode: { type: 'string', enum: ['all', 'some'] },
+          placeholderPattern: { type: 'string' },
+          camelCase: { type: 'boolean' },
+          allDeclarations: { type: 'boolean' },
+        },
+        required: ['file', 'export'],
       },
-      required: ['file', 'export'],
-    }],
+    ],
     messages: {
       mismatch: "Function '{{actual}}' must be named '{{expected}}' for file '{{file}}'.",
     },

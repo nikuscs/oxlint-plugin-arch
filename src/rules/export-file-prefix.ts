@@ -35,21 +35,23 @@ interface ExportFilePrefixOptions {
 export const exportFilePrefix = defineRule({
   meta: {
     type: 'problem',
-    schema: [{
-      type: 'object',
-      additionalProperties: false,
-      properties: {
-        stem: { type: 'string', enum: [...namingStemModes] },
-        trailingRoles: { type: 'array', items: { type: 'string' } },
-        roleSeparators: { type: 'array', items: { type: 'string' } },
-        normalize: { type: 'string', enum: ['remove-separators', 'none'] },
-        singularize: { type: 'string', enum: ['none', 'trailing-s'] },
-        serviceMethods: { type: 'boolean' },
-        allFunctions: { type: 'boolean' },
-        allDeclarations: { type: 'boolean' },
-        allowPattern: optionsPatternSchema,
+    schema: [
+      {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          stem: { type: 'string', enum: [...namingStemModes] },
+          trailingRoles: { type: 'array', items: { type: 'string' } },
+          roleSeparators: { type: 'array', items: { type: 'string' } },
+          normalize: { type: 'string', enum: ['remove-separators', 'none'] },
+          singularize: { type: 'string', enum: ['none', 'trailing-s'] },
+          serviceMethods: { type: 'boolean' },
+          allFunctions: { type: 'boolean' },
+          allDeclarations: { type: 'boolean' },
+          allowPattern: optionsPatternSchema,
+        },
       },
-    }],
+    ],
     messages: {
       prefix: "'{{name}}' must start with file prefix '{{prefix}}'.",
     },
@@ -63,7 +65,11 @@ export const exportFilePrefix = defineRule({
         })
         const basename = namingFileBasename(context.filename).replace(/\.(tsx?|jsx?)$/, '')
         const stem = namingFileStem(basename, options.stem, options.trailingRoles, options.roleSeparators)
-        const prefixes = namingFilePrefixes(stem, options.normalize ?? 'remove-separators', options.singularize ?? 'none')
+        const prefixes = namingFilePrefixes(
+          stem,
+          options.normalize ?? 'remove-separators',
+          options.singularize ?? 'none',
+        )
         const allowed = optionsOptionalPatterns(options.allowPattern)
         const names = options.allDeclarations
           ? declarationsCollectNamed(program)
@@ -73,10 +79,16 @@ export const exportFilePrefix = defineRule({
             }))
         if (options.allFunctions && !options.allDeclarations) {
           const exportedNames = new Set(names.map((item) => item.name))
-          names.push(...declarationsCollectNamed(program).filter((item) =>
-            !exportedNames.has(item.name) && (item.node.type === 'FunctionDeclaration'
-              || item.node.type === 'VariableDeclarator' && (item.node.init?.type === 'ArrowFunctionExpression'
-                || item.node.init?.type === 'FunctionExpression'))))
+          names.push(
+            ...declarationsCollectNamed(program).filter(
+              (item) =>
+                !exportedNames.has(item.name) &&
+                (item.node.type === 'FunctionDeclaration' ||
+                  (item.node.type === 'VariableDeclarator' &&
+                    (item.node.init?.type === 'ArrowFunctionExpression' ||
+                      item.node.init?.type === 'FunctionExpression'))),
+            ),
+          )
         }
         if (options.serviceMethods) names.push(...declarationsPublicServiceMethods(program))
         const seen = new Set<string>()
@@ -85,7 +97,11 @@ export const exportFilePrefix = defineRule({
           const key = `${item.name}:${item.node.start}:${item.node.end}`
           const comparableName = options.normalize === 'none' ? item.name : item.name.replaceAll('_', '').toLowerCase()
 
-          if (seen.has(key) || optionsPatternsTest(allowed, item.name) || prefixes.some((prefix) => comparableName.startsWith(prefix))) {
+          if (
+            seen.has(key) ||
+            optionsPatternsTest(allowed, item.name) ||
+            prefixes.some((prefix) => comparableName.startsWith(prefix))
+          ) {
             continue
           }
 

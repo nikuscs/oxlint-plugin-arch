@@ -32,10 +32,10 @@ function isScalarSchema(
 
   const modifier = astStaticMemberName(node.callee)
   return Boolean(
-    modifier
-      && !structuralMethods.has(modifier)
-      && node.callee.object.type === 'CallExpression'
-      && isScalarSchema(node.callee.object, namespaces, structuralMethods),
+    modifier &&
+      !structuralMethods.has(modifier) &&
+      node.callee.object.type === 'CallExpression' &&
+      isScalarSchema(node.callee.object, namespaces, structuralMethods),
   )
 }
 
@@ -49,8 +49,13 @@ function isDirectObjectField(
   const object = ancestors.at(-2)
   const call = ancestors.at(-3)
 
-  if (property?.type !== 'Property' || property.value !== identifier || object?.type !== 'ObjectExpression'
-    || call?.type !== 'CallExpression' || !schemasIsCall(call, namespaces)) {
+  if (
+    property?.type !== 'Property' ||
+    property.value !== identifier ||
+    object?.type !== 'ObjectExpression' ||
+    call?.type !== 'CallExpression' ||
+    !schemasIsCall(call, namespaces)
+  ) {
     return false
   }
 
@@ -89,22 +94,39 @@ function isAllowedStructuralElement(
 export const noSingleUseScalarSchema = defineRule({
   meta: {
     type: 'suggestion',
-    schema: [{
-      type: 'object',
-      additionalProperties: false,
-      properties: {
-        namespaces: { type: 'array', items: { type: 'string' } },
-        methods: { type: 'array', items: { type: 'string' } },
-        structuralMethods: { type: 'array', items: { type: 'string' } },
-        allowZodScalars: { type: 'boolean' },
+    schema: [
+      {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          namespaces: { type: 'array', items: { type: 'string' } },
+          methods: { type: 'array', items: { type: 'string' } },
+          structuralMethods: { type: 'array', items: { type: 'string' } },
+          allowZodScalars: { type: 'boolean' },
+        },
       },
-    }],
-    defaultOptions: [{
-      namespaces: ['z'],
-      methods: ['array', 'union', 'record', 'tuple'],
-      structuralMethods: ['and', 'array', 'discriminatedUnion', 'intersection', 'lazy', 'object', 'or', 'pipe', 'record', 'transform', 'tuple', 'union'],
-      allowZodScalars: true,
-    }],
+    ],
+    defaultOptions: [
+      {
+        namespaces: ['z'],
+        methods: ['array', 'union', 'record', 'tuple'],
+        structuralMethods: [
+          'and',
+          'array',
+          'discriminatedUnion',
+          'intersection',
+          'lazy',
+          'object',
+          'or',
+          'pipe',
+          'record',
+          'transform',
+          'tuple',
+          'union',
+        ],
+        allowZodScalars: true,
+      },
+    ],
     messages: { inline: 'Inline single-use scalar schema {{name}} at its only structural use.' },
   },
   create(context) {
@@ -126,17 +148,26 @@ export const noSingleUseScalarSchema = defineRule({
         const options = optionsFirst<NoSingleUseScalarSchemaOptions>(context)
         const namespaces = new Set(options.namespaces)
         const structuralMethods = new Set(options.structuralMethods)
-        const exportedNames = new Set(exportsCollect(program).flatMap((binding) => binding.localName ? [binding.localName] : []))
+        const exportedNames = new Set(
+          exportsCollect(program).flatMap((binding) => (binding.localName ? [binding.localName] : [])),
+        )
 
         for (const declarator of candidates) {
           const name = declarator.id.type === 'Identifier' ? declarator.id.name : undefined
           const initializer = declarator.init
 
-          if (!name || !initializer || exportedNames.has(name) || !isScalarSchema(initializer, namespaces, structuralMethods)) {
+          if (
+            !name ||
+            !initializer ||
+            exportedNames.has(name) ||
+            !isScalarSchema(initializer, namespaces, structuralMethods)
+          ) {
             continue
           }
 
-          const variable = context.sourceCode.getDeclaredVariables(declarator).find((candidate) => candidate.name === name)
+          const variable = context.sourceCode
+            .getDeclaredVariables(declarator)
+            .find((candidate) => candidate.name === name)
           const references = variable?.references.filter((reference) => reference.isRead()) ?? []
 
           if (references.length !== 1) {
@@ -146,8 +177,9 @@ export const noSingleUseScalarSchema = defineRule({
           const reference = references[0]
           const identifier = reference.identifier as ESTree.IdentifierReference
           const ancestors = context.sourceCode.getAncestors(identifier) as unknown as ESTree.Node[]
-          const inlineable = isDirectObjectField(identifier, ancestors, namespaces, structuralMethods)
-            || isAllowedStructuralElement(identifier, initializer, ancestors, options, namespaces, structuralMethods)
+          const inlineable =
+            isDirectObjectField(identifier, ancestors, namespaces, structuralMethods) ||
+            isAllowedStructuralElement(identifier, initializer, ancestors, options, namespaces, structuralMethods)
 
           if (inlineable) {
             // Deliberately report-only: moving construction can cross comments or observable statements.

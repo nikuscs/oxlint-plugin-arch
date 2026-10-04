@@ -6,8 +6,10 @@ export function trivialExpression(node: AstRuntimeFunction): ESTree.Expression |
     return node.body
   }
   if (!node.body || node.body.type !== 'BlockStatement') return null
-  const statements = node.body.body.filter((statement) => statement.type !== 'EmptyStatement'
-    && !(statement.type === 'ExpressionStatement' && statement.directive))
+  const statements = node.body.body.filter(
+    (statement) =>
+      statement.type !== 'EmptyStatement' && !(statement.type === 'ExpressionStatement' && statement.directive),
+  )
   if (statements.length !== 1) return null
   const statement = statements[0]
   if (statement.type === 'ReturnStatement') return statement.argument
@@ -15,9 +17,14 @@ export function trivialExpression(node: AstRuntimeFunction): ESTree.Expression |
 }
 
 export function trivialUnwrap(expression: ESTree.Expression): ESTree.Expression {
-  if (expression.type === 'ParenthesizedExpression' || expression.type === 'TSAsExpression'
-    || expression.type === 'TSSatisfiesExpression' || expression.type === 'TSTypeAssertion'
-    || expression.type === 'TSNonNullExpression' || expression.type === 'ChainExpression') {
+  if (
+    expression.type === 'ParenthesizedExpression' ||
+    expression.type === 'TSAsExpression' ||
+    expression.type === 'TSSatisfiesExpression' ||
+    expression.type === 'TSTypeAssertion' ||
+    expression.type === 'TSNonNullExpression' ||
+    expression.type === 'ChainExpression'
+  ) {
     return trivialUnwrap(expression.expression)
   }
   return expression.type === 'AwaitExpression' ? trivialUnwrap(expression.argument) : expression
@@ -39,10 +46,12 @@ export function trivialIsForwarder(node: AstRuntimeFunction, expression: ESTree.
   if (value.type !== 'CallExpression' || value.optional) return false
   const root = trivialCallRoot(value.callee)
   if (!root || node.params.some((param) => param.type !== 'Identifier')) return false
-  const parameters = node.params.flatMap((param) => param.type === 'Identifier' ? [param.name] : [])
+  const parameters = node.params.flatMap((param) => (param.type === 'Identifier' ? [param.name] : []))
   const arguments_ = value.arguments
   const receiver = value.callee.type === 'MemberExpression' ? root : undefined
   const forwarded = parameters.filter((name) => name !== receiver)
-  return arguments_.length === forwarded.length && arguments_.every((argument, index) =>
-    argument.type === 'Identifier' && argument.name === forwarded[index])
+  return (
+    arguments_.length === forwarded.length &&
+    arguments_.every((argument, index) => argument.type === 'Identifier' && argument.name === forwarded[index])
+  )
 }

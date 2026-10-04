@@ -16,10 +16,7 @@ export default eslintCompatPlugin({
       ':matches(JSXAttribute[name.name="className"] TemplateLiteral[expressions.length>0], JSXAttribute[name.name="className"] BinaryExpression[operator="+"])',
       'Write complete class names instead of constructing them dynamically.',
     ),
-    'backend-switch': syntaxRule(
-      'SwitchStatement',
-      'Use ts-pattern in backend application code.',
-    ),
+    'backend-switch': syntaxRule('SwitchStatement', 'Use ts-pattern in backend application code.'),
     'concurrent-db': syntaxRule(
       'CallExpression[callee.object.name="test"][callee.property.name="concurrent"] ObjectPattern > Property[key.name="db"]',
       'Obtain an isolated database fixture for concurrent tests.',
@@ -39,10 +36,7 @@ export default eslintCompatPlugin({
       'TSTypeAliasDeclaration',
       'Local component/hook contracts use interfaces named for their owner. Derived or reusable aliases belong in domain types; do not substitute an empty interface.',
     ),
-    'no-unknown': syntaxRule(
-      'TSUnknownKeyword',
-      'Use an owned domain type rather than unknown.',
-    ),
+    'no-unknown': syntaxRule('TSUnknownKeyword', 'Use an owned domain type rather than unknown.'),
     memoization: memoization,
     'pascal-interface': syntaxRule(
       'TSInterfaceDeclaration:not([id.name=/^[A-Z][a-zA-Z0-9]*$/])',

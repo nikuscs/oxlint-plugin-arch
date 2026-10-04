@@ -13,14 +13,16 @@ interface NoRestrictedFilesOptions {
 export const noRestrictedFiles = defineRule({
   meta: {
     type: 'problem',
-    schema: [{
-      type: 'object',
-      additionalProperties: false,
-      properties: {
-        message: { type: 'string' },
+    schema: [
+      {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          message: { type: 'string' },
+        },
+        required: ['message'],
       },
-      required: ['message'],
-    }],
+    ],
     messages: {
       restricted: '{{message}}',
     },

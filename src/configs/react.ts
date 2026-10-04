@@ -1,34 +1,24 @@
 import type { PresetContext, PresetPolicies } from '../types/preset.types.ts'
 import { presetScopes, presetOverride } from '../utils/helpers/preset.ts'
-import {
-  presetReactRules,
-  presetEffectsRules,
-  presetTailwindRules,
-} from '../constants/preset.constants.ts'
+import { presetReactRules, presetEffectsRules, presetTailwindRules } from '../constants/preset.constants.ts'
 
 export function presetReactConfig(context: PresetContext): PresetPolicies {
-  const {
-    options,
-    web,
-    webFiles,
-    ui,
-    testFiles,
-    components,
-    css,
-  } = context
+  const { options, web, webFiles, ui, testFiles, components, css } = context
   const policies: PresetPolicies = {}
   if (web.length) {
-    policies.reactRules = [
+    policies.react = [
       presetOverride(
         webFiles,
         {
           ...presetReactRules,
-          ...(options.reactCompiler === false ? {
-            'react-perf/jsx-no-new-object-as-prop': 'error',
-            'react-perf/jsx-no-new-array-as-prop': 'error',
-            'react-perf/jsx-no-new-function-as-prop': 'error',
-            'react-perf/jsx-no-jsx-as-prop': 'error',
-          } as const : {}),
+          ...(options.react?.compiler === false
+            ? ({
+                'react-perf/jsx-no-new-object-as-prop': 'error',
+                'react-perf/jsx-no-new-array-as-prop': 'error',
+                'react-perf/jsx-no-new-function-as-prop': 'error',
+                'react-perf/jsx-no-jsx-as-prop': 'error',
+              } as const)
+            : {}),
           'arch/jsx-attributes-multiline': ['error', { minAttributes: 3 }],
         },
         ui,
@@ -36,10 +26,7 @@ export function presetReactConfig(context: PresetContext): PresetPolicies {
       presetOverride(
         components,
         {
-          'arch/no-file-level-helpers': [
-            'error',
-            { detectComponents: true, hookPattern: '^use[A-Z]' },
-          ],
+          'arch/no-file-level-helpers': ['error', { detectComponents: true, hookPattern: '^use[A-Z]' }],
         },
         [...ui, ...testFiles],
       ),
@@ -47,13 +34,7 @@ export function presetReactConfig(context: PresetContext): PresetPolicies {
   }
 
   if (web.length) {
-    policies.effects = [
-      presetOverride(
-        webFiles,
-        { ...presetEffectsRules, 'modules/empty-effect': 'error' },
-        ui,
-      ),
-    ]
+    policies.effects = [presetOverride(webFiles, { ...presetEffectsRules, 'modules/empty-effect': 'error' }, ui)]
   }
 
   if (web.length) {
@@ -73,7 +54,14 @@ export function presetReactConfig(context: PresetContext): PresetPolicies {
         testFiles,
       ),
       presetOverride(presetScopes(web, 'routes/handlers/**/*.ts'), {
-        'arch/no-file-level-helpers': ['error', { detectComponents: false, message: 'Nest this helper in its owning route handler callback, or move genuine domain logic to a service. Do not create a component, hook or public helper to bypass this rule.' }],
+        'arch/no-file-level-helpers': [
+          'error',
+          {
+            detectComponents: false,
+            message:
+              'Nest this helper in its owning route handler callback, or move genuine domain logic to a service. Do not create a component, hook or public helper to bypass this rule.',
+          },
+        ],
       }),
     ]
   }
@@ -87,7 +75,7 @@ export function presetReactConfig(context: PresetContext): PresetPolicies {
             'error',
             {
               when: 'useForm',
-              require: options.formResolver ?? 'standardSchemaResolver',
+              require: options.forms?.schemaResolver ?? 'standardSchemaResolver',
             },
           ],
         },
@@ -96,14 +84,12 @@ export function presetReactConfig(context: PresetContext): PresetPolicies {
     ]
   }
 
-  if (web.length && options.reactCompiler !== false) {
-    policies.memoization = [
-      presetOverride(webFiles, { 'modules/memoization': 'error' }, ui),
-    ]
+  if (web.length && options.react?.compiler !== false) {
+    policies.memoization = [presetOverride(webFiles, { 'modules/memoization': 'error' }, ui)]
   }
 
   if (web.length) {
-    policies.clientOwnership = [
+    policies.rpcClientOwnership = [
       presetOverride(webFiles, {
         'arch/no-restricted-token': [
           'error',
@@ -111,16 +97,11 @@ export function presetReactConfig(context: PresetContext): PresetPolicies {
             restrictions: [
               {
                 token: 'RouterClient',
-                allowIn: [
-                  ...(options.rpcClient ? [options.rpcClient] : context.rpcClients),
-                ],
+                allowIn: [...(options.orpc?.clientOwnerFile ? [options.orpc?.clientOwnerFile] : context.rpcClients)],
               },
               {
                 token: 'createContext',
-                allowPathPatterns: [
-                  ...presetScopes(web, 'context/'),
-                  ...presetScopes(web, 'components/ui/'),
-                ],
+                allowPathPatterns: [...presetScopes(web, 'context/'), ...presetScopes(web, 'components/ui/')],
               },
             ],
           },
@@ -130,17 +111,27 @@ export function presetReactConfig(context: PresetContext): PresetPolicies {
   }
 
   if (Object.keys(css).length) {
-    policies.tailwindRules = Object.entries(css).map(([path, entryPoint]) => presetOverride(
-      presetScopes([path]),
-      Object.fromEntries(Object.entries(presetTailwindRules).map(([rule, severity]) => [rule, [severity, {
-        entryPoint,
-        rootFontSize: options.tailwind === false ? 16 : options.tailwind?.rootFontSize ?? 16,
-      }]])),
-    ))
+    policies.tailwind = Object.entries(css).map(([path, entryPoint]) =>
+      presetOverride(
+        presetScopes([path]),
+        Object.fromEntries(
+          Object.entries(presetTailwindRules).map(([rule, severity]) => [
+            rule,
+            [
+              severity,
+              {
+                entryPoint,
+                rootFontSize: options.tailwind === false ? 16 : (options.tailwind?.rootFontSize ?? 16),
+              },
+            ],
+          ]),
+        ),
+      ),
+    )
   }
 
   if (Object.keys(css).length && options.shadcn !== false) {
-    policies.shadcnRules = [
+    policies.shadcn = [
       presetOverride(
         webFiles,
         {

@@ -4,28 +4,28 @@ export const presetExtensions = '*.{ts,tsx,mts,cts}'
 
 export const presetPolicyOrder: PresetPolicyName[] = [
   'formatting',
-  'layout',
+  'statementLayout',
   'imports',
-  'banTypes',
+  'typePlacement',
   'typeSafety',
-  'moduleLayout',
-  'serviceModules',
+  'fileLayout',
+  'serviceStructure',
   'naming',
   'comments',
-  'wrappers',
+  'trivialFunctions',
   'mutableState',
-  'backendRules',
+  'backend',
   'tests',
   'schemas',
-  'reactRules',
+  'react',
   'effects',
   'routes',
   'forms',
   'memoization',
   'boundaries',
-  'clientOwnership',
-  'tailwindRules',
-  'shadcnRules',
+  'rpcClientOwnership',
+  'tailwind',
+  'shadcn',
 ]
 
 export const presetCommonRules: PresetRules = {
@@ -361,8 +361,7 @@ export const presetReactRules: PresetRules = {
 
 export const presetEffectsRules: PresetRules = {
   'react-you-might-not-need-an-effect/no-adjust-state-on-prop-change': 'error',
-  'react-you-might-not-need-an-effect/no-reset-all-state-on-prop-change':
-    'error',
+  'react-you-might-not-need-an-effect/no-reset-all-state-on-prop-change': 'error',
   'react-you-might-not-need-an-effect/no-event-handler': 'error',
   'react-you-might-not-need-an-effect/no-pass-live-state-to-parent': 'error',
   'react-you-might-not-need-an-effect/no-pass-data-to-parent': 'error',

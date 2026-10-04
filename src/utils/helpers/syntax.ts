@@ -6,8 +6,7 @@ export function syntaxRule(selector: string, message: string) {
     meta: { type: 'problem', schema: [], messages: { forbidden: message } },
     createOnce(context) {
       return {
-        [selector]: (node: ESTree.Node) =>
-          context.report({ node, messageId: 'forbidden' }),
+        [selector]: (node: ESTree.Node) => context.report({ node, messageId: 'forbidden' }),
       }
     },
   })

@@ -127,7 +127,7 @@ test('prefer-namespace-type-import', () => {
         'export { A };',
         'const value = A;',
         'import Alias = A.Member;',
-      ].map(suffix => ({ code: `${input}\n${suffix}`, output: null, errors: [error] })),
+      ].map((suffix) => ({ code: `${input}\n${suffix}`, output: null, errors: [error] })),
       {
         code: 'import type { A, /* keep */ B, C, D } from "x"; type T = A',
         output: null,
@@ -171,17 +171,30 @@ test('prefer-namespace-type-import', () => {
 test('prefer-namespace-type-import TSX', () => {
   createRuleTester('tsx').run('arch/prefer-namespace-type-import', preferNamespaceTypeImport, {
     valid: [`${output}\nconst view = <Widget<RoomTypes.A> value={null as RoomTypes.B} />`],
-    invalid: [{
-      code: `${input}\nconst view = <Widget<A> value={null as B} />`,
-      output: `${output}\nconst view = <Widget<RoomTypes.A> value={null as RoomTypes.B} />`,
-      errors: [error],
-    }],
+    invalid: [
+      {
+        code: `${input}\nconst view = <Widget<A> value={null as B} />`,
+        output: `${output}\nconst view = <Widget<RoomTypes.A> value={null as RoomTypes.B} />`,
+        errors: [error],
+      },
+    ],
   })
 })
 
 test('namespace diagnostics show the real TypeScript import syntax and source', () => {
   createRuleTester().run('arch/prefer-namespace-type-import', preferNamespaceTypeImport, {
     valid: [],
-    invalid: [{ code: input, output, errors: [{ message: "Use \u0060import type * as RoomTypes from './room.types'\u0060 for 4 type imports (max 3); keep exported domain names." }] }],
+    invalid: [
+      {
+        code: input,
+        output,
+        errors: [
+          {
+            message:
+              "Use \u0060import type * as RoomTypes from './room.types'\u0060 for 4 type imports (max 3); keep exported domain names.",
+          },
+        ],
+      },
+    ],
   })
 })

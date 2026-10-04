@@ -22,22 +22,35 @@ interface NoInlineSchemaElementsOptions {
 export const noInlineSchemaElements = defineRule({
   meta: {
     type: 'problem',
-    schema: [{
-      type: 'object',
-      additionalProperties: false,
-      properties: {
-        namespaces: { type: 'array', items: { type: 'string' } },
-        methods: { type: 'array', items: { type: 'string' } },
-        structuralMethods: { type: 'array', items: { type: 'string' } },
-        allowZodScalars: { type: 'boolean' },
+    schema: [
+      {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          namespaces: { type: 'array', items: { type: 'string' } },
+          methods: { type: 'array', items: { type: 'string' } },
+          structuralMethods: { type: 'array', items: { type: 'string' } },
+          allowZodScalars: { type: 'boolean' },
+        },
       },
-    }],
-    defaultOptions: [{
-      namespaces: ['z'],
-      methods: ['array', 'union', 'record', 'tuple'],
-      structuralMethods: ['array', 'discriminatedUnion', 'intersection', 'lazy', 'object', 'record', 'tuple', 'union'],
-      allowZodScalars: true,
-    }],
+    ],
+    defaultOptions: [
+      {
+        namespaces: ['z'],
+        methods: ['array', 'union', 'record', 'tuple'],
+        structuralMethods: [
+          'array',
+          'discriminatedUnion',
+          'intersection',
+          'lazy',
+          'object',
+          'record',
+          'tuple',
+          'union',
+        ],
+        allowZodScalars: true,
+      },
+    ],
     messages: { inline: 'z.{{method}}() elements must use named schemas.' },
   },
   createOnce(context) {
@@ -56,7 +69,9 @@ export const noInlineSchemaElements = defineRule({
         }
 
         for (const element of schemasElements(node)) {
-          if (!schemasIsAllowedElement(element, options.allowZodScalars, namespaces, new Set(options.structuralMethods))) {
+          if (
+            !schemasIsAllowedElement(element, options.allowZodScalars, namespaces, new Set(options.structuralMethods))
+          ) {
             context.report({
               node: element,
               messageId: 'inline',

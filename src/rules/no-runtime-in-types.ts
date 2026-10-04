@@ -15,8 +15,13 @@ interface NoRuntimeInTypesOptions {
 }
 
 function isTypeOnlyImport(statement: ESTree.ImportDeclaration): boolean {
-  return statement.importKind === 'type' || statement.specifiers.length > 0
-    && statement.specifiers.every((specifier) => specifier.type === 'ImportSpecifier' && specifier.importKind === 'type')
+  return (
+    statement.importKind === 'type' ||
+    (statement.specifiers.length > 0 &&
+      statement.specifiers.every(
+        (specifier) => specifier.type === 'ImportSpecifier' && specifier.importKind === 'type',
+      ))
+  )
 }
 
 function exportLocalName(specifier: ESTree.ExportSpecifier): string {
@@ -52,7 +57,7 @@ function runtimeInTypesIsAmbientFile(filename: string): boolean {
 
 function runtimeInTypesUnwrapped(statement: ESTree.Statement): ESTree.Node | undefined {
   return statement.type === 'ExportNamedDeclaration' || statement.type === 'ExportDefaultDeclaration'
-    ? statement.declaration ?? undefined
+    ? (statement.declaration ?? undefined)
     : statement
 }
 
@@ -92,11 +97,7 @@ function runtimeInTypesModuleName(node: ESTree.Node): string {
     return 'namespace'
   }
 
-  return node.id.type === 'Identifier'
-    ? node.id.name
-    : node.id.type === 'Literal'
-      ? String(node.id.value)
-      : 'namespace'
+  return node.id.type === 'Identifier' ? node.id.name : node.id.type === 'Literal' ? String(node.id.value) : 'namespace'
 }
 
 function runtimeInTypesNamespaceIsRuntime(
@@ -105,13 +106,19 @@ function runtimeInTypesNamespaceIsRuntime(
   valueNames: ReadonlySet<string>,
 ): boolean {
   if (
-    isAmbientFile || node.type !== 'TSModuleDeclaration' || node.declare || node.global || node.id.type === 'Literal'
-    || !node.body
+    isAmbientFile ||
+    node.type !== 'TSModuleDeclaration' ||
+    node.declare ||
+    node.global ||
+    node.id.type === 'Literal' ||
+    !node.body
   ) {
     return false
   }
 
-  return node.body.body.some((statement) => runtimeInTypesNamespaceMemberIsRuntime(statement, isAmbientFile, valueNames))
+  return node.body.body.some((statement) =>
+    runtimeInTypesNamespaceMemberIsRuntime(statement, isAmbientFile, valueNames),
+  )
 }
 
 function runtimeInTypesNamespaceMemberIsRuntime(
@@ -134,9 +141,11 @@ function runtimeInTypesNamespaceMemberIsRuntime(
   }
 
   if (node.type === 'TSImportEqualsDeclaration') {
-    return node.importKind !== 'type'
-      && (node.moduleReference.type === 'TSExternalModuleReference'
-        || runtimeInTypesIsInternalValueAlias(node, valueNames))
+    return (
+      node.importKind !== 'type' &&
+      (node.moduleReference.type === 'TSExternalModuleReference' ||
+        runtimeInTypesIsInternalValueAlias(node, valueNames))
+    )
   }
 
   if (node.type === 'TSExportAssignment') {
@@ -215,9 +224,10 @@ function runtimeInTypesSeedValueName(declaration: ESTree.Node, valueNames: Set<s
   }
 
   if (
-    (declaration.type === 'FunctionDeclaration' || declaration.type === 'ClassDeclaration'
-      || declaration.type === 'TSEnumDeclaration')
-    && declaration.id
+    (declaration.type === 'FunctionDeclaration' ||
+      declaration.type === 'ClassDeclaration' ||
+      declaration.type === 'TSEnumDeclaration') &&
+    declaration.id
   ) {
     valueNames.add(declaration.id.name)
     return
@@ -325,12 +335,14 @@ function isRuntimeReExport(
   }
 
   if (statement.source) {
-    return statement.specifiers.length === 0
-      || statement.specifiers.some((specifier) => specifier.exportKind !== 'type')
+    return (
+      statement.specifiers.length === 0 || statement.specifiers.some((specifier) => specifier.exportKind !== 'type')
+    )
   }
 
-  return statement.specifiers.some((specifier) => specifier.exportKind !== 'type'
-    && runtimeImportLocals.has(exportLocalName(specifier)))
+  return statement.specifiers.some(
+    (specifier) => specifier.exportKind !== 'type' && runtimeImportLocals.has(exportLocalName(specifier)),
+  )
 }
 
 /**
@@ -341,19 +353,21 @@ function isRuntimeReExport(
 export const noRuntimeInTypes = defineRule({
   meta: {
     type: 'problem',
-    schema: [{
-      type: 'object',
-      additionalProperties: false,
-      properties: {
-        allow: {
-          type: 'array',
-          items: { type: 'string', enum: ['class', 'default', 'enum', 'function', 'variable'] },
+    schema: [
+      {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          allow: {
+            type: 'array',
+            items: { type: 'string', enum: ['class', 'default', 'enum', 'function', 'variable'] },
+          },
+          runtimeImports: { type: 'string', enum: ['allow', 'ban'] },
+          allowImportSources: { type: 'array', items: { type: 'string' } },
+          banReExports: { type: 'boolean' },
         },
-        runtimeImports: { type: 'string', enum: ['allow', 'ban'] },
-        allowImportSources: { type: 'array', items: { type: 'string' } },
-        banReExports: { type: 'boolean' },
       },
-    }],
+    ],
     messages: {
       runtimeValue: 'Types files must not contain runtime value {{name}}.',
       runtimeImport: 'Types files must not contain runtime imports from {{source}}.',
@@ -424,17 +438,21 @@ export const noRuntimeInTypes = defineRule({
         }
 
         for (const statement of program.body) {
-          if (banReExports && (statement.type === 'ExportNamedDeclaration' || statement.type === 'ExportAllDeclaration')
-            && isRuntimeReExport(statement, runtimeImportLocals, valueNames, isAmbientFile)) {
+          if (
+            banReExports &&
+            (statement.type === 'ExportNamedDeclaration' || statement.type === 'ExportAllDeclaration') &&
+            isRuntimeReExport(statement, runtimeImportLocals, valueNames, isAmbientFile)
+          ) {
             context.report({
               node: statement,
               messageId: 'runtimeReExport',
             })
           }
 
-          const declaration = statement.type === 'ExportNamedDeclaration' || statement.type === 'ExportDefaultDeclaration'
-            ? statement.declaration
-            : statement
+          const declaration =
+            statement.type === 'ExportNamedDeclaration' || statement.type === 'ExportDefaultDeclaration'
+              ? statement.declaration
+              : statement
 
           if (!declaration) {
             continue
@@ -484,8 +502,12 @@ export const noRuntimeInTypes = defineRule({
             continue
           }
 
-          if (!allow.includes('default') && statement.type === 'ExportDefaultDeclaration'
-            && declaration.type !== 'TSInterfaceDeclaration' && declaration.type !== 'TSTypeAliasDeclaration') {
+          if (
+            !allow.includes('default') &&
+            statement.type === 'ExportDefaultDeclaration' &&
+            declaration.type !== 'TSInterfaceDeclaration' &&
+            declaration.type !== 'TSTypeAliasDeclaration'
+          ) {
             context.report({
               node: statement,
               messageId: 'runtimeValue',

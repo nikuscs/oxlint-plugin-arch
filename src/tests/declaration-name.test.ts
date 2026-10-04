@@ -6,74 +6,70 @@ const prefix = { messageId: 'prefix' }
 const pattern = { messageId: 'pattern' }
 
 test('declaration-name', () => {
-  createRuleTester().run(
-    'arch/declaration-name',
-    declarationName,
-    {
-      valid: [
-        {
-          filename: '/repo/src/api/agent-setups.types.ts',
-          code: 'type AgentSetupTimeTrigger = {}\nconst agentSetupDraft = {}\nfunction agentSetupLoad() { return null }',
-          options: [{ singularize: 'trailing-s' }],
-        },
-        {
-          filename: '/repo/src/api/agent-setup-drafts.types.ts',
-          code: 'type AgentSetupDraftStatus = {}\nconst leftover = 1',
-          options: [{ kinds: ['type', 'interface'], singularize: 'trailing-s' }],
-        },
-        {
-          filename: '/repo/src/api/accounts.ts',
-          code: "const listAccounts = () => []\ntype AccessRequestErrorKind = 'denied'",
-          options: [{ kinds: ['const', 'function'], pattern: '^[a-z]+[A-Z]', allowPattern: 'ErrorKind$' }],
-        },
-        {
-          filename: '/repo/src/api/accounts.ts',
-          code: 'const listAccounts = () => []\nfunction getAccount() {}',
-          options: [{ kinds: ['const', 'function'], pattern: ['^list[A-Z]', '^get[A-Z]'] }],
-        },
-        {
-          filename: '/repo/src/api/accounts.ts',
-          code: 'const goodOne = 1\nconst goodTwo = 2',
-          options: [{ kinds: ['const'], pattern: '^good', flags: 'g' }],
-        },
-        {
-          filename: '/repo/src/lib/onchain-utils.ts',
-          code: 'type OnchainClient = {}\nfunction leftover() { return null }',
-          options: [{ kinds: ['type'], trailingRoles: ['utils'] }],
-        },
-      ],
-      invalid: [
-        {
-          filename: '/repo/src/api/accounts.ts',
-          code: 'const badOne = 1',
-          options: [{ kinds: ['const'], pattern: ['', '^good'] }],
-          errors: [{ message: "'badOne' must match ^good." }],
-        },
-        {
-          filename: '/repo/src/api/agent-setups.types.ts',
-          code: 'type DraftStatus = {}\nconst leftover = 1',
-          options: [{ singularize: 'trailing-s' }],
-          errors: [prefix, prefix],
-        },
-        {
-          filename: '/repo/src/api/agent-setup-drafts.types.ts',
-          code: 'type DraftStatus = {}\nconst leftover = 1',
-          options: [{ kinds: ['type'], singularize: 'trailing-s' }],
-          errors: [prefix],
-        },
-        {
-          filename: '/repo/src/api/accounts.ts',
-          code: 'const leftover = 1\nfunction listAccounts() { return [] }',
-          options: [{ kinds: ['const', 'function'], pattern: '^list[A-Z]' }],
-          errors: [pattern],
-        },
-        {
-          filename: '/repo/src/lib/onchain-utils.ts',
-          code: 'type DraftStatus = {}',
-          options: [{ kinds: ['type'], trailingRoles: ['utils'] }],
-          errors: [prefix],
-        },
-      ],
-    },
-  )
+  createRuleTester().run('arch/declaration-name', declarationName, {
+    valid: [
+      {
+        filename: '/repo/src/api/agent-setups.types.ts',
+        code: 'type AgentSetupTimeTrigger = {}\nconst agentSetupDraft = {}\nfunction agentSetupLoad() { return null }',
+        options: [{ singularize: 'trailing-s' }],
+      },
+      {
+        filename: '/repo/src/api/agent-setup-drafts.types.ts',
+        code: 'type AgentSetupDraftStatus = {}\nconst leftover = 1',
+        options: [{ kinds: ['type', 'interface'], singularize: 'trailing-s' }],
+      },
+      {
+        filename: '/repo/src/api/accounts.ts',
+        code: "const listAccounts = () => []\ntype AccessRequestErrorKind = 'denied'",
+        options: [{ kinds: ['const', 'function'], pattern: '^[a-z]+[A-Z]', allowPattern: 'ErrorKind$' }],
+      },
+      {
+        filename: '/repo/src/api/accounts.ts',
+        code: 'const listAccounts = () => []\nfunction getAccount() {}',
+        options: [{ kinds: ['const', 'function'], pattern: ['^list[A-Z]', '^get[A-Z]'] }],
+      },
+      {
+        filename: '/repo/src/api/accounts.ts',
+        code: 'const goodOne = 1\nconst goodTwo = 2',
+        options: [{ kinds: ['const'], pattern: '^good', flags: 'g' }],
+      },
+      {
+        filename: '/repo/src/lib/onchain-utils.ts',
+        code: 'type OnchainClient = {}\nfunction leftover() { return null }',
+        options: [{ kinds: ['type'], trailingRoles: ['utils'] }],
+      },
+    ],
+    invalid: [
+      {
+        filename: '/repo/src/api/accounts.ts',
+        code: 'const badOne = 1',
+        options: [{ kinds: ['const'], pattern: ['', '^good'] }],
+        errors: [{ message: "'badOne' must match ^good." }],
+      },
+      {
+        filename: '/repo/src/api/agent-setups.types.ts',
+        code: 'type DraftStatus = {}\nconst leftover = 1',
+        options: [{ singularize: 'trailing-s' }],
+        errors: [prefix, prefix],
+      },
+      {
+        filename: '/repo/src/api/agent-setup-drafts.types.ts',
+        code: 'type DraftStatus = {}\nconst leftover = 1',
+        options: [{ kinds: ['type'], singularize: 'trailing-s' }],
+        errors: [prefix],
+      },
+      {
+        filename: '/repo/src/api/accounts.ts',
+        code: 'const leftover = 1\nfunction listAccounts() { return [] }',
+        options: [{ kinds: ['const', 'function'], pattern: '^list[A-Z]' }],
+        errors: [pattern],
+      },
+      {
+        filename: '/repo/src/lib/onchain-utils.ts',
+        code: 'type DraftStatus = {}',
+        options: [{ kinds: ['type'], trailingRoles: ['utils'] }],
+        errors: [prefix],
+      },
+    ],
+  })
 })

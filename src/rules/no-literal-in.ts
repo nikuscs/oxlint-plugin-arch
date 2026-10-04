@@ -24,13 +24,15 @@ function literalKey(node: ESTree.Expression): string | undefined {
 export const noLiteralIn = defineRule({
   meta: {
     type: 'suggestion',
-    schema: [{
-      type: 'object',
-      additionalProperties: false,
-      properties: {
-        allow: { type: 'array', items: { type: 'string' } },
+    schema: [
+      {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          allow: { type: 'array', items: { type: 'string' } },
+        },
       },
-    }],
+    ],
     defaultOptions: [{ allow: [] }],
     messages: {
       literalIn: "Avoid '{{key}}' in value; use Object.hasOwn() or a discriminated union.",

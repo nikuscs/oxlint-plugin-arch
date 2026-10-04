@@ -24,13 +24,17 @@ function tokenIsTypeOnlyImport(node: ESTree.Node): boolean {
   const parent = node.parent
 
   if (parent?.type === 'ImportSpecifier') {
-    return parent.importKind === 'type'
-      || (parent.parent.type === 'ImportDeclaration' && parent.parent.importKind === 'type')
+    return (
+      parent.importKind === 'type' ||
+      (parent.parent.type === 'ImportDeclaration' && parent.parent.importKind === 'type')
+    )
   }
 
-  return (parent?.type === 'ImportDefaultSpecifier' || parent?.type === 'ImportNamespaceSpecifier')
-    && parent.parent.type === 'ImportDeclaration'
-    && parent.parent.importKind === 'type'
+  return (
+    (parent?.type === 'ImportDefaultSpecifier' || parent?.type === 'ImportNamespaceSpecifier') &&
+    parent.parent.type === 'ImportDeclaration' &&
+    parent.parent.importKind === 'type'
+  )
 }
 
 // Why: a `*.` wildcard must match any receiver, including `this.db`, call results
@@ -49,37 +53,36 @@ function memberMatches(node: ESTree.MemberExpression, restriction: string): bool
 export const noRestrictedToken = defineRule({
   meta: {
     type: 'problem',
-    schema: [{
-      type: 'object',
-      additionalProperties: false,
-      properties: {
-        token: { type: 'string' },
-        allowIn: { type: 'array', items: { type: 'string' } },
-        allowPathPatterns: { type: 'array', items: { type: 'string' } },
-        restrictions: {
-          type: 'array',
-          items: {
-            type: 'object',
-            additionalProperties: false,
-            properties: {
-              token: { type: 'string' },
-              member: { type: 'string' },
-              allowIn: { type: 'array', items: { type: 'string' } },
-              allowPathPatterns: { type: 'array', items: { type: 'string' } },
-              message: { type: 'string' },
+    schema: [
+      {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          token: { type: 'string' },
+          allowIn: { type: 'array', items: { type: 'string' } },
+          allowPathPatterns: { type: 'array', items: { type: 'string' } },
+          restrictions: {
+            type: 'array',
+            items: {
+              type: 'object',
+              additionalProperties: false,
+              properties: {
+                token: { type: 'string' },
+                member: { type: 'string' },
+                allowIn: { type: 'array', items: { type: 'string' } },
+                allowPathPatterns: { type: 'array', items: { type: 'string' } },
+                message: { type: 'string' },
+              },
+              oneOf: [
+                { required: ['token'], not: { required: ['member'] } },
+                { required: ['member'], not: { required: ['token'] } },
+              ],
             },
-            oneOf: [
-              { required: ['token'], not: { required: ['member'] } },
-              { required: ['member'], not: { required: ['token'] } },
-            ],
           },
         },
+        anyOf: [{ required: ['token'] }, { required: ['restrictions'] }],
       },
-      anyOf: [
-        { required: ['token'] },
-        { required: ['restrictions'] },
-      ],
-    }],
+    ],
     messages: {
       restricted: "'{{token}}' may only appear in configured owner paths.",
       restrictedWithMessage: "'{{token}}' may only appear in configured owner paths. {{custom}}",
@@ -100,18 +103,23 @@ export const noRestrictedToken = defineRule({
       before() {
         const options = optionsFirst<NoRestrictedTokenOptions>(context)
         const configured = [
-          ...(options.token ? [{
-            token: options.token,
-            allowIn: options.allowIn,
-            allowPathPatterns: options.allowPathPatterns,
-          }] : []),
+          ...(options.token
+            ? [
+                {
+                  token: options.token,
+                  allowIn: options.allowIn,
+                  allowPathPatterns: options.allowPathPatterns,
+                },
+              ]
+            : []),
           ...(options.restrictions ?? []),
         ]
         const filename = namingPosixPath(context.filename)
 
         restrictions = configured.flatMap((restriction): NormalizedRestriction[] => {
-          const allowed = (restriction.allowIn ?? []).some((suffix) => filename.endsWith(suffix))
-            || (restriction.allowPathPatterns ?? []).some((pattern) => new RegExp(pattern).test(filename))
+          const allowed =
+            (restriction.allowIn ?? []).some((suffix) => filename.endsWith(suffix)) ||
+            (restriction.allowPathPatterns ?? []).some((pattern) => new RegExp(pattern).test(filename))
 
           if (allowed) {
             return []
@@ -121,9 +129,7 @@ export const noRestrictedToken = defineRule({
             return [{ kind: 'token', value: restriction.token, message: restriction.message }]
           }
 
-          return restriction.member
-            ? [{ kind: 'member', value: restriction.member, message: restriction.message }]
-            : []
+          return restriction.member ? [{ kind: 'member', value: restriction.member, message: restriction.message }] : []
         })
 
         if (restrictions.length === 0) {

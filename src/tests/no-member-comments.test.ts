@@ -45,9 +45,9 @@ test('no-member-comments', () => {
         output: 'const o = {\n ...rest,\n k: 1,\n}',
         errors: [error],
       },
-      ...['// The title.', '/** The title. */', '/* The title. */'].map(comment => ({
+      ...['// The title.', '/** The title. */', '/* The title. */'].map((comment) => ({
         code: `const props = {\n ${comment}\n title: 'Hello'\n}`,
-        output: 'const props = {\n title: \'Hello\'\n}',
+        output: "const props = {\n title: 'Hello'\n}",
         errors: [error],
       })),
       {
@@ -60,7 +60,7 @@ test('no-member-comments', () => {
         output: 'interface Props { render(): void;\n title: string }',
         errors: [error],
       },
-      ...['// The title.', '/** The title. */', '/* The title. */'].map(comment => ({
+      ...['// The title.', '/** The title. */', '/* The title. */'].map((comment) => ({
         code: `interface Props {\n  ${comment}\n\n  title: string\n}`,
         output: 'interface Props {\n  title: string\n}',
         errors: [error],
@@ -71,7 +71,7 @@ test('no-member-comments', () => {
         output: 'interface Props {\n title: string\n}',
         errors: [error],
       },
-      ...['/* Why: upstream rejects null. */', '/**\n  * Why: upstream rejects null.\n  */'].map(comment => ({
+      ...['/* Why: upstream rejects null. */', '/**\n  * Why: upstream rejects null.\n  */'].map((comment) => ({
         code: `interface Props {\n ${comment}\n title: string\n}`,
         options: [{ allowWhy: false }],
         output: 'interface Props {\n title: string\n}',
@@ -139,11 +139,13 @@ test('no-member-comments', () => {
 test('no-member-comments in TSX', () => {
   createRuleTester('tsx').run('arch/no-member-comments', noMemberComments, {
     valid: [],
-    invalid: [{
-      filename: '/repo/component.tsx',
-      code: 'function View(props: {\n // The title.\n title: string\n}) { return <h1>{props.title}</h1> }',
-      output: 'function View(props: {\n title: string\n}) { return <h1>{props.title}</h1> }',
-      errors: [error],
-    }],
+    invalid: [
+      {
+        filename: '/repo/component.tsx',
+        code: 'function View(props: {\n // The title.\n title: string\n}) { return <h1>{props.title}</h1> }',
+        output: 'function View(props: {\n title: string\n}) { return <h1>{props.title}</h1> }',
+        errors: [error],
+      },
+    ],
   })
 })

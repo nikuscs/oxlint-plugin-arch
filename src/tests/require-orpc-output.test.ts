@@ -7,19 +7,15 @@ const missing = { messageId: 'missing' }
 const invalid = { messageId: 'invalid' }
 
 test('require-orpc-output', () => {
-  createRuleTester().run(
-    'arch/require-orpc-output',
-    requireOrpcOutput,
-    {
-      valid: [
-        { code: 'procedure.output(brandApiDetail).handler(() => ({}))', options },
-        { code: 'procedure.output(paginatedOutput(brandApiSummary)).handler(() => ({}))', options },
-      ],
-      invalid: [
-        { code: 'procedure.input(inputSchema).handler(() => ({}))', options, errors: [missing] },
-        { code: 'procedure.output(z.object({})).handler(() => ({}))', options, errors: [invalid] },
-        { code: 'procedure.output(paginatedOutput(z.object({}))).handler(() => ({}))', options, errors: [invalid] },
-      ],
-    },
-  )
+  createRuleTester().run('arch/require-orpc-output', requireOrpcOutput, {
+    valid: [
+      { code: 'procedure.output(brandApiDetail).handler(() => ({}))', options },
+      { code: 'procedure.output(paginatedOutput(brandApiSummary)).handler(() => ({}))', options },
+    ],
+    invalid: [
+      { code: 'procedure.input(inputSchema).handler(() => ({}))', options, errors: [missing] },
+      { code: 'procedure.output(z.object({})).handler(() => ({}))', options, errors: [invalid] },
+      { code: 'procedure.output(paginatedOutput(z.object({}))).handler(() => ({}))', options, errors: [invalid] },
+    ],
+  })
 })

@@ -26,6 +26,10 @@ export function orpcIsNamedOrComposedArgument(argument: ESTree.Argument | undefi
     return true
   }
 
-  return argument?.type === 'CallExpression' && argument.callee.type === 'Identifier'
-    && composers.has(argument.callee.name) && argument.arguments[0]?.type === 'Identifier'
+  return (
+    argument?.type === 'CallExpression' &&
+    argument.callee.type === 'Identifier' &&
+    composers.has(argument.callee.name) &&
+    argument.arguments[0]?.type === 'Identifier'
+  )
 }

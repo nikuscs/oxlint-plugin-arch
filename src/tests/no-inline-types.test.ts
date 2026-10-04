@@ -59,7 +59,10 @@ test('no-inline-types', () => {
       { code: 'function save(...inputs: { id: string }[]) {}', errors: [error] },
       { code: 'function save([input]: [{ id: string }]) {}', errors: [error] },
       { code: 'class Service { constructor(private input: { id: string }) {} }', errors: [error] },
-      { code: 'class Service { save(input: { id: string }): { ok: boolean } { return { ok: true } } }', errors: [error, error] },
+      {
+        code: 'class Service { save(input: { id: string }): { ok: boolean } { return { ok: true } } }',
+        errors: [error, error],
+      },
       { code: 'const service = { save(input: { id: string }) {} }', errors: [error] },
       { code: 'declare function save(input: { id: string }): { ok: boolean }', errors: [error, error] },
       { code: 'abstract class Service { abstract save(input: { id: string }): void }', errors: [error] },

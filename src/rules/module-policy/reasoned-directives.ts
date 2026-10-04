@@ -6,18 +6,14 @@ export const directives = defineRule({
     type: 'problem',
     schema: [],
     messages: {
-      directive:
-        'Lint disables must name specific rules and explain why after --.',
+      directive: 'Lint disables must name specific rules and explain why after --.',
     },
   },
   createOnce(context) {
     return {
       Program() {
         for (const comment of context.sourceCode.getAllComments()) {
-          const match =
-            /^\s*(?:oxlint|eslint)-disable(?:-next-line|-line)?\b(.*)$/s.exec(
-              comment.value,
-            )
+          const match = /^\s*(?:oxlint|eslint)-disable(?:-next-line|-line)?\b(.*)$/s.exec(comment.value)
           if (!match) {
             continue
           }

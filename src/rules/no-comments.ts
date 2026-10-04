@@ -36,8 +36,7 @@ function noCommentsCreateLineIndex(text: string): NoCommentsLineIndex {
       ends.push(index)
       if (text[index + 1] === '\n') index++
       starts.push(index + 1)
-    }
-    else if (character === '\n' || character === '\u2028' || character === '\u2029') {
+    } else if (character === '\n' || character === '\u2028' || character === '\u2029') {
       ends.push(index)
       starts.push(index + 1)
     }
@@ -136,15 +135,17 @@ export const noComments = defineRule({
   meta: {
     type: 'suggestion',
     fixable: 'code',
-    schema: [{
-      type: 'object',
-      additionalProperties: false,
-      properties: {
-        allowWhy: { type: 'boolean', default: true },
-        allowPatterns: { type: 'array', items: { type: 'string' } },
-        allowJsdoc: { type: 'boolean', default: false },
+    schema: [
+      {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          allowWhy: { type: 'boolean', default: true },
+          allowPatterns: { type: 'array', items: { type: 'string' } },
+          allowJsdoc: { type: 'boolean', default: false },
+        },
       },
-    }],
+    ],
     messages: {
       comment: 'Remove this comment.',
     },
@@ -174,18 +175,17 @@ export const noComments = defineRule({
         for (const comment of comments) {
           const value = commentsNormalizedValue(comment)
           if (
-            !mightContainJsxComment
-            && comment.type === 'Block'
-            && noCommentsFollowsOpeningBrace(text, comment.range[0])
+            !mightContainJsxComment &&
+            comment.type === 'Block' &&
+            noCommentsFollowsOpeningBrace(text, comment.range[0])
           ) {
             mightContainJsxComment = true
           }
-          const directlyFollowsPrevious = previousComment !== undefined
-            && comment.loc.start.line === previousComment.loc.end.line + 1
-            && NO_COMMENTS_LINE_GAP.test(text.slice(previousComment.range[1], comment.range[0]))
-          const continuesWhy: boolean = comment.type === 'Line'
-            && whyContinuation
-            && directlyFollowsPrevious
+          const directlyFollowsPrevious =
+            previousComment !== undefined &&
+            comment.loc.start.line === previousComment.loc.end.line + 1 &&
+            NO_COMMENTS_LINE_GAP.test(text.slice(previousComment.range[1], comment.range[0]))
+          const continuesWhy: boolean = comment.type === 'Line' && whyContinuation && directlyFollowsPrevious
           const isWhy: boolean = commentsIsWhy(value) || continuesWhy
           if (commentsIsDisableNextLine(value)) {
             protectedTargetLines.push(comment.loc.end.line + 1)
@@ -223,62 +223,63 @@ export const noComments = defineRule({
           let embeddedUnicodeLineTerminator: string | undefined
           for (const comment of group) {
             if (comment.type === 'Block' && embeddedUnicodeLineTerminator === undefined) {
-              embeddedUnicodeLineTerminator = text.slice(comment.range[0], comment.range[1])
+              embeddedUnicodeLineTerminator = text
+                .slice(comment.range[0], comment.range[1])
                 .match(/[\u2028\u2029]/)?.[0]
             }
           }
-          const reportOnly = container !== undefined || noCommentsIncludesLine(
-            protectedTargetLines,
-            first.loc.start.line,
-            final.loc.end.line,
-          )
+          const reportOnly =
+            container !== undefined ||
+            noCommentsIncludesLine(protectedTargetLines, first.loc.start.line, final.loc.end.line)
           const range0 = first.range[0]
           const range1 = final.range[1]
 
           context.report({
             loc: { start: first.loc.start, end: final.loc.end },
             messageId: 'comment',
-            ...(reportOnly ? {} : {
-              fix(fixer) {
-                const lineStart = noCommentsLineStart(lines, range0)
-                const before = text.slice(lineStart, range0)
-                if (NO_COMMENTS_HORIZONTAL_SPACE.test(before)) {
-                  const trailingLines = text.slice(range1).match(NO_COMMENTS_TRAILING_LINES)
-                  if (trailingLines) {
-                    const end = range1 + trailingLines[0].length
-                    return embeddedUnicodeLineTerminator
-                      ? fixer.replaceTextRange([lineStart, end], embeddedUnicodeLineTerminator)
-                      : fixer.removeRange([lineStart, end])
-                  }
-                }
+            ...(reportOnly
+              ? {}
+              : {
+                  fix(fixer) {
+                    const lineStart = noCommentsLineStart(lines, range0)
+                    const before = text.slice(lineStart, range0)
+                    if (NO_COMMENTS_HORIZONTAL_SPACE.test(before)) {
+                      const trailingLines = text.slice(range1).match(NO_COMMENTS_TRAILING_LINES)
+                      if (trailingLines) {
+                        const end = range1 + trailingLines[0].length
+                        return embeddedUnicodeLineTerminator
+                          ? fixer.replaceTextRange([lineStart, end], embeddedUnicodeLineTerminator)
+                          : fixer.removeRange([lineStart, end])
+                      }
+                    }
 
-                const removed = text.slice(range0, range1)
-                const lineBreak = removed.match(NO_COMMENTS_LINE_TERMINATOR)?.[0]
-                let afterOnLine: string | undefined
-                if (lineBreak) {
-                  afterOnLine = text.slice(range1, noCommentsLineEnd(lines, range1))
-                  if (/\S/.test(before) && /\S/.test(afterOnLine)) {
-                    return fixer.replaceTextRange([range0, range1], lineBreak)
-                  }
-                }
-                if (embeddedUnicodeLineTerminator) {
-                  return fixer.replaceTextRange([range0, range1], embeddedUnicodeLineTerminator)
-                }
+                    const removed = text.slice(range0, range1)
+                    const lineBreak = removed.match(NO_COMMENTS_LINE_TERMINATOR)?.[0]
+                    let afterOnLine: string | undefined
+                    if (lineBreak) {
+                      afterOnLine = text.slice(range1, noCommentsLineEnd(lines, range1))
+                      if (/\S/.test(before) && /\S/.test(afterOnLine)) {
+                        return fixer.replaceTextRange([range0, range1], lineBreak)
+                      }
+                    }
+                    if (embeddedUnicodeLineTerminator) {
+                      return fixer.replaceTextRange([range0, range1], embeddedUnicodeLineTerminator)
+                    }
 
-                // Why: trailing comments own their preceding horizontal spacing, but
-                // inline comments may be the only boundary between two tokens.
-                afterOnLine ??= text.slice(range1, noCommentsLineEnd(lines, range1))
-                if (NO_COMMENTS_HORIZONTAL_SPACE.test(afterOnLine)) {
-                  const start = range0 - (/[\t ]*$/.exec(before)?.[0].length ?? 0)
-                  return fixer.removeRange([start, range1])
-                }
+                    // Why: trailing comments own their preceding horizontal spacing, but
+                    // inline comments may be the only boundary between two tokens.
+                    afterOnLine ??= text.slice(range1, noCommentsLineEnd(lines, range1))
+                    if (NO_COMMENTS_HORIZONTAL_SPACE.test(afterOnLine)) {
+                      const start = range0 - (/[\t ]*$/.exec(before)?.[0].length ?? 0)
+                      return fixer.removeRange([start, range1])
+                    }
 
-                const left = text[range0 - 1]
-                const right = text[range1]
-                const separator = left && right && !/\s/.test(left) && !/\s/.test(right) ? ' ' : ''
-                return fixer.replaceTextRange([range0, range1], separator)
-              },
-            }),
+                    const left = text[range0 - 1]
+                    const right = text[range1]
+                    const separator = left && right && !/\s/.test(left) && !/\s/.test(right) ? ' ' : ''
+                    return fixer.replaceTextRange([range0, range1], separator)
+                  },
+                }),
           })
         }
       },

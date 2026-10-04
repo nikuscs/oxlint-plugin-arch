@@ -1,13 +1,5 @@
 import { spawnSync } from 'node:child_process'
-import {
-  closeSync,
-  cpSync,
-  mkdirSync,
-  openSync,
-  readdirSync,
-  readFileSync,
-  symlinkSync,
-} from 'node:fs'
+import { closeSync, cpSync, mkdirSync, openSync, readdirSync, readFileSync, symlinkSync } from 'node:fs'
 import { resolve } from 'node:path'
 import type { PresetFixtureResult } from '../types/preset-fixture.types.ts'
 
@@ -44,15 +36,25 @@ export function presetFixtureRun(project: string, temporary: string): PresetFixt
 
   const outputPath = resolve(root, 'lint-results.json')
   const outputFile = openSync(outputPath, 'w')
-  const result = spawnSync(process.execPath, [
-    resolve(repository, 'node_modules/oxlint/bin/oxlint'),
-    '-c', 'oxlint.config.ts', '--format', 'json', 'apps', 'packages', 'scripts',
-  ], {
-    cwd: root,
-    encoding: 'utf8',
-    timeout: 60_000,
-    stdio: ['ignore', outputFile, 'pipe'],
-  })
+  const result = spawnSync(
+    process.execPath,
+    [
+      resolve(repository, 'node_modules/oxlint/bin/oxlint'),
+      '-c',
+      'oxlint.config.ts',
+      '--format',
+      'json',
+      'apps',
+      'packages',
+      'scripts',
+    ],
+    {
+      cwd: root,
+      encoding: 'utf8',
+      timeout: 60_000,
+      stdio: ['ignore', outputFile, 'pipe'],
+    },
+  )
 
   closeSync(outputFile)
   const output = readFileSync(outputPath, 'utf8')

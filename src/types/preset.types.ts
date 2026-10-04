@@ -1,18 +1,17 @@
 import type { OxlintConfig, OxlintOverride } from 'oxlint'
 
-export type PresetPolicy =
-  boolean | ((current: OxlintOverride[]) => OxlintOverride[])
+export type PresetPolicy = boolean | ((current: OxlintOverride[]) => OxlintOverride[])
 export type PresetPolicyName =
-  | 'banTypes'
+  | 'typePlacement'
   | 'typeSafety'
-  | 'serviceModules'
-  | 'moduleLayout'
+  | 'serviceStructure'
+  | 'fileLayout'
   | 'naming'
   | 'comments'
   | 'formatting'
-  | 'layout'
+  | 'statementLayout'
   | 'imports'
-  | 'reactRules'
+  | 'react'
   | 'effects'
   | 'memoization'
   | 'routes'
@@ -20,12 +19,12 @@ export type PresetPolicyName =
   | 'schemas'
   | 'boundaries'
   | 'tests'
-  | 'wrappers'
+  | 'trivialFunctions'
   | 'mutableState'
-  | 'backendRules'
-  | 'tailwindRules'
-  | 'shadcnRules'
-  | 'clientOwnership'
+  | 'backend'
+  | 'tailwind'
+  | 'shadcn'
+  | 'rpcClientOwnership'
 
 export type PresetRole = 'web' | 'server' | 'runner' | 'scripts' | 'packages'
 export type PresetFolderLayout = 'flat' | 'domain'
@@ -44,47 +43,76 @@ export interface PresetFolderScope {
   mode: PresetFolderLayout
 }
 
-export interface PresetOptions extends Partial<
-  Record<PresetPolicyName, PresetPolicy>
-> {
+export interface PresetOptions {
   root?: string
   architecture?: PresetArchitecture
-  fileRoles?: string[]
-  level?: 'error' | 'warn'
-  complexity?: number
-  maxLines?: number
+  severity?: 'error' | 'warn'
+  limits?: PresetLimitsOptions
+  modules?: PresetModulesOptions
+  imports?: PresetImportsOptions
+  orpc?: PresetOrpcOptions
+  sql?: PresetSqlOptions
+  forms?: PresetFormsOptions
+  react?: PresetReactOptions
+  policies?: PresetPolicyOptions
   ignorePatterns?: string[]
-  exclude?: Record<string, string[]>
-  reactCompiler?: boolean
+  ruleExclusions?: Record<string, string[]>
+  cliFiles?: string[]
+  tanstackStart?: PresetTanstackStartOptions
   tailwind?: false | PresetTailwindOptions
   shadcn?: false | PresetShadcnOptions
-  publicApi?: string[]
-  publicEntrypoints?: string[]
-  internalPatterns?: string[]
-  aliases?: Record<string, string>
-  rpcClient?: string
-  tanstackRuntime?: PresetRuntimeOptions
-  schemaComposers?: string[]
-  sanitizers?: string[]
-  formResolver?: string
-  cli?: string[]
 }
 
-export interface PresetRuntimeOptions {
-  serverImports?: string[]
-  clientImports?: string[]
-  allowComputedImportsIn?: string[]
+export interface PresetPolicyOptions extends Partial<Record<PresetPolicyName, PresetPolicy>> {}
+
+export interface PresetLimitsOptions {
+  maxFileLines?: number
+  maxFunctionComplexity?: number
+}
+
+export interface PresetModulesOptions {
+  customFileRoles?: string[]
+}
+
+export interface PresetImportsOptions {
+  backendEntryPoints?: string[]
+  aliases?: Record<string, string>
+  internalSortPatterns?: string[]
+}
+
+export interface PresetOrpcOptions {
+  publicProcedureFiles?: string[]
+  outputSchemaComposers?: string[]
+  clientOwnerFile?: string
+}
+
+export interface PresetSqlOptions {
+  likeSanitizers?: string[]
+}
+
+export interface PresetFormsOptions {
+  schemaResolver?: string
+}
+
+export interface PresetReactOptions {
+  compiler?: boolean
+}
+
+export interface PresetTanstackStartOptions {
+  additionalServerOnlyImports?: string[]
+  additionalClientOnlyImports?: string[]
+  computedImportAllowedFiles?: string[]
 }
 
 export interface PresetTailwindOptions {
-  entryPoint?: string
-  entryPoints?: Record<string, string>
+  cssEntryPoint?: string
+  cssEntryPointsByRoot?: Record<string, string>
   rootFontSize?: number
 }
 
 export interface PresetShadcnOptions {
-  ui?: string
-  componentImports?: string[]
+  uiImportPath?: string
+  componentImportSources?: string[]
 }
 
 export type PresetRules = NonNullable<OxlintConfig['rules']>

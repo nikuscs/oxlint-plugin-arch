@@ -27,19 +27,21 @@ interface NoExtraExportsOptions {
 export const noExtraExports = defineRule({
   meta: {
     type: 'problem',
-    schema: [{
-      type: 'object',
-      additionalProperties: false,
-      properties: {
-        names: { type: 'array', items: { type: 'string' } },
-        patterns: { type: 'array', items: { type: 'string' } },
-        domainStem: { type: 'string', enum: [...namingStemModes] },
-        trailingRoles: { type: 'array', items: { type: 'string' } },
-        roleSeparators: { type: 'array', items: { type: 'string' } },
-        allowTypeExports: { type: 'boolean' },
+    schema: [
+      {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          names: { type: 'array', items: { type: 'string' } },
+          patterns: { type: 'array', items: { type: 'string' } },
+          domainStem: { type: 'string', enum: [...namingStemModes] },
+          trailingRoles: { type: 'array', items: { type: 'string' } },
+          roleSeparators: { type: 'array', items: { type: 'string' } },
+          allowTypeExports: { type: 'boolean' },
+        },
+        required: ['names'],
       },
-      required: ['names'],
-    }],
+    ],
     messages: {
       extraExport: "Export '{{name}}' is not allowed; expected one of: {{allowed}}.",
     },
@@ -54,9 +56,9 @@ export const noExtraExports = defineRule({
           Domain: namingPascalCase(domain),
           domain: namingCamelCase(domain),
         }
-        const allowed = options.names.map((template) => template
-          .replaceAll('{Domain}', replacements.Domain)
-          .replaceAll('{domain}', replacements.domain))
+        const allowed = options.names.map((template) =>
+          template.replaceAll('{Domain}', replacements.Domain).replaceAll('{domain}', replacements.domain),
+        )
         const patterns = (options.patterns ?? []).map((template) => {
           const source = template
             .replaceAll('{Domain}', replacements.Domain.replaceAll(/[.*+?^${}()|[\]\\]/g, '\\$&'))

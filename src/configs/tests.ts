@@ -10,10 +10,7 @@ export function presetTestsConfig(context: PresetContext): PresetPolicies {
       ...presetTestRules,
       'dillon-anti-slop/no-module-mocking': 'error',
       'modules/test-modifiers': 'error',
-      'arch/test-title-pattern': [
-        'error',
-        { forbid: '^should\\b', flags: 'i' },
-      ],
+      'arch/test-title-pattern': ['error', { forbid: '^should\\b', flags: 'i' }],
     }),
     presetOverride(
       presetScopes(

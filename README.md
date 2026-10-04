@@ -45,7 +45,7 @@ export default preset({
 });
 ```
 
-`architecture` maps paths to roles and replaces the defaults when supplied. Multiple apps may share a role: `{ 'apps/dashboard': 'web', 'apps/storefront': 'web', 'apps/api': 'server', packages: 'packages', scripts: 'scripts' }`. Use `runner` for another strict backend, or `{ '.': 'web' }` for a standalone frontend. Omit absent roots. Paths are normalized; duplicates, overlapping roots and paths outside the project are rejected. Web and backend roles derive `src/services`, `src/types` and other application scopes; packages have no assumed app layout, and scripts permit console output. Shared baseline policies still apply everywhere. Each web root defaults to its own `src/application/styles.css`. Set `tailwind.entryPoints: { 'apps/storefront': 'themes/store.css' }` for per-root paths, or `tailwind.entryPoint` for an explicitly shared stylesheet. Entry paths are relative to `root`; `tailwind: false` disables Tailwind. Per-root CSS is supplied through Tailwind rule options because Oxlint 1.85 has no override-level `settings`. Shadcn discovers each app's theme through its own `components.json` (or package-local discovery). `root` makes asset and package resolution independent of the lint command's working directory; invoke the root config from its real filesystem location.
+`architecture` maps paths to roles and replaces the defaults when supplied. Multiple apps may share a role: `{ 'apps/dashboard': 'web', 'apps/storefront': 'web', 'apps/api': 'server', packages: 'packages', scripts: 'scripts' }`. Use `runner` for another strict backend, or `{ '.': 'web' }` for a standalone frontend. Omit absent roots. Paths are normalized; duplicates, overlapping roots and paths outside the project are rejected. Web and backend roles derive `src/services`, `src/types` and other application scopes; packages have no assumed app layout, and scripts permit console output. Shared baseline policies still apply everywhere. Each web root defaults to its own `src/application/styles.css`. Set `tailwind.cssEntryPointsByRoot: { 'apps/storefront': 'themes/store.css' }` for per-root paths, or `tailwind.cssEntryPoint` for an explicitly shared stylesheet. Entry paths are relative to `root`; `tailwind: false` disables Tailwind. Per-root CSS is supplied through Tailwind rule options because Oxlint 1.85 has no override-level `settings`. Shadcn discovers each app's theme through its own `components.json` (or package-local discovery). `root` makes asset and package resolution independent of the lint command's working directory; invoke the root config from its real filesystem location.
 
 Folder layout is independent of role/content rules. Shorthand roles use defaults: web has domain services and flat hooks; server/runner have domain services. Other folders keep their existing role conventions unless explicitly configured. Object entries merge folder choices into those defaults:
 
@@ -59,43 +59,49 @@ architecture: {
 
 Folder keys are literal paths relative to an app's `src` (relative to the root for packages/scripts), not new architecture slots. Segments use letters, numbers, underscores and hyphens; absolute paths, escapes, globs, empty segments and overlapping configured/default folders are rejected. `flat` requires source files directly in that folder. `domain` requires exactly one directory and filename ownership by that directory; loose/deeper files cannot coexist. Checks cover TS/TSX/MTS/CTS source files, not asset directory trees. Generic domain filenames start with their owning directory plus a dot/hyphen; hooks retain `use-` and components retain their existing singular-name convention. Choosing layout never disables service exports, types, constants, runtime suffixes or anti-slop. Existing policy callbacks and native overrides remain available.
 
-RPC ownership follows each web root's service layout: `services/rpc.client.ts` for flat, `services/rpc/rpc.client.ts` for domain. `rpcClient` remains the explicit consumer override. There is no mixed-layout mode.
+RPC ownership follows each web root's service layout: `services/rpc.client.ts` for flat, `services/rpc/rpc.client.ts` for domain. `orpc.clientOwnerFile` remains the explicit consumer override. There is no mixed-layout mode.
 
-### Configure policies
+### Configure settings and policies
 
-Each policy accepts `true` (default configuration), `false` (disabled), or a callback receiving fresh native Oxlint override objects. Callbacks run before the overall severity is applied. They never mutate another preset invocation.
+Settings are grouped by responsibility. The unreleased preset uses only this grouped API; old flat preset keys are not aliases. Standalone rule options are unchanged.
 
 ```ts
 export default preset({
   root: import.meta.dirname,
-  level: 'warn',
-  complexity: 24,
-  banTypes: (current) => current.map((scope) => ({
-    ...scope,
-    excludeFiles: [...(scope.excludeFiles ?? []), '**/portable/**'],
-  })),
+  severity: 'warn',
+  limits: { maxFileLines: 400, maxFunctionComplexity: 32 },
+  modules: { customFileRoles: ['prompts'] },
+  imports: {
+    backendEntryPoints: ['@app/server/client'],
+    aliases: { '@backend': 'apps/server/src' },
+    internalSortPatterns: ['^@app/'],
+  },
+  orpc: {
+    publicProcedureFiles: ['apps/server/src/rpc/public/**/*.ts'],
+    outputSchemaComposers: ['paginatedOutput'],
+    clientOwnerFile: 'apps/web/src/services/rpc/rpc.client.ts',
+  },
+  react: { compiler: true },
+  forms: { schemaResolver: 'standardSchemaResolver' },
+  sql: { likeSanitizers: ['escapeLikeWildcards'] },
+  policies: {
+    typePlacement: (current) => current.map((scope) => ({
+      ...scope,
+      excludeFiles: [...(scope.excludeFiles ?? []), '**/portable/**'],
+    })),
+  },
 });
 ```
 
-Use `banTypes: false` to disable type **location** restrictions, or `banTypes: true` to retain them. Other policies such as `typeSafety` continue to reject explicit `any`/`unknown`. To extend rather than modify a policy, append an override with its own `files` and `rules`:
+Each entry under `policies` accepts `true` (default configuration), `false` (disabled), or a callback receiving fresh native Oxlint override objects. Callbacks run in the existing policy order before overall severity is applied; deliberately disabled rules stay disabled. They never mutate another preset invocation. Append an override to the callback's returned array to extend a policy.
 
-```ts
-export default preset({
-  banTypes: (current) => [
-    ...current,
-    {
-      files: ['tools/**/*.ts'],
-      rules: { 'arch/no-type-declarations': 'error' },
-    },
-  ],
-});
-```
+Available policies: `typePlacement`, `typeSafety`, `serviceStructure`, `fileLayout`, `naming`, `comments`, `formatting`, `statementLayout`, `imports`, `react`, `effects`, `memoization`, `routes`, `forms`, `schemas`, `boundaries`, `tests`, `trivialFunctions`, `mutableState`, `backend`, `rpcClientOwnership`, `tailwind`, and `shadcn`.
 
-Available policies: `banTypes`, `typeSafety`, `serviceModules`, `moduleLayout`, `naming`, `comments`, `formatting`, `layout`, `imports`, `reactRules`, `effects`, `memoization`, `routes`, `forms`, `schemas`, `boundaries`, `tests`, `wrappers`, `mutableState`, `backendRules`, `clientOwnership`, `tailwindRules`, and `shadcnRules`.
+`policies.typePlacement: false` disables type location restrictions; `policies.typeSafety` still rejects explicit any/unknown. `imports` contains import settings, while `policies.imports` customizes rule overrides. Backend entry points govern permitted imports and schema ownership; internal sort patterns only classify import ordering. `orpc.publicProcedureFiles` identifies endpoint files requiring output schemas. `cliFiles` lists CLI files receiving console/switch exceptions.
 
-Shadcn allows caller-owned layout and standard opacity utilities. Other appearance belongs in the component API; arbitrary opacity still fails token validation. Add product-specific component contracts through `shadcnRules` or native Oxlint overrides, keeping `layout` and `opacity` in any replacement allowance.
+`severity` defaults to `error` and accepts `warn`. File and function limits default to 400 and 32. React Compiler is assumed by default: manual memoization is banned and the four React performance rules against render-time function/object/array/JSX props are off. `react: { compiler: false }` allows manual memoization and enables those four rules. `shadcn: false` disables shadcn integration while retaining Tailwind checks. `tailwind` accepts `cssEntryPoint`, `cssEntryPointsByRoot` and `rootFontSize`; `shadcn` accepts `uiImportPath` and `componentImportSources`. UI-kit files remain linted, with architecture/appearance exceptions rather than a global ignore.
 
-`level` is `error` by default and can be `warn`. Deliberately disabled rules remain disabled. `complexity` defaults to 32. React Compiler is assumed by default: manual memoization is banned and the four React performance rules against render-time function/object/array/JSX props are off. `reactCompiler: false` allows manual memoization and enables those four rules. `shadcn: false` disables shadcn integration while retaining Tailwind checks. `tailwind` accepts `entryPoint`, `entryPoints` and `rootFontSize`; `shadcn` accepts `ui` and `componentImports`. UI-kit files remain linted, with architecture/appearance exceptions rather than a global ignore.
+Shadcn allows caller-owned layout and standard opacity utilities. Add product-specific component contracts through `policies.shadcn` or native overrides, keeping `layout` and `opacity` in replacement allowances.
 
 Module configuration, lookup tables, limits and defaults belong in domain `.constants.ts` files, including frontend services. All frontend constant declarations carry the domain prefix (for example `BOT_MODEL_PRIORITY`). Frontend service scopes enable `modules/domain-constants` with `includeData: true`: it detects module-level literal/object/array data, literal calculations and seeded Map/Set tables, plus the existing uppercase constants. Function-local calculations and call-created service instances remain in their owner; empty Map/Set state is not classified as configuration. This is syntactic enforcement, not semantic data-flow analysis: imported aliases and arbitrary call-created configuration still need review. Backend rule defaults are unchanged. Every scope follows the configured architecture roots; a web `.server.ts` file remains frontend-owned.
 
@@ -111,21 +117,21 @@ Shared frontend domain helpers use `<domain>.utils.ts` in the configured service
 
 A portable module may consume its own contract using a type-only import from exactly the same web root's `types/<module>.types.ts`. The module stem removes the source extension and optional `.utils` suffix: both `lib/fade.ts` and `lib/fade.utils.ts` may consume `types/fade.types.ts`. Value imports, other-domain types, same-stem types from another app, and app-type re-exports (including imported bindings subsequently exported) fail. Relative paths, the built-in `@/` alias and configured aliases use the same ownership check. This is a filename ownership convention, not transitive semantic portability proof: the rule does not inspect imported contracts or follow module graphs. Static imports/re-exports, literal dynamic imports and TypeScript import types are checked; computed imports and arbitrary alias/data flow are not resolved. Custom aliases must be configured explicitly. An own-type match never overrides a services/backend/API ban.
 
-The supporting rule's `portableLib` option defaults to `false` outside the preset for compatibility. Use the existing `boundaries` callback, native overrides or file-specific `exclude['modules/import-boundaries']` for explicit consumer exceptions; an exclusion skips that rule's entire boundary check for the named file, so keep it narrow and documented.
+The supporting rule's `portableLib` option defaults to `false` outside the preset for compatibility. Use the existing `policies.boundaries` callback, native overrides or file-specific `ruleExclusions['modules/import-boundaries']` for explicit consumer exceptions; an exclusion skips that rule's entire boundary check for the named file, so keep it narrow and documented.
 
-The preset's imports policy enables `arch/prefer-namespace-type-import` with `{ max: 3 }` for checked TypeScript files. Up to three named type imports stay named; four or more become a type namespace (for example, `BotTypes` from `bot.types`) with qualified references. The scope-aware autofix preserves aliases and rewrites only supported type references. Imports with namespace collisions, inline comments, local re-exports or unsupported reference syntax remain reported for manual review. Domain exports keep their names. Customize `max` or the rule's source-to-namespace `names` map through the existing `imports` callback or a native override; file-specific exclusions remain available.
+The preset's imports policy enables `arch/prefer-namespace-type-import` with `{ max: 3 }` for checked TypeScript files. Up to three named type imports stay named; four or more become a type namespace (for example, `BotTypes` from `bot.types`) with qualified references. The scope-aware autofix preserves aliases and rewrites only supported type references. Imports with namespace collisions, inline comments, local re-exports or unsupported reference syntax remain reported for manual review. Domain exports keep their names. Customize `max` or the rule's source-to-namespace `names` map through the existing `policies.imports` callback or a native override; file-specific exclusions remain available.
 
-Declare cohesive private concept roles with `fileRoles: ['prompts']`. Built-in roles (`service`, `client`, `server`, `rsc`, `utils`, `action`, `query`, `types`, `constants`, `handler`, `test`, `spec`) cannot be redefined. A `route.prompts.ts` file may contain multiple builders, but every named function, including private functions, starts with the full `routePrompts` prefix. Arbitrary suffixes grant no exemption. Anti-slop checks remain enabled and comment exceptions remain explicit.
+Declare cohesive private concept roles with `modules: { customFileRoles: ['prompts'] }`. Built-in roles (`service`, `client`, `server`, `rsc`, `utils`, `action`, `query`, `types`, `constants`, `handler`, `test`, `spec`) cannot be redefined. A `route.prompts.ts` file may contain multiple builders, but every named function, including private functions, starts with the full `routePrompts` prefix. Arbitrary suffixes grant no exemption. Anti-slop checks remain enabled and comment exceptions remain explicit.
 
 With declared file roles, private service-domain files can be imported or re-exported only within their owning domain in the same app root. Cross-domain callers use service APIs (`.service`, `.client`, `.server`, `.rsc`) or genuinely shared `.utils`, types or constants. Public service/utility surfaces cannot re-export private internals, including private barrels; this checks export-from, export-star and directly imported bindings exported by name or namespace. Operations may use private concepts internally. This is a per-file surface contract, not a transitive module graph or arbitrary data-flow/alias analysis; do not move concept logic into utilities to evade ownership.
 
-`modules/service-functions` accepts `frontend`, `allowLocalHelpers`, `allowReturnedMethods`, `singleExport`, and `message` through the `serviceModules` callback or native overrides. The booleans default to `false` outside the preset's scoped overrides. `frontend: true` permits multiple public operations and their nested helpers; `singleExport: true` still requires exactly one operation. The preset enables frontend mode only for web runtime entries and applies the stricter single-export override to explicit actions/queries. The preset's diagnostic explains where helpers belong; consumers can replace `message` without disabling the rule.
+`modules/service-functions` accepts `frontend`, `allowLocalHelpers`, `allowReturnedMethods`, `singleExport`, and `message` through the `policies.serviceStructure` callback or native overrides. The booleans default to `false` outside the preset's scoped overrides. `frontend: true` permits multiple public operations and their nested helpers; `singleExport: true` still requires exactly one operation. The preset enables frontend mode only for web runtime entries and applies the stricter single-export override to explicit actions/queries. The preset's diagnostic explains where helpers belong; consumers can replace `message` without disabling the rule.
 
-`exclude` disables only the named rule in the selected files, including rules enabled through several scopes. `ignorePatterns` adds whole-file ignores to the generated/build/dependency defaults.
+`ruleExclusions` disables only the named rule in the selected files, including rules enabled through several scopes. `ignorePatterns` adds whole-file ignores to the generated/build/dependency defaults.
 
 ```ts
 export default preset({
-  exclude: {
+  ruleExclusions: {
     'arch/no-trivial-functions': ['apps/web/src/services/adapter.client.ts'],
     'modules/service-types': ['apps/server/src/services/portable-parser.ts'],
   },
@@ -163,9 +169,9 @@ Oxlint reads `typeAware` from the root config only. The direct `export default p
 - Unbound methods and untyped mocks are rejected, including in tests. Console calls require an explicit script/CLI scope or adapter exclusion. Promise rejection callbacks must not receive implicit `any`; omitting the error parameter is allowed. App code needing an `unknown` boundary must use an explicit rule-specific exception.
 - Backend owns shared schemas and exposes a public client entry point; frontend type files are runtime-free. Packages cannot import app internals, RPC handlers delegate database work, and service dependencies are injected.
 
-Provide `publicApi: ['apps/server/src/rpc/api/**/*.ts']` for externally exposed oRPC endpoints requiring output schemas; exposure cannot be inferred from filenames or authentication. `publicEntrypoints` defaults to `<backend package name>/client` read from each configured backend manifest. Configure it for another public API. Other targeted settings are `rpcClient`, `formResolver`, `schemaComposers`, `sanitizers`, `internalPatterns`, and `cli` (explicit console/CLI exceptions).
+Provide `orpc: { publicProcedureFiles: ['apps/server/src/rpc/api/**/*.ts'] }` for externally exposed oRPC endpoints requiring output schemas; exposure cannot be inferred from filenames or authentication. `imports.backendEntryPoints` defaults to `<backend package name>/client` read from each configured backend manifest. Configure it for another public import surface.
 
-For custom import aliases, supply `aliases: { '@backend': 'apps/server/src' }`. Keys are import prefixes without wildcards, and values are directories relative to `root`. Boundary checks then treat `@backend/services/chat.service` like its relative path. `internalPatterns` controls import sorting only.
+For custom import aliases, supply `imports: { aliases: { '@backend': 'apps/server/src' } }`. Keys are import prefixes without wildcards, and values are directories relative to `root`. Boundary checks then treat `@backend/services/chat.service` like its relative path. `imports.internalSortPatterns` controls import sorting only.
 
 Native correctness defaults are promoted through `categories.correctness`; redundant rule entries are omitted after checking Oxlint's resolved configuration. Framework policies add the opinionated options on top. Other future presets can have their own named subpath under `/presets`; this factory does not enable any other preset.
 
@@ -337,7 +343,7 @@ Options that take one regex string (`pattern`, `allowPattern`, `forbid`, `requir
 
 ### File size
 
-`maxLines?: number` sets the existing ESLint `max-lines` ceiling on checked safety scopes; default `400`. Blank lines and comments remain skipped. Use native Oxlint overrides or the existing `exclude` configuration for deliberate per-file exceptions. File size is a ceiling, not a cohesion proof.
+`limits.maxFileLines?: number` sets the existing ESLint `max-lines` ceiling on checked safety scopes; default `400`. Blank lines and comments remain skipped. Use native Oxlint overrides or the existing `ruleExclusions` configuration for deliberate per-file exceptions. File size is a ceiling, not a cohesion proof.
 
 ### TanStack runtime boundaries
 
@@ -347,7 +353,7 @@ Options that take one regex string (`pattern`, `allowPattern`, `forbid`, `requir
 
 `.server` files may statically import server implementation; dynamic loading alone proves nothing. RSC permits JSX, React and server-component definitions, but server renderer/dependency references still require a server callback. Server/RSC modules reject browser globals, local hook imports, client-only markers/APIs and React/TanStack client hooks outside recognized client branches. Global checks respect lexical shadowing and direct `globalThis.name` / literal-key access. Shared utilities/constants/lib cannot launder known server or client-only imports. Type-only imports/re-exports erase at runtime but retain all architecture restrictions.
 
-`tanstackRuntime.serverImports` and `clientImports` add package/module prefixes. `tanstackRuntime.allowComputedImportsIn` permits computed imports only in explicitly named project-relative files; review all targets before using it. Other checks still run. This is direct syntax and lexical-reference enforcement, not an import graph, interprocedural alias analysis, sandbox, or proof of SSR safety. Wrapper factories, indirect callback references, re-exported framework factories and arbitrary computed member aliases are not recognized as boundary proofs. Native rule exclusions remain explicit consumer decisions.
+`tanstackStart.additionalServerOnlyImports` and `additionalClientOnlyImports` add package/module prefixes. `tanstackStart.computedImportAllowedFiles` permits computed imports only in explicitly named project-relative files; review all targets before using it. Other checks still run. This is direct syntax and lexical-reference enforcement, not an import graph, interprocedural alias analysis, sandbox, or proof of SSR safety. Wrapper factories, indirect callback references, re-exported framework factories and arbitrary computed member aliases are not recognized as boundary proofs. Native rule exclusions remain explicit consumer decisions.
 
 TanStack's [environment functions](https://tanstack.com/start/latest/docs/framework/react/guide/environment-functions) remove opposite branches, and [import protection](https://tanstack.com/start/latest/docs/framework/react/guide/import-protection) checks the resulting graph. Start's default import protection treats `.client.*` as browser-only, unlike this preset's service convention: SSR consumers must deliberately configure its server file pattern (Orbs uses `server.files: []`). Keep build-side protection enabled for server dependencies; lint does not replace it.
 

@@ -39,12 +39,7 @@ const roleFiles = [
 
 const componentFiles = ['**/apps/web/src/components/**/*.tsx']
 
-const componentExceptions = [
-  '**/*.test.tsx',
-  '**/apps/web/src/components/ui/**',
-  '**/*-context.tsx',
-  '**/context-*.tsx',
-]
+const componentExceptions = ['**/*.test.tsx', '**/apps/web/src/components/ui/**', '**/*-context.tsx', '**/context-*.tsx']
 
 const factoryHelpers = {
   allowPattern: '^(create|make)[A-Z]',
@@ -53,9 +48,7 @@ const factoryHelpers = {
 
 export default defineConfig({
   plugins: ['typescript', 'react', 'import', 'unicorn', 'promise', 'vitest', 'node', 'oxc'],
-  jsPlugins: [
-    { name: 'arch', specifier: 'oxlint-plugin-arch' },
-  ],
+  jsPlugins: [{ name: 'arch', specifier: 'oxlint-plugin-arch' }],
   rules: {
     'no-restricted-imports': ['error', { patterns: restrictedImportPatterns }],
     'arch/prefer-namespace-type-import': ['error', { max: 3 }],
@@ -65,14 +58,17 @@ export default defineConfig({
     'arch/object-multiline': 'error',
     'arch/key-value-same-line': 'error',
     'arch/call-array-multiline': 'error',
-    'arch/chain-newline': ['error', {
-      groups: [
-        { minDepth: 3, methods: ['selectFrom', 'selectAll', 'insertInto', 'updateTable', 'deleteFrom', 'execute'] },
-        { minDepth: 2, rootPattern: 'Procedure$' },
-        { minDepth: 2, onlyMethods: ['input', 'handler', 'use', 'output'] },
-        { minDepth: 3, methods: ['map', 'filter', 'reduce', 'flatMap', 'find', 'some', 'every', 'sort'] },
-      ],
-    }],
+    'arch/chain-newline': [
+      'error',
+      {
+        groups: [
+          { minDepth: 3, methods: ['selectFrom', 'selectAll', 'insertInto', 'updateTable', 'deleteFrom', 'execute'] },
+          { minDepth: 2, rootPattern: 'Procedure$' },
+          { minDepth: 2, onlyMethods: ['input', 'handler', 'use', 'output'] },
+          { minDepth: 3, methods: ['map', 'filter', 'reduce', 'flatMap', 'find', 'some', 'every', 'sort'] },
+        ],
+      },
+    ],
   },
   overrides: [
     {
@@ -85,14 +81,17 @@ export default defineConfig({
     {
       files: roleFiles,
       rules: {
-        'arch/export-file-prefix': ['error', {
-          allFunctions: true,
-          stem: 'before-first-dot',
-          trailingRoles: ['constants', 'utils', 'handler', 'service', 'types'],
-          roleSeparators: ['.', '-'],
-          normalize: 'remove-separators',
-          allowPattern: '^(make[A-Z]|\\*$)',
-        }],
+        'arch/export-file-prefix': [
+          'error',
+          {
+            allFunctions: true,
+            stem: 'before-first-dot',
+            trailingRoles: ['constants', 'utils', 'handler', 'service', 'types'],
+            roleSeparators: ['.', '-'],
+            normalize: 'remove-separators',
+            allowPattern: '^(make[A-Z]|\\*$)',
+          },
+        ],
       },
     },
     {
@@ -111,11 +110,14 @@ export default defineConfig({
       files: ['**/apps/{server,web}/src/**/*.{ts,tsx}'],
       excludeFiles: ['**/apps/server/src/types/**'],
       rules: {
-        'arch/no-local-schema-construction': ['warn', {
-          packages: ['zod'],
-          namespaces: ['z'],
-          message: 'Schemas belong in apps/server/src/types; import a named backend schema instead.',
-        }],
+        'arch/no-local-schema-construction': [
+          'warn',
+          {
+            packages: ['zod'],
+            namespaces: ['z'],
+            message: 'Schemas belong in apps/server/src/types; import a named backend schema instead.',
+          },
+        ],
       },
     },
     {
@@ -129,11 +131,14 @@ export default defineConfig({
       files: ['**/apps/server/src/types/**/*.types.ts'],
       rules: {
         'arch/no-top-level-functions': ['error', { banReExports: false }],
-        'arch/declaration-name': ['error', {
-          kinds: ['type', 'interface'],
-          singularize: 'trailing-s',
-          trailingRoles: ['types'],
-        }],
+        'arch/declaration-name': [
+          'error',
+          {
+            kinds: ['type', 'interface'],
+            singularize: 'trailing-s',
+            trailingRoles: ['types'],
+          },
+        ],
       },
     },
     {
@@ -142,108 +147,147 @@ export default defineConfig({
         'arch/no-inline-types': 'error',
         'arch/no-type-declarations': ['error', { allowPattern: 'Service$' }],
         'arch/no-module-mutable-state': 'error',
-        'arch/no-restricted-constructor': ['error', {
-          constructors: ['Error'],
-          message: 'Throw a typed domain error instead.',
-        }],
-        'arch/no-unescaped-like': ['error', {
-          methods: ['like', 'ilike'],
-          operatorMethods: ['where'],
-          sanitizers: ['escapeLikeWildcards'],
-          allowSanitizedBindings: true,
-        }],
+        'arch/no-restricted-constructor': [
+          'error',
+          {
+            constructors: ['Error'],
+            message: 'Throw a typed domain error instead.',
+          },
+        ],
+        'arch/no-unescaped-like': [
+          'error',
+          {
+            methods: ['like', 'ilike'],
+            operatorMethods: ['where'],
+            sanitizers: ['escapeLikeWildcards'],
+            allowSanitizedBindings: true,
+          },
+        ],
       },
     },
     {
       files: ['**/apps/server/src/services/**/*.service.ts'],
       rules: {
-        'arch/no-extra-exports': ['error', {
-          names: ['make{Domain}Service', '{Domain}Service', '{domain}ServiceDefinition', 'default'],
-          domainStem: 'before-first-dot',
-          allowTypeExports: false,
-        }],
+        'arch/no-extra-exports': [
+          'error',
+          {
+            names: ['make{Domain}Service', '{Domain}Service', '{domain}ServiceDefinition', 'default'],
+            domainStem: 'before-first-dot',
+            allowTypeExports: false,
+          },
+        ],
       },
     },
     {
       files: ['**/apps/server/src/services/**/actions/*.ts'],
       rules: {
-        'arch/filename-match': ['error', {
-          pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*-action\\.[a-z0-9]+(?:[-.][a-z0-9]+)*\\.ts$',
-          message: 'Action files must match {domain}-action.{verb}.ts.',
-        }],
-        'arch/filename-export-name': ['error', {
-          camelCase: true,
-          file: '{domain}-action.{name}.ts',
-          export: 'make{Domain}Action{Name}',
-          placeholderPattern: '[a-z0-9-]+',
-        }],
+        'arch/filename-match': [
+          'error',
+          {
+            pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*-action\\.[a-z0-9]+(?:[-.][a-z0-9]+)*\\.ts$',
+            message: 'Action files must match {domain}-action.{verb}.ts.',
+          },
+        ],
+        'arch/filename-export-name': [
+          'error',
+          {
+            camelCase: true,
+            file: '{domain}-action.{name}.ts',
+            export: 'make{Domain}Action{Name}',
+            placeholderPattern: '[a-z0-9-]+',
+          },
+        ],
         'arch/require-file-factory': ['error', { factory: 'make{Stem}' }],
         'arch/require-object-params': 'error',
-        'arch/no-extra-factory-keys': ['error', {
-          keys: ['run'],
-          requireKeys: ['run'],
-          factoryPattern: '^make[A-Z]',
-        }],
+        'arch/no-extra-factory-keys': [
+          'error',
+          {
+            keys: ['run'],
+            requireKeys: ['run'],
+            factoryPattern: '^make[A-Z]',
+          },
+        ],
         'arch/no-file-level-helpers': ['error', factoryHelpers],
       },
     },
     {
       files: ['**/apps/server/src/services/**/queries/*.ts'],
       rules: {
-        'arch/filename-match': ['error', {
-          pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*-query-[a-z0-9]+(?:-[a-z0-9]+)*\\.ts$',
-          message: 'Query files must match {domain}-query-{name}.ts.',
-        }],
-        'arch/filename-export-name': ['error', {
-          file: '{domain}-query-{name}.ts',
-          export: 'make{Domain}Query{Name}',
-          placeholderPattern: '[a-z0-9-]+',
-          mode: 'some',
-        }],
+        'arch/filename-match': [
+          'error',
+          {
+            pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*-query-[a-z0-9]+(?:-[a-z0-9]+)*\\.ts$',
+            message: 'Query files must match {domain}-query-{name}.ts.',
+          },
+        ],
+        'arch/filename-export-name': [
+          'error',
+          {
+            file: '{domain}-query-{name}.ts',
+            export: 'make{Domain}Query{Name}',
+            placeholderPattern: '[a-z0-9-]+',
+            mode: 'some',
+          },
+        ],
         'arch/require-file-factory': ['error', { factory: 'make{Stem}' }],
         'arch/require-object-params': 'error',
-        'arch/no-extra-factory-keys': ['error', {
-          keys: ['get', 'list', 'find', 'search', 'count', 'summary', 'detail'],
-          factoryPattern: '^make[A-Z]',
-        }],
+        'arch/no-extra-factory-keys': [
+          'error',
+          {
+            keys: ['get', 'list', 'find', 'search', 'count', 'summary', 'detail'],
+            factoryPattern: '^make[A-Z]',
+          },
+        ],
         'arch/no-file-level-helpers': ['error', factoryHelpers],
-        'arch/no-restricted-token': ['error', {
-          restrictions: [
-            { member: '*.insertInto', message: 'Queries are read-only; move writes to an action.' },
-            { member: '*.updateTable', message: 'Queries are read-only; move writes to an action.' },
-            { member: '*.deleteFrom', message: 'Queries are read-only; move writes to an action.' },
-          ],
-        }],
+        'arch/no-restricted-token': [
+          'error',
+          {
+            restrictions: [
+              { member: '*.insertInto', message: 'Queries are read-only; move writes to an action.' },
+              { member: '*.updateTable', message: 'Queries are read-only; move writes to an action.' },
+              { member: '*.deleteFrom', message: 'Queries are read-only; move writes to an action.' },
+            ],
+          },
+        ],
       },
     },
     {
       files: ['**/apps/server/src/rpc/api/**/*.ts'],
       rules: {
-        'arch/require-orpc-output': ['error', {
-          composers: ['paginationOutput'],
-          handlerMethod: 'handler',
-          outputMethod: 'output',
-        }],
+        'arch/require-orpc-output': [
+          'error',
+          {
+            composers: ['paginationOutput'],
+            handlerMethod: 'handler',
+            outputMethod: 'output',
+          },
+        ],
       },
     },
     {
       files: ['**/apps/server/src/rpc/**/*.ts'],
       rules: {
-        'arch/no-restricted-token': ['error', {
-          restrictions: [
-            { member: '*.selectFrom', message: 'RPC handlers call services, not the database.' },
-            { member: '*.insertInto', message: 'RPC handlers call services, not the database.' },
-          ],
-        }],
+        'arch/no-restricted-token': [
+          'error',
+          {
+            restrictions: [
+              { member: '*.selectFrom', message: 'RPC handlers call services, not the database.' },
+              { member: '*.insertInto', message: 'RPC handlers call services, not the database.' },
+            ],
+          },
+        ],
       },
     },
     {
       files: ['**/apps/server/src/services/database/migrations/*.ts'],
       rules: {
-        'arch/filename-match': ['error', {
-          pattern: '^\\d{3}-[a-z0-9]+(?:-[a-z0-9]+)*\\.ts$',
-          message: 'Migration files must use a 3-digit prefix and kebab-case name.',
-        }],
+        'arch/filename-match': [
+          'error',
+          {
+            pattern: '^\\d{3}-[a-z0-9]+(?:-[a-z0-9]+)*\\.ts$',
+            message: 'Migration files must use a 3-digit prefix and kebab-case name.',
+          },
+        ],
       },
     },
     {
@@ -263,15 +307,21 @@ export default defineConfig({
       files: ['**/apps/web/src/**'],
       rules: {
         'arch/require-paired-call': ['error', { when: 'useForm', require: 'standardSchemaResolver' }],
-        'arch/no-restricted-token': ['error', {
-          token: 'RouterClient',
-          allowIn: ['/apps/web/src/services/rpc.client.ts'],
-        }],
-        'arch/no-rederive-schema': ['error', {
-          from: ['@app/server/client'],
-          namespaces: ['z'],
-          operators: ['infer', 'input'],
-        }],
+        'arch/no-restricted-token': [
+          'error',
+          {
+            token: 'RouterClient',
+            allowIn: ['/apps/web/src/services/rpc.client.ts'],
+          },
+        ],
+        'arch/no-rederive-schema': [
+          'error',
+          {
+            from: ['@app/server/client'],
+            namespaces: ['z'],
+            operators: ['infer', 'input'],
+          },
+        ],
       },
     },
     {
@@ -283,11 +333,7 @@ export default defineConfig({
     },
     {
       files: ['**/apps/web/src/services/*.{ts,tsx}'],
-      excludeFiles: [
-        '**/apps/web/src/services/*.client.{ts,tsx}',
-        '**/apps/web/src/services/*.rsc.{ts,tsx}',
-        '**/apps/web/src/services/*.server.{ts,tsx}',
-      ],
+      excludeFiles: ['**/apps/web/src/services/*.client.{ts,tsx}', '**/apps/web/src/services/*.rsc.{ts,tsx}', '**/apps/web/src/services/*.server.{ts,tsx}'],
       rules: {
         'arch/no-restricted-files': ['error', { message: 'Web service files must use a .client, .rsc or .server suffix.' }],
       },
@@ -311,21 +357,27 @@ export default defineConfig({
       rules: {
         'arch/only-export-components': ['error', { matchFileName: true, denyTypePattern: 'Props$' }],
         'arch/folder-prefix': ['error', { singularize: 'trailing-s', separators: ['-'] }],
-        'arch/no-file-level-helpers': ['error', {
-          allowPattern: '^(create|make)[A-Z]',
-          detectComponents: true,
-          hookPattern: '^use[A-Z]',
-        }],
+        'arch/no-file-level-helpers': [
+          'error',
+          {
+            allowPattern: '^(create|make)[A-Z]',
+            detectComponents: true,
+            hookPattern: '^use[A-Z]',
+          },
+        ],
       },
     },
     {
       files: ['**/apps/web/src/routes/**/*.tsx'],
       rules: {
-        'arch/route-surface': ['error', {
-          exportName: 'Route',
-          bannedHooks: ['useState', 'useEffect', 'useMutation'],
-          banIntrinsicJsx: true,
-        }],
+        'arch/route-surface': [
+          'error',
+          {
+            exportName: 'Route',
+            bannedHooks: ['useState', 'useEffect', 'useMutation'],
+            banIntrinsicJsx: true,
+          },
+        ],
       },
     },
     {
@@ -335,15 +387,5 @@ export default defineConfig({
       },
     },
   ],
-  ignorePatterns: [
-    'node_modules',
-    'dist',
-    'build',
-    '.output',
-    '.tanstack',
-    '.vite',
-    '**/routes.tree.ts',
-    '**/*.generated.ts',
-    '**/paraglide/**',
-  ],
+  ignorePatterns: ['node_modules', 'dist', 'build', '.output', '.tanstack', '.vite', '**/routes.tree.ts', '**/*.generated.ts', '**/paraglide/**'],
 })

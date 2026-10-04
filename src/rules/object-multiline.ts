@@ -1,11 +1,5 @@
 import { defineRule } from '@oxlint/plugins'
-import {
-  layoutIndentSchema,
-  layoutIndentUnit,
-  layoutLineIndent,
-  layoutNewline,
-  optionsFirst,
-} from '../utils/index.ts'
+import { layoutIndentSchema, layoutIndentUnit, layoutLineIndent, layoutNewline, optionsFirst } from '../utils/index.ts'
 import type { LayoutIndent } from '../utils/index.ts'
 import type { ESTree } from '@oxlint/plugins'
 
@@ -48,7 +42,10 @@ function objectMultilineGaps(text: string, node: ESTree.ObjectExpression): Array
       continue
     }
 
-    if (!objectMultilineIsWhitespace(between.slice(0, comma)) || !objectMultilineIsWhitespace(between.slice(comma + 1))) {
+    if (
+      !objectMultilineIsWhitespace(between.slice(0, comma)) ||
+      !objectMultilineIsWhitespace(between.slice(comma + 1))
+    ) {
       return null
     }
     gaps.push([after + comma + 1, limit])
@@ -66,15 +63,17 @@ export const objectMultiline = defineRule({
   meta: {
     type: 'layout',
     fixable: 'whitespace',
-    schema: [{
-      type: 'object',
-      additionalProperties: false,
-      properties: {
-        minProperties: { type: 'integer', minimum: 1, default: 3 },
-        scope: { type: 'string', enum: ['call-args', 'all'], default: 'call-args' },
-        indent: { ...layoutIndentSchema, default: 2 },
+    schema: [
+      {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          minProperties: { type: 'integer', minimum: 1, default: 3 },
+          scope: { type: 'string', enum: ['call-args', 'all'], default: 'call-args' },
+          indent: { ...layoutIndentSchema, default: 2 },
+        },
       },
-    }],
+    ],
     messages: {
       callArgs: 'Object with {{min}}+ properties in a call should have each property on its own line.',
       always: 'Object with {{min}}+ properties should have each property on its own line.',
@@ -115,10 +114,9 @@ export const objectMultiline = defineRule({
             if (!gaps) {
               return null
             }
-            return gaps.map((gap, index) => fixer.replaceTextRange(
-              gap,
-              `${newline}${index === gaps.length - 1 ? baseIndent : propIndent}`,
-            ))
+            return gaps.map((gap, index) =>
+              fixer.replaceTextRange(gap, `${newline}${index === gaps.length - 1 ? baseIndent : propIndent}`),
+            )
           },
         })
       },

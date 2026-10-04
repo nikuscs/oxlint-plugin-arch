@@ -1,5 +1,11 @@
 import { defineRule } from '@oxlint/plugins'
-import { namingFileBasename, optionsFirst, optionsPatterns, optionsPatternSchema, optionsPatternsTest } from '../utils/index.ts'
+import {
+  namingFileBasename,
+  optionsFirst,
+  optionsPatterns,
+  optionsPatternSchema,
+  optionsPatternsTest,
+} from '../utils/index.ts'
 import type { OptionsPattern } from '../utils/index.ts'
 
 interface FilenameMatchOptions {
@@ -16,16 +22,18 @@ interface FilenameMatchOptions {
 export const filenameMatch = defineRule({
   meta: {
     type: 'problem',
-    schema: [{
-      type: 'object',
-      additionalProperties: false,
-      properties: {
-        pattern: optionsPatternSchema,
-        message: { type: 'string' },
-        flags: { type: 'string' },
+    schema: [
+      {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          pattern: optionsPatternSchema,
+          message: { type: 'string' },
+          flags: { type: 'string' },
+        },
+        required: ['pattern', 'message'],
       },
-      required: ['pattern', 'message'],
-    }],
+    ],
     messages: {
       mismatch: '{{message}}',
     },

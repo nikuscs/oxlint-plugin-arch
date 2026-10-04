@@ -2,7 +2,7 @@ import { defineRule } from '@oxlint/plugins'
 import type { ESTree } from '@oxlint/plugins'
 import { astDottedName, optionsFirst } from '../utils/index.ts'
 
-type RestrictedConstructor = string | { name: string, message?: string }
+type RestrictedConstructor = string | { name: string; message?: string }
 
 interface NoRestrictedConstructorOptions {
   constructors: RestrictedConstructor[]
@@ -37,32 +37,34 @@ function restrictedConstructorEntries(constructors: RestrictedConstructor[]): Ma
 export const noRestrictedConstructor = defineRule({
   meta: {
     type: 'problem',
-    schema: [{
-      type: 'object',
-      additionalProperties: false,
-      properties: {
-        constructors: {
-          type: 'array',
-          items: {
-            anyOf: [
-              { type: 'string' },
-              {
-                type: 'object',
-                additionalProperties: false,
-                properties: {
-                  name: { type: 'string' },
-                  message: { type: 'string' },
+    schema: [
+      {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          constructors: {
+            type: 'array',
+            items: {
+              anyOf: [
+                { type: 'string' },
+                {
+                  type: 'object',
+                  additionalProperties: false,
+                  properties: {
+                    name: { type: 'string' },
+                    message: { type: 'string' },
+                  },
+                  required: ['name'],
                 },
-                required: ['name'],
-              },
-            ],
+              ],
+            },
           },
+          checkCalls: { type: 'boolean', default: false },
+          message: { type: 'string' },
         },
-        checkCalls: { type: 'boolean', default: false },
-        message: { type: 'string' },
+        required: ['constructors'],
       },
-      required: ['constructors'],
-    }],
+    ],
     messages: {
       construct: "Do not construct '{{name}}'.{{suffix}}",
       call: "Do not call '{{name}}'.{{suffix}}",

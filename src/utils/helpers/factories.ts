@@ -25,7 +25,10 @@ export function factoriesExpandTemplate(template: string, groups: Record<string,
 
 export function factoriesCollectTopLevel(program: ESTree.Program, pattern: RegExp): FactoriesFunction[] {
   return program.body.flatMap((statement) => {
-    const declaration = statement.type === 'ExportNamedDeclaration' || statement.type === 'ExportDefaultDeclaration' ? statement.declaration : statement
+    const declaration =
+      statement.type === 'ExportNamedDeclaration' || statement.type === 'ExportDefaultDeclaration'
+        ? statement.declaration
+        : statement
 
     if (declaration?.type === 'FunctionDeclaration') {
       const name = declaration.id?.name ?? '<anonymous>'
@@ -36,10 +39,13 @@ export function factoriesCollectTopLevel(program: ESTree.Program, pattern: RegEx
       return []
     }
 
-    return declaration.declarations.flatMap((item) => item.id.type === 'Identifier' && pattern.test(item.id.name)
-      && (item.init?.type === 'FunctionExpression' || item.init?.type === 'ArrowFunctionExpression')
-      ? [{ name: item.id.name, node: item.init }]
-      : [])
+    return declaration.declarations.flatMap((item) =>
+      item.id.type === 'Identifier' &&
+      pattern.test(item.id.name) &&
+      (item.init?.type === 'FunctionExpression' || item.init?.type === 'ArrowFunctionExpression')
+        ? [{ name: item.id.name, node: item.init }]
+        : [],
+    )
   })
 }
 
@@ -50,7 +56,11 @@ export function factoriesDirectlyReturnedObjects(factory: FactoriesFunction): ES
 
   const result: ESTree.ObjectExpression[] = []
   astVisit(factory.node.body, [factory.node], (node, ancestors) => {
-    if (node.type === 'ReturnStatement' && node.argument?.type === 'ObjectExpression' && astNearestFunction(ancestors) === factory.node) {
+    if (
+      node.type === 'ReturnStatement' &&
+      node.argument?.type === 'ObjectExpression' &&
+      astNearestFunction(ancestors) === factory.node
+    ) {
       result.push(node.argument)
     }
   })

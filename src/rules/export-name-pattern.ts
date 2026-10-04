@@ -27,18 +27,20 @@ interface ExportNamePatternOptions {
 export const exportNamePattern = defineRule({
   meta: {
     type: 'problem',
-    schema: [{
-      type: 'object',
-      additionalProperties: false,
-      properties: {
-        pattern: optionsPatternSchema,
-        flags: { type: 'string' },
-        ignoreTypeExports: { type: 'boolean' },
-        allDeclarations: { type: 'boolean' },
-        allowPattern: optionsPatternSchema,
+    schema: [
+      {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          pattern: optionsPatternSchema,
+          flags: { type: 'string' },
+          ignoreTypeExports: { type: 'boolean' },
+          allDeclarations: { type: 'boolean' },
+          allowPattern: optionsPatternSchema,
+        },
+        required: ['pattern'],
       },
-      required: ['pattern'],
-    }],
+    ],
     messages: {
       pattern: "'{{name}}' must match {{pattern}}.",
     },
@@ -57,16 +59,17 @@ export const exportNamePattern = defineRule({
         const expected = optionsPatterns(pattern, flags)
         const names = allDeclarations
           ? declarationsCollectNamed(program)
-          : exportsCollect(program).flatMap((binding) => ignoreTypeExports && binding.typeOnly
-            ? []
-            : [{ name: binding.localName ?? binding.exportedName, node: binding.node }])
+          : exportsCollect(program).flatMap((binding) =>
+              ignoreTypeExports && binding.typeOnly
+                ? []
+                : [{ name: binding.localName ?? binding.exportedName, node: binding.node }],
+            )
         const seen = new Set<string>()
 
         for (const item of names) {
           const key = `${item.name}:${item.node.start}:${item.node.end}`
 
-          if (seen.has(key) || optionsPatternsTest(allowed, item.name)
-            || optionsPatternsTest(expected, item.name)) {
+          if (seen.has(key) || optionsPatternsTest(allowed, item.name) || optionsPatternsTest(expected, item.name)) {
             continue
           }
 

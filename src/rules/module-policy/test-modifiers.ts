@@ -17,21 +17,14 @@ export const testModifiers = defineRule({
         names = new Set(['test', 'it', 'describe', 'suite'])
       },
       ImportDeclaration(node) {
-        if (
-          !['vitest', 'bun:test', '@playwright/test', '@jest/globals'].includes(
-            node.source.value,
-          )
-        ) {
+        if (!['vitest', 'bun:test', '@playwright/test', '@jest/globals'].includes(node.source.value)) {
           return
         }
         for (const specifier of node.specifiers) {
           if (specifier.type !== 'ImportSpecifier') {
             continue
           }
-          const imported =
-            specifier.imported.type === 'Identifier'
-              ? specifier.imported.name
-              : specifier.imported.value
+          const imported = specifier.imported.type === 'Identifier' ? specifier.imported.name : specifier.imported.value
           if (['test', 'it', 'describe', 'suite'].includes(imported)) {
             names.add(specifier.local.name)
           }
@@ -43,10 +36,7 @@ export const testModifiers = defineRule({
           return
         }
         const parts = name.split('.')
-        if (
-          names.has(parts[0]) &&
-          ['only', 'skip', 'todo'].includes(parts.at(-1) ?? '')
-        ) {
+        if (names.has(parts[0]) && ['only', 'skip', 'todo'].includes(parts.at(-1) ?? '')) {
           context.report({ node, messageId: 'modifier' })
         }
       },

@@ -23,16 +23,18 @@ interface FolderPrefixOptions {
 export const folderPrefix = defineRule({
   meta: {
     type: 'problem',
-    schema: [{
-      type: 'object',
-      additionalProperties: false,
-      properties: {
-        singularize: { type: 'string', enum: ['none', 'trailing-s'] },
-        separators: { type: 'array', items: { type: 'string' } },
-        after: { type: 'string' },
-        stripPrefixes: { type: 'array', items: { type: 'string', minLength: 1 } },
+    schema: [
+      {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          singularize: { type: 'string', enum: ['none', 'trailing-s'] },
+          separators: { type: 'array', items: { type: 'string' } },
+          after: { type: 'string' },
+          stripPrefixes: { type: 'array', items: { type: 'string', minLength: 1 } },
+        },
       },
-    }],
+    ],
     messages: {
       prefix: "File '{{file}}' must start with '{{expected}}' to match its domain folder '{{folder}}'.",
     },
@@ -47,9 +49,7 @@ export const folderPrefix = defineRule({
           stripPrefixes = [],
         } = optionsFirst<FolderPrefixOptions>(context, {})
         const filename = namingPosixPath(context.filename)
-        const folders = after
-          ? namingSegmentsAfter(filename, after)
-          : [namingDirSegments(filename).at(-1) ?? '']
+        const folders = after ? namingSegmentsAfter(filename, after) : [namingDirSegments(filename).at(-1) ?? '']
 
         if (!folders) {
           return
@@ -62,14 +62,19 @@ export const folderPrefix = defineRule({
         const rawStem = file.replace(/\.(tsx?|jsx?)$/, '')
         const strip = stripPrefixes.find((prefix) => rawStem.startsWith(prefix))
         const stem = strip ? rawStem.slice(strip.length) : rawStem
-        const valid = prefixes.some((prefix) => stem === prefix
-          || separators.some((item) => stem.startsWith(`${prefix}${item}`)))
+        const valid = prefixes.some(
+          (prefix) => stem === prefix || separators.some((item) => stem.startsWith(`${prefix}${item}`)),
+        )
 
         if (!valid) {
           context.report({
             node: program,
             messageId: 'prefix',
-            data: { file, folder: resolved.join('/'), expected: prefixes.map((prefix) => `${stripPrefixes[0] ?? ''}${prefix}`).join(' or ') },
+            data: {
+              file,
+              folder: resolved.join('/'),
+              expected: prefixes.map((prefix) => `${stripPrefixes[0] ?? ''}${prefix}`).join(' or '),
+            },
           })
         }
       },

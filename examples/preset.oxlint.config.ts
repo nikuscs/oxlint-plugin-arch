@@ -8,10 +8,12 @@ export default preset({
     scripts: 'scripts',
     packages: 'packages',
   },
-  maxLines: 400,
-  banTypes: (current) =>
-    current.map((scope) => ({
-      ...scope,
-      excludeFiles: [...(scope.excludeFiles ?? []), '**/portable/**'],
-    })),
+  limits: { maxFileLines: 400 },
+  policies: {
+    typePlacement: (current) =>
+      current.map((scope) => ({
+        ...scope,
+        excludeFiles: [...(scope.excludeFiles ?? []), '**/portable/**'],
+      })),
+  },
 })

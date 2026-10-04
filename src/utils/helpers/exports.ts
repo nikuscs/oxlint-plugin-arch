@@ -40,17 +40,20 @@ function declarationBindings(declaration: ESTree.Declaration | null): ExportsBin
   }
 
   const name = declaration.id?.name ?? '<anonymous>'
-  return [{
-    exportedName: name,
-    localName: declaration.id?.name,
-    node: declaration,
-    declaration,
-    typeOnly: declaration.type === 'TSInterfaceDeclaration'
-      || declaration.type === 'TSTypeAliasDeclaration'
-      || declaration.type === 'TSDeclareFunction',
-    default: false,
-    reExport: false,
-  }]
+  return [
+    {
+      exportedName: name,
+      localName: declaration.id?.name,
+      node: declaration,
+      declaration,
+      typeOnly:
+        declaration.type === 'TSInterfaceDeclaration' ||
+        declaration.type === 'TSTypeAliasDeclaration' ||
+        declaration.type === 'TSDeclareFunction',
+      default: false,
+      reExport: false,
+    },
+  ]
 }
 
 function localBindings(program: ESTree.Program): Map<string, ExportsBinding> {
@@ -78,30 +81,34 @@ export function exportsCollect(program: ESTree.Program): ExportsBinding[] {
 
   return program.body.flatMap((statement) => {
     if (statement.type === 'ExportAllDeclaration') {
-      return [{
-        exportedName: '*',
-        node: statement,
-        typeOnly: statement.exportKind === 'type',
-        default: false,
-        reExport: true,
-      }]
+      return [
+        {
+          exportedName: '*',
+          node: statement,
+          typeOnly: statement.exportKind === 'type',
+          default: false,
+          reExport: true,
+        },
+      ]
     }
 
     if (statement.type === 'ExportDefaultDeclaration') {
       if (statement.declaration.type === 'Identifier') {
         const local = locals.get(statement.declaration.name)
-        return [{
-          ...(local ?? {
+        return [
+          {
+            ...(local ?? {
+              exportedName: 'default',
+              node: statement,
+              typeOnly: false,
+              default: true,
+              reExport: false,
+            }),
             exportedName: 'default',
-            node: statement,
-            typeOnly: false,
+            localName: local?.localName ?? statement.declaration.name,
             default: true,
-            reExport: false,
-          }),
-          exportedName: 'default',
-          localName: local?.localName ?? statement.declaration.name,
-          default: true,
-        }]
+          },
+        ]
       }
 
       if (statement.declaration.type.endsWith('Declaration')) {

@@ -2,76 +2,101 @@ import { test } from 'vitest'
 import { filenameExportName } from '../rules/filename-export-name.ts'
 import { createRuleTester } from './rule-tester.ts'
 
-const actionOptions = [{
-  file: '{domain}-action.{name}.ts',
-  export: 'make{Domain}Action{Name}',
-}]
-const hookOptions = [{
-  file: 'use-{name}.ts',
-  export: 'use{Name}',
-  mode: 'some',
-}]
-const allDeclarations = [{
-  file: '{domain}-action.{name}.ts',
-  export: 'make{Domain}Action{Name}',
-  allDeclarations: true,
-}]
+const actionOptions = [
+  {
+    file: '{domain}-action.{name}.ts',
+    export: 'make{Domain}Action{Name}',
+  },
+]
+const hookOptions = [
+  {
+    file: 'use-{name}.ts',
+    export: 'use{Name}',
+    mode: 'some',
+  },
+]
+const allDeclarations = [
+  {
+    file: '{domain}-action.{name}.ts',
+    export: 'make{Domain}Action{Name}',
+    allDeclarations: true,
+  },
+]
 const error = { messageId: 'mismatch' }
 
 test('filename-export-name', () => {
-  createRuleTester().run(
-    'arch/filename-export-name',
-    filenameExportName,
-    {
-      valid: [
-        { filename: '/repo/user-profile-action.send.ts', code: 'export function userProfileActionSend() {}', options: [{ file: '{domain}-action.{name}.ts', export: '{domain}Action{Name}', placeholderPattern: '[a-z0-9-]+', camelCase: true }] },
-        {
-          filename: '/repo/actions/persona-action.identity-sheet-generate.ts',
-          code: 'export function makePersonaActionIdentitySheetGenerate() {}',
-          options: actionOptions,
-        },
-        {
-          filename: '/repo/hooks/use-realtime-event.ts',
-          code: 'export function useRealtimeEvent() {}\nexport function useGenerationEvent() {}',
-          options: hookOptions,
-        },
-        {
-          filename: '/repo/hooks/use-theme.ts',
-          code: 'export function useTheme() {}\nexport const ThemeContext = {}',
-          options: hookOptions,
-        },
-        {
-          filename: '/repo/actions/not-an-action.ts',
-          code: 'export function anything() {}',
-          options: actionOptions,
-        },
-        {
-          filename: '/repo/actions/persona-action.generate.ts',
-          code: 'function helper() {}\nexport function makePersonaActionGenerate() {}',
-          options: actionOptions,
-        },
-      ],
-      invalid: [
-        { filename: '/repo/user-profile-action.send.ts', code: 'export function wrongActionSend() {}', options: [{ file: '{domain}-action.{name}.ts', export: '{domain}Action{Name}', placeholderPattern: '[a-z0-9-]+', camelCase: true }], errors: [error] },
-        {
-          filename: '/repo/actions/persona-action.generate.ts',
-          code: 'export function makeWrongFactory() {}',
-          options: actionOptions,
-          errors: [error],
-        },
-        {
-          filename: '/repo/hooks/use-thing.ts',
-          code: 'export function useOther() {}',
-          options: hookOptions,
-          errors: [error],
-        },
-        {
-          filename: '/repo/actions/persona-action.generate.ts',
-          code: 'function helper() {}\nexport function makePersonaActionGenerate() {}',
-          options: allDeclarations,
-          errors: [error],
-        },
-      ],
-    },
-  )
+  createRuleTester().run('arch/filename-export-name', filenameExportName, {
+    valid: [
+      {
+        filename: '/repo/user-profile-action.send.ts',
+        code: 'export function userProfileActionSend() {}',
+        options: [
+          {
+            file: '{domain}-action.{name}.ts',
+            export: '{domain}Action{Name}',
+            placeholderPattern: '[a-z0-9-]+',
+            camelCase: true,
+          },
+        ],
+      },
+      {
+        filename: '/repo/actions/persona-action.identity-sheet-generate.ts',
+        code: 'export function makePersonaActionIdentitySheetGenerate() {}',
+        options: actionOptions,
+      },
+      {
+        filename: '/repo/hooks/use-realtime-event.ts',
+        code: 'export function useRealtimeEvent() {}\nexport function useGenerationEvent() {}',
+        options: hookOptions,
+      },
+      {
+        filename: '/repo/hooks/use-theme.ts',
+        code: 'export function useTheme() {}\nexport const ThemeContext = {}',
+        options: hookOptions,
+      },
+      {
+        filename: '/repo/actions/not-an-action.ts',
+        code: 'export function anything() {}',
+        options: actionOptions,
+      },
+      {
+        filename: '/repo/actions/persona-action.generate.ts',
+        code: 'function helper() {}\nexport function makePersonaActionGenerate() {}',
+        options: actionOptions,
+      },
+    ],
+    invalid: [
+      {
+        filename: '/repo/user-profile-action.send.ts',
+        code: 'export function wrongActionSend() {}',
+        options: [
+          {
+            file: '{domain}-action.{name}.ts',
+            export: '{domain}Action{Name}',
+            placeholderPattern: '[a-z0-9-]+',
+            camelCase: true,
+          },
+        ],
+        errors: [error],
+      },
+      {
+        filename: '/repo/actions/persona-action.generate.ts',
+        code: 'export function makeWrongFactory() {}',
+        options: actionOptions,
+        errors: [error],
+      },
+      {
+        filename: '/repo/hooks/use-thing.ts',
+        code: 'export function useOther() {}',
+        options: hookOptions,
+        errors: [error],
+      },
+      {
+        filename: '/repo/actions/persona-action.generate.ts',
+        code: 'function helper() {}\nexport function makePersonaActionGenerate() {}',
+        options: allDeclarations,
+        errors: [error],
+      },
+    ],
+  })
 })

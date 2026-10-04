@@ -1,5 +1,11 @@
 import { defineRule } from '@oxlint/plugins'
-import { declarationsFunctionName, optionsFirst, optionsOptionalPatterns, optionsPatternSchema, optionsPatternsTest } from '../utils/index.ts'
+import {
+  declarationsFunctionName,
+  optionsFirst,
+  optionsOptionalPatterns,
+  optionsPatternSchema,
+  optionsPatternsTest,
+} from '../utils/index.ts'
 import type { OptionsPattern } from '../utils/index.ts'
 
 interface NoTopLevelFunctionsOptions {
@@ -15,14 +21,16 @@ interface NoTopLevelFunctionsOptions {
 export const noTopLevelFunctions = defineRule({
   meta: {
     type: 'problem',
-    schema: [{
-      type: 'object',
-      additionalProperties: false,
-      properties: {
-        banReExports: { type: 'boolean' },
-        allowPattern: optionsPatternSchema,
+    schema: [
+      {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          banReExports: { type: 'boolean' },
+          allowPattern: optionsPatternSchema,
+        },
       },
-    }],
+    ],
     defaultOptions: [{ banReExports: true }],
     messages: {
       noFunction: 'Files in this scope must not contain top-level function {{name}}.',
@@ -36,15 +44,19 @@ export const noTopLevelFunctions = defineRule({
         const allowed = optionsOptionalPatterns(allowPattern)
 
         for (const statement of program.body) {
-          if (banReExports && (statement.type === 'ExportAllDeclaration'
-            || (statement.type === 'ExportNamedDeclaration' && statement.source))) {
+          if (
+            banReExports &&
+            (statement.type === 'ExportAllDeclaration' ||
+              (statement.type === 'ExportNamedDeclaration' && statement.source))
+          ) {
             context.report({ node: statement, messageId: 'noReExport' })
             continue
           }
 
-          const declaration = statement.type === 'ExportNamedDeclaration' || statement.type === 'ExportDefaultDeclaration'
-            ? statement.declaration
-            : statement
+          const declaration =
+            statement.type === 'ExportNamedDeclaration' || statement.type === 'ExportDefaultDeclaration'
+              ? statement.declaration
+              : statement
 
           if (declaration?.type === 'FunctionDeclaration') {
             if (!optionsPatternsTest(allowed, declarationsFunctionName(declaration))) {
@@ -62,8 +74,10 @@ export const noTopLevelFunctions = defineRule({
           }
 
           for (const item of declaration.declarations) {
-            if ((item.init?.type === 'FunctionExpression' || item.init?.type === 'ArrowFunctionExpression')
-              && !optionsPatternsTest(allowed, declarationsFunctionName(item))) {
+            if (
+              (item.init?.type === 'FunctionExpression' || item.init?.type === 'ArrowFunctionExpression') &&
+              !optionsPatternsTest(allowed, declarationsFunctionName(item))
+            ) {
               context.report({
                 node: item,
                 messageId: 'noFunction',

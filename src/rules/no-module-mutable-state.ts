@@ -12,7 +12,7 @@ interface NoModuleMutableStateOptions {
 
 function moduleMutableStateBindings(
   pattern: ESTree.BindingPattern | ESTree.BindingRestElement,
-): { name: string, node: ESTree.BindingIdentifier }[] {
+): { name: string; node: ESTree.BindingIdentifier }[] {
   if (pattern.type === 'Identifier') {
     return [{ name: pattern.name, node: pattern }]
   }
@@ -26,13 +26,15 @@ function moduleMutableStateBindings(
   }
 
   if (pattern.type === 'ObjectPattern') {
-    return pattern.properties.flatMap((property) => property.type === 'RestElement'
-      ? moduleMutableStateBindings(property)
-      : moduleMutableStateBindings(property.value))
+    return pattern.properties.flatMap((property) =>
+      property.type === 'RestElement'
+        ? moduleMutableStateBindings(property)
+        : moduleMutableStateBindings(property.value),
+    )
   }
 
   if (pattern.type === 'ArrayPattern') {
-    return pattern.elements.flatMap((element) => element ? moduleMutableStateBindings(element) : [])
+    return pattern.elements.flatMap((element) => (element ? moduleMutableStateBindings(element) : []))
   }
 
   return []
@@ -40,12 +42,14 @@ function moduleMutableStateBindings(
 
 function moduleMutableStateInsideFunction(node: ESTree.Node): boolean {
   for (let current = node.parent; current; current = current.parent) {
-    if (current.type === 'FunctionDeclaration'
-      || current.type === 'FunctionExpression'
-      || current.type === 'ArrowFunctionExpression'
-      || current.type === 'TSDeclareFunction'
-      || current.type === 'TSEmptyBodyFunctionExpression'
-      || current.type === 'StaticBlock') {
+    if (
+      current.type === 'FunctionDeclaration' ||
+      current.type === 'FunctionExpression' ||
+      current.type === 'ArrowFunctionExpression' ||
+      current.type === 'TSDeclareFunction' ||
+      current.type === 'TSEmptyBodyFunctionExpression' ||
+      current.type === 'StaticBlock'
+    ) {
       return true
     }
   }
@@ -55,14 +59,15 @@ function moduleMutableStateInsideFunction(node: ESTree.Node): boolean {
 
 function moduleMutableStateIsModuleLet(node: ESTree.VariableDeclaration): boolean {
   const parent = node.parent
-  return parent?.type === 'Program'
-    || parent?.type === 'ExportNamedDeclaration' && parent.parent?.type === 'Program'
+  return parent?.type === 'Program' || (parent?.type === 'ExportNamedDeclaration' && parent.parent?.type === 'Program')
 }
 
 function moduleMutableStateInsideAmbient(node: ESTree.Node): boolean {
   for (let current = node.parent; current; current = current.parent) {
-    if (current.type === 'TSModuleDeclaration'
-      && (current.declare || current.global || current.id.type === 'Literal')) {
+    if (
+      current.type === 'TSModuleDeclaration' &&
+      (current.declare || current.global || current.id.type === 'Literal')
+    ) {
       return true
     }
   }
@@ -78,17 +83,19 @@ function moduleMutableStateInsideAmbient(node: ESTree.Node): boolean {
 export const noModuleMutableState = defineRule({
   meta: {
     type: 'problem',
-    schema: [{
-      type: 'object',
-      additionalProperties: false,
-      properties: {
-        kinds: {
-          type: 'array',
-          items: { type: 'string', enum: ['let', 'var'] },
+    schema: [
+      {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          kinds: {
+            type: 'array',
+            items: { type: 'string', enum: ['let', 'var'] },
+          },
+          allowNamePattern: optionsPatternSchema,
         },
-        allowNamePattern: optionsPatternSchema,
       },
-    }],
+    ],
     messages: {
       moduleState: 'module state is shared across requests/tests; keep it local.',
     },
@@ -108,9 +115,11 @@ export const noModuleMutableState = defineRule({
           return
         }
 
-        if ((node.kind === 'let' && !moduleMutableStateIsModuleLet(node))
-          || (node.kind === 'var' && moduleMutableStateInsideFunction(node))
-          || moduleMutableStateInsideAmbient(node)) {
+        if (
+          (node.kind === 'let' && !moduleMutableStateIsModuleLet(node)) ||
+          (node.kind === 'var' && moduleMutableStateInsideFunction(node)) ||
+          moduleMutableStateInsideAmbient(node)
+        ) {
           return
         }
 

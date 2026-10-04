@@ -6,8 +6,7 @@ export const serviceTypes = defineRule({
     type: 'problem',
     schema: [],
     messages: {
-      domain:
-        'Move this type to its domain types file; only the matching factory-derived Service alias belongs here.',
+      domain: 'Move this type to its domain types file; only the matching factory-derived Service alias belongs here.',
     },
   },
   createOnce(context) {
@@ -17,13 +16,9 @@ export const serviceTypes = defineRule({
       },
       TSTypeAliasDeclaration(node) {
         const type = node.typeAnnotation
-        const argument =
-          type.type === 'TSTypeReference'
-            ? type.typeArguments?.params[0]
-            : undefined
+        const argument = type.type === 'TSTypeReference' ? type.typeArguments?.params[0] : undefined
         const factory =
-          argument?.type === 'TSTypeQuery' &&
-          argument.exprName.type === 'Identifier'
+          argument?.type === 'TSTypeQuery' && argument.exprName.type === 'Identifier'
             ? argument.exprName.name
             : undefined
         if (

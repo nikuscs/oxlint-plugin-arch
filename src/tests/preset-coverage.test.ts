@@ -7,7 +7,12 @@ import { presetCoverageFiles, presetCoverageInventory, presetCoverageRule } from
 import type { PresetFixtureResult, PresetRuleFixture } from './types/preset-fixture.types.ts'
 
 const temporary = realpathSync(mkdtempSync(resolve(tmpdir(), 'arch-rule-coverage-')))
-const manifest: PresetRuleFixture[] = JSON.parse(readFileSync(resolve(import.meta.dirname, '../../tests/fixtures/tanstack-start-react-modules/rule-coverage.json'), 'utf8'))
+const manifest: PresetRuleFixture[] = JSON.parse(
+  readFileSync(
+    resolve(import.meta.dirname, '../../tests/fixtures/tanstack-start-react-modules/rule-coverage.json'),
+    'utf8',
+  ),
+)
 const scanned = new Map<string, Set<string>>()
 const projects = new Map<string, PresetFixtureResult>()
 
@@ -17,7 +22,9 @@ beforeAll(() => {
   for (const project of new Set(manifest.flatMap((entry) => [entry.pass.project, entry.fail.project]))) {
     const result = presetFixtureRun(project, temporary)
     expect(result.status).toBe(1)
-    expect(result.output.diagnostics.filter((diagnostic) => !diagnostic.code || diagnostic.code.startsWith('oxc-parser'))).toEqual([])
+    expect(
+      result.output.diagnostics.filter((diagnostic) => !diagnostic.code || diagnostic.code.startsWith('oxc-parser')),
+    ).toEqual([])
     projects.set(project, result)
     scanned.set(project, presetCoverageFiles(result.root))
   }

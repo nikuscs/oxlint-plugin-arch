@@ -48,28 +48,30 @@ function compileFactoryKeys(pattern: OptionsPattern, keys: string[], requireKeys
 export const noExtraFactoryKeys = defineRule({
   meta: {
     type: 'problem',
-    schema: [{
-      type: 'object',
-      additionalProperties: false,
-      properties: {
-        keys: { type: 'array', items: { type: 'string' } },
-        factoryPattern: optionsPatternSchema,
-        requireKeys: { type: 'array', items: { type: 'string' } },
-        keySets: {
-          type: 'array',
-          items: {
-            type: 'object',
-            additionalProperties: false,
-            properties: {
-              factoryPattern: optionsPatternSchema,
-              keys: { type: 'array', items: { type: 'string' } },
-              requireKeys: { type: 'array', items: { type: 'string' } },
+    schema: [
+      {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          keys: { type: 'array', items: { type: 'string' } },
+          factoryPattern: optionsPatternSchema,
+          requireKeys: { type: 'array', items: { type: 'string' } },
+          keySets: {
+            type: 'array',
+            items: {
+              type: 'object',
+              additionalProperties: false,
+              properties: {
+                factoryPattern: optionsPatternSchema,
+                keys: { type: 'array', items: { type: 'string' } },
+                requireKeys: { type: 'array', items: { type: 'string' } },
+              },
+              required: ['factoryPattern', 'keys'],
             },
-            required: ['factoryPattern', 'keys'],
           },
         },
       },
-    }],
+    ],
     messages: {
       extraKey: "Factory '{{factory}}' must not return key '{{key}}'; allowed keys: {{allowed}}.",
       missingKey: "Factory '{{factory}}' must return key '{{key}}'.",
@@ -100,7 +102,9 @@ export const noExtraFactoryKeys = defineRule({
           return false
         }
 
-        keySets = (configured ?? []).map((item) => compileFactoryKeys(item.factoryPattern, item.keys, item.requireKeys ?? []))
+        keySets = (configured ?? []).map((item) =>
+          compileFactoryKeys(item.factoryPattern, item.keys, item.requireKeys ?? []),
+        )
         fallback = keys ? compileFactoryKeys(factoryPattern, keys, requireKeys) : undefined
       },
       Program(program) {
@@ -112,10 +116,12 @@ export const noExtraFactoryKeys = defineRule({
           }
 
           for (const object of factoriesDirectlyReturnedObjects(factory)) {
-            const present = new Set(object.properties.flatMap((property) => {
-              const key = factoriesObjectPropertyName(property)
-              return key ? [key] : []
-            }))
+            const present = new Set(
+              object.properties.flatMap((property) => {
+                const key = factoriesObjectPropertyName(property)
+                return key ? [key] : []
+              }),
+            )
 
             if (object.properties.length === 0 && resolved.requireKeys.length > 0) {
               context.report({
@@ -132,7 +138,11 @@ export const noExtraFactoryKeys = defineRule({
                 context.report({
                   node: property,
                   messageId: 'extraKey',
-                  data: { factory: factory.name, key: key ?? '<computed or spread>', allowed: resolved.allowedList.join(', ') },
+                  data: {
+                    factory: factory.name,
+                    key: key ?? '<computed or spread>',
+                    allowed: resolved.allowedList.join(', '),
+                  },
                 })
               }
             }

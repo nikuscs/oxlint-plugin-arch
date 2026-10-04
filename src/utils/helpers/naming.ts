@@ -150,4 +150,3 @@ export function namingFilePrefixes(
 
   return [...new Set(prefixes.filter(Boolean))]
 }
-

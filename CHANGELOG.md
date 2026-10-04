@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- Breaking unreleased preset API cleanup: grouped limits, modules, imports, oRPC, SQL, forms, React and TanStack Start settings; all boolean/callback policies now live under `policies`. Use `severity`, `cliFiles` and `ruleExclusions`; Tailwind/shadcn leaves use explicit names. Old flat preset keys are removed. Rule behavior, defaults, callback order and standalone rule APIs are unchanged.
+
 - Configure per-root folder layouts through role/object architecture entries; keep shorthand defaults, exact flat/domain structure, hook/component naming and layout-derived RPC ownership.
 - Permit strictly named public method-only frontend service objects without changing factory-returned APIs; check their trivial wrappers and parameter contracts.
 - Add TanStack runtime boundary checks with scoped imported factory recognition, an RPC-owner server-branch exception, direct dependency/global checks and exact-file computed-import customization.

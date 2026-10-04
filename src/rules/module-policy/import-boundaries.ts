@@ -23,15 +23,7 @@ export const importBoundaries = defineRule({
           appPackages: { type: 'array', items: { type: 'string' } },
           aliases: { type: 'object', additionalProperties: { type: 'string' } },
         },
-        required: [
-          'web',
-          'backend',
-          'packages',
-          'backendPackages',
-          'publicEntrypoints',
-          'appPackages',
-          'aliases',
-        ],
+        required: ['web', 'backend', 'packages', 'backendPackages', 'publicEntrypoints', 'appPackages', 'aliases'],
       },
     ],
     messages: {
@@ -50,66 +42,68 @@ export const importBoundaries = defineRule({
       const target = boundaryResolveTarget(options, file, source)
       const backendImport =
         options.backend.some((path) => contains(path, target)) ||
-        options.backendPackages.some(
-          (name) => source === name || source.startsWith(`${name}/`),
-        )
+        options.backendPackages.some((name) => source === name || source.startsWith(`${name}/`))
       let reason: string | undefined
       if (web && backendImport && !options.publicEntrypoints.includes(source)) {
         reason = 'frontend code uses only public backend entry points'
       }
       if (
-        (Array.isArray(options.packages) ? options.packages : [options.packages]).some((path) => path && contains(path, file)) &&
+        (Array.isArray(options.packages) ? options.packages : [options.packages]).some(
+          (path) => path && contains(path, file),
+        ) &&
         (backendImport ||
           options.web.some((path) => contains(path, target)) ||
-          options.appPackages.some(
-            (name) => source === name || source.startsWith(`${name}/`),
-          ))
+          options.appPackages.some((name) => source === name || source.startsWith(`${name}/`)))
       ) {
         reason = 'shared packages do not import app internals'
       }
-      if (
-        file.includes('/services/') &&
-        /\/services\/service(?:\.ts)?$/.test(target) &&
-        !typeOnly
-      ) {
-        reason =
-          'service dependencies are injected rather than read from the registry'
+      if (file.includes('/services/') && /\/services\/service(?:\.ts)?$/.test(target) && !typeOnly) {
+        reason = 'service dependencies are injected rather than read from the registry'
       }
       if (
         /\.(?:types|constants)\.ts$/.test(file) &&
         !typeOnly &&
-        /\/(?:core\/|services\/.*(?:\.(?:service|utils)|-(?:action|query)\.|\/(?:actions|queries)\/))/.test(
-          target,
-        )
+        /\/(?:core\/|services\/.*(?:\.(?:service|utils)|-(?:action|query)\.|\/(?:actions|queries)\/))/.test(target)
       ) {
-        reason =
-          'domain types/constants use type-only imports from implementations'
+        reason = 'domain types/constants use type-only imports from implementations'
       }
-      if (
-        file.endsWith('.client.ts') &&
-        !typeOnly &&
-        /^(react|react-dom)(\/|$)/.test(source)
-      ) {
+      if (file.endsWith('.client.ts') && !typeOnly && /^(react|react-dom)(\/|$)/.test(source)) {
         reason = 'client services are React-free; use hooks for React behavior'
       }
       if (options.fileRoles?.length) {
         const targetOwner = roots.find((path) => contains(path, target))
         const domain = (path: string, appRoot: string) => {
           const relative = path.slice(appRoot.length + 1)
-          if (relative.startsWith('types/') && relative.endsWith('.types.ts')) return relative.slice('types/'.length).split('.')[0]
+          if (relative.startsWith('types/') && relative.endsWith('.types.ts'))
+            return relative.slice('types/'.length).split('.')[0]
           if (!relative.startsWith('services/')) return undefined
           const parts = relative.slice('services/'.length).split('/')
           return parts.length > 1 ? parts[0] : parts[0].split('.')[0].replace(/-(?:action|query|driver)$/, '')
         }
-        const sameDomain = owner && targetOwner && owner === targetOwner && domain(file, owner) && domain(file, owner) === domain(target, targetOwner)
+        const sameDomain =
+          owner &&
+          targetOwner &&
+          owner === targetOwner &&
+          domain(file, owner) &&
+          domain(file, owner) === domain(target, targetOwner)
         const targetStem = target.replace(/\.[cm]?[jt]sx?$/, '')
         const concept = options.fileRoles.some((role) => targetStem.endsWith(`.${role}`))
-        const publicSurface = /\.(?:service|client|server|rsc|utils)$/.test(targetStem) && !/\/(?:[^/]+)-(?:action|query)\./.test(targetStem)
-        const privateTarget = concept || targetOwner && domain(target, targetOwner) && !publicSurface && !/\.(?:types|constants)$/.test(targetStem)
+        const publicSurface =
+          /\.(?:service|client|server|rsc|utils)$/.test(targetStem) &&
+          !/\/(?:[^/]+)-(?:action|query)\./.test(targetStem)
+        const privateTarget =
+          concept ||
+          (targetOwner && domain(target, targetOwner) && !publicSurface && !/\.(?:types|constants)$/.test(targetStem))
         if (privateTarget && !sameDomain) {
-          reason = 'private domain files stay in the same domain and application; use its service API or shared utilities'
+          reason =
+            'private domain files stay in the same domain and application; use its service API or shared utilities'
         }
-        if (privateTarget && reExport && /\.(?:service|client|server|rsc|utils)\.ts$/.test(file) && !/\/(?:[^/]+)-(?:action|query)\./.test(file)) {
+        if (
+          privateTarget &&
+          reExport &&
+          /\.(?:service|client|server|rsc|utils)\.ts$/.test(file) &&
+          !/\/(?:[^/]+)-(?:action|query)\./.test(file)
+        ) {
           reason = 'public service and utility surfaces must not re-export private domain internals'
         }
       }
@@ -119,8 +113,11 @@ export const importBoundaries = defineRule({
         const backendTarget = options.backend.some((path) => contains(path, portableTarget))
         const appPackage = options.appPackages.some((name) => source === name || source.startsWith(`${name}/`))
         const appType = roots.some((path) => contains(`${path}/types`, portableTarget))
-        const stem = basename(file).replace(/\.[cm]?[jt]sx?$/, '').replace(/\.utils$/, '')
-        const ownType = typeOnly && !reExport && portableTarget.replace(/\.[cm]?[jt]sx?$/, '') === `${web}/types/${stem}.types`
+        const stem = basename(file)
+          .replace(/\.[cm]?[jt]sx?$/, '')
+          .replace(/\.utils$/, '')
+        const ownType =
+          typeOnly && !reExport && portableTarget.replace(/\.[cm]?[jt]sx?$/, '') === `${web}/types/${stem}.types`
         if (backendImport || backendTarget || appService || appPackage) {
           reason = 'portable frontend lib does not import application services or application APIs'
         } else if (appType && !ownType) {
@@ -137,11 +134,22 @@ export const importBoundaries = defineRule({
     }
     return {
       Program(program) {
-        const exported = new Set(exportsCollect(program).filter((binding) => !binding.reExport).map((binding) => binding.localName))
+        const exported = new Set(
+          exportsCollect(program)
+            .filter((binding) => !binding.reExport)
+            .map((binding) => binding.localName),
+        )
         for (const statement of program.body) {
           if (statement.type !== 'ImportDeclaration') continue
           for (const specifier of statement.specifiers) {
-            if (exported.has(specifier.local.name)) check(specifier, statement.source.value, statement.importKind === 'type' || specifier.type === 'ImportSpecifier' && specifier.importKind === 'type', true)
+            if (exported.has(specifier.local.name))
+              check(
+                specifier,
+                statement.source.value,
+                statement.importKind === 'type' ||
+                  (specifier.type === 'ImportSpecifier' && specifier.importKind === 'type'),
+                true,
+              )
           }
         }
       },
@@ -151,10 +159,7 @@ export const importBoundaries = defineRule({
           node.source.value,
           node.importKind === 'type' ||
             (node.specifiers.length > 0 &&
-              node.specifiers.every(
-                (item) =>
-                  item.type === 'ImportSpecifier' && item.importKind === 'type',
-              )),
+              node.specifiers.every((item) => item.type === 'ImportSpecifier' && item.importKind === 'type')),
         )
       },
       ExportNamedDeclaration(node) {
@@ -166,10 +171,7 @@ export const importBoundaries = defineRule({
         check(node, node.source.value, node.exportKind === 'type', true)
       },
       ImportExpression(node) {
-        if (
-          node.source.type === 'Literal' &&
-          typeof node.source.value === 'string'
-        ) {
+        if (node.source.type === 'Literal' && typeof node.source.value === 'string') {
           check(node, node.source.value, false)
         }
       },

@@ -7,20 +7,17 @@ export function optionsFirst<T>(context: Context, fallback?: T): T {
 export type OptionsPattern = string | string[]
 
 export const optionsPatternSchema = {
-  anyOf: [
-    { type: 'string' },
-    { type: 'array', items: { type: 'string' }, minItems: 1 },
-  ],
+  anyOf: [{ type: 'string' }, { type: 'array', items: { type: 'string' }, minItems: 1 }],
 }
 
 /** Compiles a regex option that accepts one pattern or a list where any pattern may match. */
 export function optionsPatterns(pattern: OptionsPattern | undefined, flags?: string): RegExp[] {
-  return pattern === undefined ? [] : [pattern].flat().map(source => new RegExp(source, flags))
+  return pattern === undefined ? [] : [pattern].flat().map((source) => new RegExp(source, flags))
 }
 
 /** Like `optionsPatterns`, for options where an empty string has always meant "not set". */
 export function optionsOptionalPatterns(pattern: OptionsPattern | undefined, flags?: string): RegExp[] {
-  return optionsPatterns(pattern === undefined ? undefined : [pattern].flat().filter(source => source !== ''), flags)
+  return optionsPatterns(pattern === undefined ? undefined : [pattern].flat().filter((source) => source !== ''), flags)
 }
 
 export function optionsPatternLabel(pattern: OptionsPattern | undefined): string {

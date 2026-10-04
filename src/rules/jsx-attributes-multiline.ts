@@ -1,12 +1,6 @@
 import { defineRule } from '@oxlint/plugins'
 import type { ESTree } from '@oxlint/plugins'
-import {
-  layoutIndentSchema,
-  layoutIndentUnit,
-  layoutLineIndent,
-  layoutNewline,
-  optionsFirst,
-} from '../utils/index.ts'
+import { layoutIndentSchema, layoutIndentUnit, layoutLineIndent, layoutNewline, optionsFirst } from '../utils/index.ts'
 import type { LayoutIndent } from '../utils/index.ts'
 
 interface JsxAttributesMultilineOptions {
@@ -34,10 +28,12 @@ function jsxAttributesMultilineEdits(
   const openingRange: [number, number] = [prefix.range[1], first.range[0]]
   if (!/^\s*$/.test(text.slice(...openingRange))) return null
 
-  const edits: JsxAttributesMultilineEdit[] = [{
-    range: openingRange,
-    text: `${newline}${attributeIndent}`,
-  }]
+  const edits: JsxAttributesMultilineEdit[] = [
+    {
+      range: openingRange,
+      text: `${newline}${attributeIndent}`,
+    },
+  ]
 
   for (let index = 1; index < node.attributes.length; index++) {
     const previous = node.attributes[index - 1]
@@ -64,14 +60,16 @@ export const jsxAttributesMultiline = defineRule({
   meta: {
     type: 'layout',
     fixable: 'whitespace',
-    schema: [{
-      type: 'object',
-      additionalProperties: false,
-      properties: {
-        minAttributes: { type: 'integer', minimum: 1 },
-        indent: layoutIndentSchema,
+    schema: [
+      {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          minAttributes: { type: 'integer', minimum: 1 },
+          indent: layoutIndentSchema,
+        },
       },
-    }],
+    ],
     messages: {
       multiline: 'Put every JSX attribute and the closing token on its own line.',
     },
@@ -102,9 +100,7 @@ export const jsxAttributesMultiline = defineRule({
         context.report({
           node,
           messageId: 'multiline',
-          fix: edits
-            ? fixer => edits.map(edit => fixer.replaceTextRange(edit.range, edit.text))
-            : undefined,
+          fix: edits ? (fixer) => edits.map((edit) => fixer.replaceTextRange(edit.range, edit.text)) : undefined,
         })
       },
     }

@@ -26,16 +26,18 @@ interface RequireObjectParamsOptions {
 export const requireObjectParams = defineRule({
   meta: {
     type: 'problem',
-    schema: [{
-      type: 'object',
-      additionalProperties: false,
-      properties: {
-        maxParams: { type: 'integer', minimum: 1 },
-        serviceMethods: { type: 'boolean' },
-        allDeclarations: { type: 'boolean' },
-        allowPattern: optionsPatternSchema,
+    schema: [
+      {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          maxParams: { type: 'integer', minimum: 1 },
+          serviceMethods: { type: 'boolean' },
+          allDeclarations: { type: 'boolean' },
+          allowPattern: optionsPatternSchema,
+        },
       },
-    }],
+    ],
     messages: {
       objectParams: '{{label}} {{name}} must accept at most {{maxParams}} object parameter{{s}}.',
     },
@@ -43,7 +45,12 @@ export const requireObjectParams = defineRule({
   createOnce(context) {
     return {
       Program(program) {
-        const { maxParams = 1, allDeclarations = false, serviceMethods = false, allowPattern } = optionsFirst<RequireObjectParamsOptions>(context, {})
+        const {
+          maxParams = 1,
+          allDeclarations = false,
+          serviceMethods = false,
+          allowPattern,
+        } = optionsFirst<RequireObjectParamsOptions>(context, {})
         const allowed = optionsOptionalPatterns(allowPattern)
         const seen = new Set<string>()
         const functions = allDeclarations
@@ -61,7 +68,10 @@ export const requireObjectParams = defineRule({
 
           seen.add(key)
 
-          if (item.node.params.length > maxParams || item.node.params.some((param) => !declarationsIsObjectParam(param))) {
+          if (
+            item.node.params.length > maxParams ||
+            item.node.params.some((param) => !declarationsIsObjectParam(param))
+          ) {
             context.report({
               node: item.node,
               messageId: 'objectParams',

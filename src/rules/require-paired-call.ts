@@ -26,30 +26,29 @@ interface PairState extends RequirePairedCallPair {
 export const requirePairedCall = defineRule({
   meta: {
     type: 'problem',
-    schema: [{
-      type: 'object',
-      additionalProperties: false,
-      properties: {
-        when: { type: 'string' },
-        require: { type: 'string' },
-        pairs: {
-          type: 'array',
-          items: {
-            type: 'object',
-            additionalProperties: false,
-            properties: {
-              when: { type: 'string' },
-              require: { type: 'string' },
+    schema: [
+      {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          when: { type: 'string' },
+          require: { type: 'string' },
+          pairs: {
+            type: 'array',
+            items: {
+              type: 'object',
+              additionalProperties: false,
+              properties: {
+                when: { type: 'string' },
+                require: { type: 'string' },
+              },
+              required: ['when', 'require'],
             },
-            required: ['when', 'require'],
           },
         },
+        anyOf: [{ required: ['when', 'require'] }, { required: ['pairs'] }],
       },
-      anyOf: [
-        { required: ['when', 'require'] },
-        { required: ['pairs'] },
-      ],
-    }],
+    ],
     messages: {
       paired: '{{when}} requires a call to {{require}} in the same file.',
     },

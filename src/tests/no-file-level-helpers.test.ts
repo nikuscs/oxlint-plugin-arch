@@ -5,29 +5,37 @@ import { createRuleTester } from './rule-tester.ts'
 const error = { messageId: 'helper' }
 
 test('no-file-level-helpers', () => {
-  createRuleTester('tsx').run(
-    'arch/no-file-level-helpers',
-    noFileLevelHelpers,
-    {
-      valid: [
-        'export function ContentForm() { return <form /> }',
-        'export function useContentForm() { return null }',
-        { code: 'export function makeContentForm() { return null }', options: [{ allowPattern: '^make[A-Z]' }] },
-        { code: 'export function makeContentForm() { return null }', options: [{ allowPattern: ['^build[A-Z]', '^make[A-Z]'] }] },
-        { code: 'export function withContentForm() { return null }', options: [{ hookPattern: ['^use[A-Z]', '^with[A-Z]'] }] },
-        'export function ContentForm() { function handleSubmit() {} return <form /> }',
-      ],
-      invalid: [
-        { code: 'function handlePersonaSearch() {}\nexport function ContentForm() { return <form /> }', errors: [error] },
-        { code: 'const buildPayload = () => ({})\nexport function ContentForm() { return <form /> }', errors: [error] },
-      ],
-    },
-  )
+  createRuleTester('tsx').run('arch/no-file-level-helpers', noFileLevelHelpers, {
+    valid: [
+      'export function ContentForm() { return <form /> }',
+      'export function useContentForm() { return null }',
+      { code: 'export function makeContentForm() { return null }', options: [{ allowPattern: '^make[A-Z]' }] },
+      {
+        code: 'export function makeContentForm() { return null }',
+        options: [{ allowPattern: ['^build[A-Z]', '^make[A-Z]'] }],
+      },
+      {
+        code: 'export function withContentForm() { return null }',
+        options: [{ hookPattern: ['^use[A-Z]', '^with[A-Z]'] }],
+      },
+      'export function ContentForm() { function handleSubmit() {} return <form /> }',
+    ],
+    invalid: [
+      { code: 'function handlePersonaSearch() {}\nexport function ContentForm() { return <form /> }', errors: [error] },
+      { code: 'const buildPayload = () => ({})\nexport function ContentForm() { return <form /> }', errors: [error] },
+    ],
+  })
 })
 
 test('route helper diagnostics do not prescribe components', () => {
   createRuleTester().run('arch/no-file-level-helpers', noFileLevelHelpers, {
     valid: [],
-    invalid: [{ code: 'function format() {}', options: [{ detectComponents: false, message: 'Nest this helper in its route handler callback.' }], errors: [{ message: 'format: Nest this helper in its route handler callback.' }] }],
+    invalid: [
+      {
+        code: 'function format() {}',
+        options: [{ detectComponents: false, message: 'Nest this helper in its route handler callback.' }],
+        errors: [{ message: 'format: Nest this helper in its route handler callback.' }],
+      },
+    ],
   })
 })

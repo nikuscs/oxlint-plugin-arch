@@ -15,11 +15,18 @@ interface Binding {
 
 function bindingNames(pattern: ESTree.BindingPattern | ESTree.BindingRestElement): string[] {
   switch (pattern.type) {
-    case 'Identifier': return [pattern.name]
-    case 'AssignmentPattern': return bindingNames(pattern.left)
-    case 'RestElement': return bindingNames(pattern.argument)
-    case 'ArrayPattern': return pattern.elements.flatMap((element) => element ? bindingNames(element) : [])
-    case 'ObjectPattern': return pattern.properties.flatMap((property) => bindingNames(property.type === 'RestElement' ? property : property.value))
+    case 'Identifier':
+      return [pattern.name]
+    case 'AssignmentPattern':
+      return bindingNames(pattern.left)
+    case 'RestElement':
+      return bindingNames(pattern.argument)
+    case 'ArrayPattern':
+      return pattern.elements.flatMap((element) => (element ? bindingNames(element) : []))
+    case 'ObjectPattern':
+      return pattern.properties.flatMap((property) =>
+        bindingNames(property.type === 'RestElement' ? property : property.value),
+      )
   }
 }
 
@@ -28,9 +35,14 @@ function moduleName(node: ESTree.ModuleExportName): string {
 }
 
 function unwrap(expression: ESTree.Expression): ESTree.Expression {
-  if (expression.type === 'ParenthesizedExpression' || expression.type === 'TSAsExpression'
-    || expression.type === 'TSSatisfiesExpression' || expression.type === 'TSTypeAssertion'
-    || expression.type === 'TSNonNullExpression' || expression.type === 'TSInstantiationExpression') {
+  if (
+    expression.type === 'ParenthesizedExpression' ||
+    expression.type === 'TSAsExpression' ||
+    expression.type === 'TSSatisfiesExpression' ||
+    expression.type === 'TSTypeAssertion' ||
+    expression.type === 'TSNonNullExpression' ||
+    expression.type === 'TSInstantiationExpression'
+  ) {
     return unwrap(expression.expression)
   }
 
@@ -44,14 +56,19 @@ function collectBindings(program: ESTree.Program): Map<string, Binding> {
     if (statement.type === 'ImportDeclaration') {
       for (const specifier of statement.specifiers) {
         bindings.set(specifier.local.name, {
-          kind: statement.importKind === 'type' || specifier.type === 'ImportSpecifier' && specifier.importKind === 'type' ? 'type' : 'import',
+          kind:
+            statement.importKind === 'type' || (specifier.type === 'ImportSpecifier' && specifier.importKind === 'type')
+              ? 'type'
+              : 'import',
         })
       }
       continue
     }
 
-    const declaration = statement.type === 'ExportNamedDeclaration' || statement.type === 'ExportDefaultDeclaration'
-      ? statement.declaration : statement
+    const declaration =
+      statement.type === 'ExportNamedDeclaration' || statement.type === 'ExportDefaultDeclaration'
+        ? statement.declaration
+        : statement
 
     if (declaration?.type === 'TSImportEqualsDeclaration') {
       bindings.set(declaration.id.name, { kind: declaration.importKind === 'type' ? 'type' : 'import' })
@@ -66,9 +83,14 @@ function collectBindings(program: ESTree.Program): Map<string, Binding> {
       }
     } else if (declaration && 'id' in declaration && declaration.id?.type === 'Identifier') {
       bindings.set(declaration.id.name, {
-        kind: declaration.type === 'TSTypeAliasDeclaration' || declaration.type === 'TSInterfaceDeclaration' ? 'type'
-          : declaration.type === 'FunctionDeclaration' || declaration.type === 'TSDeclareFunction' ? 'function'
-            : declaration.type === 'ClassDeclaration' ? 'class' : 'other',
+        kind:
+          declaration.type === 'TSTypeAliasDeclaration' || declaration.type === 'TSInterfaceDeclaration'
+            ? 'type'
+            : declaration.type === 'FunctionDeclaration' || declaration.type === 'TSDeclareFunction'
+              ? 'function'
+              : declaration.type === 'ClassDeclaration'
+                ? 'class'
+                : 'other',
       })
     }
   }
@@ -86,23 +108,30 @@ function collectBindings(program: ESTree.Program): Map<string, Binding> {
 export const onlyExportConstants = defineRule({
   meta: {
     type: 'problem',
-    schema: [{
-      type: 'object',
-      additionalProperties: false,
-      properties: {
-        allowFunctionValues: { type: 'boolean' },
-        allowTypeExports: { type: 'boolean' },
-        allowReExports: { type: 'boolean' },
+    schema: [
+      {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          allowFunctionValues: { type: 'boolean' },
+          allowTypeExports: { type: 'boolean' },
+          allowReExports: { type: 'boolean' },
+        },
       },
-    }],
+    ],
     messages: {
-      nonConstant: "Export '{{name}}' must be a local const binding with an allowed value; types and re-exports require explicit options.",
+      nonConstant:
+        "Export '{{name}}' must be a local const binding with an allowed value; types and re-exports require explicit options.",
     },
   },
   createOnce(context) {
     return {
       Program(program) {
-        const { allowFunctionValues = false, allowTypeExports = false, allowReExports = false } = optionsFirst<OnlyExportConstantsOptions>(context, {})
+        const {
+          allowFunctionValues = false,
+          allowTypeExports = false,
+          allowReExports = false,
+        } = optionsFirst<OnlyExportConstantsOptions>(context, {})
         const bindings = collectBindings(program)
 
         function hasForbiddenValue(binding: Binding, seen = new Set<Binding>()): boolean {
@@ -130,11 +159,12 @@ export const onlyExportConstants = defineRule({
 
         function check(node: ESTree.Node, name: string, localName?: string, typeOnly = false, reExport = false) {
           const binding = localName ? bindings.get(localName) : undefined
-          const allowed = typeOnly || !reExport && binding?.kind === 'type'
-            ? allowTypeExports
-            : reExport || binding?.kind === 'import'
-              ? allowReExports
-              : binding?.kind === 'const' && !hasForbiddenValue(binding)
+          const allowed =
+            typeOnly || (!reExport && binding?.kind === 'type')
+              ? allowTypeExports
+              : reExport || binding?.kind === 'import'
+                ? allowReExports
+                : binding?.kind === 'const' && !hasForbiddenValue(binding)
 
           if (!allowed) {
             context.report({ node, messageId: 'nonConstant', data: { name } })
@@ -146,8 +176,12 @@ export const onlyExportConstants = defineRule({
             check(statement, '*', undefined, statement.exportKind === 'type', true)
           } else if (statement.type === 'ExportDefaultDeclaration') {
             const declaration = statement.declaration
-            check(statement, 'default', declaration.type === 'Identifier' ? declaration.name : undefined,
-              declaration.type === 'TSInterfaceDeclaration')
+            check(
+              statement,
+              'default',
+              declaration.type === 'Identifier' ? declaration.name : undefined,
+              declaration.type === 'TSInterfaceDeclaration',
+            )
           } else if (statement.type === 'TSExportAssignment') {
             check(statement, 'export =')
           } else if (statement.type === 'TSNamespaceExportDeclaration') {
@@ -161,12 +195,18 @@ export const onlyExportConstants = defineRule({
                 }
               }
             } else if (declaration) {
-              const name = 'id' in declaration && declaration.id?.type === 'Identifier' ? declaration.id.name : '<anonymous>'
+              const name =
+                'id' in declaration && declaration.id?.type === 'Identifier' ? declaration.id.name : '<anonymous>'
               check(declaration, name, name)
             }
             for (const specifier of statement.specifiers) {
-              check(specifier, moduleName(specifier.exported), moduleName(specifier.local),
-                statement.exportKind === 'type' || specifier.exportKind === 'type', Boolean(statement.source))
+              check(
+                specifier,
+                moduleName(specifier.exported),
+                moduleName(specifier.local),
+                statement.exportKind === 'type' || specifier.exportKind === 'type',
+                Boolean(statement.source),
+              )
             }
           }
         }

@@ -1,12 +1,6 @@
 import { defineRule } from '@oxlint/plugins'
 import type { Context, ESTree, Scope, SourceCode } from '@oxlint/plugins'
-import {
-  layoutIndentSchema,
-  layoutIndentUnit,
-  layoutLineIndent,
-  layoutNewline,
-  optionsFirst,
-} from '../utils/index.ts'
+import { layoutIndentSchema, layoutIndentUnit, layoutLineIndent, layoutNewline, optionsFirst } from '../utils/index.ts'
 import type { LayoutIndent } from '../utils/index.ts'
 
 interface CallArrayMultilineOptions {
@@ -20,7 +14,7 @@ interface CallArrayMultilineEdit {
   text: string
 }
 
-function callArrayMultilineCallee(node: ESTree.Expression): { name: string, root: ESTree.Expression } | null {
+function callArrayMultilineCallee(node: ESTree.Expression): { name: string; root: ESTree.Expression } | null {
   if (node.type === 'Identifier') return { name: node.name, root: node }
   if (node.type !== 'MemberExpression' || node.computed || node.property.type !== 'Identifier') return null
 
@@ -65,11 +59,11 @@ function callArrayMultilineEdits(
   newline: string,
 ): CallArrayMultilineEdit[] | null {
   const elements = array.elements
-  if (elements.some(element => element === null)) return null
+  if (elements.some((element) => element === null)) return null
 
   const present = elements
     .filter((element): element is Exclude<typeof element, null> => element !== null)
-    .map(element => callArrayMultilineOuterRange(source, element))
+    .map((element) => callArrayMultilineOuterRange(source, element))
   const first = present[0]
   const last = present.at(-1)
   if (!first || !last) return null
@@ -110,15 +104,17 @@ export const callArrayMultiline = defineRule({
   meta: {
     type: 'layout',
     fixable: 'whitespace',
-    schema: [{
-      type: 'object',
-      additionalProperties: false,
-      properties: {
-        callees: { type: 'array', items: { type: 'string' } },
-        minElements: { type: 'integer', minimum: 1 },
-        indent: layoutIndentSchema,
+    schema: [
+      {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          callees: { type: 'array', items: { type: 'string' } },
+          minElements: { type: 'integer', minimum: 1 },
+          indent: layoutIndentSchema,
+        },
       },
-    }],
+    ],
     messages: {
       multiline: 'Put every array element in this call on its own line.',
     },
@@ -149,10 +145,11 @@ export const callArrayMultiline = defineRule({
 
         // Why: only Promise names a built-in whose local shadow changes the configured call's meaning.
         if (
-          callee.root.type === 'Identifier'
-          && callee.root.name === 'Promise'
-          && callArrayMultilineIsShadowed(context, callee.root)
-        ) return
+          callee.root.type === 'Identifier' &&
+          callee.root.name === 'Promise' &&
+          callArrayMultilineIsShadowed(context, callee.root)
+        )
+          return
 
         const source = context.sourceCode
         const text = source.text
@@ -165,9 +162,7 @@ export const callArrayMultiline = defineRule({
         context.report({
           node: array,
           messageId: 'multiline',
-          fix: edits
-            ? fixer => edits.map(edit => fixer.replaceTextRange(edit.range, edit.text))
-            : undefined,
+          fix: edits ? (fixer) => edits.map((edit) => fixer.replaceTextRange(edit.range, edit.text)) : undefined,
         })
       },
     }

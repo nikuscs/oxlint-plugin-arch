@@ -4,46 +4,48 @@ import { createRuleTester } from './rule-tester.ts'
 
 type JsonValue = JsonValue[] | { [key: string]: JsonValue } | string | number | boolean | null
 
-const options: JsonValue[] = [{
-  groups: [
-    {
-      minDepth: 3,
-      methods: [
-        'selectFrom',
-        'insertInto',
-        'updateTable',
-        'deleteFrom',
-        'mergeInto',
-        'execute',
-        'executeTakeFirst',
-        'executeTakeFirstOrThrow',
-      ],
-    },
-    {
-      minDepth: 2,
-      onlyMethods: ['input', 'handler', 'use', 'output'],
-      rootPattern: 'Procedure$',
-    },
-    {
-      minDepth: 3,
-      methods: [
-        'filter',
-        'map',
-        'flatMap',
-        'sort',
-        'reduce',
-        'reduceRight',
-        'find',
-        'findIndex',
-        'findLast',
-        'findLastIndex',
-        'some',
-        'every',
-        'forEach',
-      ],
-    },
-  ],
-}]
+const options: JsonValue[] = [
+  {
+    groups: [
+      {
+        minDepth: 3,
+        methods: [
+          'selectFrom',
+          'insertInto',
+          'updateTable',
+          'deleteFrom',
+          'mergeInto',
+          'execute',
+          'executeTakeFirst',
+          'executeTakeFirstOrThrow',
+        ],
+      },
+      {
+        minDepth: 2,
+        onlyMethods: ['input', 'handler', 'use', 'output'],
+        rootPattern: 'Procedure$',
+      },
+      {
+        minDepth: 3,
+        methods: [
+          'filter',
+          'map',
+          'flatMap',
+          'sort',
+          'reduce',
+          'reduceRight',
+          'find',
+          'findIndex',
+          'findLast',
+          'findLastIndex',
+          'some',
+          'every',
+          'forEach',
+        ],
+      },
+    ],
+  },
+]
 const error = { messageId: 'newline' }
 
 const queryOutput = 'db\n  .selectFrom("users")\n  .where("active", "=", true)\n  .execute()'
@@ -54,13 +56,17 @@ const nestedOutput = 'wrap(items\n  .filter(active)\n  .map(toName)\n  .sort())'
 const parenOutput = 'await (db as TestDb)\n  .insertInto("users")\n  .values(row)\n  .execute()'
 
 test('chain-newline rejects invalid root patterns during setup', () => {
-  expect(() => createRuleTester().run('arch/chain-newline-invalid-regex', chainNewline, {
-    valid: [{
-      code: 'source.map(fn)',
-      options: [{ groups: [{ minDepth: 1, rootPattern: '[' }] }],
-    }],
-    invalid: [],
-  })).toThrow(/Invalid regular expression/)
+  expect(() =>
+    createRuleTester().run('arch/chain-newline-invalid-regex', chainNewline, {
+      valid: [
+        {
+          code: 'source.map(fn)',
+          options: [{ groups: [{ minDepth: 1, rootPattern: '[' }] }],
+        },
+      ],
+      invalid: [],
+    }),
+  ).toThrow(/Invalid regular expression/)
 })
 
 test('chain-newline', () => {

@@ -1,45 +1,20 @@
 import type { PresetContext, PresetPolicies } from '../types/preset.types.ts'
 import { presetOverride, presetScopes } from '../utils/helpers/preset.ts'
-import {
-  presetExtensions,
-  presetFormattingRules,
-  presetImportRules,
-} from '../constants/preset.constants.ts'
+import { presetExtensions, presetFormattingRules, presetImportRules } from '../constants/preset.constants.ts'
 
 export function presetSourceConfig(context: PresetContext): PresetPolicies {
-  const {
-    options,
-    web,
-    scripts,
-    app,
-    appFiles,
-    backendFiles,
-    ui,
-    safetyFiles,
-    publicEntrypoints,
-    baseImports,
-  } = context
+  const { options, web, scripts, app, appFiles, backendFiles, ui, safetyFiles, publicEntrypoints, baseImports } =
+    context
   const policies: PresetPolicies = {}
-  policies.formatting = [
-    presetOverride([`**/${presetExtensions}`], presetFormattingRules),
-  ]
+  policies.formatting = [presetOverride([`**/${presetExtensions}`], presetFormattingRules)]
 
-  policies.layout = [
-    presetOverride(
-      [`**/${presetExtensions}`],
-      {
-        'arch/padding-between-statements': ['error', { multilineVariables: true }],
-        'arch/object-multiline': [
-          'error',
-          { minProperties: 3, scope: 'call-args' },
-        ],
-        'arch/call-array-multiline': [
-          'error',
-          { callees: ['Promise.all'], minElements: 2 },
-        ],
-        'arch/key-value-same-line': 'error',
-      },
-    ),
+  policies.statementLayout = [
+    presetOverride([`**/${presetExtensions}`], {
+      'arch/padding-between-statements': ['error', { multilineVariables: true }],
+      'arch/object-multiline': ['error', { minProperties: 3, scope: 'call-args' }],
+      'arch/call-array-multiline': ['error', { callees: ['Promise.all'], minElements: 2 }],
+      'arch/key-value-same-line': 'error',
+    }),
   ]
 
   policies.imports = [
@@ -55,20 +30,13 @@ export function presetSourceConfig(context: PresetContext): PresetPolicies {
           ignoreCase: true,
           newlinesBetween: 0,
           environment: 'bun',
-          internalPattern: options.internalPatterns ?? [
+          internalPattern: options.imports?.internalSortPatterns ?? [
             '^@/.*',
             '^#.*',
             '^~icons/.*',
-            ...publicEntrypoints.map(
-              (path) => `^${path.split('/').slice(0, 2).join('/')}/`,
-            ),
+            ...publicEntrypoints.map((path) => `^${path.split('/').slice(0, 2).join('/')}/`),
           ],
-          groups: [
-            ['builtin', 'external'],
-            'internal',
-            ['parent', 'sibling', 'index'],
-            'type',
-          ],
+          groups: [['builtin', 'external'], 'internal', ['parent', 'sibling', 'index'], 'type'],
         },
       ],
     }),
@@ -78,10 +46,7 @@ export function presetSourceConfig(context: PresetContext): PresetPolicies {
     presetOverride(
       appFiles,
       {
-        'arch/no-comments': [
-          'error',
-          { allowWhy: false, allowPatterns: ['^\\s*SAFETY: '] },
-        ],
+        'arch/no-comments': ['error', { allowWhy: false, allowPatterns: ['^\\s*SAFETY: '] }],
       },
       ui,
     ),
@@ -93,43 +58,38 @@ export function presetSourceConfig(context: PresetContext): PresetPolicies {
     }),
   ]
 
-  policies.wrappers = [
+  policies.trivialFunctions = [
     presetOverride(
       appFiles,
       {
-        'arch/no-trivial-functions': [
-          'error',
-          { mode: 'precise', allowAsync: false, allowCallees: [] },
-        ],
+        'arch/no-trivial-functions': ['error', { mode: 'precise', allowAsync: false, allowCallees: [] }],
       },
       ui,
     ),
   ]
 
-  policies.wrappers.push(presetOverride([
-    ...presetScopes(web, 'services/**/*.{client,server,rsc}.ts'),
-    ...presetScopes(web, 'services/**/*.rsc.tsx'),
-  ], {
-    'arch/no-trivial-functions': ['error', { mode: 'precise', allowAsync: false, allowCallees: [], checkServiceMethods: true }],
-  }, ui))
-
-  policies.mutableState = [
+  policies.trivialFunctions.push(
     presetOverride(
-      safetyFiles,
-      { 'arch/no-module-mutable-state': ['error', { kinds: ['let', 'var'] }] },
+      [...presetScopes(web, 'services/**/*.{client,server,rsc}.ts'), ...presetScopes(web, 'services/**/*.rsc.tsx')],
+      {
+        'arch/no-trivial-functions': [
+          'error',
+          { mode: 'precise', allowAsync: false, allowCallees: [], checkServiceMethods: true },
+        ],
+      },
       ui,
     ),
+  )
+
+  policies.mutableState = [
+    presetOverride(safetyFiles, { 'arch/no-module-mutable-state': ['error', { kinds: ['let', 'var'] }] }, ui),
   ]
 
-  policies.backendRules = [
-    presetOverride(
-      backendFiles,
-      { 'modules/backend-switch': 'error' },
-      options.cli,
-    ),
+  policies.backend = [
+    presetOverride(backendFiles, { 'modules/backend-switch': 'error' }, options.cliFiles),
     presetOverride([`**/${presetExtensions}`], { 'no-console': 'error' }, [
       ...presetScopes(scripts, '**'),
-      ...(options.cli ?? []),
+      ...(options.cliFiles ?? []),
     ]),
     presetOverride(safetyFiles, { 'modules/double-negation': 'error' }, ui),
   ]

@@ -26,7 +26,10 @@ function isConfiguredName(name: string | undefined, callees: readonly string[]):
       return false
     }
 
-    return name.slice(callee.length + 1).split('.').every((part) => TEST_MODIFIERS.has(part))
+    return name
+      .slice(callee.length + 1)
+      .split('.')
+      .every((part) => TEST_MODIFIERS.has(part))
   })
 }
 
@@ -39,8 +42,7 @@ function isConfiguredCall(node: ESTree.CallExpression, callees: readonly string[
     return isConfiguredName(astDottedName(node.callee.callee), callees)
   }
 
-  return node.callee.type === 'TaggedTemplateExpression'
-    && isConfiguredName(astDottedName(node.callee.tag), callees)
+  return node.callee.type === 'TaggedTemplateExpression' && isConfiguredName(astDottedName(node.callee.tag), callees)
 }
 
 function titleText(node: ESTree.Expression | ESTree.SpreadElement): string | undefined {
@@ -65,7 +67,9 @@ function regexMatches(regex: RegExp, value: string): boolean {
 
 // Why: messages name the pattern that matched, so each source stays next to its regex.
 function titlePatterns(pattern: OptionsPattern | undefined, flags: string): TitlePattern[] {
-  return pattern === undefined ? [] : [pattern].flat().map(source => ({ regex: new RegExp(source, flags), pattern: source }))
+  return pattern === undefined
+    ? []
+    : [pattern].flat().map((source) => ({ regex: new RegExp(source, flags), pattern: source }))
 }
 
 /**
@@ -77,20 +81,24 @@ function titlePatterns(pattern: OptionsPattern | undefined, flags: string): Titl
 export const testTitlePattern = defineRule({
   meta: {
     type: 'suggestion',
-    schema: [{
-      type: 'object',
-      additionalProperties: false,
-      properties: {
-        callees: { type: 'array', items: { type: 'string' } },
-        forbid: optionsPatternSchema,
-        require: optionsPatternSchema,
-        flags: { type: 'string', pattern: '^[dgimsuvy]*$' },
+    schema: [
+      {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          callees: { type: 'array', items: { type: 'string' } },
+          forbid: optionsPatternSchema,
+          require: optionsPatternSchema,
+          flags: { type: 'string', pattern: '^[dgimsuvy]*$' },
+        },
       },
-    }],
-    defaultOptions: [{
-      callees: ['describe', 'it', 'test'],
-      flags: '',
-    }],
+    ],
+    defaultOptions: [
+      {
+        callees: ['describe', 'it', 'test'],
+        flags: '',
+      },
+    ],
     messages: {
       forbidden: "Test title matches forbidden pattern '{{pattern}}'.",
       required: "Test title must match required pattern '{{pattern}}'.",
@@ -130,7 +138,7 @@ export const testTitlePattern = defineRule({
           return
         }
 
-        const forbidden = forbid.find(item => regexMatches(item.regex, text))
+        const forbidden = forbid.find((item) => regexMatches(item.regex, text))
         if (forbidden) {
           context.report({
             node: title,
@@ -139,7 +147,7 @@ export const testTitlePattern = defineRule({
           })
         }
 
-        if (required.length > 0 && !required.some(item => regexMatches(item.regex, text))) {
+        if (required.length > 0 && !required.some((item) => regexMatches(item.regex, text))) {
           context.report({
             node: title,
             messageId: 'required',

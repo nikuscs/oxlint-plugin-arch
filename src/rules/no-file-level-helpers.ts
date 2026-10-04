@@ -25,16 +25,18 @@ interface NoFileLevelHelpersOptions {
 export const noFileLevelHelpers = defineRule({
   meta: {
     type: 'problem',
-    schema: [{
-      type: 'object',
-      additionalProperties: false,
-      properties: {
-        allowPattern: optionsPatternSchema,
-        message: { type: 'string' },
-        detectComponents: { type: 'boolean' },
-        hookPattern: optionsPatternSchema,
+    schema: [
+      {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          allowPattern: optionsPatternSchema,
+          message: { type: 'string' },
+          detectComponents: { type: 'boolean' },
+          hookPattern: optionsPatternSchema,
+        },
       },
-    }],
+    ],
     messages: {
       helper: '{{name}}: {{message}}',
     },
@@ -52,9 +54,11 @@ export const noFileLevelHelpers = defineRule({
         const hooks = optionsPatterns(hookPattern)
 
         for (const candidate of declarationsFileLevelFunctionCandidates(program)) {
-          if ((detectComponents && reactComponentsIsLike(program, candidate))
-            || optionsPatternsTest(hooks, candidate.name)
-            || optionsPatternsTest(allowed, candidate.name)) {
+          if (
+            (detectComponents && reactComponentsIsLike(program, candidate)) ||
+            optionsPatternsTest(hooks, candidate.name) ||
+            optionsPatternsTest(allowed, candidate.name)
+          ) {
             continue
           }
 

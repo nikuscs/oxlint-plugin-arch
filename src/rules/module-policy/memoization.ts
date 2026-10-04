@@ -22,10 +22,7 @@ export const memoization = defineRule({
         }
         for (const item of node.specifiers) {
           if (item.type === 'ImportSpecifier') {
-            const name =
-              item.imported.type === 'Identifier'
-                ? item.imported.name
-                : item.imported.value
+            const name = item.imported.type === 'Identifier' ? item.imported.name : item.imported.value
             if (['memo', 'useMemo', 'useCallback'].includes(name)) {
               context.report({ node: item, messageId: 'memo' })
             }
@@ -36,11 +33,7 @@ export const memoization = defineRule({
       },
       MemberExpression(node) {
         const name = astDottedName(node)?.split('.')
-        if (
-          name?.length === 2 &&
-          namespaces.has(name[0]) &&
-          ['memo', 'useMemo', 'useCallback'].includes(name[1])
-        ) {
+        if (name?.length === 2 && namespaces.has(name[0]) && ['memo', 'useMemo', 'useCallback'].includes(name[1])) {
           context.report({ node, messageId: 'memo' })
         }
       },

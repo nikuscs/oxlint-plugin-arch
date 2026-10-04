@@ -20,7 +20,7 @@ export function presetTypesConfig(context: PresetContext): PresetPolicies {
     publicEntrypoints,
   } = context
   const policies: PresetPolicies = {}
-  policies.banTypes = [
+  policies.typePlacement = [
     presetOverride(appFiles, { 'arch/no-type-declarations': 'error' }, [
       ...types,
       ...components,
@@ -29,10 +29,7 @@ export function presetTypesConfig(context: PresetContext): PresetPolicies {
       ...ui,
       ...testFiles,
     ]),
-    presetOverride(services, { 'modules/service-types': 'error' }, [
-      ...utilities,
-      ...testFiles,
-    ]),
+    presetOverride(services, { 'modules/service-types': 'error' }, [...utilities, ...testFiles]),
     presetOverride(
       [...components, ...hooks],
       {
@@ -52,77 +49,63 @@ export function presetTypesConfig(context: PresetContext): PresetPolicies {
     presetOverride(
       presetScopes(app, '**/*.types.ts'),
       {
-        'arch/no-restricted-files': [
-          'error',
-          { message: 'Domain types belong in src/types.' },
-        ],
+        'arch/no-restricted-files': ['error', { message: 'Domain types belong in src/types.' }],
       },
       [...types, ...ui],
     ),
-    presetOverride(presetScopes(app, '**/*.{utils,constants}.ts'), {
-      'arch/no-type-declarations': 'error',
-    }, [...ui, ...testFiles]),
-    presetOverride([
-      ...presetScopes(backend, 'types/**/*.types.ts'),
-      ...presetScopes(app, '**/*.constants.ts'),
-    ], {
+    presetOverride(
+      presetScopes(app, '**/*.{utils,constants}.ts'),
+      {
+        'arch/no-type-declarations': 'error',
+      },
+      [...ui, ...testFiles],
+    ),
+    presetOverride([...presetScopes(backend, 'types/**/*.types.ts'), ...presetScopes(app, '**/*.constants.ts')], {
       'arch/no-top-level-functions': ['error', { banReExports: false }],
     }),
     presetOverride(presetScopes(web, 'types/**/*.types.ts'), {
-      'arch/no-runtime-in-types': [
-        'error',
-        { runtimeImports: 'ban', allowImportSources: [], banReExports: true },
-      ],
+      'arch/no-runtime-in-types': ['error', { runtimeImports: 'ban', allowImportSources: [], banReExports: true }],
     }),
   ]
 
   policies.typeSafety = [
-    presetOverride(
-      safetyFiles,
-      {
-        'typescript/no-explicit-any': 'error',
-        'typescript/ban-ts-comment': [
-          'error',
-          {
-            'ts-ignore': true,
-            'ts-nocheck': true,
-            'ts-expect-error': true,
-            'ts-check': false,
-          },
-        ],
-        'modules/no-unknown': 'error',
-        'modules/shape-suffix': 'error',
-        'arch/no-imported-type-alias': 'error',
-        'arch/no-literal-in': 'error',
-        'arch/no-promise-all-mutation': 'error',
-        'arch/no-restricted-constructor': [
-          'error',
-          { constructors: ['Error'], checkCalls: true },
-        ],
-        'dillon-anti-slop/no-chained-type-assertions': 'error',
-        'dillon-anti-slop/no-conditional-empty-object-spread': 'error',
-        'dillon-anti-slop/no-known-value-widening': 'error',
-        'dillon-anti-slop/no-reflect-apply': 'error',
-        'dillon-anti-slop/no-reflect-get': 'error',
-        'dillon-anti-slop/no-runtime-typeof': 'error',
-        'dillon-anti-slop/no-unknown-parameters': 'error',
-        'dillon-anti-slop/no-unknown-returns': 'error',
-        'dillon-anti-slop/no-unknown-type-aliases': 'error',
-        'dillon-anti-slop/no-unsafe-dictionary-type': 'error',
-        'dillon-anti-slop/no-widen-then-assert': 'error',
-        'dillon-anti-slop/require-safety-comment-for-type-assertion': 'error',
-      },
-    ),
+    presetOverride(safetyFiles, {
+      'typescript/no-explicit-any': 'error',
+      'typescript/ban-ts-comment': [
+        'error',
+        {
+          'ts-ignore': true,
+          'ts-nocheck': true,
+          'ts-expect-error': true,
+          'ts-check': false,
+        },
+      ],
+      'modules/no-unknown': 'error',
+      'modules/shape-suffix': 'error',
+      'arch/no-imported-type-alias': 'error',
+      'arch/no-literal-in': 'error',
+      'arch/no-promise-all-mutation': 'error',
+      'arch/no-restricted-constructor': ['error', { constructors: ['Error'], checkCalls: true }],
+      'dillon-anti-slop/no-chained-type-assertions': 'error',
+      'dillon-anti-slop/no-conditional-empty-object-spread': 'error',
+      'dillon-anti-slop/no-known-value-widening': 'error',
+      'dillon-anti-slop/no-reflect-apply': 'error',
+      'dillon-anti-slop/no-reflect-get': 'error',
+      'dillon-anti-slop/no-runtime-typeof': 'error',
+      'dillon-anti-slop/no-unknown-parameters': 'error',
+      'dillon-anti-slop/no-unknown-returns': 'error',
+      'dillon-anti-slop/no-unknown-type-aliases': 'error',
+      'dillon-anti-slop/no-unsafe-dictionary-type': 'error',
+      'dillon-anti-slop/no-widen-then-assert': 'error',
+      'dillon-anti-slop/require-safety-comment-for-type-assertion': 'error',
+    }),
   ]
 
   policies.schemas = [
     presetOverride(
       appFiles,
       {
-        'arch/no-local-schema-construction': [
-          'error',
-          { packages: ['zod'], namespaces: ['z'] },
-        ],
+        'arch/no-local-schema-construction': ['error', { packages: ['zod'], namespaces: ['z'] }],
       },
       [...presetScopes(backend, 'types/**'), ...ui],
     ),
@@ -142,20 +125,20 @@ export function presetTypesConfig(context: PresetContext): PresetPolicies {
         {
           methods: ['like', 'ilike'],
           operatorMethods: ['where'],
-          sanitizers: options.sanitizers ?? ['escapeLikeWildcards'],
+          sanitizers: options.sql?.likeSanitizers ?? ['escapeLikeWildcards'],
           allowSanitizedBindings: true,
         },
       ],
     }),
-    ...(options.publicApi?.length
+    ...(options.orpc?.publicProcedureFiles?.length
       ? [
-          presetOverride(options.publicApi, {
+          presetOverride(options.orpc?.publicProcedureFiles, {
             'arch/require-orpc-output': [
               'error',
               {
                 handlerMethod: 'handler',
                 outputMethod: 'output',
-                composers: options.schemaComposers ?? [],
+                composers: options.orpc?.outputSchemaComposers ?? [],
               },
             ],
           }),

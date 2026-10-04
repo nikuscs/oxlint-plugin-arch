@@ -8,7 +8,11 @@ interface NamespaceTypeImportOptions {
 }
 
 const bindingName = /^[A-Za-z_$][\w$]*$/
-const reservedNames = new Set(('await break case catch class const continue debugger default delete do else enum export extends false finally for function if import in instanceof new null return super switch this throw true try typeof var void while with yield implements interface let package private protected public static arguments eval').split(' '))
+const reservedNames = new Set(
+  'await break case catch class const continue debugger default delete do else enum export extends false finally for function if import in instanceof new null return super switch this throw true try typeof var void while with yield implements interface let package private protected public static arguments eval'.split(
+    ' ',
+  ),
+)
 
 function namespaceName(source: string, names: Record<string, string>): string {
   if (Object.hasOwn(names, source)) {
@@ -22,22 +26,31 @@ function namespaceName(source: string, names: Record<string, string>): string {
 }
 
 function isTypeOnlyNamedImport(node: ESTree.ImportDeclaration): boolean {
-  return node.specifiers.length > 0 && node.specifiers.every(specifier =>
-    specifier.type === 'ImportSpecifier' && (node.importKind === 'type' || specifier.importKind === 'type'))
+  return (
+    node.specifiers.length > 0 &&
+    node.specifiers.every(
+      (specifier) =>
+        specifier.type === 'ImportSpecifier' && (node.importKind === 'type' || specifier.importKind === 'type'),
+    )
+  )
 }
 
 function safeReference(node: ESTree.Node): boolean {
   let current = node
   let parent = current.parent
-  while ((parent?.type === 'TSQualifiedName' && parent.left === current)
-    || (parent?.type === 'MemberExpression' && !parent.computed && parent.object === current)) {
+  while (
+    (parent?.type === 'TSQualifiedName' && parent.left === current) ||
+    (parent?.type === 'MemberExpression' && !parent.computed && parent.object === current)
+  ) {
     current = parent
     parent = current.parent
   }
 
-  return (parent?.type === 'TSTypeReference' && parent.typeName === current)
-    || (parent?.type === 'TSTypeQuery' && parent.exprName === current)
-    || ((parent?.type === 'TSInterfaceHeritage' || parent?.type === 'TSClassImplements') && parent.expression === current)
+  return (
+    (parent?.type === 'TSTypeReference' && parent.typeName === current) ||
+    (parent?.type === 'TSTypeQuery' && parent.exprName === current) ||
+    ((parent?.type === 'TSInterfaceHeritage' || parent?.type === 'TSClassImplements') && parent.expression === current)
+  )
 }
 
 /**
@@ -48,17 +61,20 @@ export const preferNamespaceTypeImport = defineRule({
   meta: {
     type: 'suggestion',
     fixable: 'code',
-    schema: [{
-      type: 'object',
-      additionalProperties: false,
-      properties: {
-        max: { type: 'integer', minimum: 0 },
-        names: { type: 'object', additionalProperties: { type: 'string', pattern: bindingName.source } },
+    schema: [
+      {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          max: { type: 'integer', minimum: 0 },
+          names: { type: 'object', additionalProperties: { type: 'string', pattern: bindingName.source } },
+        },
       },
-    }],
+    ],
     defaultOptions: [{ max: 3, names: {} }],
     messages: {
-      namespace: "Use `import type * as {{name}} from '{{source}}'` for {{count}} type imports (max {{max}}); keep exported domain names.{{reason}}",
+      namespace:
+        "Use `import type * as {{name}} from '{{source}}'` for {{count}} type imports (max {{max}}); keep exported domain names.{{reason}}",
     },
   },
   createOnce(context) {
@@ -72,7 +88,7 @@ export const preferNamespaceTypeImport = defineRule({
       },
       'Program:exit'() {
         const { max, names } = optionsFirst<NamespaceTypeImportOptions>(context)
-        const candidates = imports.filter(node => isTypeOnlyNamedImport(node) && node.specifiers.length > max)
+        const candidates = imports.filter((node) => isTypeOnlyNamedImport(node) && node.specifiers.length > max)
         if (candidates.length === 0) {
           return
         }
@@ -88,10 +104,10 @@ export const preferNamespaceTypeImport = defineRule({
             occupied.add(reference.identifier.name)
           }
         }
-        const proposed = candidates.map(node => namespaceName(node.source.value, names))
+        const proposed = candidates.map((node) => namespaceName(node.source.value, names))
         const comments = sourceCode.getAllComments()
-        const reports: { node: ESTree.ImportDeclaration, name: string, reason: string }[] = []
-        const edits: { range: [number, number], text: string }[] = []
+        const reports: { node: ESTree.ImportDeclaration; name: string; reason: string }[] = []
+        const edits: { range: [number, number]; text: string }[] = []
 
         for (const [index, node] of candidates.entries()) {
           const name = proposed[index]!
@@ -99,12 +115,22 @@ export const preferNamespaceTypeImport = defineRule({
           const replacements = new Map<ESTree.Node, string>()
           if (!bindingName.test(name) || reservedNames.has(name)) {
             reason = 'invalid namespace binding'
-          } else if (imports.some(other => other.source.value === node.source.value
-            && other.specifiers.some(specifier => specifier.type === 'ImportNamespaceSpecifier'))) {
+          } else if (
+            imports.some(
+              (other) =>
+                other.source.value === node.source.value &&
+                other.specifiers.some((specifier) => specifier.type === 'ImportNamespaceSpecifier'),
+            )
+          ) {
             reason = 'existing namespace import from this module'
-          } else if (occupied.has(name) || proposed.some((other, otherIndex) => otherIndex !== index && other === name)) {
+          } else if (
+            occupied.has(name) ||
+            proposed.some((other, otherIndex) => otherIndex !== index && other === name)
+          ) {
             reason = 'namespace name collides with a binding, reference, or another proposed namespace'
-          } else if (comments.some(comment => comment.range[0] >= node.range[0] && comment.range[1] <= node.range[1])) {
+          } else if (
+            comments.some((comment) => comment.range[0] >= node.range[0] && comment.range[1] <= node.range[1])
+          ) {
             reason = 'comment inside import'
           } else {
             const variables = sourceCode.getDeclaredVariables(node)
@@ -112,8 +138,11 @@ export const preferNamespaceTypeImport = defineRule({
               if (specifier.type !== 'ImportSpecifier') {
                 continue
               }
-              const imported = specifier.imported.type === 'Identifier' ? specifier.imported.name : specifier.imported.value
-              const variable = variables.find(binding => binding.identifiers.some(id => id.range[0] === specifier.local.range[0]))
+              const imported =
+                specifier.imported.type === 'Identifier' ? specifier.imported.name : specifier.imported.value
+              const variable = variables.find((binding) =>
+                binding.identifiers.some((id) => id.range[0] === specifier.local.range[0]),
+              )
               if (!bindingName.test(imported) || !variable || variable.defs.length !== 1) {
                 reason = 'unsupported imported name or binding'
                 break
@@ -151,8 +180,14 @@ export const preferNamespaceTypeImport = defineRule({
           context.report({
             node,
             messageId: 'namespace',
-            data: { name, source: node.source.value, count: node.specifiers.length, max, reason: reason ? ` Autofix skipped: ${reason}.` : '' },
-            fix: reason ? undefined : fixer => edits.map(edit => fixer.replaceTextRange(edit.range, edit.text)),
+            data: {
+              name,
+              source: node.source.value,
+              count: node.specifiers.length,
+              max,
+              reason: reason ? ` Autofix skipped: ${reason}.` : '',
+            },
+            fix: reason ? undefined : (fixer) => edits.map((edit) => fixer.replaceTextRange(edit.range, edit.text)),
           })
         }
       },

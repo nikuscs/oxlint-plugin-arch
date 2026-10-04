@@ -10,9 +10,7 @@ import { presetPluginsConfig } from '../configs/plugins.ts'
 import { presetResolveContext } from '../services/preset-context.ts'
 import { presetCompose } from '../services/preset-compose.ts'
 
-export default function tanstackStartReactModulesPreset(
-  options: PresetOptions = {},
-): OxlintConfig {
+export default function tanstackStartReactModulesPreset(options: PresetOptions = {}): OxlintConfig {
   const context = presetResolveContext(options)
 
   return presetCompose(

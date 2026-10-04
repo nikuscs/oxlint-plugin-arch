@@ -25,15 +25,17 @@ interface OnlyExportComponentsOptions {
 export const onlyExportComponents = defineRule({
   meta: {
     type: 'problem',
-    schema: [{
-      type: 'object',
-      additionalProperties: false,
-      properties: {
-        matchFileName: { type: 'boolean' },
-        allowTypeExports: { type: 'boolean' },
-        denyTypePattern: optionsPatternSchema,
+    schema: [
+      {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          matchFileName: { type: 'boolean' },
+          allowTypeExports: { type: 'boolean' },
+          denyTypePattern: optionsPatternSchema,
+        },
       },
-    }],
+    ],
     messages: {
       nonComponent: "Export '{{name}}' must be a React component or type.",
       nameMismatch: "Component export '{{name}}' must match '{{expected}}' or its prefix.",

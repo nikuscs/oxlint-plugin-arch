@@ -6,7 +6,9 @@ import type { ESTree } from '@oxlint/plugins'
 
 export type DeclarationsRuntime = ESTree.VariableDeclaration | ESTree.Function | ESTree.Class | ESTree.TSEnumDeclaration
 
-export function declarationsTopLevelUnexportedFunctions(program: ESTree.Program): { name: string, node: ESTree.Function | ESTree.ArrowFunctionExpression }[] {
+export function declarationsTopLevelUnexportedFunctions(
+  program: ESTree.Program,
+): { name: string; node: ESTree.Function | ESTree.ArrowFunctionExpression }[] {
   return program.body.flatMap((statement) => {
     if (statement.type === 'FunctionDeclaration') {
       return [{ name: statement.id?.name ?? '<anonymous>', node: statement }]
@@ -16,9 +18,11 @@ export function declarationsTopLevelUnexportedFunctions(program: ESTree.Program)
       return []
     }
 
-    return statement.declarations.flatMap((item) => item.init?.type === 'FunctionExpression' || item.init?.type === 'ArrowFunctionExpression'
-      ? [{ name: item.id.type === 'Identifier' ? item.id.name : '<anonymous>', node: item.init }]
-      : [])
+    return statement.declarations.flatMap((item) =>
+      item.init?.type === 'FunctionExpression' || item.init?.type === 'ArrowFunctionExpression'
+        ? [{ name: item.id.type === 'Identifier' ? item.id.name : '<anonymous>', node: item.init }]
+        : [],
+    )
   })
 }
 
@@ -26,7 +30,10 @@ export function declarationsFileLevelFunctionCandidates(program: ESTree.Program)
   const result: ReactComponentsCandidate[] = []
 
   for (const statement of program.body) {
-    const declaration = statement.type === 'ExportNamedDeclaration' || statement.type === 'ExportDefaultDeclaration' ? statement.declaration : statement
+    const declaration =
+      statement.type === 'ExportNamedDeclaration' || statement.type === 'ExportDefaultDeclaration'
+        ? statement.declaration
+        : statement
 
     if (declaration?.type === 'FunctionDeclaration') {
       result.push({ name: declaration.id?.name ?? '<anonymous>', node: declaration })
@@ -61,7 +68,12 @@ export function declarationsIsObjectParam(node: ESTree.ParamPattern): boolean {
   }
 
   const annotation = node.typeAnnotation?.typeAnnotation
-  return !annotation || annotation.type === 'TSTypeReference' || annotation.type === 'TSTypeLiteral' || annotation.type === 'TSIntersectionType'
+  return (
+    !annotation ||
+    annotation.type === 'TSTypeReference' ||
+    annotation.type === 'TSTypeLiteral' ||
+    annotation.type === 'TSIntersectionType'
+  )
 }
 
 export function declarationsFunctionName(node: ESTree.Function | ESTree.VariableDeclarator): string {
@@ -73,12 +85,17 @@ export function declarationsFunctionName(node: ESTree.Function | ESTree.Variable
 }
 
 export function declarationsIsRuntime(node: ESTree.Node): node is DeclarationsRuntime {
-  return node.type === 'VariableDeclaration' || node.type === 'FunctionDeclaration' || node.type === 'ClassDeclaration' || node.type === 'TSEnumDeclaration'
+  return (
+    node.type === 'VariableDeclaration' ||
+    node.type === 'FunctionDeclaration' ||
+    node.type === 'ClassDeclaration' ||
+    node.type === 'TSEnumDeclaration'
+  )
 }
 
 export function declarationsRuntimeName(node: DeclarationsRuntime): string {
   if (node.type === 'VariableDeclaration') {
-    return node.declarations.map((item) => item.id.type === 'Identifier' ? item.id.name : '<anonymous>').join(', ')
+    return node.declarations.map((item) => (item.id.type === 'Identifier' ? item.id.name : '<anonymous>')).join(', ')
   }
 
   return node.id?.name ?? '<anonymous>'
@@ -101,8 +118,13 @@ export function declarationsRuntimeKind(node: DeclarationsRuntime): 'class' | 'e
 }
 
 function declarationsUnwrapExpression(node: ESTree.Expression): ESTree.Expression {
-  if (node.type === 'ParenthesizedExpression' || node.type === 'TSAsExpression' || node.type === 'TSSatisfiesExpression'
-    || node.type === 'TSTypeAssertion' || node.type === 'TSNonNullExpression') {
+  if (
+    node.type === 'ParenthesizedExpression' ||
+    node.type === 'TSAsExpression' ||
+    node.type === 'TSSatisfiesExpression' ||
+    node.type === 'TSTypeAssertion' ||
+    node.type === 'TSNonNullExpression'
+  ) {
     return declarationsUnwrapExpression(node.expression)
   }
 
@@ -116,7 +138,12 @@ function declarationsUnwrapExpression(node: ESTree.Expression): ESTree.Expressio
 export function declarationsIsTrivialExpression(node: ESTree.Expression): boolean {
   const value = declarationsUnwrapExpression(node)
 
-  if (value.type === 'Identifier' || value.type === 'ThisExpression' || value.type === 'MetaProperty' || value.type.endsWith('Literal')) {
+  if (
+    value.type === 'Identifier' ||
+    value.type === 'ThisExpression' ||
+    value.type === 'MetaProperty' ||
+    value.type.endsWith('Literal')
+  ) {
     return true
   }
 
@@ -124,14 +151,20 @@ export function declarationsIsTrivialExpression(node: ESTree.Expression): boolea
     return value.expressions.length === 0
   }
 
-  if (value.type === 'MemberExpression' || value.type === 'CallExpression' || value.type === 'NewExpression'
-    || value.type === 'TaggedTemplateExpression') {
+  if (
+    value.type === 'MemberExpression' ||
+    value.type === 'CallExpression' ||
+    value.type === 'NewExpression' ||
+    value.type === 'TaggedTemplateExpression'
+  ) {
     return true
   }
 
-  return value.type === 'LogicalExpression'
-    && declarationsIsTrivialExpression(value.left)
-    && declarationsIsTrivialExpression(value.right)
+  return (
+    value.type === 'LogicalExpression' &&
+    declarationsIsTrivialExpression(value.left) &&
+    declarationsIsTrivialExpression(value.right)
+  )
 }
 
 export function declarationsIsTrivialFunction(node: AstRuntimeFunction): boolean {
@@ -143,8 +176,10 @@ export function declarationsIsTrivialFunction(node: AstRuntimeFunction): boolean
     return false
   }
 
-  const statements = node.body.body.filter((statement) => statement.type !== 'EmptyStatement'
-    && !(statement.type === 'ExpressionStatement' && statement.directive))
+  const statements = node.body.body.filter(
+    (statement) =>
+      statement.type !== 'EmptyStatement' && !(statement.type === 'ExpressionStatement' && statement.directive),
+  )
 
   if (statements.length === 0) {
     return true
@@ -198,8 +233,8 @@ export function declarationsNamedKind(node: ESTree.Node, ancestors: ESTree.Node[
   }
 
   const declaration = ancestors.findLast((ancestor) => ancestor.type === 'VariableDeclaration')
-  return declaration?.type === 'VariableDeclaration' && (declaration.kind === 'const' || declaration.kind === 'let'
-    || declaration.kind === 'var')
+  return declaration?.type === 'VariableDeclaration' &&
+    (declaration.kind === 'const' || declaration.kind === 'let' || declaration.kind === 'var')
     ? declaration.kind
     : undefined
 }
@@ -210,16 +245,24 @@ export function declarationsCollectNamed(root: ESTree.Node, kinds?: readonly Dec
 
   astVisit(root, [], (node, ancestors) => {
     const kind = declarationsNamedKind(node, ancestors)
-    const name = node.type === 'VariableDeclarator' && node.id.type === 'Identifier'
-      ? node.id.name
-      : 'id' in node && node.id && 'name' in node.id ? node.id.name : undefined
+    const name =
+      node.type === 'VariableDeclarator' && node.id.type === 'Identifier'
+        ? node.id.name
+        : 'id' in node && node.id && 'name' in node.id
+          ? node.id.name
+          : undefined
 
-    if (!kind || !name || allowed && !allowed.has(kind)) {
+    if (!kind || !name || (allowed && !allowed.has(kind))) {
       return
     }
 
-    if (node.type === 'VariableDeclarator' && ancestors.some((ancestor) => ancestor.type === 'ForStatement'
-      || ancestor.type === 'ForInStatement' || ancestor.type === 'ForOfStatement')) {
+    if (
+      node.type === 'VariableDeclarator' &&
+      ancestors.some(
+        (ancestor) =>
+          ancestor.type === 'ForStatement' || ancestor.type === 'ForInStatement' || ancestor.type === 'ForOfStatement',
+      )
+    ) {
       return
     }
 
@@ -254,14 +297,16 @@ export function declarationsNamedFromNode(node: ESTree.Node): Required<Declarati
   return kind && name ? { name, node, kind } : undefined
 }
 
-export function declarationsCollectFunctions(root: ESTree.Node): { name: string, node: AstRuntimeFunction }[] {
+export function declarationsCollectFunctions(root: ESTree.Node): { name: string; node: AstRuntimeFunction }[] {
   return declarationsCollectNamed(root).flatMap((item) => {
     if (item.node.type === 'FunctionDeclaration') {
       return [{ name: item.name, node: item.node }]
     }
 
-    if (item.node.type === 'VariableDeclarator'
-      && (item.node.init?.type === 'FunctionExpression' || item.node.init?.type === 'ArrowFunctionExpression')) {
+    if (
+      item.node.type === 'VariableDeclarator' &&
+      (item.node.init?.type === 'FunctionExpression' || item.node.init?.type === 'ArrowFunctionExpression')
+    ) {
       return [{ name: item.name, node: item.node.init }]
     }
 
@@ -269,16 +314,30 @@ export function declarationsCollectFunctions(root: ESTree.Node): { name: string,
   })
 }
 
-
-export function declarationsPublicServiceMethods(program: ESTree.Program): { name: string, node: ESTree.Function, binding: ESTree.VariableDeclarator }[] {
+export function declarationsPublicServiceMethods(
+  program: ESTree.Program,
+): { name: string; node: ESTree.Function; binding: ESTree.VariableDeclarator }[] {
   return program.body.flatMap((statement) => {
-    if (statement.type !== 'ExportNamedDeclaration' || statement.declaration?.type !== 'VariableDeclaration' || statement.declaration.kind !== 'const') return []
+    if (
+      statement.type !== 'ExportNamedDeclaration' ||
+      statement.declaration?.type !== 'VariableDeclaration' ||
+      statement.declaration.kind !== 'const'
+    )
+      return []
     return statement.declaration.declarations.flatMap((binding) => {
       if (binding.id.type !== 'Identifier' || !binding.init) return []
       const value = trivialUnwrap(binding.init)
       if (value.type !== 'ObjectExpression' || value.properties.length === 0) return []
-      const methods = value.properties.flatMap((property) => property.type === 'Property' && property.method && property.kind === 'init' && !property.computed && property.key.type === 'Identifier' && property.value.type === 'FunctionExpression'
-        ? [{ name: property.key.name, node: property.value, binding }] : [])
+      const methods = value.properties.flatMap((property) =>
+        property.type === 'Property' &&
+        property.method &&
+        property.kind === 'init' &&
+        !property.computed &&
+        property.key.type === 'Identifier' &&
+        property.value.type === 'FunctionExpression'
+          ? [{ name: property.key.name, node: property.value, binding }]
+          : [],
+      )
       return methods.length === value.properties.length ? methods : []
     })
   })

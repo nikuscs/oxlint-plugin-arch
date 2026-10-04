@@ -2,22 +2,17 @@ import type { ESTree } from '@oxlint/plugins'
 
 export type AstRuntimeFunction = ESTree.Function | ESTree.ArrowFunctionExpression
 
-const astVisitSkip = new Set([
-  'parent',
-  'type',
-  'start',
-  'end',
-  'range',
-  'loc',
-  'tokens',
-  'comments',
-])
+const astVisitSkip = new Set(['parent', 'type', 'start', 'end', 'range', 'loc', 'tokens', 'comments'])
 
 export function astIsNode(value: unknown): value is ESTree.Node {
   return value !== null && typeof value === 'object' && typeof Reflect.get(value, 'type') === 'string'
 }
 
-export function astVisit(node: unknown, ancestors: ESTree.Node[], callback: (node: ESTree.Node, ancestors: ESTree.Node[]) => void): void {
+export function astVisit(
+  node: unknown,
+  ancestors: ESTree.Node[],
+  callback: (node: ESTree.Node, ancestors: ESTree.Node[]) => void,
+): void {
   if (Array.isArray(node)) {
     for (const child of node) {
       astVisit(child, ancestors, callback)
@@ -51,9 +46,14 @@ export function astContainsJsx(node: unknown): boolean {
 }
 
 export function astNearestFunction(ancestors: readonly ESTree.Node[]): AstRuntimeFunction | undefined {
-  return [...ancestors].reverse().find((node): node is AstRuntimeFunction => node.type === 'FunctionDeclaration'
-    || node.type === 'FunctionExpression'
-    || node.type === 'ArrowFunctionExpression')
+  return [...ancestors]
+    .reverse()
+    .find(
+      (node): node is AstRuntimeFunction =>
+        node.type === 'FunctionDeclaration' ||
+        node.type === 'FunctionExpression' ||
+        node.type === 'ArrowFunctionExpression',
+    )
 }
 
 export function astDirectReturnExpressions(node: AstRuntimeFunction): ESTree.Expression[] {
@@ -120,8 +120,10 @@ export function astImportedCallAliases(program: ESTree.Program): Map<string, str
   return aliases
 }
 
-export function astResolvedCallName(node: ESTree.CallExpression, aliases: ReadonlyMap<string, string>): string | undefined {
+export function astResolvedCallName(
+  node: ESTree.CallExpression,
+  aliases: ReadonlyMap<string, string>,
+): string | undefined {
   const name = astCallName(node)
-  return name ? aliases.get(name) ?? name : undefined
+  return name ? (aliases.get(name) ?? name) : undefined
 }
-

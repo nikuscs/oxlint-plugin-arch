@@ -1,10 +1,5 @@
 import { defineRule } from '@oxlint/plugins'
-import {
-  astStaticMemberName,
-  optionsFirst,
-  orpcFindChainCall,
-  orpcIsNamedOrComposedArgument,
-} from '../utils/index.ts'
+import { astStaticMemberName, optionsFirst, orpcFindChainCall, orpcIsNamedOrComposedArgument } from '../utils/index.ts'
 
 interface RequireOrpcOutputOptions {
   composers: string[]
@@ -20,16 +15,18 @@ interface RequireOrpcOutputOptions {
 export const requireOrpcOutput = defineRule({
   meta: {
     type: 'problem',
-    schema: [{
-      type: 'object',
-      additionalProperties: false,
-      properties: {
-        composers: { type: 'array', items: { type: 'string' } },
-        handlerMethod: { type: 'string' },
-        outputMethod: { type: 'string' },
+    schema: [
+      {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          composers: { type: 'array', items: { type: 'string' } },
+          handlerMethod: { type: 'string' },
+          outputMethod: { type: 'string' },
+        },
+        required: ['composers'],
       },
-      required: ['composers'],
-    }],
+    ],
     messages: {
       missing: 'oRPC procedures must declare .output() before .handler().',
       invalid: 'oRPC .output() must use a named schema or configured composer with a named schema.',
@@ -42,7 +39,11 @@ export const requireOrpcOutput = defineRule({
           return
         }
 
-        const { composers, handlerMethod = 'handler', outputMethod = 'output' } = optionsFirst<RequireOrpcOutputOptions>(context)
+        const {
+          composers,
+          handlerMethod = 'handler',
+          outputMethod = 'output',
+        } = optionsFirst<RequireOrpcOutputOptions>(context)
 
         if (astStaticMemberName(node.callee) !== handlerMethod) {
           return

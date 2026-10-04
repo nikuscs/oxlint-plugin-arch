@@ -214,9 +214,7 @@ test('no-comments', () => {
 
 test('no-comments in TSX', () => {
   createRuleTester('tsx').run('arch/no-comments', noComments, {
-    valid: [
-      'function View() { return <div>Hello</div> }',
-    ],
+    valid: ['function View() { return <div>Hello</div> }'],
     invalid: [
       {
         filename: '/repo/component.tsx',

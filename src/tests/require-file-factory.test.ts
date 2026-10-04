@@ -9,8 +9,16 @@ const error = { messageId: 'factory' }
 test('require-file-factory', () => {
   createRuleTester().run('arch/require-file-factory', requireFileFactory, {
     valid: [
-      { filename: '/repo/services/workflow/workflow-validation.ts', code: 'export function makeWorkflowValidation() {}', options },
-      { filename: '/repo/services/post-generation/post-generation.source.ts', code: 'export const makePostGenerationSource = () => ({})', options },
+      {
+        filename: '/repo/services/workflow/workflow-validation.ts',
+        code: 'export function makeWorkflowValidation() {}',
+        options,
+      },
+      {
+        filename: '/repo/services/post-generation/post-generation.source.ts',
+        code: 'export const makePostGenerationSource = () => ({})',
+        options,
+      },
     ],
     invalid: [
       {

@@ -5,75 +5,71 @@ import { createRuleTester } from './rule-tester.ts'
 const error = { messageId: 'trivial' }
 
 test('no-trivial-functions', () => {
-  createRuleTester('tsx').run(
-    'arch/no-trivial-functions',
-    noTrivialFunctions,
-    {
-      valid: [
-        'export function createUser(params: { name: string }) { if (!params.name) { throw new Error(\'missing\') } return saveUser(params) }',
-        'export function add(params: { left: number, right: number }) { return params.left + params.right }',
-        'export function Title() { return <h1>Title</h1> }',
-        'export function makeThing(params: { id: string }) { function inner(value: string) { return fetchValue(value) } return inner(params.id) }',
-        {
-          code: 'export function makeClient() { return createClient() }',
-          options: [{ allowPattern: '^(create|make)[A-Z]' }],
-        },
-        {
-          code: 'export function makeClient() { return createClient() }',
-          options: [{ allowPattern: ['^build[A-Z]', '^make[A-Z]'] }],
-        },
-        {
-          code: 'export function loadUser(id: string) { return fetchUser(id) }',
-          options: [{ allowCallees: ['^fetchUser$'] }],
-        },
-        {
-          code: 'function loadUser(id: string) { return http.client.get(id) }\nfunction ping() { http.get() }',
-          options: [{ allowCallees: ['^http\\.(?:client\\.)?get$'] }],
-        },
-        {
-          code: 'export async function loadUser(id: string) { return await fetchUser(id) }',
-          options: [{ allowAsync: true }],
-        },
-      ],
-      invalid: [
-        { code: 'export function load() {}', errors: [error] },
-        { code: 'export function loadUser(id: string) { return fetchUser(id) }', errors: [error] },
-        {
-          code: 'export function getDomainIconKey(domainLabel: string): DomainIconKey { return DOMAIN_ICON_BY_LABEL[domainLabel] ?? \'stack\' }',
-          errors: [error],
-        },
-        {
-          code: 'function canvasAmountLabel(amount: string | number | null | undefined): string { return formatCurrency({ value: amount, compact: true }).replace(/\\s*kr\\.$/, \'\') }',
-          errors: [error],
-        },
-        { code: 'const toName = (user: User) => user.name', errors: [error] },
-        {
-          code: 'export function loadUser(id: string) { return otherClient.get(id) }',
-          options: [{ allowCallees: ['^http\\.get$'] }],
-          errors: [error],
-        },
-        {
-          code: 'export function loadUser(id: string) { return clients[provider].get(id) }',
-          options: [{ allowCallees: ['get'] }],
-          errors: [error],
-        },
-        {
-          code: 'export async function loadUser(id: string) { return await fetchUser(id) }',
-          errors: [error],
-        },
-        {
-          code: 'export async function load() {}',
-          options: [{ allowAsync: true }],
-          errors: [error],
-        },
-        {
-          code: 'export async function load() { return 1 }',
-          options: [{ allowAsync: true }],
-          errors: [error],
-        },
-      ],
-    },
-  )
+  createRuleTester('tsx').run('arch/no-trivial-functions', noTrivialFunctions, {
+    valid: [
+      "export function createUser(params: { name: string }) { if (!params.name) { throw new Error('missing') } return saveUser(params) }",
+      'export function add(params: { left: number, right: number }) { return params.left + params.right }',
+      'export function Title() { return <h1>Title</h1> }',
+      'export function makeThing(params: { id: string }) { function inner(value: string) { return fetchValue(value) } return inner(params.id) }',
+      {
+        code: 'export function makeClient() { return createClient() }',
+        options: [{ allowPattern: '^(create|make)[A-Z]' }],
+      },
+      {
+        code: 'export function makeClient() { return createClient() }',
+        options: [{ allowPattern: ['^build[A-Z]', '^make[A-Z]'] }],
+      },
+      {
+        code: 'export function loadUser(id: string) { return fetchUser(id) }',
+        options: [{ allowCallees: ['^fetchUser$'] }],
+      },
+      {
+        code: 'function loadUser(id: string) { return http.client.get(id) }\nfunction ping() { http.get() }',
+        options: [{ allowCallees: ['^http\\.(?:client\\.)?get$'] }],
+      },
+      {
+        code: 'export async function loadUser(id: string) { return await fetchUser(id) }',
+        options: [{ allowAsync: true }],
+      },
+    ],
+    invalid: [
+      { code: 'export function load() {}', errors: [error] },
+      { code: 'export function loadUser(id: string) { return fetchUser(id) }', errors: [error] },
+      {
+        code: "export function getDomainIconKey(domainLabel: string): DomainIconKey { return DOMAIN_ICON_BY_LABEL[domainLabel] ?? 'stack' }",
+        errors: [error],
+      },
+      {
+        code: "function canvasAmountLabel(amount: string | number | null | undefined): string { return formatCurrency({ value: amount, compact: true }).replace(/\\s*kr\\.$/, '') }",
+        errors: [error],
+      },
+      { code: 'const toName = (user: User) => user.name', errors: [error] },
+      {
+        code: 'export function loadUser(id: string) { return otherClient.get(id) }',
+        options: [{ allowCallees: ['^http\\.get$'] }],
+        errors: [error],
+      },
+      {
+        code: 'export function loadUser(id: string) { return clients[provider].get(id) }',
+        options: [{ allowCallees: ['get'] }],
+        errors: [error],
+      },
+      {
+        code: 'export async function loadUser(id: string) { return await fetchUser(id) }',
+        errors: [error],
+      },
+      {
+        code: 'export async function load() {}',
+        options: [{ allowAsync: true }],
+        errors: [error],
+      },
+      {
+        code: 'export async function load() { return 1 }',
+        options: [{ allowAsync: true }],
+        errors: [error],
+      },
+    ],
+  })
 })
 
 const precise = [{ mode: 'precise' }]
@@ -110,7 +106,7 @@ test('no-trivial-functions precise: meaningful work survives', () => {
       'import { isRecord } from "external"; use(isRecord)',
       'declare function isRecord(value: unknown): boolean',
       'function objectFactory() { return { fresh: true } }',
-    ].map(code => ({ code, options: precise })),
+    ].map((code) => ({ code, options: precise })),
     invalid: [
       { code: 'function alias(params: Params) { return client.load(params) }', errors: [error] },
       { code: 'function alias(deps: Deps, params: Params) { return deps.client.load(params) }', errors: [error] },
@@ -121,35 +117,83 @@ test('no-trivial-functions precise: meaningful work survives', () => {
       { code: 'async function alias(value: string) { return await client.load(value) }', errors: [error] },
       { code: 'export { alias }; function alias(params: Params) { return client.load(params) }', errors: [error] },
       { code: 'export function load(value: string) { return client.load(value) }', errors: [error] },
-    ].map(entry => ({ ...entry, options: precise })),
+    ].map((entry) => ({ ...entry, options: precise })),
   })
 })
 
 test('no-trivial-functions precise: name first and renamed generic guards', () => {
   createRuleTester().run('arch/no-trivial-functions', noTrivialFunctions, {
     valid: [
-      { code: 'function isRecord(value: unknown) { return schema.parse({ value }) }', options: [{ mode: 'precise', bannedNames: [] }] },
-      { code: 'function isRecord(value: unknown) { return typeof value === "object" }', options: [{ mode: 'precise', allowPattern: '^isRecord$' }] },
-      { code: 'function renamed(value: unknown) { return typeof value === "object" }', options: [{ mode: 'precise', checkGenericGuards: false }] },
-      { code: 'function send(value: string) { return client.send(value) }', options: [{ mode: 'precise', allowCallees: ['^client.send$'] }] },
-      { code: 'async function send(value: string) { return client.send(value) }', options: [{ mode: 'precise', allowAsync: true }] },
+      {
+        code: 'function isRecord(value: unknown) { return schema.parse({ value }) }',
+        options: [{ mode: 'precise', bannedNames: [] }],
+      },
+      {
+        code: 'function isRecord(value: unknown) { return typeof value === "object" }',
+        options: [{ mode: 'precise', allowPattern: '^isRecord$' }],
+      },
+      {
+        code: 'function renamed(value: unknown) { return typeof value === "object" }',
+        options: [{ mode: 'precise', checkGenericGuards: false }],
+      },
+      {
+        code: 'function send(value: string) { return client.send(value) }',
+        options: [{ mode: 'precise', allowCallees: ['^client.send$'] }],
+      },
+      {
+        code: 'async function send(value: string) { return client.send(value) }',
+        options: [{ mode: 'precise', allowAsync: true }],
+      },
     ],
     invalid: [
-      ...['isRecord', 'isPlainObject', 'isObject', 'isString', 'isNumber', 'isBoolean', 'isArray', 'asRecord', 'asArray']
-        .map(name => ({ code: `function ${name}(value: unknown) { return schema.parse(value) }`, errors: [bannedName] })),
+      ...[
+        'isRecord',
+        'isPlainObject',
+        'isObject',
+        'isString',
+        'isNumber',
+        'isBoolean',
+        'isArray',
+        'asRecord',
+        'asArray',
+      ].map((name) => ({
+        code: `function ${name}(value: unknown) { return schema.parse(value) }`,
+        errors: [bannedName],
+      })),
       { code: 'const isRecord = (value: unknown) => typeof value === "object"', errors: [bannedName] },
-      { code: 'function outer() { function isRecord(value: unknown) { return typeof value === "object" } return isRecord(input) }', errors: [bannedName] },
-      { code: 'function renamed(value: unknown): value is Record<string, unknown> { return typeof value === "object" && value !== null && !Array.isArray(value) }', errors: [guard] },
+      {
+        code: 'function outer() { function isRecord(value: unknown) { return typeof value === "object" } return isRecord(input) }',
+        errors: [bannedName],
+      },
+      {
+        code: 'function renamed(value: unknown): value is Record<string, unknown> { return typeof value === "object" && value !== null && !Array.isArray(value) }',
+        errors: [guard],
+      },
       { code: 'const renamed = (value: unknown) => "string" === typeof value', errors: [guard] },
       { code: 'function renamed(value: unknown) { return Array.isArray(value) }', errors: [guard] },
       { code: 'function renamed(value: unknown) { return typeof value === "string" ? value : "" }', errors: [guard] },
-      { code: 'function renamed(value: unknown) { if (typeof value === "string") { return value } return undefined }', errors: [guard] },
-      { code: 'function renamed(value: unknown) { const input = value; const valid = typeof input === "object"; return valid && input !== null }', errors: [guard] },
-      { code: 'function renamed(record: Record<string, unknown>, key: string) { const value = record[key]; return typeof value === "number" ? value : 0 }', errors: [guard] },
-      { code: 'function renamed(value: unknown) { const unused = 1; const another = null; return typeof value === "string" }', errors: [guard] },
-      { code: 'function outer() { const renamed = (value: unknown) => typeof value === "string"; return renamed(input) }', errors: [guard] },
+      {
+        code: 'function renamed(value: unknown) { if (typeof value === "string") { return value } return undefined }',
+        errors: [guard],
+      },
+      {
+        code: 'function renamed(value: unknown) { const input = value; const valid = typeof input === "object"; return valid && input !== null }',
+        errors: [guard],
+      },
+      {
+        code: 'function renamed(record: Record<string, unknown>, key: string) { const value = record[key]; return typeof value === "number" ? value : 0 }',
+        errors: [guard],
+      },
+      {
+        code: 'function renamed(value: unknown) { const unused = 1; const another = null; return typeof value === "string" }',
+        errors: [guard],
+      },
+      {
+        code: 'function outer() { const renamed = (value: unknown) => typeof value === "string"; return renamed(input) }',
+        errors: [guard],
+      },
       { code: 'const helpers = { isRecord(value: unknown) { return schema.parse(value) } }', errors: [bannedName] },
-    ].map(entry => ({ ...entry, options: precise })),
+    ].map((entry) => ({ ...entry, options: precise })),
   })
 })
 
@@ -158,13 +202,23 @@ test('explicit service method checking rejects wrappers and guards without chang
   createRuleTester().run('arch/no-trivial-functions', noTrivialFunctions, {
     valid: [
       { options, code: 'export const themeService = { themeApply(value) { return save(value.trim()) } }' },
-      { options, code: 'export function themeCreate() { const cache = new Map(); return { read(key) { return cache.get(key) } } }' },
-      { options: [{ mode: 'precise' }], code: 'export const themeService = { themeApply(value) { return save(value) } }' },
+      {
+        options,
+        code: 'export function themeCreate() { const cache = new Map(); return { read(key) { return cache.get(key) } } }',
+      },
+      {
+        options: [{ mode: 'precise' }],
+        code: 'export const themeService = { themeApply(value) { return save(value) } }',
+      },
     ],
     invalid: [
       { options, code: 'export const themeService = { themeApply(value) { return save(value) } }', errors: [error] },
       { options, code: 'export const themeService = { themeValue() { return 1 } }', errors: [error] },
-      { options, code: 'export const themeService = { themeIsString(value) { return typeof value === "string" } }', errors: [{ messageId: 'genericGuard' }] },
+      {
+        options,
+        code: 'export const themeService = { themeIsString(value) { return typeof value === "string" } }',
+        errors: [{ messageId: 'genericGuard' }],
+      },
     ],
   })
 })

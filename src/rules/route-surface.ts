@@ -20,16 +20,20 @@ interface RouteSurfaceOptions {
 export const routeSurface = defineRule({
   meta: {
     type: 'problem',
-    schema: [{
-      type: 'object',
-      additionalProperties: false,
-      properties: {
-        exportName: { type: 'string' },
-        bannedHooks: { type: 'array', items: { type: 'string' } },
-        banIntrinsicJsx: { type: 'boolean' },
+    schema: [
+      {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          exportName: { type: 'string' },
+          bannedHooks: { type: 'array', items: { type: 'string' } },
+          banIntrinsicJsx: { type: 'boolean' },
+        },
       },
-    }],
-    defaultOptions: [{ exportName: 'Route', bannedHooks: ['useState', 'useEffect', 'useMutation'], banIntrinsicJsx: true }],
+    ],
+    defaultOptions: [
+      { exportName: 'Route', bannedHooks: ['useState', 'useEffect', 'useMutation'], banIntrinsicJsx: true },
+    ],
     messages: {
       extraExport: "Route files may only export '{{expected}}'; found '{{actual}}'.",
       hostJsx: 'Route adapter {{name}} must not render intrinsic JSX.',
