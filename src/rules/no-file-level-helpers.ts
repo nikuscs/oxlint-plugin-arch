@@ -13,6 +13,7 @@ import type { OptionsPattern } from '../utils/index.ts'
 interface NoFileLevelHelpersOptions {
   allowPattern?: OptionsPattern
   detectComponents?: boolean
+  message?: string
   hookPattern?: OptionsPattern
 }
 
@@ -29,12 +30,13 @@ export const noFileLevelHelpers = defineRule({
       additionalProperties: false,
       properties: {
         allowPattern: optionsPatternSchema,
+        message: { type: 'string' },
         detectComponents: { type: 'boolean' },
         hookPattern: optionsPatternSchema,
       },
     }],
     messages: {
-      helper: 'File-level helper {{name}} must move inside its owning component or hook.',
+      helper: '{{name}}: {{message}}',
     },
   },
   createOnce(context) {
@@ -42,6 +44,7 @@ export const noFileLevelHelpers = defineRule({
       Program(program) {
         const {
           allowPattern,
+          message = 'Keep this helper inside its owning component or hook.',
           detectComponents = true,
           hookPattern = '^use[A-Z]',
         } = optionsFirst<NoFileLevelHelpersOptions>(context, {})
@@ -58,7 +61,7 @@ export const noFileLevelHelpers = defineRule({
           context.report({
             node: candidate.node,
             messageId: 'helper',
-            data: { name: candidate.name },
+            data: { name: candidate.name, message },
           })
         }
       },

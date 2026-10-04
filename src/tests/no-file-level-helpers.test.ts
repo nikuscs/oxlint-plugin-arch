@@ -24,3 +24,10 @@ test('no-file-level-helpers', () => {
     },
   )
 })
+
+test('route helper diagnostics do not prescribe components', () => {
+  createRuleTester().run('arch/no-file-level-helpers', noFileLevelHelpers, {
+    valid: [],
+    invalid: [{ code: 'function format() {}', options: [{ detectComponents: false, message: 'Nest this helper in its route handler callback.' }], errors: [{ message: 'format: Nest this helper in its route handler callback.' }] }],
+  })
+})

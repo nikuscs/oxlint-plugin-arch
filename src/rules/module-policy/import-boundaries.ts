@@ -124,7 +124,7 @@ export const importBoundaries = defineRule({
         if (backendImport || backendTarget || appService || appPackage) {
           reason = 'portable frontend lib does not import application services or application APIs'
         } else if (appType && !ownType) {
-          reason = 'portable frontend lib only consumes its same-root, same-stem contract with a type-only import; app type re-exports are forbidden'
+          reason = `portable frontend lib may only type-import its own contract '${web}/types/${stem}.types.ts'; app type re-exports are forbidden`
         }
       }
       if (reason) {

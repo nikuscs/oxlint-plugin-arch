@@ -1,3 +1,4 @@
+import { basename, dirname } from 'node:path'
 import { defineRule } from '@oxlint/plugins'
 import type { ESTree } from '@oxlint/plugins'
 import type { ModuleDomainConstantsOptions } from '../../types/module-policy.types.ts'
@@ -12,7 +13,7 @@ export const domainConstants = defineRule({
       additionalProperties: false,
       properties: { includeData: { type: 'boolean' }, allowServiceMethods: { type: 'boolean' } },
     }],
-    messages: { forbidden: 'Move named module constants to the domain constants file.' },
+    messages: { forbidden: "'{{name}}' belongs in '{{file}}' under this module-data policy. Use a domain-prefixed name; do not invent a factory to silence the rule." },
   },
   createOnce(context) {
     let serviceObjects = new Set<ESTree.VariableDeclarator>()
@@ -38,7 +39,9 @@ export const domainConstants = defineRule({
         const options = optionsFirst<ModuleDomainConstantsOptions>(context, {})
         if (node.id.type === 'Identifier' && /^[A-Z][A-Z0-9_]+$/.test(node.id.name)
           || options.includeData && node.init && data(node.init)) {
-          context.report({ node, messageId: 'forbidden' })
+          const file = context.filename.replaceAll('\\', '/')
+          const owner = file.includes('/services/') && dirname(file).split('/').at(-1) !== 'services' ? basename(dirname(file)) : basename(file).split('.')[0].replace(/-(?:action|query)$/, '')
+          context.report({ node, messageId: 'forbidden', data: { name: node.id.type === 'Identifier' ? node.id.name : '<destructured binding>', file: `${owner}.constants.ts` } })
         }
       },
     }

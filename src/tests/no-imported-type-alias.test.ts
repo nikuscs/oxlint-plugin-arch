@@ -38,3 +38,10 @@ test('no-imported-type-alias', () => {
     },
   )
 })
+
+test('alias diagnostics point callers at the original imported contract', () => {
+  createRuleTester().run('arch/no-imported-type-alias', noImportedTypeAlias, {
+    valid: [],
+    invalid: [{ code: "import type { Room as BackendRoom } from './room.types'; export type ChatRoom = BackendRoom", errors: [{ message: "Import 'Room' from './room.types' at the callers instead of exporting alias 'ChatRoom'. Keep genuine derivations; do not substitute an empty interface." }] }],
+  })
+})

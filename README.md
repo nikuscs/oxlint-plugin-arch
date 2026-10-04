@@ -47,6 +47,20 @@ export default preset({
 
 `architecture` maps paths to roles and replaces the defaults when supplied. Multiple apps may share a role: `{ 'apps/dashboard': 'web', 'apps/storefront': 'web', 'apps/api': 'server', packages: 'packages', scripts: 'scripts' }`. Use `runner` for another strict backend, or `{ '.': 'web' }` for a standalone frontend. Omit absent roots. Paths are normalized; duplicates, overlapping roots and paths outside the project are rejected. Web and backend roles derive `src/services`, `src/types` and other application scopes; packages have no assumed app layout, and scripts permit console output. Shared baseline policies still apply everywhere. Each web root defaults to its own `src/application/styles.css`. Set `tailwind.entryPoints: { 'apps/storefront': 'themes/store.css' }` for per-root paths, or `tailwind.entryPoint` for an explicitly shared stylesheet. Entry paths are relative to `root`; `tailwind: false` disables Tailwind. Per-root CSS is supplied through Tailwind rule options because Oxlint 1.85 has no override-level `settings`. Shadcn discovers each app's theme through its own `components.json` (or package-local discovery). `root` makes asset and package resolution independent of the lint command's working directory; invoke the root config from its real filesystem location.
 
+Folder layout is independent of role/content rules. Shorthand roles use defaults: web has domain services and flat hooks; server/runner have domain services. Other folders keep their existing role conventions unless explicitly configured. Object entries merge folder choices into those defaults:
+
+```ts
+architecture: {
+  'apps/dashboard': { role: 'web', layout: { services: 'flat', hooks: 'domain', features: 'domain' } },
+  'apps/storefront': { role: 'web', layout: { services: 'domain', features: 'flat' } },
+  'apps/api': { role: 'server', layout: { services: 'domain' } },
+}
+```
+
+Folder keys are literal paths relative to an app's `src` (relative to the root for packages/scripts), not new architecture slots. Segments use letters, numbers, underscores and hyphens; absolute paths, escapes, globs, empty segments and overlapping configured/default folders are rejected. `flat` requires source files directly in that folder. `domain` requires exactly one directory and filename ownership by that directory; loose/deeper files cannot coexist. Checks cover TS/TSX/MTS/CTS source files, not asset directory trees. Generic domain filenames start with their owning directory plus a dot/hyphen; hooks retain `use-` and components retain their existing singular-name convention. Choosing layout never disables service exports, types, constants, runtime suffixes or anti-slop. Existing policy callbacks and native overrides remain available.
+
+RPC ownership follows each web root's service layout: `services/rpc.client.ts` for flat, `services/rpc/rpc.client.ts` for domain. `rpcClient` remains the explicit consumer override. There is no mixed-layout mode.
+
 ### Configure policies
 
 Each policy accepts `true` (default configuration), `false` (disabled), or a callback receiving fresh native Oxlint override objects. Callbacks run before the overall severity is applied. They never mutate another preset invocation.
@@ -89,11 +103,11 @@ Module configuration, lookup tables, limits and defaults belong in domain `.cons
 
 Action/query files (`services/**/*-{action,query}.*.ts` under configured app roots) export exactly one named operation. Helpers used only by that operation may be private nested functions or arrows inside it. Extra exports, including types, constants and re-exports, fail. Module-level private helpers still fail. Backend service files retain the stricter helper policy; `.utils.ts` files are for genuinely shared domain helpers, not a destination for every extraction. The trivial-function rule still applies.
 
-Frontend `.client.ts`, `.server.ts` and `.rsc.{ts,tsx}` service entries are cohesive modules: multiple public domain-prefixed operations are allowed. No private module-level function satellites are allowed. Operation-only helpers stay nested inside their public operation and retain the domain prefix; genuinely shared helpers belong in domain `.utils.ts`. Factories are optional for real state, injection or lifetimes, and existing singleton exports remain valid. Do not export helpers just to evade this rule. Runtime suffix checks, React-free client checks and anti-slop rules remain enabled.
+Frontend `.client.ts`, `.server.ts` and `.rsc.{ts,tsx}` service entries are cohesive modules: multiple public domain-prefixed operations are allowed. No private module-level function satellites are allowed. Operation-only helpers stay nested inside their public operation and retain the domain prefix; genuinely shared helpers belong in domain `.utils.ts`. Factories are optional for real state, injection or lifetimes, and existing singleton exports remain valid. Do not export helpers just to evade this rule. Runtime suffix checks, React-free client checks and anti-slop rules remain enabled. A direct `export const themeService = { themeApply(...) { ... } }` is also allowed: a nonempty method-only object, static identifier keys, both binding and methods domain-prefixed. Data fields, getters/setters, strings/computed keys, spreads, arrow properties and callback-reference tables do not qualify. Returned factory API keys retain their existing contract. `allowServiceMethods` on domain-constants, `serviceMethods` on naming/object-parameter rules and `checkServiceMethods` on no-trivial-functions are enabled only for frontend runtime scopes; backend defaults remain unchanged. Object methods receive wrapper/generic-guard checks and named-parameter-contract rules. This is a syntax form, not proof that an object owns meaningful state.
 
 Frontend actions/queries retain their runtime suffix: `theme-action.apply.client.ts` exports exactly `themeActionApply`, not `themeActionApplyClient`. Related helpers stay inside that operation. Backend operations remain `domain-action.name.ts` / `domain-query.name.ts`, without runtime suffixes.
 
-Shared frontend domain helpers belong in `services/<domain>/<domain>.utils.ts`; existing runtime entrypoints may remain flat. Utility functions, including private helpers, keep their domain prefix. Pure implementation does not make an application-specific helper portable: the preset enables `portableLib` in `modules/import-boundaries` for every configured web root. Files under `src/lib/` cannot import or re-export any configured app's services or app package APIs, including otherwise public backend entrypoints and type-only references. Backend library scopes retain their existing rules.
+Shared frontend domain helpers use `<domain>.utils.ts` in the configured services layout. Domain mode groups all runtime, utility, constants and action/query files under `services/<domain>/`; flat mode keeps all directly under `services/`. Utility functions, including private helpers, keep their domain prefix. Pure implementation does not make an application-specific helper portable: the preset enables `portableLib` in `modules/import-boundaries` for every configured web root. Files under `src/lib/` cannot import or re-export any configured app's services or app package APIs, including otherwise public backend entrypoints and type-only references. Backend library scopes retain their existing rules.
 
 A portable module may consume its own contract using a type-only import from exactly the same web root's `types/<module>.types.ts`. The module stem removes the source extension and optional `.utils` suffix: both `lib/fade.ts` and `lib/fade.utils.ts` may consume `types/fade.types.ts`. Value imports, other-domain types, same-stem types from another app, and app-type re-exports (including imported bindings subsequently exported) fail. Relative paths, the built-in `@/` alias and configured aliases use the same ownership check. This is a filename ownership convention, not transitive semantic portability proof: the rule does not inspect imported contracts or follow module graphs. Static imports/re-exports, literal dynamic imports and TypeScript import types are checked; computed imports and arbitrary alias/data flow are not resolved. Custom aliases must be configured explicitly. An own-type match never overrides a services/backend/API ban.
 
@@ -142,7 +156,7 @@ Oxlint reads `typeAware` from the root config only. The direct `export default p
 ### Application conventions
 
 - Single quotes, semicolons, two spaces, braced multiline control flow, early returns, 160-character lines and 400-line app and test files. Promise arrays and call objects expand; method chains are not forced multiline.
-- Components live in one group folder with matching prefixed names. Hooks are flat `use-*.ts` files. Local React types are prefixed interfaces; exported Props interfaces are allowed. Other types belong in domain `types/*.types.ts` files.
+- Components live in one group folder with matching prefixed names. Hooks default to flat `use-*.ts` files; an explicit domain layout retains the hook filename convention. Local React types are prefixed interfaces; exported Props interfaces are allowed. Other types belong in domain `types/*.types.ts` files.
 - Backend operations use `domain-action.name.ts` / `domain-query.name.ts`. Services allow one domain folder, one exported operation without private helpers, object parameters and named signature types. Explicit `.utils.ts` files can hold generic helpers, but their types still belong in domain type files. Domain type and constant files cannot contain top-level functions. Frontend services use `.client.ts`, `.server.ts` or `.rsc.{ts,tsx}`. RSC JSX entries retain `domainRscName` exports and the same helper/constants policies.
 - Routes wire components, forms use a schema resolver, context creation has an owner directory, and effects cannot replace derived values or event handlers. React Compiler projects reject manual memoization. Test IDs are allowed. JSX rejects new object/function props inside render, and noninteractive elements cannot receive a tab index.
 - Safety rules reject unknown/any, chained assertions, unjustified assertions, loose dictionaries, module mocks, shared mutable bindings and focused/skipped/placeholder tests. Comments are limited to supported directives, SAFETY notes and explicit exceptions. Type/constant files do not allow SAFETY comments; prompt files require explicit comment exceptions. UI-kit code retains type-safety, formatting and layout checks.
@@ -321,6 +335,22 @@ Options that take one regex string (`pattern`, `allowPattern`, `forbid`, `requir
 
 ## 🔍 Rule details
 
+### File size
+
+`maxLines?: number` sets the existing ESLint `max-lines` ceiling on checked safety scopes; default `400`. Blank lines and comments remain skipped. Use native Oxlint overrides or the existing `exclude` configuration for deliberate per-file exceptions. File size is a ceiling, not a cohesion proof.
+
+### TanStack runtime boundaries
+
+`modules/tanstack-runtime` checks every configured web root's services and lib. Server dependencies include Node builtins (bare and `node:`), Bun/Cloudflare modules, `@orpc/server`, configured backend server/RPC APIs, `.server` files, TanStack server APIs/markers and React DOM server rendering. Known RSC renderer imports are checked by symbol; the entire mixed RSC package is not banned. Pure public backend client/schema imports remain governed by existing architecture rules.
+
+`.client.ts` is the preset's frontend-facing, potentially SSR-used service convention. Known server runtime dependencies require inline callbacks of scope-resolved imports of `createServerFn().handler`, `createServerOnlyFn`, `createMiddleware().server` or `createIsomorphicFn().server`. Alias/namespace imports are recognized; lookalike names and shadowed parameters are not. Static isomorphic server imports are allowed only in the actual configured RPC owner, and every runtime reference must stay in its server branch. Elsewhere that branch can load a literal dynamic import. Module-level execution and re-exports do not inherit the exception.
+
+`.server` files may statically import server implementation; dynamic loading alone proves nothing. RSC permits JSX, React and server-component definitions, but server renderer/dependency references still require a server callback. Server/RSC modules reject browser globals, local hook imports, client-only markers/APIs and React/TanStack client hooks outside recognized client branches. Global checks respect lexical shadowing and direct `globalThis.name` / literal-key access. Shared utilities/constants/lib cannot launder known server or client-only imports. Type-only imports/re-exports erase at runtime but retain all architecture restrictions.
+
+`tanstackRuntime.serverImports` and `clientImports` add package/module prefixes. `tanstackRuntime.allowComputedImportsIn` permits computed imports only in explicitly named project-relative files; review all targets before using it. Other checks still run. This is direct syntax and lexical-reference enforcement, not an import graph, interprocedural alias analysis, sandbox, or proof of SSR safety. Wrapper factories, indirect callback references, re-exported framework factories and arbitrary computed member aliases are not recognized as boundary proofs. Native rule exclusions remain explicit consumer decisions.
+
+TanStack's [environment functions](https://tanstack.com/start/latest/docs/framework/react/guide/environment-functions) remove opposite branches, and [import protection](https://tanstack.com/start/latest/docs/framework/react/guide/import-protection) checks the resulting graph. Start's default import protection treats `.client.*` as browser-only, unlike this preset's service convention: SSR consumers must deliberately configure its server file pattern (Orbs uses `server.files: []`). Keep build-side protection enabled for server dependencies; lint does not replace it.
+
 ### Private domain helpers and precise wrapper detection
 
 The preset requires all named functions in `room.utils.ts`, exported or private, to start with `room`, such as `roomUserIsOwner`. Private action/query helpers use the same domain prefix; the exported operation must exactly match its filename (`room-action.send-message.ts` → `roomActionSendMessage`). Ordinary local variables are unaffected. Standalone `export-file-prefix` users opt in with `allFunctions: true`.
@@ -433,7 +463,7 @@ Keeps identifiers and member calls inside the files that own them.
 ```ts
 'arch/no-restricted-token': ['error', {
   restrictions: [
-    { token: 'RouterClient', allowIn: ['/src/services/rpc.client.ts'] },
+    { token: 'RouterClient', allowIn: ['/src/services/rpc/rpc.client.ts'] },
     { member: 'process.platform', allowIn: ['/src/runtime.ts'] },
     { member: '*.insertInto', message: 'Queries are read-only; move writes to an action.' },
   ],

@@ -27,7 +27,7 @@ export const noImportedTypeAlias = defineRule({
     type: 'problem',
     schema: [],
     messages: {
-      alias: "Exported type '{{alias}}' must not re-alias imported type '{{name}}'.",
+      alias: "Import '{{name}}' from '{{source}}' at the callers instead of exporting alias '{{alias}}'. Keep genuine derivations; do not substitute an empty interface.",
     },
   },
   createOnce(context) {
@@ -36,6 +36,7 @@ export const noImportedTypeAlias = defineRule({
         const imports = new Set(program.body.flatMap((statement) => statement.type === 'ImportDeclaration'
           ? statement.specifiers.map((specifier) => specifier.local.name)
           : []))
+        const origins = new Map(program.body.flatMap((statement) => statement.type === 'ImportDeclaration' ? statement.specifiers.map((specifier) => [specifier.local.name, { source: statement.source.value, name: specifier.type === 'ImportSpecifier' ? specifier.imported.type === 'Identifier' ? specifier.imported.name : specifier.imported.value : specifier.local.name }] as const) : []))
         const aliases = new Map<string, string>()
 
         for (const statement of program.body) {
@@ -61,7 +62,7 @@ export const noImportedTypeAlias = defineRule({
             context.report({
               node: statement.declaration,
               messageId: 'alias',
-              data: { alias: statement.declaration.id.name, name: inline },
+              data: { alias: statement.declaration.id.name, name: origins.get(inline)?.name ?? inline, source: origins.get(inline)?.source ?? '<import source>' },
             })
           }
 
@@ -73,7 +74,7 @@ export const noImportedTypeAlias = defineRule({
               context.report({
                 node: specifier,
                 messageId: 'alias',
-                data: { alias: local, name: imported },
+                data: { alias: local, name: origins.get(imported)?.name ?? imported, source: origins.get(imported)?.source ?? '<import source>' },
               })
             }
           }

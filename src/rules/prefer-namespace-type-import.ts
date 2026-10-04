@@ -58,7 +58,7 @@ export const preferNamespaceTypeImport = defineRule({
     }],
     defaultOptions: [{ max: 3, names: {} }],
     messages: {
-      namespace: "Use a type namespace '{{name}}' for {{count}} named imports (maximum {{max}}).{{reason}}",
+      namespace: "Use `import type * as {{name}} from '{{source}}'` for {{count}} type imports (max {{max}}); keep exported domain names.{{reason}}",
     },
   },
   createOnce(context) {
@@ -151,7 +151,7 @@ export const preferNamespaceTypeImport = defineRule({
           context.report({
             node,
             messageId: 'namespace',
-            data: { name, count: node.specifiers.length, max, reason: reason ? ` Autofix skipped: ${reason}.` : '' },
+            data: { name, source: node.source.value, count: node.specifiers.length, max, reason: reason ? ` Autofix skipped: ${reason}.` : '' },
             fix: reason ? undefined : fixer => edits.map(edit => fixer.replaceTextRange(edit.range, edit.text)),
           })
         }

@@ -3,11 +3,12 @@ import preset from 'oxlint-plugin-arch/presets/tanstack-start-react-modules-pres
 export default preset({
   root: import.meta.dirname,
   architecture: {
-    'apps/web': 'web',
-    'apps/server': 'server',
+    'apps/web': { role: 'web', layout: { services: 'domain' } },
+    'apps/server': { role: 'server', layout: { services: 'domain' } },
     scripts: 'scripts',
     packages: 'packages',
   },
+  maxLines: 400,
   banTypes: (current) =>
     current.map((scope) => ({
       ...scope,

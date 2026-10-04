@@ -33,7 +33,7 @@ export function presetCompose(
       {
         'max-lines': [
           level,
-          { max: 400, skipBlankLines: true, skipComments: true },
+          { max: options.maxLines ?? 400, skipBlankLines: true, skipComments: true },
         ],
         complexity: [level, { max: options.complexity ?? 32 }],
       },

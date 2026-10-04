@@ -39,7 +39,7 @@ export const filenameExportName = defineRule({
       required: ['file', 'export'],
     }],
     messages: {
-      mismatch: "Function '{{actual}}' must match '{{expected}}'.",
+      mismatch: "Function '{{actual}}' must be named '{{expected}}' for file '{{file}}'.",
     },
   },
   createOnce(context) {
@@ -68,7 +68,7 @@ export const filenameExportName = defineRule({
             context.report({
               node: first?.node ?? program,
               messageId: 'mismatch',
-              data: { actual: first?.name ?? '<none>', expected },
+              data: { actual: first?.name ?? '<none>', expected, file: namingFileBasename(context.filename) },
             })
           }
           return
@@ -79,7 +79,7 @@ export const filenameExportName = defineRule({
             context.report({
               node: item.node,
               messageId: 'mismatch',
-              data: { actual: item.name, expected },
+              data: { actual: item.name, expected, file: namingFileBasename(context.filename) },
             })
           }
         }

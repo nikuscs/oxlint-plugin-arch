@@ -26,7 +26,7 @@ export const serviceFunctions = defineRule({
     }],
     messages: {
       helper:
-        '{{message}}',
+        '{{name}}: {{message}}',
       exports: '{{message}}',
     },
   },
@@ -73,7 +73,9 @@ export const serviceFunctions = defineRule({
         allowReturnedMethods = options.allowReturnedMethods ?? false
         message = options.message ?? (options.frontend
           ? 'Frontend service modules expose public domain operations. Keep operation-only helpers inside their public operation and genuinely shared helpers in domain .utils.ts; file-level private functions are forbidden.'
-          : 'This service file owns one exported function. Private helpers are allowed only inside action/query operations. Use domain .utils.ts files only for genuinely shared helpers.')
+          : allowLocalHelpers
+            ? 'Keep this helper inside the one exported operation; domain .utils.ts is only for genuinely shared logic.'
+            : 'This service contract does not allow private helpers. Keep its existing factory/operation contract; domain .utils.ts is only for genuinely shared logic. Do not add a fake factory or public helper export.')
         if (options.singleExport) {
           const bindings = exportsCollect(program)
           if (
@@ -83,7 +85,7 @@ export const serviceFunctions = defineRule({
             context.report({
               node: program,
               messageId: 'exports',
-              data: { message: options.message ?? 'Export exactly one named operation, with no extra values, types or re-exports. Keep action/query-specific helpers private inside the operation; .utils.ts is only for genuinely shared helpers.' },
+              data: { message: options.message ?? 'Export exactly one named operation. Do not export helpers, types, constants or re-exports.' },
             })
           }
         }
@@ -94,7 +96,7 @@ export const serviceFunctions = defineRule({
           ) {
             continue
           }
-          context.report({ node: candidate.node, messageId: 'helper', data: { message } })
+          context.report({ node: candidate.node, messageId: 'helper', data: { message, name: candidate.name } })
         }
       },
       FunctionDeclaration(node) {
@@ -107,7 +109,7 @@ export const serviceFunctions = defineRule({
         if (returnedMethod(node) || allowLocalHelpers && insideOperation(node)) {
           return
         }
-        context.report({ node, messageId: 'helper', data: { message } })
+        context.report({ node, messageId: 'helper', data: { message, name: node.id?.type === 'Identifier' ? node.id.name : '<anonymous>' } })
       },
       VariableDeclarator(node) {
         if (
@@ -126,7 +128,7 @@ export const serviceFunctions = defineRule({
         if (allowLocalHelpers && insideOperation(node)) {
           return
         }
-        context.report({ node, messageId: 'helper', data: { message } })
+        context.report({ node, messageId: 'helper', data: { message, name: node.id.type === 'Identifier' ? node.id.name : '<anonymous>' } })
       },
     }
   },

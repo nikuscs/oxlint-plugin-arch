@@ -73,7 +73,7 @@ export function presetReactConfig(context: PresetContext): PresetPolicies {
         testFiles,
       ),
       presetOverride(presetScopes(web, 'routes/handlers/**/*.ts'), {
-        'arch/no-file-level-helpers': ['error', { detectComponents: false }],
+        'arch/no-file-level-helpers': ['error', { detectComponents: false, message: 'Nest this helper in its owning route handler callback, or move genuine domain logic to a service. Do not create a component, hook or public helper to bypass this rule.' }],
       }),
     ]
   }

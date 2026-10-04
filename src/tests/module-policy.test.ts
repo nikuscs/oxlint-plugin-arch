@@ -244,3 +244,14 @@ test('service method objects are explicit public method-only forms', () => {
     invalid: [{ options: [{ frontend: true }], code: 'function themeNormalize(value) { return value.trim() } export const themeService = { themeApply(value) { return themeNormalize(value) } }', errors: [{ messageId: 'helper' }] }],
   })
 })
+
+test('ownership diagnostics give scope-correct helper and constant fixes', () => {
+  createRuleTester().run('modules/service-functions', serviceFunctions, {
+    valid: [],
+    invalid: [{ code: 'function chatHelper() {}', errors: [{ message: 'chatHelper: This service contract does not allow private helpers. Keep its existing factory/operation contract; domain .utils.ts is only for genuinely shared logic. Do not add a fake factory or public helper export.' }] }],
+  })
+  createRuleTester().run('modules/domain-constants', domainConstants, {
+    valid: [],
+    invalid: [{ filename: '/repo/src/services/chat/chat-action.send.ts', code: 'const CHAT_LIMIT = 3', errors: [{ message: "'CHAT_LIMIT' belongs in 'chat.constants.ts' under this module-data policy. Use a domain-prefixed name; do not invent a factory to silence the rule." }] }],
+  })
+})

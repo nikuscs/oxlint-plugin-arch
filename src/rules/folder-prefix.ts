@@ -34,7 +34,7 @@ export const folderPrefix = defineRule({
       },
     }],
     messages: {
-      prefix: "File '{{file}}' must start with folder name '{{folder}}' or an allowed singular form.",
+      prefix: "File '{{file}}' must start with '{{expected}}' to match its domain folder '{{folder}}'.",
     },
   },
   createOnce(context) {
@@ -69,7 +69,7 @@ export const folderPrefix = defineRule({
           context.report({
             node: program,
             messageId: 'prefix',
-            data: { file, folder: prefixes[0] ?? '' },
+            data: { file, folder: resolved.join('/'), expected: prefixes.map((prefix) => `${stripPrefixes[0] ?? ''}${prefix}`).join(' or ') },
           })
         }
       },

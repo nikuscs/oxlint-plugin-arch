@@ -52,6 +52,7 @@ export interface PresetOptions extends Partial<
   fileRoles?: string[]
   level?: 'error' | 'warn'
   complexity?: number
+  maxLines?: number
   ignorePatterns?: string[]
   exclude?: Record<string, string[]>
   reactCompiler?: boolean

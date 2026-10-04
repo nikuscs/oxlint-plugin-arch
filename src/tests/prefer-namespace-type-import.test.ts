@@ -178,3 +178,10 @@ test('prefer-namespace-type-import TSX', () => {
     }],
   })
 })
+
+test('namespace diagnostics show the real TypeScript import syntax and source', () => {
+  createRuleTester().run('arch/prefer-namespace-type-import', preferNamespaceTypeImport, {
+    valid: [],
+    invalid: [{ code: input, output, errors: [{ message: "Use \u0060import type * as RoomTypes from './room.types'\u0060 for 4 type imports (max 3); keep exported domain names." }] }],
+  })
+})

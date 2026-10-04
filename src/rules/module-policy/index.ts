@@ -37,7 +37,7 @@ export default eslintCompatPlugin({
     'tanstack-runtime': tanstackRuntime,
     'local-type-alias': syntaxRule(
       'TSTypeAliasDeclaration',
-      'Local React contracts must be interfaces; move aliases to domain types.',
+      'Local component/hook contracts use interfaces named for their owner. Derived or reusable aliases belong in domain types; do not substitute an empty interface.',
     ),
     'no-unknown': syntaxRule(
       'TSUnknownKeyword',

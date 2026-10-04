@@ -51,8 +51,8 @@ export const noTrivialFunctions = defineRule({
     }],
     messages: {
       trivial: 'Function {{name}} adds no transformation; inline it or use a value for a constant result. Keep deliberate adapters through an explicit rule exclusion.',
-      bannedName: 'Helper {{name}} is forbidden by this policy. Parse a named domain schema at the input boundary; renaming the same guard does not fix it.',
-      genericGuard: 'Helper {{name}} only performs generic runtime type checks or fallback reads. Parse a named domain schema at the input boundary.',
+      bannedName: 'Helper {{name}} is forbidden by this policy. Inline the local check, or validate external input at its boundary; renaming the guard does not fix it.',
+      genericGuard: 'Helper {{name}} only performs generic runtime type checks or fallback reads. Inline the local check, or validate external input at its boundary; do not add a schema merely to retain this helper.',
     },
   },
   createOnce(context) {

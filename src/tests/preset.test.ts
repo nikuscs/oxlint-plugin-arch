@@ -86,6 +86,31 @@ function fixture(
 }
 
 describe('TanStack Start React modules preset', () => {
+  test('maxLines keeps the 400 default and native skip flags while accepting a custom ceiling', () => {
+    const defaults = fixture("architecture: { web: 'web' },", {}, true)
+    expect(defaults.output).toContain('"max": 400')
+    expect(defaults.output).toContain('"skipBlankLines": true')
+    expect(defaults.output).toContain('"skipComments": true')
+    const code = Array.from({ length: 6 }, (_, index) => 'export const value' + index + ' = ' + index + ';').join('\n') + '\n'
+    const passed = fixture("architecture: { web: 'web' }, maxLines: 6,", { 'web/src/lib/values.ts': code })
+    expect(passed.status, passed.output).toBe(0)
+    const failed = fixture("architecture: { web: 'web' }, maxLines: 5,", { 'web/src/lib/values.ts': code })
+    expect(failed.output).toContain('max-lines')
+    const native = JSON.parse(fixture("architecture: { web: 'web' }, maxLines: 5, exclude: { 'max-lines': ['web/src/lib/values.ts'] },", { 'web/src/lib/values.ts': code }).output)
+    expect(native.diagnostics).toEqual([])
+  })
+
+  test('preset diagnostics identify the allowed route helper and action constant destinations', () => {
+    const result = fixture("architecture: { web: 'web' },", {
+      'web/src/routes/handlers/chat.ts': 'function format() { return 1; }',
+      'web/src/services/theme/theme-action.apply.client.ts': 'const THEME_LIMIT = 3; export function themeActionApplyClient() { return THEME_LIMIT; }',
+    })
+    const output: PresetFixtureOutput = JSON.parse(result.output)
+    expect(output.diagnostics.find((entry) => entry.code === 'arch(no-file-level-helpers)')?.message).toBe('format: Nest this helper in its owning route handler callback, or move genuine domain logic to a service. Do not create a component, hook or public helper to bypass this rule.')
+    expect(output.diagnostics.find((entry) => entry.code === 'modules(domain-constants)')?.message).toBe("'THEME_LIMIT' belongs in 'theme.constants.ts' under this module-data policy. Use a domain-prefixed name; do not invent a factory to silence the rule.")
+    expect(output.diagnostics.find((entry) => entry.code === 'arch(filename-export-name)')?.message).toBe("Function 'themeActionApplyClient' must be named 'themeActionApply' for file 'theme-action.apply.client.ts'.")
+  })
+
   test('TanStack runtime CLI accepts real boundary forms across flat and domain web roots', () => {
     const result = fixture("architecture: { web: { role: 'web', layout: { services: 'flat' } }, admin: 'web', api: 'server' }, aliases: { '@admin': 'admin/src' },", {
       'web/src/services/chat.client.ts': "import { createServerFn as serverFn } from '@tanstack/react-start';\n\nexport const chatRead = serverFn().handler(async () => (await import('./chat.server')).chatRead());\n",

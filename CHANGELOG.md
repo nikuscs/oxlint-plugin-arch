@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- Configure per-root folder layouts through role/object architecture entries; keep shorthand defaults, exact flat/domain structure, hook/component naming and layout-derived RPC ownership.
+- Permit strictly named public method-only frontend service objects without changing factory-returned APIs; check their trivial wrappers and parameter contracts.
+- Add TanStack runtime boundary checks with scoped imported factory recognition, an RPC-owner server-branch exception, direct dependency/global checks and exact-file computed-import customization.
+- Expose the existing max-lines ceiling as maxLines (default 400); improve helper, constants, namespace, alias, filename and portable-contract diagnostics with exact-message regressions.
+
 - Web runtime service entries support cohesive public operations with domain-prefixed nested helpers and no private module-level functions. Explicit actions/queries and backend service rules remain strict. Web module data moves to domain-prefixed constants files; real service instances keep their lifetimes.
 
 - Enable `arch/prefer-namespace-type-import` at `max: 3` in the preset imports policy. Add CLI threshold, namespace acceptance, qualified-reference autofix/idempotence, TypeScript and consumer-option regressions plus rule-coverage fixtures.
