@@ -374,6 +374,17 @@
     }
   },
   {
+    "rule": "arch/prefer-namespace-type-import",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/rule-cases/arch-prefer-namespace-type-import.ts"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/rule-cases/arch-prefer-namespace-type-import.ts"
+    }
+  },
+  {
     "rule": "arch/require-object-params",
     "pass": {
       "project": "rules-pass",
@@ -3126,6 +3137,17 @@
     }
   },
   {
+    "rule": "modules/tanstack-runtime",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/services/runtime/runtime.client.ts"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/services/runtime/runtime.client.ts"
+    }
+  },
+  {
     "rule": "modules/test-modifiers",
     "pass": {
       "project": "rules-pass",
@@ -3515,52 +3537,6 @@
     "fail": {
       "project": "rules-fail",
       "file": "apps/web/src/rule-cases/react-extra-require-render-return-fail-0.tsx"
-    }
-  },
-  {
-    "rule": "react-perf/jsx-no-jsx-as-prop",
-    "pass": {
-      "project": "rules-pass",
-      "file": "apps/web/src/rule-cases/react-perf-jsx-no-jsx-as-prop-pass-0.tsx"
-    },
-    "fail": {
-      "project": "rules-fail",
-      "file": "apps/web/src/rule-cases/react-perf-jsx-no-jsx-as-prop-fail-0.tsx"
-    },
-    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/react_perf/jsx_no_jsx_as_prop.rs"
-  },
-  {
-    "rule": "react-perf/jsx-no-new-array-as-prop",
-    "pass": {
-      "project": "rules-pass",
-      "file": "apps/web/src/rule-cases/react-perf-jsx-no-new-array-as-prop-pass-0.tsx"
-    },
-    "fail": {
-      "project": "rules-fail",
-      "file": "apps/web/src/rule-cases/react-perf-jsx-no-new-array-as-prop-fail-0.tsx"
-    },
-    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/react_perf/jsx_no_new_array_as_prop.rs"
-  },
-  {
-    "rule": "react-perf/jsx-no-new-function-as-prop",
-    "pass": {
-      "project": "rules-pass",
-      "file": "apps/web/src/rule-cases/function-prop.tsx"
-    },
-    "fail": {
-      "project": "rules-fail",
-      "file": "apps/web/src/rule-cases/function-prop.tsx"
-    }
-  },
-  {
-    "rule": "react-perf/jsx-no-new-object-as-prop",
-    "pass": {
-      "project": "rules-pass",
-      "file": "apps/web/src/rule-cases/object-prop.tsx"
-    },
-    "fail": {
-      "project": "rules-fail",
-      "file": "apps/web/src/rule-cases/object-prop.tsx"
     }
   },
   {

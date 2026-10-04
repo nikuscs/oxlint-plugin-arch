@@ -2,6 +2,9 @@ export { default as tanstackStartReactModulesPreset } from './tanstack-start-rea
 export type {
   PresetOptions,
   PresetArchitecture,
+  PresetArchitectureEntry,
+  PresetFolderLayout,
+  PresetRuntimeOptions,
   PresetPolicy,
   PresetPolicyName,
   PresetTailwindOptions,

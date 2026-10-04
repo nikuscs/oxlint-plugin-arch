@@ -2,6 +2,25 @@
 
 ## Unreleased
 
+- Web runtime service entries support cohesive public operations with domain-prefixed nested helpers and no private module-level functions. Explicit actions/queries and backend service rules remain strict. Web module data moves to domain-prefixed constants files; real service instances keep their lifetimes.
+
+- Enable `arch/prefer-namespace-type-import` at `max: 3` in the preset imports policy. Add CLI threshold, namespace acceptance, qualified-reference autofix/idempotence, TypeScript and consumer-option regressions plus rule-coverage fixtures.
+
+- Keep every configured frontend library portable: reject app service/API dependencies and foreign domain types, allowing only type-only consumption of a same-root, same-stem contract. Reject app-type re-exports; normalize optional utility stems and resolve relative/configured aliases. Keep backend scopes and existing consumer exceptions intact, with CLI regressions for multiple web roots and domain utilities.
+
+- Replace the unreleased preset's fixed architecture slots with normalized path-to-role mappings supporting multiple apps per role and rejecting overlapping roots. Add explicitly declared concept file roles with full domain-role function prefixes and same-app domain boundaries; public service/utils surfaces reject private re-exports. Retain scope-resolved returned-method support for standalone consumers; backend factories remain strict.
+
+- Enable precise trivial-function detection in the preset: configurable helper names, renamed generic guards and unchanged-argument wrappers; preserve legacy defaults and meaningful transformations.
+- Require domain prefixes for private utility/action/query functions with `allFunctions`; keep exact filename matching for exported operations and strict service helper boundaries.
+
+- Allow meaningful imported generic type instantiations; add opt-in camel-case filename placeholders and enable them for preset action/query names.
+
+- Allow standard caller opacity utilities in the preset's shadcn policy; retain bans on other appearance overrides and arbitrary opacity, verified with a real CLI fixture.
+
+- Allow private nested helpers only in action/query operations, require exactly one named function export there, and reject additional type/value/re-exports. Keep module-level helpers and other service scopes strict. Add configurable guidance explaining that `.utils.ts` is reserved for genuinely shared helpers.
+
+- Disable render-time function/object/array/JSX prop bans for React Compiler projects; keep them when `reactCompiler: false`. Allow frontend service constants while retaining backend separation under configurable architecture roots. Keep portable-type and intentional-wrapper exceptions consumer-owned and file-specific.
+
 - Restore missing type-file/helper restrictions and close utility-type, prompt-comment and UI-kit safety/formatting exceptions. Type and constant files reject ordinary and SAFETY comments; constants cannot hide functions.
 - Enable unbound-method, catch-callback typing, noninteractive-tabindex and render-time object/function prop checks. Require typed mocks, enforce file-size/complexity limits in tests, and restrict all console methods to configured scripts/CLI or explicit adapter exceptions.
 - Compare Crauler's enabled rules, disabled rules, exclusions and options against the baseline; retain its route-handler helper restriction without copying product-specific ignores. Add scope regressions and retain passing/failing fixtures for every enabled preset rule.

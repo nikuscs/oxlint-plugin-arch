@@ -1,6 +1,7 @@
 import { defineRule } from '@oxlint/plugins'
 import {
   declarationsIsObjectParam,
+  declarationsPublicServiceMethods,
   declarationsTopLevelUnexportedFunctions,
   exportsCollectFunctions,
   optionsFirst,
@@ -13,6 +14,7 @@ import type { OptionsPattern } from '../utils/index.ts'
 interface RequireObjectParamsOptions {
   maxParams?: number
   allDeclarations?: boolean
+  serviceMethods?: boolean
   allowPattern?: OptionsPattern
 }
 
@@ -29,6 +31,7 @@ export const requireObjectParams = defineRule({
       additionalProperties: false,
       properties: {
         maxParams: { type: 'integer', minimum: 1 },
+        serviceMethods: { type: 'boolean' },
         allDeclarations: { type: 'boolean' },
         allowPattern: optionsPatternSchema,
       },
@@ -40,12 +43,14 @@ export const requireObjectParams = defineRule({
   createOnce(context) {
     return {
       Program(program) {
-        const { maxParams = 1, allDeclarations = false, allowPattern } = optionsFirst<RequireObjectParamsOptions>(context, {})
+        const { maxParams = 1, allDeclarations = false, serviceMethods = false, allowPattern } = optionsFirst<RequireObjectParamsOptions>(context, {})
         const allowed = optionsOptionalPatterns(allowPattern)
         const seen = new Set<string>()
         const functions = allDeclarations
           ? [...exportsCollectFunctions(program), ...declarationsTopLevelUnexportedFunctions(program)]
           : exportsCollectFunctions(program)
+
+        if (serviceMethods) functions.push(...declarationsPublicServiceMethods(program))
 
         for (const item of functions) {
           const key = `${item.name}:${item.node.start}:${item.node.end}`

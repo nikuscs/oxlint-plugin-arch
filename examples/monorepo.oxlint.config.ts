@@ -86,6 +86,7 @@ export default defineConfig({
       files: roleFiles,
       rules: {
         'arch/export-file-prefix': ['error', {
+          allFunctions: true,
           stem: 'before-first-dot',
           trailingRoles: ['constants', 'utils', 'handler', 'service', 'types'],
           roleSeparators: ['.', '-'],
@@ -171,6 +172,7 @@ export default defineConfig({
           message: 'Action files must match {domain}-action.{verb}.ts.',
         }],
         'arch/filename-export-name': ['error', {
+          camelCase: true,
           file: '{domain}-action.{name}.ts',
           export: 'make{Domain}Action{Name}',
           placeholderPattern: '[a-z0-9-]+',

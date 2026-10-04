@@ -306,10 +306,10 @@ export const presetReactRules: PresetRules = {
   'react/jsx-no-useless-fragment': 'error',
   'react/jsx-pascal-case': 'error',
   'react/self-closing-comp': 'error',
-  'react-perf/jsx-no-new-object-as-prop': 'error',
-  'react-perf/jsx-no-new-array-as-prop': 'error',
-  'react-perf/jsx-no-new-function-as-prop': 'error',
-  'react-perf/jsx-no-jsx-as-prop': 'error',
+  'react-perf/jsx-no-new-object-as-prop': 'off',
+  'react-perf/jsx-no-new-array-as-prop': 'off',
+  'react-perf/jsx-no-new-function-as-prop': 'off',
+  'react-perf/jsx-no-jsx-as-prop': 'off',
   'react-extra/jsx-sort-props': [
     'error',
     {
@@ -371,7 +371,7 @@ export const presetEffectsRules: PresetRules = {
   'react-you-might-not-need-an-effect/no-derived-state': 'error',
 }
 
-export const presetTailwindRules: PresetRules = {
+export const presetTailwindRules = {
   'better-tailwindcss/enforce-canonical-classes': 'error',
   'better-tailwindcss/enforce-consistent-class-order': 'error',
   'better-tailwindcss/enforce-shorthand-classes': 'error',
@@ -380,7 +380,7 @@ export const presetTailwindRules: PresetRules = {
   'better-tailwindcss/no-unknown-classes': 'off',
   'better-tailwindcss/no-unnecessary-whitespace': 'error',
   'better-tailwindcss/no-deprecated-classes': 'error',
-}
+} satisfies PresetRules
 
 export const presetImportRules: PresetRules = {
   'import/first': 'error',

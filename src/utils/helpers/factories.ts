@@ -1,5 +1,5 @@
 import { astNearestFunction, astVisit } from './ast.ts'
-import { namingPascalCase } from './naming.ts'
+import { namingCamelCase, namingPascalCase } from './naming.ts'
 import type { ESTree } from '@oxlint/plugins'
 
 export interface FactoriesFunction {
@@ -7,7 +7,7 @@ export interface FactoriesFunction {
   node: ESTree.Function | ESTree.ArrowFunctionExpression
 }
 
-export function factoriesExpandTemplate(template: string, groups: Record<string, string>): string {
+export function factoriesExpandTemplate(template: string, groups: Record<string, string>, camelCase = false): string {
   return template.replaceAll(/\{([^}]+)\}/g, (placeholder, key: string) => {
     const group = groups[key.toLowerCase()]
 
@@ -15,7 +15,11 @@ export function factoriesExpandTemplate(template: string, groups: Record<string,
       return placeholder
     }
 
-    return /^[A-Z]/.test(key) ? namingPascalCase(group) : group
+    if (/^[A-Z]/.test(key)) {
+      return namingPascalCase(group)
+    }
+
+    return camelCase ? namingCamelCase(group) : group
   })
 }
 

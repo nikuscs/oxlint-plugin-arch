@@ -1,6 +1,7 @@
 import { defineRule } from '@oxlint/plugins'
 import {
   declarationsCollectNamed,
+  declarationsPublicServiceMethods,
   exportsCollect,
   namingFileBasename,
   namingFilePrefixes,
@@ -19,6 +20,8 @@ interface ExportFilePrefixOptions {
   roleSeparators?: string[]
   normalize?: 'remove-separators' | 'none'
   singularize?: 'none' | 'trailing-s'
+  serviceMethods?: boolean
+  allFunctions?: boolean
   allDeclarations?: boolean
   allowPattern?: OptionsPattern
 }
@@ -41,6 +44,8 @@ export const exportFilePrefix = defineRule({
         roleSeparators: { type: 'array', items: { type: 'string' } },
         normalize: { type: 'string', enum: ['remove-separators', 'none'] },
         singularize: { type: 'string', enum: ['none', 'trailing-s'] },
+        serviceMethods: { type: 'boolean' },
+        allFunctions: { type: 'boolean' },
         allDeclarations: { type: 'boolean' },
         allowPattern: optionsPatternSchema,
       },
@@ -66,6 +71,14 @@ export const exportFilePrefix = defineRule({
               name: binding.localName ?? binding.exportedName,
               node: binding.node,
             }))
+        if (options.allFunctions && !options.allDeclarations) {
+          const exportedNames = new Set(names.map((item) => item.name))
+          names.push(...declarationsCollectNamed(program).filter((item) =>
+            !exportedNames.has(item.name) && (item.node.type === 'FunctionDeclaration'
+              || item.node.type === 'VariableDeclarator' && (item.node.init?.type === 'ArrowFunctionExpression'
+                || item.node.init?.type === 'FunctionExpression'))))
+        }
+        if (options.serviceMethods) names.push(...declarationsPublicServiceMethods(program))
         const seen = new Set<string>()
 
         for (const item of names) {

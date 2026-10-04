@@ -5,6 +5,7 @@ function importedAliasTarget(declaration: ESTree.Declaration | null, imports: Se
   if (declaration?.type !== 'TSTypeAliasDeclaration'
     || declaration.typeAnnotation.type !== 'TSTypeReference'
     || declaration.typeAnnotation.typeName.type !== 'Identifier'
+    || Boolean(declaration.typeAnnotation.typeArguments?.params.length)
     || !imports.has(declaration.typeAnnotation.typeName.name)) {
     return undefined
   }

@@ -1,6 +1,6 @@
 # Preset integration fixtures
 
-The preset has **475/475 enabled rules covered**, including implicit Oxlint defaults: each has a passing counterexample and a failing example checked by the real CLI. `rule-coverage.json` maps every rule to those files. The inventory test checks both the authored preset (including root JavaScript-plugin rules omitted from printed output) and Oxlint's resolved configuration, including overrides, and fails if the manifest omits or duplicates a rule. It also fails when an upgrade adds an enabled default without fixtures.
+The preset has **471/471 enabled rules covered**, including implicit Oxlint defaults: each has a passing counterexample and a failing example checked by the real CLI. `rule-coverage.json` maps every rule to those files. The inventory test checks both the authored preset (including root JavaScript-plugin rules omitted from printed output) and Oxlint's resolved configuration, including overrides, and fails if the manifest omits or duplicates a rule. It also fails when an upgrade adds an enabled default without fixtures.
 
 This measures enabled-rule coverage, not every branch inside third-party rule implementations. Scopes, thresholds and consumer configuration have additional integration cases below.
 
@@ -35,3 +35,5 @@ Additional configuration cases live in `src/tests/preset.test.ts`: standalone/cu
 Native-rule examples were adapted from [Oxlint 1.85.0's rule tests](https://github.com/oxc-project/oxc/tree/oxlint_v1.85.0/crates/oxc_linter/src/rules), then verified with this preset's actual options. The manifest records source references where applicable; `OXC-LICENSE` preserves the upstream MIT license. Other examples exercise this preset's decisions and installed plugin behavior.
 
 Do not format `invalid/`, `rules-pass/` or `rules-fail/`: whitespace, filenames, missing EOF newlines and intentionally invalid patterns are test inputs. Repository-specific CI, Fallow and compiler-policy decisions remain outside the preset's scope.
+
+React Compiler defaults disable the four render-time prop rules. Separate CLI tests cover all four with Compiler enabled and disabled, custom architecture roots, frontend service constants, and narrow consumer exceptions.

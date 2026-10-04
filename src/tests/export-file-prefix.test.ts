@@ -132,3 +132,35 @@ test('export-file-prefix', () => {
     },
   )
 })
+
+ test('private domain functions retain the filename prefix', () => {
+  const options = [{ allFunctions: true }]
+  createRuleTester().run('arch/export-file-prefix', exportFilePrefix, {
+    valid: [
+      { filename: '/repo/room.utils.ts', options, code: 'export function roomRead() { const value = 1; const roomUserIsOwner = () => value > 0; return roomUserIsOwner() }' },
+      { filename: '/repo/room.utils.ts', options, code: 'function roomUserIsOwner() {} const roomRead = function () {}; const value = 1;' },
+      { filename: '/repo/room.utils.ts', code: 'function isOwner() {}' },
+    ],
+    invalid: [
+      { filename: '/repo/room.utils.ts', options, code: 'function isOwner() {}', errors: [error] },
+      { filename: '/repo/room.utils.ts', options, code: 'const isOwner = () => true; const read = function () {};', errors: [error, error] },
+      { filename: '/repo/room.utils.ts', options, code: 'export function roomRead() { function isOwner() {} }', errors: [error] },
+      { filename: '/repo/room.utils.ts', options, code: 'export function wrong() {}', errors: [error] },
+      { filename: '/repo/room.utils.ts', options, code: 'export const wrong = () => true;', errors: [error] },
+    ],
+  })
+})
+
+test('direct service object methods use the domain prefix without changing returned factory keys', () => {
+  const options = [{ serviceMethods: true }]
+  createRuleTester().run('arch/export-file-prefix', exportFilePrefix, {
+    valid: [
+      { filename: '/services/theme/theme.client.ts', options, code: 'export const themeService = { themeApply(value) { return value.trim() } }' },
+      { filename: '/services/theme/theme.client.ts', options, code: 'export function themeCreate() { return { apply(value) { return value.trim() } } }' },
+    ],
+    invalid: [
+      { filename: '/services/theme/theme.client.ts', options, code: 'export const otherService = { themeApply(value) { return value.trim() } }', errors: [error] },
+      { filename: '/services/theme/theme.client.ts', options, code: 'export const themeService = { apply(value) { return value.trim() } }', errors: [error] },
+    ],
+  })
+})

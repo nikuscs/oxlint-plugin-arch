@@ -1,3 +1,4 @@
+import { trivialUnwrap } from './trivial.ts'
 import { astVisit } from './ast.ts'
 import type { AstRuntimeFunction } from './ast.ts'
 import type { ReactComponentsCandidate } from './react-components.ts'
@@ -268,3 +269,17 @@ export function declarationsCollectFunctions(root: ESTree.Node): { name: string,
   })
 }
 
+
+export function declarationsPublicServiceMethods(program: ESTree.Program): { name: string, node: ESTree.Function, binding: ESTree.VariableDeclarator }[] {
+  return program.body.flatMap((statement) => {
+    if (statement.type !== 'ExportNamedDeclaration' || statement.declaration?.type !== 'VariableDeclaration' || statement.declaration.kind !== 'const') return []
+    return statement.declaration.declarations.flatMap((binding) => {
+      if (binding.id.type !== 'Identifier' || !binding.init) return []
+      const value = trivialUnwrap(binding.init)
+      if (value.type !== 'ObjectExpression' || value.properties.length === 0) return []
+      const methods = value.properties.flatMap((property) => property.type === 'Property' && property.method && property.kind === 'init' && !property.computed && property.key.type === 'Identifier' && property.value.type === 'FunctionExpression'
+        ? [{ name: property.key.name, node: property.value, binding }] : [])
+      return methods.length === value.properties.length ? methods : []
+    })
+  })
+}

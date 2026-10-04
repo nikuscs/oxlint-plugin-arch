@@ -17,17 +17,22 @@ export function presetModulesConfig(context: PresetContext): PresetPolicies {
     testFiles,
     components,
     hooks,
+    options,
   } = context
+  const conceptFiles = (options.fileRoles ?? []).map((role) => `**/*.${role}.ts`)
+  const frontendEntries = [...presetScopes(web, 'services/**/*.{client,server,rsc}.ts'), ...presetScopes(web, 'services/**/*.rsc.tsx')]
   const policies: PresetPolicies = {}
   policies.moduleLayout = [
-    presetOverride(presetScopes(app, `services/*/*/**/${presetExtensions}`), {
-      'arch/no-restricted-files': [
-        'error',
-        { message: 'Services allow at most one domain folder.' },
-      ],
-    }),
+    ...context.folders.flatMap(({ path, folder, mode }) => [
+      presetOverride([mode === 'flat' ? `${path}/*/**/${presetExtensions}` : `${path}/${presetExtensions}`, ...(mode === 'domain' ? [`${path}/*/*/**/${presetExtensions}`] : [])], {
+        'arch/no-restricted-files': ['error', { message: mode === 'flat' ? 'This folder uses a flat layout; subfolders are forbidden.' : 'This folder uses exactly one owning domain directory; loose and deeper files are forbidden.' }],
+      }),
+      ...(mode === 'domain' ? [presetOverride([`${path}/*/${presetExtensions}`], {
+        'arch/folder-prefix': ['error', { singularize: folder === 'components' ? 'trailing-s' : 'none', separators: ['.', '-'], ...(folder === 'hooks' ? { stripPrefixes: ['use-'] } : {}) }],
+      })] : []),
+    ]),
     presetOverride(
-      presetScopes(web, `components/*/*/**/${presetExtensions}`),
+      presetScopes(web.filter((path) => !context.folders.some((scope) => scope.path === path + '/components')), `components/*/*/**/${presetExtensions}`),
       {
         'arch/no-restricted-files': [
           'error',
@@ -40,12 +45,11 @@ export function presetModulesConfig(context: PresetContext): PresetPolicies {
       [
         ...presetScopes(web, 'components/**/*.ts'),
         ...presetScopes(web, 'hooks/**/*.tsx'),
-        ...presetScopes(web, 'hooks/*/**'),
       ],
       {
         'arch/no-restricted-files': [
           'error',
-          { message: 'Components use TSX; hooks are flat .ts files.' },
+          { message: 'Components use TSX; hooks use .ts files.' },
         ],
       },
       ui,
@@ -66,11 +70,11 @@ export function presetModulesConfig(context: PresetContext): PresetPolicies {
         'arch/no-restricted-files': [
           'error',
           {
-            message: 'Frontend services use .client.ts, .server.ts or .rsc.ts.',
+            message: 'Frontend services use .client.ts, .server.ts or .rsc.{ts,tsx}; shared domain helpers use .utils.ts and values use .constants.ts.',
           },
         ],
       },
-      ['**/*.{client,server,rsc,utils,constants}.ts'],
+      ['**/*.{client,server,rsc,utils,constants}.ts', '**/*.rsc.tsx', ...conceptFiles],
     ),
   ]
 
@@ -79,7 +83,6 @@ export function presetModulesConfig(context: PresetContext): PresetPolicies {
       services,
       {
         'modules/service-functions': 'error',
-        'modules/domain-constants': 'error',
         'arch/no-inline-types': [
           'error',
           {
@@ -90,16 +93,55 @@ export function presetModulesConfig(context: PresetContext): PresetPolicies {
           },
         ],
       },
+      [...utilities, ...testFiles, ...conceptFiles],
+    ),
+    presetOverride(
+      frontendEntries,
+      {
+        'modules/service-functions': ['error', { frontend: true }],
+      },
+      testFiles,
+    ),
+    ...conceptFiles.map((pattern) => presetOverride(presetScopes(app, `services/${pattern}`), {
+      'modules/service-functions': 'off',
+      'arch/export-file-prefix': ['error', {
+        stem: 'full-basename',
+        allFunctions: true,
+      }],
+    }, testFiles)),
+    presetOverride(
+      [...presetScopes(app, 'services/**/*-{action,query}.*.ts'), ...presetScopes(web, 'services/**/*-{action,query}.*.rsc.tsx')],
+      {
+        'modules/service-functions': ['error', {
+          allowLocalHelpers: true,
+          singleExport: true,
+          message: 'Action/query files export exactly one named operation. Keep helpers used only by this operation private inside its function; do not export them. Move a helper to the module\'s .utils.ts only when it is genuinely shared, not merely to satisfy lint.',
+        }],
+      },
+      testFiles,
+    ),
+    presetOverride(
+      presetScopes(backend, 'services/**/*.ts'),
+      { 'modules/domain-constants': 'error' },
       [...utilities, ...testFiles],
     ),
+    presetOverride(presetScopes(web, 'services/**/*.{ts,tsx}'), {
+      'modules/domain-constants': ['error', { includeData: true }],
+    }, ['**/*.constants.ts', ...testFiles]),
+    presetOverride(frontendEntries, {
+      'modules/domain-constants': ['error', { includeData: true, allowServiceMethods: true }],
+    }, testFiles),
     presetOverride(
       [
         ...presetScopes(backend, 'services/**/*-{action,query}.*.ts'),
-        ...presetScopes(web, 'services/**/*.{client,server,rsc}.ts'),
+        ...frontendEntries,
       ],
       { 'arch/require-object-params': ['error', { maxParams: 2 }] },
       testFiles,
     ),
+    presetOverride(frontendEntries, {
+      'arch/require-object-params': ['error', { maxParams: 2, serviceMethods: true }],
+    }, testFiles),
     presetOverride(
       presetScopes(backend, 'services/**/*.service.ts'),
       {
@@ -141,6 +183,19 @@ export function presetModulesConfig(context: PresetContext): PresetPolicies {
       { 'arch/export-file-prefix': ['error', presetExportPrefix] },
       [...ui, ...presetScopes(backend, 'entry.*.ts')],
     ),
+    presetOverride(frontendEntries, {
+      'arch/export-file-prefix': ['error', { ...presetExportPrefix, allFunctions: true, serviceMethods: true, allowPattern: '^\\*$' }],
+    }, testFiles),
+    presetOverride(presetScopes(web, 'services/**/*.constants.ts'), {
+      'arch/export-file-prefix': ['error', { ...presetExportPrefix, allDeclarations: true, allowPattern: '^\\*$' }],
+    }, testFiles),
+    presetOverride(presetScopes(app, '**/*.utils.ts'), {
+      'arch/export-file-prefix': ['error', {
+        ...presetExportPrefix,
+        allFunctions: true,
+        allowPattern: '^\\*$',
+      }],
+    }, ui),
     presetOverride(hooks, {
       'arch/filename-match': [
         'error',
@@ -158,10 +213,6 @@ export function presetModulesConfig(context: PresetContext): PresetPolicies {
     presetOverride(
       components,
       {
-        'arch/folder-prefix': [
-          'error',
-          { singularize: 'trailing-s', separators: ['-'] },
-        ],
         'arch/only-export-components': [
           'error',
           { matchFileName: true, allowTypeExports: true },
@@ -169,31 +220,55 @@ export function presetModulesConfig(context: PresetContext): PresetPolicies {
       },
       [...ui, ...testFiles],
     ),
+    presetOverride(presetScopes(web.filter((path) => !context.folders.some((scope) => scope.path === path + '/components')), 'components/**/*.tsx'), {
+      'arch/folder-prefix': ['error', { singularize: 'trailing-s', separators: ['-'] }],
+    }, [...ui, ...testFiles]),
     ...['action', 'query'].map((role) =>
-      presetOverride(presetScopes(backend, `services/**/*-${role}.*.ts`), {
+      presetOverride([...presetScopes(app, `services/**/*-${role}.*.ts`), ...presetScopes(web, `services/**/*-${role}.*.rsc.tsx`)], {
         'arch/filename-match': [
           'error',
           {
-            pattern: `^[a-z0-9]+(?:-[a-z0-9]+)*-${role}\\.[a-z0-9]+(?:[-.][a-z0-9]+)*\\.ts$`,
+            pattern: `^[a-z0-9]+(?:-[a-z0-9]+)*-${role}\\.[a-z0-9]+(?:-[a-z0-9]+)*\\.ts$`,
             message: 'Use domain-action.name.ts or domain-query.name.ts.',
           },
         ],
+        'arch/export-file-prefix': ['error', {
+          ...presetExportPrefix,
+          trailingRoles: [role],
+          allFunctions: true,
+          allowPattern: '^\\*$',
+        }],
         'arch/filename-export-name': [
           'error',
           {
             file: `{domain}-${role}.{name}.ts`,
             export: `{domain}${role === 'action' ? 'Action' : 'Query'}{Name}`,
             placeholderPattern: '[a-z0-9-]+',
+            camelCase: true,
           },
         ],
       }),
     ),
-    presetOverride(presetScopes(web, 'services/**/*.rsc.ts'), {
+    ...['action', 'query'].flatMap((role) => ['client.ts', 'server.ts', 'rsc.ts', 'rsc.tsx'].map((suffix) =>
+      presetOverride(presetScopes(web, `services/**/*-${role}.*.${suffix}`), {
+        'arch/filename-match': ['error', {
+          pattern: `^[a-z0-9]+(?:-[a-z0-9]+)*-${role}\\.[a-z0-9]+(?:-[a-z0-9]+)*\\.${suffix.replace('.', '\\.')}$`,
+          message: 'Frontend operations retain a client, server or rsc runtime suffix.',
+        }],
+        'arch/filename-export-name': ['error', {
+          file: `{domain}-${role}.{name}.${suffix}`,
+          export: `{domain}${role === 'action' ? 'Action' : 'Query'}{Name}`,
+          placeholderPattern: '[a-z0-9-]+',
+          camelCase: true,
+        }],
+      }),
+    )),
+    presetOverride(presetScopes(web, 'services/**/*.rsc.{ts,tsx}'), {
       'arch/export-name-pattern': [
         'error',
         { pattern: '^[a-z][a-z0-9]*Rsc[A-Z][a-zA-Z0-9]*$' },
       ],
-    }),
+    }, ['**/*-{action,query}.*.rsc.{ts,tsx}']),
   ]
   return policies
 }

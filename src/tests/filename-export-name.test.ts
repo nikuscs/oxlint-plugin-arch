@@ -24,6 +24,7 @@ test('filename-export-name', () => {
     filenameExportName,
     {
       valid: [
+        { filename: '/repo/user-profile-action.send.ts', code: 'export function userProfileActionSend() {}', options: [{ file: '{domain}-action.{name}.ts', export: '{domain}Action{Name}', placeholderPattern: '[a-z0-9-]+', camelCase: true }] },
         {
           filename: '/repo/actions/persona-action.identity-sheet-generate.ts',
           code: 'export function makePersonaActionIdentitySheetGenerate() {}',
@@ -51,6 +52,7 @@ test('filename-export-name', () => {
         },
       ],
       invalid: [
+        { filename: '/repo/user-profile-action.send.ts', code: 'export function wrongActionSend() {}', options: [{ file: '{domain}-action.{name}.ts', export: '{domain}Action{Name}', placeholderPattern: '[a-z0-9-]+', camelCase: true }], errors: [error] },
         {
           filename: '/repo/actions/persona-action.generate.ts',
           code: 'export function makeWrongFactory() {}',

@@ -3,8 +3,8 @@ import preset from 'oxlint-plugin-arch/presets/tanstack-start-react-modules-pres
 export default preset({
   root: import.meta.dirname,
   architecture: {
-    web: 'apps/web',
-    server: 'apps/server',
+    'apps/web': 'web',
+    'apps/server': 'server',
     scripts: 'scripts',
     packages: 'packages',
   },

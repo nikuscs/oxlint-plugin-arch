@@ -92,7 +92,7 @@ export const namingStemModes = ['before-first-dot', 'full-basename'] as const
 export type NamingStemMode = (typeof namingStemModes)[number]
 
 export function namingNormalized(value: string, normalize: 'remove-separators' | 'none'): string {
-  return normalize === 'none' ? value : value.replaceAll(/[-_]/g, '').toLowerCase()
+  return normalize === 'none' ? value : value.replaceAll(/[-_.]/g, '').toLowerCase()
 }
 
 export function namingFileStem(

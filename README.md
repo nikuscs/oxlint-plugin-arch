@@ -37,15 +37,15 @@ Paths are relative **app roots**, not `src` directories. These are the defaults:
 export default preset({
   root: import.meta.dirname,
   architecture: {
-    web: 'apps/web',
-    server: 'apps/server',
+    'apps/web': 'web',
+    'apps/server': 'server',
     scripts: 'scripts',
     packages: 'packages',
   },
 });
 ```
 
-The preset applies frontend rules under `apps/web/src`, backend rules under `apps/server/src`, and package import boundaries under `packages`. Add `runner: 'apps/runner'` for another backend app. Set a role to `false` when absent. A standalone frontend can use `web: '.', server: false, packages: false`. The default CSS entry point is `<web>/src/application/styles.css`; configure `tailwind.entryPoint` when different, or `tailwind: false` for a project without Tailwind. `root` makes asset and package resolution independent of the lint command's working directory; invoke the root config from its real filesystem location.
+`architecture` maps paths to roles and replaces the defaults when supplied. Multiple apps may share a role: `{ 'apps/dashboard': 'web', 'apps/storefront': 'web', 'apps/api': 'server', packages: 'packages', scripts: 'scripts' }`. Use `runner` for another strict backend, or `{ '.': 'web' }` for a standalone frontend. Omit absent roots. Paths are normalized; duplicates, overlapping roots and paths outside the project are rejected. Web and backend roles derive `src/services`, `src/types` and other application scopes; packages have no assumed app layout, and scripts permit console output. Shared baseline policies still apply everywhere. Each web root defaults to its own `src/application/styles.css`. Set `tailwind.entryPoints: { 'apps/storefront': 'themes/store.css' }` for per-root paths, or `tailwind.entryPoint` for an explicitly shared stylesheet. Entry paths are relative to `root`; `tailwind: false` disables Tailwind. Per-root CSS is supplied through Tailwind rule options because Oxlint 1.85 has no override-level `settings`. Shadcn discovers each app's theme through its own `components.json` (or package-local discovery). `root` makes asset and package resolution independent of the lint command's working directory; invoke the root config from its real filesystem location.
 
 ### Configure policies
 
@@ -79,9 +79,33 @@ export default preset({
 
 Available policies: `banTypes`, `typeSafety`, `serviceModules`, `moduleLayout`, `naming`, `comments`, `formatting`, `layout`, `imports`, `reactRules`, `effects`, `memoization`, `routes`, `forms`, `schemas`, `boundaries`, `tests`, `wrappers`, `mutableState`, `backendRules`, `clientOwnership`, `tailwindRules`, and `shadcnRules`.
 
-`level` is `error` by default and can be `warn`. Deliberately disabled rules remain disabled. `complexity` defaults to 32. `reactCompiler: false` disables the manual-memoization ban. `shadcn: false` disables shadcn integration while retaining Tailwind checks. `tailwind` accepts `entryPoint` and `rootFontSize`; `shadcn` accepts `ui` and `componentImports`. UI-kit files remain linted, with architecture/appearance exceptions rather than a global ignore.
+Shadcn allows caller-owned layout and standard opacity utilities. Other appearance belongs in the component API; arbitrary opacity still fails token validation. Add product-specific component contracts through `shadcnRules` or native Oxlint overrides, keeping `layout` and `opacity` in any replacement allowance.
+
+`level` is `error` by default and can be `warn`. Deliberately disabled rules remain disabled. `complexity` defaults to 32. React Compiler is assumed by default: manual memoization is banned and the four React performance rules against render-time function/object/array/JSX props are off. `reactCompiler: false` allows manual memoization and enables those four rules. `shadcn: false` disables shadcn integration while retaining Tailwind checks. `tailwind` accepts `entryPoint`, `entryPoints` and `rootFontSize`; `shadcn` accepts `ui` and `componentImports`. UI-kit files remain linted, with architecture/appearance exceptions rather than a global ignore.
+
+Module configuration, lookup tables, limits and defaults belong in domain `.constants.ts` files, including frontend services. All frontend constant declarations carry the domain prefix (for example `BOT_MODEL_PRIORITY`). Frontend service scopes enable `modules/domain-constants` with `includeData: true`: it detects module-level literal/object/array data, literal calculations and seeded Map/Set tables, plus the existing uppercase constants. Function-local calculations and call-created service instances remain in their owner; empty Map/Set state is not classified as configuration. This is syntactic enforcement, not semantic data-flow analysis: imported aliases and arbitrary call-created configuration still need review. Backend rule defaults are unchanged. Every scope follows the configured architecture roots; a web `.server.ts` file remains frontend-owned.
 
 ### Exceptions and native customization
+
+Action/query files (`services/**/*-{action,query}.*.ts` under configured app roots) export exactly one named operation. Helpers used only by that operation may be private nested functions or arrows inside it. Extra exports, including types, constants and re-exports, fail. Module-level private helpers still fail. Backend service files retain the stricter helper policy; `.utils.ts` files are for genuinely shared domain helpers, not a destination for every extraction. The trivial-function rule still applies.
+
+Frontend `.client.ts`, `.server.ts` and `.rsc.{ts,tsx}` service entries are cohesive modules: multiple public domain-prefixed operations are allowed. No private module-level function satellites are allowed. Operation-only helpers stay nested inside their public operation and retain the domain prefix; genuinely shared helpers belong in domain `.utils.ts`. Factories are optional for real state, injection or lifetimes, and existing singleton exports remain valid. Do not export helpers just to evade this rule. Runtime suffix checks, React-free client checks and anti-slop rules remain enabled.
+
+Frontend actions/queries retain their runtime suffix: `theme-action.apply.client.ts` exports exactly `themeActionApply`, not `themeActionApplyClient`. Related helpers stay inside that operation. Backend operations remain `domain-action.name.ts` / `domain-query.name.ts`, without runtime suffixes.
+
+Shared frontend domain helpers belong in `services/<domain>/<domain>.utils.ts`; existing runtime entrypoints may remain flat. Utility functions, including private helpers, keep their domain prefix. Pure implementation does not make an application-specific helper portable: the preset enables `portableLib` in `modules/import-boundaries` for every configured web root. Files under `src/lib/` cannot import or re-export any configured app's services or app package APIs, including otherwise public backend entrypoints and type-only references. Backend library scopes retain their existing rules.
+
+A portable module may consume its own contract using a type-only import from exactly the same web root's `types/<module>.types.ts`. The module stem removes the source extension and optional `.utils` suffix: both `lib/fade.ts` and `lib/fade.utils.ts` may consume `types/fade.types.ts`. Value imports, other-domain types, same-stem types from another app, and app-type re-exports (including imported bindings subsequently exported) fail. Relative paths, the built-in `@/` alias and configured aliases use the same ownership check. This is a filename ownership convention, not transitive semantic portability proof: the rule does not inspect imported contracts or follow module graphs. Static imports/re-exports, literal dynamic imports and TypeScript import types are checked; computed imports and arbitrary alias/data flow are not resolved. Custom aliases must be configured explicitly. An own-type match never overrides a services/backend/API ban.
+
+The supporting rule's `portableLib` option defaults to `false` outside the preset for compatibility. Use the existing `boundaries` callback, native overrides or file-specific `exclude['modules/import-boundaries']` for explicit consumer exceptions; an exclusion skips that rule's entire boundary check for the named file, so keep it narrow and documented.
+
+The preset's imports policy enables `arch/prefer-namespace-type-import` with `{ max: 3 }` for checked TypeScript files. Up to three named type imports stay named; four or more become a type namespace (for example, `BotTypes` from `bot.types`) with qualified references. The scope-aware autofix preserves aliases and rewrites only supported type references. Imports with namespace collisions, inline comments, local re-exports or unsupported reference syntax remain reported for manual review. Domain exports keep their names. Customize `max` or the rule's source-to-namespace `names` map through the existing `imports` callback or a native override; file-specific exclusions remain available.
+
+Declare cohesive private concept roles with `fileRoles: ['prompts']`. Built-in roles (`service`, `client`, `server`, `rsc`, `utils`, `action`, `query`, `types`, `constants`, `handler`, `test`, `spec`) cannot be redefined. A `route.prompts.ts` file may contain multiple builders, but every named function, including private functions, starts with the full `routePrompts` prefix. Arbitrary suffixes grant no exemption. Anti-slop checks remain enabled and comment exceptions remain explicit.
+
+With declared file roles, private service-domain files can be imported or re-exported only within their owning domain in the same app root. Cross-domain callers use service APIs (`.service`, `.client`, `.server`, `.rsc`) or genuinely shared `.utils`, types or constants. Public service/utility surfaces cannot re-export private internals, including private barrels; this checks export-from, export-star and directly imported bindings exported by name or namespace. Operations may use private concepts internally. This is a per-file surface contract, not a transitive module graph or arbitrary data-flow/alias analysis; do not move concept logic into utilities to evade ownership.
+
+`modules/service-functions` accepts `frontend`, `allowLocalHelpers`, `allowReturnedMethods`, `singleExport`, and `message` through the `serviceModules` callback or native overrides. The booleans default to `false` outside the preset's scoped overrides. `frontend: true` permits multiple public operations and their nested helpers; `singleExport: true` still requires exactly one operation. The preset enables frontend mode only for web runtime entries and applies the stricter single-export override to explicit actions/queries. The preset's diagnostic explains where helpers belong; consumers can replace `message` without disabling the rule.
 
 `exclude` disables only the named rule in the selected files, including rules enabled through several scopes. `ignorePatterns` adds whole-file ignores to the generated/build/dependency defaults.
 
@@ -119,7 +143,7 @@ Oxlint reads `typeAware` from the root config only. The direct `export default p
 
 - Single quotes, semicolons, two spaces, braced multiline control flow, early returns, 160-character lines and 400-line app and test files. Promise arrays and call objects expand; method chains are not forced multiline.
 - Components live in one group folder with matching prefixed names. Hooks are flat `use-*.ts` files. Local React types are prefixed interfaces; exported Props interfaces are allowed. Other types belong in domain `types/*.types.ts` files.
-- Backend operations use `domain-action.name.ts` / `domain-query.name.ts`. Services allow one domain folder, one exported operation without private helpers, object parameters and named signature types. Explicit `.utils.ts` files can hold generic helpers, but their types still belong in domain type files. Domain type and constant files cannot contain top-level functions. Frontend services use `.client.ts`, `.server.ts` or `.rsc.ts`.
+- Backend operations use `domain-action.name.ts` / `domain-query.name.ts`. Services allow one domain folder, one exported operation without private helpers, object parameters and named signature types. Explicit `.utils.ts` files can hold generic helpers, but their types still belong in domain type files. Domain type and constant files cannot contain top-level functions. Frontend services use `.client.ts`, `.server.ts` or `.rsc.{ts,tsx}`. RSC JSX entries retain `domainRscName` exports and the same helper/constants policies.
 - Routes wire components, forms use a schema resolver, context creation has an owner directory, and effects cannot replace derived values or event handlers. React Compiler projects reject manual memoization. Test IDs are allowed. JSX rejects new object/function props inside render, and noninteractive elements cannot receive a tab index.
 - Safety rules reject unknown/any, chained assertions, unjustified assertions, loose dictionaries, module mocks, shared mutable bindings and focused/skipped/placeholder tests. Comments are limited to supported directives, SAFETY notes and explicit exceptions. Type/constant files do not allow SAFETY comments; prompt files require explicit comment exceptions. UI-kit code retains type-safety, formatting and layout checks.
 - Unbound methods and untyped mocks are rejected, including in tests. Console calls require an explicit script/CLI scope or adapter exclusion. Promise rejection callbacks must not receive implicit `any`; omitting the error parameter is allowed. App code needing an `unknown` boundary must use an explicit rule-specific exception.
@@ -215,9 +239,9 @@ Options that take one regex string (`pattern`, `allowPattern`, `forbid`, `requir
 | Rule | What it enforces |
 | --- | --- |
 | `declaration-name` | Selected declarations start with a prefix taken from the filename, or match a pattern. |
-| `export-file-prefix` | Export names (or every function and type) start with the filename prefix. `trailingRoles` treats `onchain-utils.ts` like `onchain.utils.ts`. |
+| `export-file-prefix` | Names start with the filename prefix. `allFunctions` includes private functions; `allDeclarations` includes every declaration. `trailingRoles` handles role suffixes. |
 | `export-name-pattern` | Export names (or every function and type) match a regular expression. |
-| `filename-export-name` | Function names follow a template built from the filename. |
+| `filename-export-name` | Function names follow a template built from the filename. Set `camelCase: true` to convert lowercase placeholders such as `{domain}` from `user-profile` to `userProfile`; the default preserves captured text. |
 | `no-extra-exports` | A file exports only the names you allow. `patterns` accepts families such as `{Domain}[A-Z]\w*`. |
 | `only-export-constants` | Constant files export only local `const` values. [Details ↓](#only-export-constants) |
 
@@ -230,7 +254,7 @@ Options that take one regex string (`pattern`, `allowPattern`, `forbid`, `requir
 | `require-object-params` | Functions take object parameters instead of long positional lists. `maxParams: 2` allows `(deps, params)`. |
 | `no-file-level-helpers` | No stray helper functions at module scope. |
 | `no-top-level-functions` | No top-level functions (and optionally no re-exports) in matched files. |
-| `no-trivial-functions` | No empty or pass-through wrapper functions. `allowCallees` keeps intentional wrappers. |
+| `no-trivial-functions` | No empty/pass-through functions. `mode: 'precise'` preserves transformations and checks forbidden helper names and renamed generic guards. |
 | `no-module-mutable-state` | No module-level `let`/`var`, which is shared across requests and tests. |
 
 ### 🔷 Types
@@ -240,7 +264,7 @@ Options that take one regex string (`pattern`, `allowPattern`, `forbid`, `requir
 | `no-inline-types` | Function signatures use named types instead of inline `{ ... }` objects. [Details ↓](#no-inline-types) |
 | `no-type-declarations` | No type aliases or interfaces in matched files, so types live in one place. |
 | `no-runtime-in-types` | Type modules stay free of runtime code. Opt in to also ban runtime imports and re-exports. |
-| `no-imported-type-alias` | No exported aliases that only rename an imported type. |
+| `no-imported-type-alias` | No exported aliases that only rename an imported type; generic instantiations such as `Selectable<Table>` remain allowed. |
 | `prefer-namespace-type-import` 🔧 | Long type-only named imports become a namespace import with qualified references. [Details ↓](#prefer-namespace-type-import) |
 
 ### 🧪 Schemas & APIs
@@ -296,6 +320,14 @@ Options that take one regex string (`pattern`, `allowPattern`, `forbid`, `requir
 ---
 
 ## 🔍 Rule details
+
+### Private domain helpers and precise wrapper detection
+
+The preset requires all named functions in `room.utils.ts`, exported or private, to start with `room`, such as `roomUserIsOwner`. Private action/query helpers use the same domain prefix; the exported operation must exactly match its filename (`room-action.send-message.ts` → `roomActionSendMessage`). Ordinary local variables are unaffected. Standalone `export-file-prefix` users opt in with `allFunctions: true`.
+
+The preset enables `no-trivial-functions` with `mode: 'precise'`; standalone defaults retain legacy behavior. Precise mode rejects empty/constant/identity functions and unchanged-argument forwarding. Transformed arguments, query chains and interpolated prompts remain allowed. Nested generic runtime guards are checked too.
+
+Default exact banned names: `isRecord`, `isPlainObject`, `isObject`, `isString`, `isNumber`, `isBoolean`, `isArray`, `asRecord`, `asArray`. `bannedNames` replaces the list; `[]` disables name checks. `checkGenericGuards: false` disables structural checks. `allowPattern` exempts named helpers; `allowCallees` and `allowAsync` exempt wrappers only. No usage-count threshold, cross-file analysis or automatic rewrite is used.
 
 ### `no-inline-types`
 

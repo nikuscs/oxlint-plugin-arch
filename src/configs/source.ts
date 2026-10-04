@@ -9,7 +9,8 @@ import {
 export function presetSourceConfig(context: PresetContext): PresetPolicies {
   const {
     options,
-    architecture,
+    web,
+    scripts,
     app,
     appFiles,
     backendFiles,
@@ -44,6 +45,7 @@ export function presetSourceConfig(context: PresetContext): PresetPolicies {
   policies.imports = [
     presetOverride([`**/${presetExtensions}`], {
       ...presetImportRules,
+      'arch/prefer-namespace-type-import': ['error', { max: 3 }],
       'no-restricted-imports': ['error', { patterns: baseImports }],
       'import-extra/no-relative-packages': 'error',
       'perfectionist/sort-imports': [
@@ -97,12 +99,19 @@ export function presetSourceConfig(context: PresetContext): PresetPolicies {
       {
         'arch/no-trivial-functions': [
           'error',
-          { allowAsync: false, allowCallees: [] },
+          { mode: 'precise', allowAsync: false, allowCallees: [] },
         ],
       },
       ui,
     ),
   ]
+
+  policies.wrappers.push(presetOverride([
+    ...presetScopes(web, 'services/**/*.{client,server,rsc}.ts'),
+    ...presetScopes(web, 'services/**/*.rsc.tsx'),
+  ], {
+    'arch/no-trivial-functions': ['error', { mode: 'precise', allowAsync: false, allowCallees: [], checkServiceMethods: true }],
+  }, ui))
 
   policies.mutableState = [
     presetOverride(
@@ -119,7 +128,7 @@ export function presetSourceConfig(context: PresetContext): PresetPolicies {
       options.cli,
     ),
     presetOverride([`**/${presetExtensions}`], { 'no-console': 'error' }, [
-      ...(architecture.scripts ? [architecture.scripts + '/**'] : []),
+      ...presetScopes(scripts, '**'),
       ...(options.cli ?? []),
     ]),
     presetOverride(safetyFiles, { 'modules/double-negation': 'error' }, ui),

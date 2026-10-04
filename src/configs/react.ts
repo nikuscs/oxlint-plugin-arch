@@ -23,6 +23,12 @@ export function presetReactConfig(context: PresetContext): PresetPolicies {
         webFiles,
         {
           ...presetReactRules,
+          ...(options.reactCompiler === false ? {
+            'react-perf/jsx-no-new-object-as-prop': 'error',
+            'react-perf/jsx-no-new-array-as-prop': 'error',
+            'react-perf/jsx-no-new-function-as-prop': 'error',
+            'react-perf/jsx-no-jsx-as-prop': 'error',
+          } as const : {}),
           'arch/jsx-attributes-multiline': ['error', { minAttributes: 3 }],
         },
         ui,
@@ -106,7 +112,7 @@ export function presetReactConfig(context: PresetContext): PresetPolicies {
               {
                 token: 'RouterClient',
                 allowIn: [
-                  options.rpcClient ?? web[0] + '/services/rpc.client.ts',
+                  ...(options.rpcClient ? [options.rpcClient] : context.rpcClients),
                 ],
               },
               {
@@ -123,16 +129,22 @@ export function presetReactConfig(context: PresetContext): PresetPolicies {
     ]
   }
 
-  if (css) {
-    policies.tailwindRules = [presetOverride(webFiles, presetTailwindRules)]
+  if (Object.keys(css).length) {
+    policies.tailwindRules = Object.entries(css).map(([path, entryPoint]) => presetOverride(
+      presetScopes([path]),
+      Object.fromEntries(Object.entries(presetTailwindRules).map(([rule, severity]) => [rule, [severity, {
+        entryPoint,
+        rootFontSize: options.tailwind === false ? 16 : options.tailwind?.rootFontSize ?? 16,
+      }]])),
+    ))
   }
 
-  if (css && options.shadcn !== false) {
+  if (Object.keys(css).length && options.shadcn !== false) {
     policies.shadcnRules = [
       presetOverride(
         webFiles,
         {
-          'shadcn/no-restyle': ['error', { allow: ['layout'] }],
+          'shadcn/no-restyle': ['error', { allow: ['layout', 'opacity'] }],
           'shadcn/no-arbitrary-values': ['error', { allow: ['layout'] }],
           'shadcn/require-static-classes': 'error',
           'modules/dynamic-classes': 'error',

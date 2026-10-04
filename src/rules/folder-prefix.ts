@@ -11,6 +11,7 @@ import {
 interface FolderPrefixOptions {
   singularize?: 'none' | 'trailing-s'
   separators?: string[]
+  stripPrefixes?: string[]
   after?: string
 }
 
@@ -29,6 +30,7 @@ export const folderPrefix = defineRule({
         singularize: { type: 'string', enum: ['none', 'trailing-s'] },
         separators: { type: 'array', items: { type: 'string' } },
         after: { type: 'string' },
+        stripPrefixes: { type: 'array', items: { type: 'string', minLength: 1 } },
       },
     }],
     messages: {
@@ -42,6 +44,7 @@ export const folderPrefix = defineRule({
           singularize = 'trailing-s',
           separators = ['-'],
           after,
+          stripPrefixes = [],
         } = optionsFirst<FolderPrefixOptions>(context, {})
         const filename = namingPosixPath(context.filename)
         const folders = after
@@ -56,7 +59,9 @@ export const folderPrefix = defineRule({
         const separator = separators[0] ?? '-'
         const prefixes = namingFolderPrefixes(resolved, separator, singularize)
         const file = namingFileBasename(filename)
-        const stem = file.replace(/\.(tsx?|jsx?)$/, '')
+        const rawStem = file.replace(/\.(tsx?|jsx?)$/, '')
+        const strip = stripPrefixes.find((prefix) => rawStem.startsWith(prefix))
+        const stem = strip ? rawStem.slice(strip.length) : rawStem
         const valid = prefixes.some((prefix) => stem === prefix
           || separators.some((item) => stem.startsWith(`${prefix}${item}`)))
 

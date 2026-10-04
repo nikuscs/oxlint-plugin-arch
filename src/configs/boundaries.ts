@@ -12,6 +12,7 @@ export function presetBoundariesConfig(context: PresetContext): PresetPolicies {
     options,
     root,
     architecture,
+    packages,
     web,
     backend,
     appFiles,
@@ -23,9 +24,7 @@ export function presetBoundariesConfig(context: PresetContext): PresetPolicies {
     presetOverride(
       [
         ...appFiles,
-        ...(architecture.packages
-          ? [architecture.packages + '/**/' + presetExtensions]
-          : []),
+        ...presetScopes(packages, '**/' + presetExtensions),
       ],
       {
         'modules/import-boundaries': [
@@ -33,38 +32,47 @@ export function presetBoundariesConfig(context: PresetContext): PresetPolicies {
           {
             web: web.map((path) => resolve(root, path)),
             backend: backend.map((path) => resolve(root, path)),
-            packages: architecture.packages
-              ? resolve(root, architecture.packages)
-              : '',
+            packages: packages.map((path) => resolve(root, path)),
+            fileRoles: options.fileRoles ?? [],
+            portableLib: true,
             aliases: Object.fromEntries(
               Object.entries(options.aliases ?? {}).map(([alias, path]) => [
                 alias.replace(/\/$/, ''),
                 resolve(root, path),
               ]),
             ),
-            appPackages: [
-              architecture.web,
-              architecture.server,
-              architecture.runner,
-            ].flatMap((directory) => {
-              const name = directory
+            appPackages: Object.entries(architecture).flatMap(([directory, { role }]) => {
+              const name = role === 'web' || role === 'server' || role === 'runner'
                 ? presetPackageName(root, directory)
                 : undefined
               return name ? [name] : []
             }),
-            backendPackages: [architecture.server, architecture.runner].flatMap(
-              (directory) => {
-                const name = directory
-                  ? presetPackageName(root, directory)
-                  : undefined
-                return name ? [name] : []
-              },
-            ),
+            backendPackages: Object.entries(architecture).flatMap(([directory, { role }]) => {
+              const name = role === 'server' || role === 'runner'
+                ? presetPackageName(root, directory)
+                : undefined
+              return name ? [name] : []
+            }),
             publicEntrypoints,
           },
         ],
       },
     ),
+    presetOverride([...presetScopes(web, 'services/**/*.{ts,tsx}'), ...presetScopes(web, 'lib/**/*.{ts,tsx}')], {
+      'modules/tanstack-runtime': ['error', {
+        web: web.map((path) => resolve(root, path)),
+        backend: backend.map((path) => resolve(root, path)),
+        aliases: Object.fromEntries(Object.entries(options.aliases ?? {}).map(([alias, path]) => [alias.replace(/\/$/, ''), resolve(root, path)])),
+        backendPackages: Object.entries(architecture).flatMap(([directory, { role }]) => {
+          const name = role === 'server' || role === 'runner' ? presetPackageName(root, directory) : undefined
+          return name ? [name] : []
+        }),
+        rpcClients: (options.rpcClient ? [options.rpcClient] : context.rpcClients).map((path) => resolve(root, path)),
+        serverImports: options.tanstackRuntime?.serverImports ?? [],
+        clientImports: options.tanstackRuntime?.clientImports ?? [],
+        allowComputedImportsIn: options.tanstackRuntime?.allowComputedImportsIn?.map((path) => resolve(root, path)) ?? [],
+      }],
+    }),
     presetOverride(presetScopes(backend, 'rpc/**/*.ts'), {
       'modules/rpc-database': 'error',
       'no-restricted-imports': [

@@ -27,12 +27,21 @@ export type PresetPolicyName =
   | 'shadcnRules'
   | 'clientOwnership'
 
-export interface PresetArchitecture {
-  web?: string | false
-  server?: string | false
-  runner?: string | false
-  scripts?: string | false
-  packages?: string | false
+export type PresetRole = 'web' | 'server' | 'runner' | 'scripts' | 'packages'
+export type PresetFolderLayout = 'flat' | 'domain'
+export interface PresetArchitectureEntry {
+  role: PresetRole
+  layout?: Record<string, PresetFolderLayout>
+}
+export type PresetArchitecture = Record<string, PresetRole | PresetArchitectureEntry>
+export interface PresetResolvedRoot {
+  role: PresetRole
+  layout: Record<string, PresetFolderLayout>
+}
+export interface PresetFolderScope {
+  path: string
+  folder: string
+  mode: PresetFolderLayout
 }
 
 export interface PresetOptions extends Partial<
@@ -40,6 +49,7 @@ export interface PresetOptions extends Partial<
 > {
   root?: string
   architecture?: PresetArchitecture
+  fileRoles?: string[]
   level?: 'error' | 'warn'
   complexity?: number
   ignorePatterns?: string[]
@@ -52,14 +62,22 @@ export interface PresetOptions extends Partial<
   internalPatterns?: string[]
   aliases?: Record<string, string>
   rpcClient?: string
+  tanstackRuntime?: PresetRuntimeOptions
   schemaComposers?: string[]
   sanitizers?: string[]
   formResolver?: string
   cli?: string[]
 }
 
+export interface PresetRuntimeOptions {
+  serverImports?: string[]
+  clientImports?: string[]
+  allowComputedImportsIn?: string[]
+}
+
 export interface PresetTailwindOptions {
   entryPoint?: string
+  entryPoints?: Record<string, string>
   rootFontSize?: number
 }
 
@@ -81,10 +99,14 @@ export interface PresetImportRestriction {
 
 export interface PresetContext {
   options: PresetOptions
-  architecture: PresetArchitecture
+  architecture: Record<string, PresetResolvedRoot>
+  folders: PresetFolderScope[]
+  rpcClients: string[]
+  packages: string[]
+  scripts: string[]
   root: string
   level: 'error' | 'warn'
-  css: string | undefined
+  css: Record<string, string>
   baseImports: PresetImportRestriction[]
   web: string[]
   backend: string[]

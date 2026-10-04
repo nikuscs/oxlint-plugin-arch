@@ -13,6 +13,7 @@ interface FilenameExportNameOptions {
   export: string
   mode?: 'all' | 'some'
   placeholderPattern?: string
+  camelCase?: boolean
   allDeclarations?: boolean
 }
 
@@ -32,6 +33,7 @@ export const filenameExportName = defineRule({
         export: { type: 'string' },
         mode: { type: 'string', enum: ['all', 'some'] },
         placeholderPattern: { type: 'string' },
+        camelCase: { type: 'boolean' },
         allDeclarations: { type: 'boolean' },
       },
       required: ['file', 'export'],
@@ -49,6 +51,7 @@ export const filenameExportName = defineRule({
           mode = 'all',
           placeholderPattern,
           allDeclarations = false,
+          camelCase = false,
         } = optionsFirst<FilenameExportNameOptions>(context)
         const groups = namingMatchTemplate(namingFileBasename(context.filename), file, placeholderPattern)
 
@@ -56,7 +59,7 @@ export const filenameExportName = defineRule({
           return
         }
 
-        const expected = factoriesExpandTemplate(exportTemplate, groups)
+        const expected = factoriesExpandTemplate(exportTemplate, groups, camelCase)
         const functions = allDeclarations ? declarationsCollectFunctions(program) : exportsCollectFunctions(program)
 
         if (mode === 'some') {

@@ -56,6 +56,7 @@ export default defineConfig({
           pairs: [{ when: 'createForm', require: 'schemaResolver' }],
         }],
         'arch/no-trivial-functions': ['error', {
+          mode: 'precise',
           allowPattern: '^(create|make)[A-Z]',
           allowCallees: ['^http\\.'],
         }],
@@ -112,6 +113,7 @@ export default defineConfig({
           after: 'components',
         }],
         'arch/export-file-prefix': ['error', {
+          allFunctions: true,
           stem: 'full-basename',
           normalize: 'remove-separators',
           singularize: 'trailing-s',
@@ -140,6 +142,7 @@ export default defineConfig({
           message: 'Action filenames must include their domain and action name.',
         }],
         'arch/filename-export-name': ['error', {
+          camelCase: true,
           file: '{domain}-action.{name}.ts',
           export: 'make{Domain}Action{Name}',
           mode: 'all',
