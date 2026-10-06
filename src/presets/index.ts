@@ -12,6 +12,7 @@ export type {
   PresetSqlOptions,
   PresetFormsOptions,
   PresetReactOptions,
+  PresetTestsOptions,
   PresetPolicyOptions,
   PresetPolicy,
   PresetPolicyName,

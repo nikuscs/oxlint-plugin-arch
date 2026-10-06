@@ -29,6 +29,8 @@ export const presetPolicyOrder: PresetPolicyName[] = [
 ]
 
 export const presetCommonRules: PresetRules = {
+  'vitest/expect-expect': 'off',
+  'vitest/no-standalone-expect': 'off',
   'jsx-a11y/no-noninteractive-tabindex': 'error',
   'no-case-declarations': 'error',
   'no-empty': 'error',
@@ -419,18 +421,7 @@ export const presetTestRules: PresetRules = {
   'jest/no-export': 'off',
   'jest/no-standalone-expect': 'off',
   'jest/require-to-throw-message': 'off',
-  'vitest/no-standalone-expect': [
-    'error',
-    {
-      additionalTestBlockFunctions: ['test'],
-    },
-  ],
-  'vitest/expect-expect': [
-    'error',
-    {
-      additionalTestBlockFunctions: ['test'],
-    },
-  ],
+  'vitest/no-conditional-expect': 'error',
   'vitest/require-mock-type-parameters': 'error',
 }
 

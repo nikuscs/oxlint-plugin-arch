@@ -1,6 +1,7 @@
 import { eslintCompatPlugin } from '@oxlint/plugins'
 import { callArrayMultiline } from './rules/call-array-multiline.ts'
 import { chainNewline } from './rules/chain-newline.ts'
+import { componentProps } from './rules/component-props.ts'
 import { declarationName } from './rules/declaration-name.ts'
 import { exportFilePrefix } from './rules/export-file-prefix.ts'
 import { exportNamePattern } from './rules/export-name-pattern.ts'
@@ -48,6 +49,7 @@ export default eslintCompatPlugin({
   rules: {
     'call-array-multiline': callArrayMultiline,
     'chain-newline': chainNewline,
+    'component-props': componentProps,
     'declaration-name': declarationName,
     'export-file-prefix': exportFilePrefix,
     'export-name-pattern': exportNamePattern,

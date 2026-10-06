@@ -355,6 +355,7 @@ export default defineConfig({
       files: componentFiles,
       excludeFiles: componentExceptions,
       rules: {
+        'arch/component-props': 'error',
         'arch/only-export-components': ['error', { matchFileName: true, denyTypePattern: 'Props$' }],
         'arch/folder-prefix': ['error', { singularize: 'trailing-s', separators: ['-'] }],
         'arch/no-file-level-helpers': [

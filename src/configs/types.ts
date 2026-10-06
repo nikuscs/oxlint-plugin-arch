@@ -46,6 +46,9 @@ export function presetTypesConfig(context: PresetContext): PresetPolicies {
       },
       [...ui, ...testFiles],
     ),
+    ...(options.react?.componentProps === false
+      ? []
+      : [presetOverride(components, { 'arch/component-props': ['error', { filePrefix: true }] }, [...ui, ...testFiles])]),
     presetOverride(
       presetScopes(app, '**/*.types.ts'),
       {

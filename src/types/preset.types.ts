@@ -54,6 +54,7 @@ export interface PresetOptions {
   sql?: PresetSqlOptions
   forms?: PresetFormsOptions
   react?: PresetReactOptions
+  tests?: PresetTestsOptions
   policies?: PresetPolicyOptions
   ignorePatterns?: string[]
   ruleExclusions?: Record<string, string[]>
@@ -72,6 +73,13 @@ export interface PresetLimitsOptions {
 
 export interface PresetModulesOptions {
   customFileRoles?: string[]
+  migrationFiles?: string[]
+}
+
+export interface PresetTestsOptions {
+  profile?: 'standard' | 'fixtures'
+  additionalTestFunctions?: string[]
+  additionalAssertionFunctions?: string[]
 }
 
 export interface PresetImportsOptions {
@@ -96,6 +104,7 @@ export interface PresetFormsOptions {
 
 export interface PresetReactOptions {
   compiler?: boolean
+  componentProps?: boolean
 }
 
 export interface PresetTanstackStartOptions {

@@ -9,6 +9,8 @@ export default preset({
     packages: 'packages',
   },
   limits: { maxFileLines: 400 },
+  tests: { profile: 'fixtures' },
+  modules: { migrationFiles: ['apps/server/src/services/database/migrations/**/*.ts'] },
   policies: {
     typePlacement: (current) =>
       current.map((scope) => ({

@@ -4,6 +4,7 @@ import { serviceTypes } from './service-types.ts'
 import { serviceFunctions } from './service-functions.ts'
 import { domainConstants } from './domain-constants.ts'
 import { testModifiers } from './test-modifiers.ts'
+import { testAssertions } from './test-assertions.ts'
 import { directives } from './reasoned-directives.ts'
 import { tanstackRuntime } from './tanstack-runtime.ts'
 import { importBoundaries } from './import-boundaries.ts'
@@ -12,6 +13,7 @@ import { memoization } from './memoization.ts'
 export default eslintCompatPlugin({
   meta: { name: 'modules' },
   rules: {
+    'test-assertions': testAssertions,
     'dynamic-classes': syntaxRule(
       ':matches(JSXAttribute[name.name="className"] TemplateLiteral[expressions.length>0], JSXAttribute[name.name="className"] BinaryExpression[operator="+"])',
       'Write complete class names instead of constructing them dynamically.',

@@ -53,6 +53,11 @@ test('test-title-pattern', () => {
     ],
     invalid: [
       {
+        code: "test.for(cases)('should save %s', fn); integrationTest.for(cases)('should load %s', fn)",
+        options: [{ callees: ['test', 'integrationTest'], forbid: '^should ', flags: '' }],
+        errors: [forbidden, forbidden],
+      },
+      {
         code: "test('should save', fn)",
         options: [{ forbid: '^should ' }],
         errors: [forbidden],

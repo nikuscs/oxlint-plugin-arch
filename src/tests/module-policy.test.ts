@@ -194,7 +194,10 @@ test('action/query helpers stay inside their sole exported operation', () => {
     valid: [
       { options, code: 'export function run() { const format = () => 1; return format() + 2 }' },
       { options, code: 'export async function run() { function format() { return 1 } return format() + 2 }' },
-      { options, code: 'export const run = () => { const format = function () { return 1 }; return format() + 2 }' },
+      {
+        options,
+        code: 'export const run = () => { const format = function () { return 1 }; return format() + 2 }',
+      },
       { options, code: 'const run = () => { const format = () => 1; return format() + 2 }; export { run }' },
     ],
     invalid: [
@@ -208,9 +211,21 @@ test('action/query helpers stay inside their sole exported operation', () => {
         code: 'export function run() {} export function helper() {}',
         errors: [{ messageId: 'exports' }, { messageId: 'helper' }, { messageId: 'helper' }],
       },
-      { options, code: 'export function run() {} export const extra = 1', errors: [{ messageId: 'exports' }] },
-      { options, code: 'export function run() {} export type Extra = string', errors: [{ messageId: 'exports' }] },
-      { options, code: 'export function run() {} export { run as other }', errors: [{ messageId: 'exports' }] },
+      {
+        options,
+        code: 'export function run() {} export const extra = 1',
+        errors: [{ messageId: 'exports' }],
+      },
+      {
+        options,
+        code: 'export function run() {} export type Extra = string',
+        errors: [{ messageId: 'exports' }],
+      },
+      {
+        options,
+        code: 'export function run() {} export { run as other }',
+        errors: [{ messageId: 'exports' }],
+      },
       { options, code: 'export * from "./other"', errors: [{ messageId: 'exports' }] },
       { options, code: 'export { run } from "./other"', errors: [{ messageId: 'exports' }] },
       { options, code: 'export const value = 1', errors: [{ messageId: 'exports' }] },
@@ -220,7 +235,11 @@ test('action/query helpers stay inside their sole exported operation', () => {
         code: 'export default function run() {}',
         errors: [{ messageId: 'exports' }, { messageId: 'helper' }],
       },
-      { options, code: 'export function run() {} { const helper = () => 1 }', errors: [{ messageId: 'helper' }] },
+      {
+        options,
+        code: 'export function run() {} { const helper = () => 1 }',
+        errors: [{ messageId: 'helper' }],
+      },
       {
         options: [{ ...options[0], message: 'Keep one operation; keep local helpers inside it.' }],
         code: 'export const extra = 1',
@@ -232,8 +251,19 @@ test('action/query helpers stay inside their sole exported operation', () => {
 
 test('test modifiers recognize renamed test imports', () => {
   createRuleTester().run('modules/test-modifiers', testModifiers, {
-    valid: ["import { test as check } from 'vitest'; check('works', () => {})"],
+    valid: [
+      "import { test as check } from 'vitest'; check('works', () => {})",
+      {
+        code: "integrationTest('works', fn); unrelated.skip()",
+        options: [{ additionalTestFunctions: ['integrationTest'] }],
+      },
+    ],
     invalid: [
+      {
+        code: "integrationTest.only('works', fn); suite.integration.skip('works', fn); suite.integration.todo('later')",
+        options: [{ additionalTestFunctions: ['integrationTest', 'suite.integration'] }],
+        errors: [{ messageId: 'modifier' }, { messageId: 'modifier' }, { messageId: 'modifier' }],
+      },
       {
         code: "import { test as check } from 'vitest'; check.only('works', () => {})",
         errors: [{ messageId: 'modifier' }],

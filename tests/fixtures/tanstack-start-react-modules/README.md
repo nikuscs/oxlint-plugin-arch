@@ -1,6 +1,6 @@
 # Preset integration fixtures
 
-The preset has **471/471 enabled rules covered**, including implicit Oxlint defaults: each has a passing counterexample and a failing example checked by the real CLI. `rule-coverage.json` maps every rule to those files. The inventory test checks both the authored preset (including root JavaScript-plugin rules omitted from printed output) and Oxlint's resolved configuration, including overrides, and fails if the manifest omits or duplicates a rule. It also fails when an upgrade adds an enabled default without fixtures.
+Every enabled preset rule, including implicit Oxlint defaults, has a passing counterexample and a failing example checked by the real CLI. `rule-coverage.json` maps every rule to those files. The inventory test checks both the authored preset (including root JavaScript-plugin rules omitted from printed output) and Oxlint's resolved configuration, including overrides, and fails if the manifest omits or duplicates a rule. It also fails when an upgrade adds an enabled default without fixtures.
 
 This measures enabled-rule coverage, not every branch inside third-party rule implementations. Scopes, thresholds and consumer configuration have additional integration cases below.
 
@@ -30,7 +30,11 @@ The runners live in `src/tests/preset-coverage.test.ts` and `src/tests/preset-fi
 
 Additional configuration cases live in `src/tests/preset.test.ts`: standalone/custom architecture roots, aliases, policy switches, callbacks, native overrides, public endpoint scope, plugin loading, type-aware configuration and option isolation. Focused regressions cover exported multiline declaration padding, SQL operator calls and `SAFETY:` comments on exported assertions.
 
+Test-profile regressions cover fixture/standard import conventions, parameterized and custom tests, missing/conditional assertions, typed mocks and forbidden modifiers, assertion-based TypeScript narrowing, exact imported assertion helpers and migration-scope isolation. The shared assertion check covers native/extended tests, every static table-row callback, framework fixture teardown, called versus unused helpers, aliases, recursion and shadowing. Bare assertions and empty tests still fail. The two replaced native checks are no longer active in the preset manifest. Tailwind fix tests require byte-for-byte convergence within eight passes, followed by an unchanged repeat, not merely exit zero: overlapping fixes may finish a command successfully while leaving another fix for the next pass.
+
 ## Sources
+
+[Cross-project review](./igerslike-review.md) records the isolated 0.5.0-to-candidate comparison, recognition fixes, migration scopes, remaining policy differences and validation limits.
 
 Native-rule examples were adapted from [Oxlint 1.85.0's rule tests](https://github.com/oxc-project/oxc/tree/oxlint_v1.85.0/crates/oxc_linter/src/rules), then verified with this preset's actual options. The manifest records source references where applicable; `OXC-LICENSE` preserves the upstream MIT license. Other examples exercise this preset's decisions and installed plugin behavior.
 

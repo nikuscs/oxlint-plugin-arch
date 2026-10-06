@@ -30,3 +30,11 @@ export interface ModuleRuntimeOptions
   clientImports?: string[]
   allowComputedImportsIn?: string[]
 }
+
+export interface ModuleTestModifiersOptions {
+  additionalTestFunctions?: string[]
+}
+
+export interface ModuleTestAssertionsOptions extends ModuleTestModifiersOptions {
+  additionalAssertionFunctions?: string[]
+}

@@ -129,6 +129,7 @@ export default defineConfig({
     {
       files: ['**/src/components/**/*.tsx'],
       rules: {
+        'arch/component-props': 'error',
         'arch/only-export-components': ['error', { matchFileName: true, denyTypePattern: 'Props$' }],
         'arch/no-extra-exports': [
           'error',

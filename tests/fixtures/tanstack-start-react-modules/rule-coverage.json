@@ -55,6 +55,17 @@
     }
   },
   {
+    "rule": "arch/component-props",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/web/src/components/chats/chat-card.tsx"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/web/src/components/chats/chat-card.tsx"
+    }
+  },
+  {
     "rule": "arch/declaration-name",
     "pass": {
       "project": "rules-pass",
@@ -3071,6 +3082,17 @@
     }
   },
   {
+    "rule": "modules/test-assertions",
+    "pass": {
+      "project": "rules-pass",
+      "file": "apps/server/tests/fixture-assertions.test.ts"
+    },
+    "fail": {
+      "project": "rules-fail",
+      "file": "apps/server/tests/fixture-assertions.test.ts"
+    }
+  },
+  {
     "rule": "modules/test-modifiers",
     "pass": {
       "project": "rules-pass",
@@ -5321,18 +5343,6 @@
     }
   },
   {
-    "rule": "vitest/expect-expect",
-    "pass": {
-      "project": "rules-pass",
-      "file": "apps/web/src/rule-cases/vitest-expect-expect-pass-0.test.tsx"
-    },
-    "fail": {
-      "project": "rules-fail",
-      "file": "apps/web/src/rule-cases/vitest-expect-expect-fail-0.test.tsx"
-    },
-    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/vitest/expect_expect.rs"
-  },
-  {
     "rule": "vitest/hoisted-apis-on-top",
     "pass": {
       "project": "rules-pass",
@@ -5391,18 +5401,6 @@
       "file": "apps/web/src/rule-cases/vitest-no-focused-tests-fail-0.test.tsx"
     },
     "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/vitest/no_focused_tests.rs"
-  },
-  {
-    "rule": "vitest/no-standalone-expect",
-    "pass": {
-      "project": "rules-pass",
-      "file": "apps/web/src/rule-cases/vitest-no-standalone-expect-pass-0.test.tsx"
-    },
-    "fail": {
-      "project": "rules-fail",
-      "file": "apps/web/src/rule-cases/vitest-no-standalone-expect-fail-0.test.tsx"
-    },
-    "source": "https://raw.githubusercontent.com/oxc-project/oxc/oxlint_v1.85.0/crates/oxc_linter/src/rules/vitest/no_standalone_expect.rs"
   },
   {
     "rule": "vitest/prefer-snapshot-hint",

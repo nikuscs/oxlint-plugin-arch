@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- Add `tests.profile` (`fixtures` by default, or `standard`), explicit custom test/assertion names, parameterized-test recognition and assertion-based narrowing guidance. Both profiles retain assertion, mock and type-safety checks; fixtures additionally require named fixture/support imports.
+- Add explicit `modules.migrationFiles` scopes to exempt framework migration functions from service function/signature and folder-layout conventions without globally ignoring their safety checks.
+- Recognize `test.for` titles and configured custom test modifiers; cover profiles and migration isolation with real Oxlint CLI regressions.
+- Replace the preset’s native assertion-presence/placement checks with `modules/test-assertions`, covering native and extended tests, called local helpers and static table-row assertion callbacks. Require an assertion in every row; retain errors for standalone assertions, unused helpers and shadowed expectations. Custom assertion DSLs use `tests.additionalAssertionFunctions` or scoped module-rule options.
+- Recognize polling/soft assertions without mistaking table builders or asymmetric matchers for assertions. Verify Tailwind fixes converge by file contents rather than assuming exit zero means an unchanged next pass.
+- Add `arch/component-props`: every React component with props, exported or local, uses `interface XProps` declared directly above it; inline props always fail. Pass-through components may take a plain `ComponentProps<'tag'>` or `ComponentProps<typeof X>`. `filePrefix` requires local components to carry the file prefix. Enabled in the preset (with `filePrefix`) for `components/**/*.tsx`, excluding `components/ui` and tests; hooks, routes and non-component functions are unaffected. Opt out with `react: { componentProps: false }`, which leaves the other type-placement rules on.
+
+## 0.5.0
+
 - Replace the preset's `eslint-plugin-better-tailwindcss` dependency with `oxlint-tailwindcss` 1.14.0. Preserve seven Tailwind checks, per-root CSS themes and root font size, with shadcn retaining unknown-class and component checks. Consumer rule overrides must use the new `tailwindcss/*` IDs documented in the README. Add real autofix/idempotence coverage; deprecated classes now belong to the dedicated deprecation diagnostic.
 
 - Breaking unreleased preset API cleanup: grouped limits, modules, imports, oRPC, SQL, forms, React and TanStack Start settings; all boolean/callback policies now live under `policies`. Use `severity`, `cliFiles` and `ruleExclusions`; Tailwind/shadcn leaves use explicit names. Old flat preset keys are removed. Rule behavior, defaults, callback order and standalone rule APIs are unchanged.

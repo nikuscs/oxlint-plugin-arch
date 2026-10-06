@@ -10,7 +10,7 @@ interface TestTitlePatternOptions {
   flags: string
 }
 
-const TEST_MODIFIERS = new Set(['only', 'skip', 'concurrent', 'todo', 'each'])
+const TEST_MODIFIERS = new Set(['only', 'skip', 'concurrent', 'sequential', 'todo', 'each', 'for'])
 
 function isConfiguredName(name: string | undefined, callees: readonly string[]): boolean {
   if (!name) {
@@ -42,7 +42,10 @@ function isConfiguredCall(node: ESTree.CallExpression, callees: readonly string[
     return isConfiguredName(astDottedName(node.callee.callee), callees)
   }
 
-  return node.callee.type === 'TaggedTemplateExpression' && isConfiguredName(astDottedName(node.callee.tag), callees)
+  return (
+    node.callee.type === 'TaggedTemplateExpression' &&
+    isConfiguredName(astDottedName(node.callee.tag), callees)
+  )
 }
 
 function titleText(node: ESTree.Expression | ESTree.SpreadElement): string | undefined {

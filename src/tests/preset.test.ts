@@ -1,6 +1,14 @@
 import { afterAll, describe, expect, test } from 'vitest'
 import { execFileSync, spawnSync } from 'node:child_process'
-import { mkdtempSync, mkdirSync, writeFileSync, rmSync, symlinkSync, realpathSync, readFileSync } from 'node:fs'
+import {
+  mkdtempSync,
+  mkdirSync,
+  writeFileSync,
+  rmSync,
+  symlinkSync,
+  realpathSync,
+  readFileSync,
+} from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -63,6 +71,212 @@ function fixture(options: string, files: Record<string, string>, print = false) 
 }
 
 describe('TanStack Start React modules preset', { timeout: 30_000 }, () => {
+  test.each(['standard', 'fixtures'])('test profile %s follows assertion callbacks in table rows', (profile) => {
+    const code = `test.for([
+  { value: 1, verify: (value: number) => { expect(value).toBe(1); } },
+  { value: 2, verify: (value: number) => { expect(value).toBe(2); } },
+] as const)('checks $value', ({ value, verify: check }) => { check(value); });\n`
+    const result = fixture(`tests: { profile: '${profile}' },`, {
+      'apps/server/tests/native-table.test.ts': "import { expect, test } from 'vitest';\n" + code,
+      'apps/server/tests/fixture-table.test.ts': "import { expect, test as base } from 'vitest';\nconst test = base.extend({ amount: 1 });\n" + code,
+    })
+    const output: PresetFixtureOutput = JSON.parse(result.output)
+    expect(output.diagnostics.filter((entry) => /vitest\(|test-assertions/.test(entry.code)), result.output).toEqual([])
+  })
+
+  test.each(['standard', 'fixtures'])(
+    'test profile %s recognizes fixture tables and narrowing assertions',
+    (profile) => {
+      const result = fixture(
+        `tests: { profile: '${profile}', additionalTestFunctions: ['integrationTest'] },`,
+        {
+          'tsconfig.json': JSON.stringify({
+            compilerOptions: {
+              strict: true,
+              skipLibCheck: true,
+              module: 'Preserve',
+              moduleResolution: 'Bundler',
+              target: 'ESNext',
+              types: ['node'],
+            },
+            include: ['apps/**/*.ts'],
+          }),
+          'apps/server/tests/order.test.ts': `import { assert, expect, test as base } from 'vitest';
+const test = base.extend<{ amount: number }>({ amount: 1 });
+const integrationTest = test;
+test.for([1, 2])('table %s', (amount, { expect }) => { expect(amount).toBeGreaterThan(0); });
+test.each([1, 2])('each %s', (amount) => { expect(amount).toBeGreaterThan(0); });
+integrationTest.for([1])('custom table %s', (amount) => { expect(amount).toBe(1); });
+test.concurrent.for([1])('concurrent table %s', (amount, { expect }) => { expect(amount).toBe(1); });
+integrationTest('custom assertion', ({ amount }) => { assert.isTrue(amount === 1); });
+test('narrows a result', () => {
+  const result: { ok: true; data: { count: number } } | { ok: false } = Math.random() > 0.5 ? { ok: true, data: { count: 1 } } : { ok: false };
+  assert(result.ok, 'Expected success');
+  expect(result.data.count).toBe(1);
+});
+test('assert only', () => { assert(true); });
+`,
+      'apps/server/tests/native.test.ts': `import { assert, expect, it, test } from 'vitest';
+test.for([1])('native for %s', (amount) => { expect(amount).toBe(1); });
+it.each([1])('native each %s', (amount) => { expect(amount).toBe(1); });
+test('native assert', () => { assert(true); });
+test('poll', async () => { await expect.poll(() => 1).toBe(1); });
+`,
+        },
+      )
+      const diagnostics: PresetFixtureOutput = JSON.parse(result.output)
+      expect(diagnostics.diagnostics.filter((entry) => entry.code.startsWith('vitest('))).toEqual([])
+      const checked = spawnSync(
+        process.execPath,
+        [resolve(repository, 'node_modules/typescript/bin/tsc'), '--noEmit'],
+        {
+          cwd: result.root,
+          encoding: 'utf8',
+          timeout: 30_000,
+        },
+      )
+      expect(checked.status, checked.stdout + checked.stderr).toBe(0)
+    },
+  )
+
+  test.each(['standard', 'fixtures'])('test profile %s retains assertion and mock safety', (profile) => {
+    const result = fixture(
+      `tests: { profile: '${profile}', additionalTestFunctions: ['integrationTest'] },`,
+      {
+        'apps/server/tests/order.test.ts': `import { expect, test as base, vi } from 'vitest';
+const test = base.extend<{ amount: number }>({ amount: 1 });
+const integrationTest = test;
+expect(1).toBe(1);
+test('conditional assertion', ({ amount }) => { if (amount) { expect(amount).toBe(1); } });
+integrationTest.only('focused', () => { expect(1).toBe(1); });
+integrationTest.skip('skipped', () => { expect(1).toBe(1); });
+integrationTest.todo('future');
+vi.mock('./dependency');
+const callback = vi.fn();
+let shared = 1;
+test('mock', () => { shared += 1; expect(callback).not.toHaveBeenCalled(); });
+`,
+      'apps/server/tests/empty.test.ts': `import { test as base } from 'vitest';
+const test = base.extend<{ amount: number }>({ amount: 1 });
+const integrationTest = test;
+test.for([1])('missing assertion %s', (amount) => { Math.abs(amount); });
+integrationTest.for([1])('custom missing assertion %s', (amount) => { Math.abs(amount); });
+`,
+      'apps/server/tests/native-empty.test.ts': "import { test } from 'vitest';\ntest.for([1])('native empty %s', (amount) => { Math.abs(amount); });\n",
+      },
+    )
+    const diagnostics: PresetFixtureOutput = JSON.parse(result.output)
+    const codes = diagnostics.diagnostics.map((entry) => entry.code)
+    expect(codes.filter((code) => code === 'vitest(expect-expect)'), result.output).toHaveLength(0)
+    expect(
+      codes.filter((code) => code === 'modules(test-assertions)'),
+      result.output,
+    ).toHaveLength(4)
+    expect(codes.filter((code) => code === 'modules(test-modifiers)')).toHaveLength(3)
+    expect(codes).toEqual(
+      expect.arrayContaining([
+        'modules(test-assertions)',
+        'vitest(no-conditional-expect)',
+        'vitest(require-mock-type-parameters)',
+        'dillon-anti-slop(no-module-mocking)',
+        'arch(no-module-mutable-state)',
+      ]),
+    )
+  })
+
+  test('fixture profile preserves support imports convention while standard leaves helper organization open', () => {
+    const files = {
+      'apps/server/tests/order.test.ts':
+        "import { expect, test } from 'vitest';\nimport { amount } from './helpers/amount';\ntest('amount', () => { expect(amount).toBe(1); });\n",
+      'apps/server/tests/helpers/amount.ts': 'export const amount = 1;\n',
+    }
+    for (const options of ['', "tests: { profile: 'fixtures' },", "tests: { profile: 'standard' },"]) {
+      const result = fixture(options, files)
+      const diagnostics: PresetFixtureOutput = JSON.parse(result.output)
+      const restricted = diagnostics.diagnostics.filter(
+        (entry) => entry.code === 'eslint(no-restricted-imports)',
+      )
+      expect(restricted).toHaveLength(options.includes('standard') ? 0 : 1)
+    }
+  })
+
+  test('test settings validate names and preserve callbacks, severity, exclusions and caller arrays', () => {
+    const additionalTestFunctions = ['integrationTest']
+    const config = tanstackStartReactModulesPreset({
+      tests: { additionalTestFunctions },
+      severity: 'warn',
+      policies: {
+        tests: (current) => [
+          ...current,
+          { files: ['**/*.test.ts'], rules: { 'vitest/no-conditional-expect': 'off' } },
+        ],
+      },
+      ruleExclusions: { 'modules/test-assertions': ['tests/special.test.ts'] },
+    })
+    expect(additionalTestFunctions).toEqual(['integrationTest'])
+    expect(
+      config.overrides?.some((entry) => {
+        const rule = entry.rules?.['modules/test-assertions']
+        return Array.isArray(rule) && rule[0] === 'warn'
+      }),
+    ).toBe(true)
+    expect(config.overrides?.at(-1)?.rules?.['modules/test-assertions']).toBe('off')
+    expect(() => fixture("tests: { profile: 'unknown' },", { 'tests/order.test.ts': '' })).toThrow()
+    expect(() => tanstackStartReactModulesPreset({ tests: { additionalTestFunctions: ['*'] } })).toThrow(
+      'literal identifiers',
+    )
+  })
+
+  test('registered imported assertion helpers are exact and additive to Vitest assertions', () => {
+    const files = {
+      'apps/server/tests/order.test.ts':
+        "import { assert, test } from 'vitest';\nimport { verifyOrder, verifyOther } from './support/assertions';\ntest('known helper', () => { verifyOrder(1); });\ntest('unregistered helper', () => { verifyOther(1); });\ntest('native assertion', () => { assert.isTrue(true); });\n",
+      'apps/server/tests/support/assertions.ts':
+        "import { expect } from 'vitest';\nexport function verifyOrder(value: number) { expect(value).toBe(1); }\nexport function verifyOther(value: number) { expect(value).toBe(1); }\n",
+    }
+    const result = fixture("tests: { additionalAssertionFunctions: ['verifyOrder'] },", files)
+    const diagnostics: PresetFixtureOutput = JSON.parse(result.output)
+    expect(diagnostics.diagnostics.filter((entry) => entry.code === 'modules(test-assertions)')).toHaveLength(1)
+  })
+
+  test('explicit migration files exempt service layout and functions without hiding safety or nearby services', () => {
+    const path = 'api/src/services/database/migrations/001-create.ts'
+    const files = {
+      [path]:
+        'export function up() { return 1; }\nexport function down() { return 0; }\nexport type Unsafe = unknown;\n',
+      'api/src/services/database/tasks/001-create.ts':
+        'export function up() { return 1; }\nexport function down() { return 0; }\n',
+      'worker/src/services/database/migrations/001-create.ts':
+        'export function up() { return 1; }\nexport function down() { return 0; }\n',
+    }
+    const options = "architecture: { api: 'server', worker: 'runner' },"
+    const baseline: PresetFixtureOutput = JSON.parse(fixture(options, files).output)
+    expect(
+      baseline.diagnostics.some(
+        (entry) => entry.filename === path && entry.code === 'modules(service-functions)',
+      ),
+    ).toBe(true)
+    const result = fixture(
+      options + "modules: { migrationFiles: ['api/src/services/database/migrations/*.ts'] },",
+      files,
+    )
+    const diagnostics: PresetFixtureOutput = JSON.parse(result.output)
+    const migrated = diagnostics.diagnostics
+      .filter((entry) => entry.filename === path)
+      .map((entry) => entry.code)
+    expect(migrated).not.toContain('arch(no-restricted-files)')
+    expect(migrated).not.toContain('modules(service-functions)')
+    expect(migrated).toContain('modules(no-unknown)')
+    for (const filename of Object.keys(files).slice(1)) {
+      const codes = diagnostics.diagnostics
+        .filter((entry) => entry.filename === filename)
+        .map((entry) => entry.code)
+      expect(codes).toEqual(
+        expect.arrayContaining(['arch(no-restricted-files)', 'modules(service-functions)']),
+      )
+    }
+  })
+
   test('grouped settings preserve rule options, root-specific paths and callback precedence', () => {
     const seen: string[] = []
     const config = tanstackStartReactModulesPreset({
@@ -1157,11 +1371,19 @@ describe('TanStack Start React modules preset', { timeout: 30_000 }, () => {
     expect(result.output).toContain('shadcn(no-unknown-classes)')
     const path = resolve(result.root, 'apps/web/src/components/ui/card.tsx')
     const args = [binary, '-c', resolve(result.root, 'oxlint.config.ts'), '--fix', '--format', 'json', path]
-    let fixed = spawnSync(process.execPath, args, { cwd: result.root, encoding: 'utf8' })
-    for (let pass = 1; pass < 4 && fixed.status !== 0; pass++) {
-      fixed = spawnSync(process.execPath, args, { cwd: result.root, encoding: 'utf8' })
+    let stable = false
+    const passes: string[] = []
+    for (let pass = 0; pass < 8; pass++) {
+      const before = readFileSync(path, 'utf8')
+      const fixed = spawnSync(process.execPath, args, { cwd: result.root, encoding: 'utf8' })
+      passes.push(readFileSync(path, 'utf8'))
+      if (readFileSync(path, 'utf8') === before) {
+        expect(fixed.status, fixed.stdout + fixed.stderr).toBe(0)
+        stable = true
+        break
+      }
     }
-    expect(fixed.status, fixed.stdout + fixed.stderr).toBe(0)
+    expect(stable, `Tailwind fixes must converge within eight passes: ${JSON.stringify(passes)}`).toBe(true)
     const source = readFileSync(path, 'utf8')
     expect(source).toContain('size-4')
     expect(source).toContain('bg-brand')
@@ -1395,6 +1617,79 @@ export function ChatMessage() {
         "type ChatMessageStatus = 'idle' | 'busy';\n\nexport function ChatMessage() {\n  return <div>Hello</div>;\n}\n",
     })
     expect(invalid.output).toContain('local-type-alias')
+  })
+
+  test('component props use a same-file <Component>Props interface only in component scope', () => {
+    const inline = 'export function ProbeCard({ title }: { title: string }) {\n  return <h2>{title}</h2>;\n}\n'
+    const result = fixture('', {
+      'apps/web/src/components/probe/probe-card.tsx':
+        "import { memo } from 'react';\n\ninterface ProbeCardProps {\n  title: string;\n}\n\nexport function ProbeCard({ title }: ProbeCardProps) {\n  return <button onClick={(event: { detail: number }) => event.detail}>{title}</button>;\n}\n\ninterface ProbeCardInlineOptions {\n  label: string;\n}\n\nexport const ProbeCardInline = ({ label }: ProbeCardInlineOptions) => <span>{label}</span>;\n\ninterface ProbeCardMemoProps {\n  label: string;\n}\n\ninterface ProbeCardBadgeProps {\n  tone: string;\n}\n\nexport const ProbeCardMemo = memo(({ label }: ProbeCardMemoProps) => <p>{label}</p>);\n\nfunction ProbeCardBadge({ tone }: ProbeCardBadgeProps) {\n  return <i>{tone}</i>;\n}\n",
+      'apps/web/src/components/probe/probe-badge.tsx': inline.replace('ProbeCard', 'ProbeBadge'),
+      'apps/web/src/components/rooms/rooms-chat-tools.tsx':
+        'interface RoomsChatToolProps {\n  label: string;\n}\n\nfunction RoomsChatTool({ label }: RoomsChatToolProps) {\n  return <li>{label}</li>;\n}\n\nexport function RoomsChatTools() {\n  return <RoomsChatTool label="x" />;\n}\n',
+      'apps/web/src/components/ui/probe-card.tsx': inline,
+      'apps/web/src/components/probe/probe-card.test.tsx': inline,
+      'apps/web/src/hooks/use-probe.ts': 'export function useProbe({ id }: { id: string }) {\n  return id;\n}\n',
+    })
+    const diagnostics = JSON.parse(result.output).diagnostics.filter((entry: { code: string }) =>
+      entry.code.includes('component-props'),
+    )
+    expect(
+      diagnostics
+        .map((entry: { filename: string; message: string }) => [entry.filename, entry.message])
+        .sort(([left]: string[], [right]: string[]) => left.localeCompare(right)),
+    ).toEqual([
+      [
+        'apps/web/src/components/probe/probe-badge.tsx',
+        "'ProbeBadge' props are typed inline. Declare `interface ProbeBadgeProps` directly above it and use that.",
+      ],
+      [
+        'apps/web/src/components/probe/probe-card.tsx',
+        "'ProbeCardInline' props must use `interface ProbeCardInlineProps` declared directly above it, not 'ProbeCardInlineOptions'.",
+      ],
+      [
+        'apps/web/src/components/probe/probe-card.tsx',
+        "Move `interface ProbeCardMemoProps` directly above 'ProbeCardMemo', with only blank lines between them.",
+      ],
+      [
+        'apps/web/src/components/probe/probe-card.tsx',
+        "Move `interface ProbeCardBadgeProps` directly above 'ProbeCardBadge', with only blank lines between them.",
+      ],
+      [
+        'apps/web/src/components/rooms/rooms-chat-tools.tsx',
+        "Local component 'RoomsChatTool' would need `interface RoomsChatToolProps`, which breaks the file prefix 'RoomsChatTools'. Rename the component to start with 'RoomsChatTools' (for example 'RoomsChatToolsItem').",
+      ],
+    ])
+  })
+
+  test('react.componentProps toggles only component-props', () => {
+    const files = {
+      'apps/web/src/components/probe/probe-card.tsx':
+        "type ProbeCardTone = 'calm';\n\nexport function ProbeCard({ title }: { title: string }) {\n  return <h2>{title}</h2>;\n}\n",
+    }
+    const enabled = fixture('', files)
+    expect(enabled.output).toContain('component-props')
+    expect(enabled.output).toContain('local-type-alias')
+    const disabled = fixture('react: { componentProps: false },', files)
+    expect(disabled.output).not.toContain('component-props')
+    expect(disabled.output).toContain('local-type-alias')
+  })
+
+  test('pass-through components use ComponentProps instead of an empty props interface', () => {
+    const header = (props: string) =>
+      `import type { ComponentProps } from 'react';\n\n${props}export function ProbeHeader(props: ${props ? 'ProbeHeaderProps' : "ComponentProps<'header'>"}) {\n  return <header {...props} />;\n}\n`
+    const passThrough = fixture('', { 'apps/web/src/components/probe/probe-header.tsx': header('') })
+    expect(passThrough.status, passThrough.output).toBe(0)
+    const empty = fixture('', {
+      'apps/web/src/components/probe/probe-header.tsx': header("interface ProbeHeaderProps extends ComponentProps<'header'> {}\n\n"),
+    })
+    expect(empty.output).toContain('no-empty-object-type')
+    expect(empty.output).not.toContain('component-props')
+    const adds = fixture('', {
+      'apps/web/src/components/probe/probe-header.tsx':
+        "import type { ComponentProps } from 'react';\n\nexport function ProbeHeader(props: Omit<ComponentProps<'header'>, 'title'>) {\n  return <header {...props} />;\n}\n",
+    })
+    expect(adds.output).toContain("'ProbeHeader' props must use `interface ProbeHeaderProps`")
   })
 
   test('requires output schemas only in configured public API scopes', () => {

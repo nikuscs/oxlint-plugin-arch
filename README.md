@@ -103,11 +103,59 @@ Available policies: `typePlacement`, `typeSafety`, `serviceStructure`, `fileLayo
 
 `policies.typePlacement: false` disables type location restrictions; `policies.typeSafety` still rejects explicit any/unknown. `imports` contains import settings, while `policies.imports` customizes rule overrides. Backend entry points govern permitted imports and schema ownership; internal sort patterns only classify import ordering. `orpc.publicProcedureFiles` identifies endpoint files requiring output schemas. `cliFiles` lists CLI files receiving console/switch exceptions.
 
-`severity` defaults to `error` and accepts `warn`. File and function limits default to 400 and 32. React Compiler is assumed by default: manual memoization is banned and the four React performance rules against render-time function/object/array/JSX props are off. `react: { compiler: false }` allows manual memoization and enables those four rules. `shadcn: false` disables shadcn integration while retaining Tailwind checks. `tailwind` accepts `cssEntryPoint`, `cssEntryPointsByRoot` and `rootFontSize`; `shadcn` accepts `uiImportPath` and `componentImportSources`. UI-kit files remain linted, with architecture/appearance exceptions rather than a global ignore.
+`severity` defaults to `error` and accepts `warn`. File and function limits default to 400 and 32. React Compiler is assumed by default: manual memoization is banned and the four React performance rules against render-time function/object/array/JSX props are off. `react: { compiler: false }` allows manual memoization and enables those four rules. `react: { componentProps: false }` turns off only `arch/component-props` (props typed with `interface XProps` directly above each component); it is on by default. `shadcn: false` disables shadcn integration while retaining Tailwind checks. `tailwind` accepts `cssEntryPoint`, `cssEntryPointsByRoot` and `rootFontSize`; `shadcn` accepts `uiImportPath` and `componentImportSources`. UI-kit files remain linted, with architecture/appearance exceptions rather than a global ignore.
 
 Shadcn allows caller-owned layout and standard opacity utilities. Add product-specific component contracts through `policies.shadcn` or native overrides, keeping `layout` and `opacity` in replacement allowances.
 
 Module configuration, lookup tables, limits and defaults belong in domain `.constants.ts` files, including frontend services. All frontend constant declarations carry the domain prefix (for example `BOT_MODEL_PRIORITY`). Frontend service scopes enable `modules/domain-constants` with `includeData: true`: it detects module-level literal/object/array data, literal calculations and seeded Map/Set tables, plus the existing uppercase constants. Function-local calculations and call-created service instances remain in their owner; empty Map/Set state is not classified as configuration. This is syntactic enforcement, not semantic data-flow analysis: imported aliases and arbitrary call-created configuration still need review. Backend rule defaults are unchanged. Every scope follows the configured architecture roots; a web `.server.ts` file remains frontend-owned.
+
+### Tests
+
+Both test profiles use the same assertion, typed-mock, type-safety and no-module-mocking rules. `fixtures` is the default and preserves the backend convention of importing named fixtures or `tests/support`, rather than `tests/helpers`. `standard` leaves helper-folder organization open. Neither profile chooses a database, constructs a test kit, changes fixture lifetimes, or requires a particular service assembly.
+
+```ts
+export default preset({
+  tests: {
+    profile: 'fixtures', // Or 'standard'.
+    additionalTestFunctions: ['integrationTest'],
+    additionalAssertionFunctions: ['expectRejectsWithInternal'],
+  },
+});
+```
+
+Regular tests, `test.for`/`test.each` tables and their `it` equivalents are recognized in both profiles, including concurrent/sequential forms. Additional test names also register those forms. Test-function names must be literal identifiers or dotted names. Assertion helpers also accept rooted dotted patterns, for example `arch.**.to*` for an explicitly reviewed fluent assertion API. Register only assertion helpers that actually fail on incorrect results; registering a name does not inspect its implementation. Standard Vitest `expect`, `expectTypeOf`, `assert`, `assert.*` and `assertType` assertions remain enabled.
+
+`modules/test-assertions` checks assertion presence and placement for native Vitest tests, locally extended fixture tests and configured custom functions. It replaces the preset’s `vitest/expect-expect` and `vitest/no-standalone-expect` checks: those cannot consistently follow fixture and table-row callbacks. It follows called local helpers and statically declared object table rows, including destructured/renamed callbacks, and requires an assertion for every row. Unused assertion callbacks do not satisfy it. Assertions outside tests or assertion helpers remain errors.
+
+Move custom native assertion-name overrides to `tests.additionalAssertionFunctions` (or scoped `modules/test-assertions` options through `policies.tests`). This is a static check, not proof that every execution reaches an assertion. Imported callbacks, dynamically constructed tables and cross-file helper bodies are not inferred; keep a direct assertion or register a reviewed imported assertion helper. Conditional assertions remain forbidden by the separate Vitest rule.
+
+Prefer a throwing assertion to conditional expectations when narrowing a discriminated result:
+
+```ts
+import { assert, expect } from 'vitest';
+
+const result = await service.run(params);
+
+assert(result.ok, 'Expected the operation to succeed');
+
+expect(result.data.ordersCreated).toBe(1);
+```
+
+`assert` fails the test and narrows the TypeScript type. No cast, custom unwrap helper or conditional expectation is needed. A prior success expectation followed by an `if` can be logically sound, but this form is simpler and keeps the conditional-expect rule enabled. Use `policies.tests` for native policy customization and `ignorePatterns` only when intentionally excluding tests from the entire lint run.
+
+### Framework migrations
+
+Migration files can have framework-required exports such as Kysely's `up`/`down`. Declare their exact scope instead of restructuring them into service factories:
+
+```ts
+export default preset({
+  modules: {
+    migrationFiles: ['apps/server/src/services/database/migrations/**/*.ts'],
+  },
+});
+```
+
+No migration paths are assumed by default. The supplied files are excluded from flat/domain folder-depth enforcement and the general service-functions/inline-signature scope. Formatting, naming, imports, type safety, constants and other rules still apply; this is not a whole-file ignore. Keep scopes narrow. In particular, `unknown` or framework-specific type exceptions require their own explicit `ruleExclusions`.
 
 ### Exceptions and native customization
 
@@ -166,7 +214,7 @@ Oxlint reads `typeAware` from the root config only. The direct `export default p
 ### Application conventions
 
 - Single quotes, semicolons, two spaces, braced multiline control flow, early returns, 160-character lines and 400-line app and test files. Promise arrays and call objects expand; method chains are not forced multiline.
-- Components live in one group folder with matching prefixed names. Hooks default to flat `use-*.ts` files; an explicit domain layout retains the hook filename convention. Local React types are prefixed interfaces; exported Props interfaces are allowed. Other types belong in domain `types/*.types.ts` files.
+- Components live in one group folder with matching prefixed names. Hooks default to flat `use-*.ts` files; an explicit domain layout retains the hook filename convention. Local React types are prefixed interfaces; exported Props interfaces are allowed. Component props are never inline: every component `X` takes `interface XProps` declared directly above it, and local components carry the file prefix. Other types belong in domain `types/*.types.ts` files.
 - Backend operations use `domain-action.name.ts` / `domain-query.name.ts`. Services allow one domain folder, one exported operation without private helpers, object parameters and named signature types. Explicit `.utils.ts` files can hold generic helpers, but their types still belong in domain type files. Domain type and constant files cannot contain top-level functions. Frontend services use `.client.ts`, `.server.ts` or `.rsc.{ts,tsx}`. RSC JSX entries retain `domainRscName` exports and the same helper/constants policies.
 - Routes wire components, forms use a schema resolver, context creation has an owner directory, and effects cannot replace derived values or event handlers. React Compiler projects reject manual memoization. Test IDs are allowed. JSX rejects new object/function props inside render, and noninteractive elements cannot receive a tab index.
 - Safety rules reject unknown/any, chained assertions, unjustified assertions, loose dictionaries, module mocks, shared mutable bindings and focused/skipped/placeholder tests. Comments are limited to supported directives, SAFETY notes and explicit exceptions. Type/constant files do not allow SAFETY comments; prompt files require explicit comment exceptions. UI-kit code retains type-safety, formatting and layout checks.
@@ -237,7 +285,7 @@ export default defineConfig({
 | --- | --- |
 | [`minimal.oxlint.config.ts`](examples/minimal.oxlint.config.ts) | You want the smallest possible starting point. |
 | [`monorepo.oxlint.config.ts`](examples/monorepo.oxlint.config.ts) | ⭐ You are starting an `apps/server` + `apps/web` monorepo and want a strict, copy-ready setup. |
-| [`full.oxlint.config.ts`](examples/full.oxlint.config.ts) | You want to see every one of the 43 rules with its options. |
+| [`full.oxlint.config.ts`](examples/full.oxlint.config.ts) | You want to see every one of the 44 rules with its options. |
 
 > [!TIP]
 > `monorepo.oxlint.config.ts` already loads `oxlint-plugin-arch`, so you can copy it as-is and adjust globs and names. The other two load `../src/index.ts`; change that specifier to `oxlint-plugin-arch` when you copy them.
@@ -246,7 +294,7 @@ export default defineConfig({
 
 ## 🧩 Rules
 
-43 rules in 9 groups. 🔧 means the rule can autofix. Each rule file in [`src/rules/`](src/rules) explains its behavior in plain English, and the tests in [`src/tests/`](src/tests) show every option shape.
+44 rules in 9 groups. 🔧 means the rule can autofix. Each rule file in [`src/rules/`](src/rules) explains its behavior in plain English, and the tests in [`src/tests/`](src/tests) show every option shape.
 
 Options that take one regex string (`pattern`, `allowPattern`, `forbid`, `require`, and the other `*Pattern` options) also take a non-empty list; any pattern in the list may match. Options that were already lists, such as `allowPatterns` and `allowCallees`, are unchanged.
 
@@ -316,6 +364,7 @@ Options that take one regex string (`pattern`, `allowPattern`, `forbid`, `requir
 
 | Rule | What it enforces |
 | --- | --- |
+| `component-props` | Components type props with `interface XProps` declared directly above them; pass-through components may use `ComponentProps<'tag'>`. [Details ↓](#component-props) |
 | `only-export-components` | Component files export only components. `denyTypePattern: 'Props$'` keeps props private. |
 | `route-surface` | Route files export the route only, with no banned hooks or raw JSX. |
 
@@ -368,6 +417,32 @@ The preset requires all named functions in `room.utils.ts`, exported or private,
 The preset enables `no-trivial-functions` with `mode: 'precise'`; standalone defaults retain legacy behavior. Precise mode rejects empty/constant/identity functions and unchanged-argument forwarding. Transformed arguments, query chains and interpolated prompts remain allowed. Nested generic runtime guards are checked too.
 
 Default exact banned names: `isRecord`, `isPlainObject`, `isObject`, `isString`, `isNumber`, `isBoolean`, `isArray`, `asRecord`, `asArray`. `bannedNames` replaces the list; `[]` disables name checks. `checkGenericGuards: false` disables structural checks. `allowPattern` exempts named helpers; `allowCallees` and `allowAsync` exempt wrappers only. No usage-count threshold, cross-file analysis or automatic rewrite is used.
+
+### `component-props`
+
+Every top-level React component with props, exported or local, must use exactly `interface XProps`, declared directly above the component with only blank lines between. A file with `ProbeCard` and `ProbeCardInline` declares `ProbeCardProps` above `ProbeCard` and `ProbeCardInlineProps` above `ProbeCardInline`. Inline object types always fail. Components without parameters pass. `memo` and `forwardRef` are unwrapped, and `forwardRef<Ref, XProps>` type arguments count as the props type. Hooks and functions that do not return JSX are ignored.
+
+A component that adds no props of its own may take a plain `ComponentProps<'header'>` or `ComponentProps<typeof Button>` instead of an empty `interface XProps extends ComponentProps<'header'> {}`. Once it adds, omits or intersects anything, it needs `XProps`.
+
+| Option | Default | What it does |
+| --- | --- | --- |
+| `filePrefix` | `false` | Local components with props must start with the filename prefix, so `XProps` also matches prefix rules such as `declaration-name`. In `rooms-chat-tools.tsx`, rename `RoomsChatTool` to `RoomsChatToolsItem`. |
+
+```ts
+// ✅ Pass
+interface ProbeCardProps extends ComponentProps<'button'> { tone: string }
+
+export function ProbeCard({ tone, ...rest }: ProbeCardProps) { return <button {...rest} /> }
+
+export function ProbeCardHeader(props: ComponentProps<'header'>) { return <header {...props} /> }
+
+// ❌ Fail: inline, wrong name, wrapped props
+export function ProbeCard({ title }: { title: string }) { return <h2>{title}</h2> }
+export function ProbeCard(props: ProbeCardOptions) { return <h2>{props.title}</h2> }
+export function ProbeCard(props: PropsWithChildren<ProbeCardProps>) { return props.children }
+```
+
+There is no autofix: moving an interface is a code change, not whitespace. It replaces `no-inline-types` for component files, which would also flag inline types on event handlers and callbacks inside components and cannot require the `XProps` name. The preset enables `filePrefix`.
 
 ### `no-inline-types`
 

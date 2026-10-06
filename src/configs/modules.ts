@@ -5,6 +5,7 @@ import { presetExtensions, presetNamingRules, presetExportPrefix } from '../cons
 export function presetModulesConfig(context: PresetContext): PresetPolicies {
   const { web, backend, app, services, utilities, ui, testFiles, components, hooks, options } = context
   const conceptFiles = (options.modules?.customFileRoles ?? []).map((role) => `**/*.${role}.ts`)
+  const migrations = options.modules?.migrationFiles ?? []
   const frontendEntries = [
     ...presetScopes(web, 'services/**/*.{client,server,rsc}.ts'),
     ...presetScopes(web, 'services/**/*.rsc.tsx'),
@@ -28,6 +29,7 @@ export function presetModulesConfig(context: PresetContext): PresetPolicies {
             },
           ],
         },
+        migrations,
       ),
       ...(mode === 'domain'
         ? [
@@ -98,7 +100,7 @@ export function presetModulesConfig(context: PresetContext): PresetPolicies {
           },
         ],
       },
-      [...utilities, ...testFiles, ...conceptFiles],
+      [...utilities, ...testFiles, ...conceptFiles, ...migrations],
     ),
     presetOverride(
       frontendEntries,
@@ -186,7 +188,10 @@ export function presetModulesConfig(context: PresetContext): PresetPolicies {
       testFiles,
     ),
     presetOverride(presetScopes(app, 'services/**/{actions,queries}/**/*.ts'), {
-      'arch/no-restricted-files': ['error', { message: 'Use domain-action.name.ts or domain-query.name.ts.' }],
+      'arch/no-restricted-files': [
+        'error',
+        { message: 'Use domain-action.name.ts or domain-query.name.ts.' },
+      ],
     }),
   ]
 
@@ -223,7 +228,10 @@ export function presetModulesConfig(context: PresetContext): PresetPolicies {
     presetOverride(
       presetScopes(web, 'services/**/*.constants.ts'),
       {
-        'arch/export-file-prefix': ['error', { ...presetExportPrefix, allDeclarations: true, allowPattern: '^\\*$' }],
+        'arch/export-file-prefix': [
+          'error',
+          { ...presetExportPrefix, allDeclarations: true, allowPattern: '^\\*$' },
+        ],
       },
       testFiles,
     ),
@@ -271,7 +279,10 @@ export function presetModulesConfig(context: PresetContext): PresetPolicies {
     ),
     ...['action', 'query'].map((role) =>
       presetOverride(
-        [...presetScopes(app, `services/**/*-${role}.*.ts`), ...presetScopes(web, `services/**/*-${role}.*.rsc.tsx`)],
+        [
+          ...presetScopes(app, `services/**/*-${role}.*.ts`),
+          ...presetScopes(web, `services/**/*-${role}.*.rsc.tsx`),
+        ],
         {
           'arch/filename-match': [
             'error',
