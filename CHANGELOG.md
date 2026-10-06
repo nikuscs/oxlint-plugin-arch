@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.6.0
 
 - Add `tests.profile` (`fixtures` by default, or `standard`), explicit custom test/assertion names, parameterized-test recognition and assertion-based narrowing guidance. Both profiles retain assertion, mock and type-safety checks; fixtures additionally require named fixture/support imports.
 - Add explicit `modules.migrationFiles` scopes to exempt framework migration functions from service function/signature and folder-layout conventions without globally ignoring their safety checks.
