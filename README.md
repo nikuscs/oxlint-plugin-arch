@@ -105,7 +105,19 @@ Available policies: `typePlacement`, `typeSafety`, `serviceStructure`, `fileLayo
 
 `severity` defaults to `error` and accepts `warn`. File and function limits default to 400 and 32. React Compiler is assumed by default: manual memoization is banned and the four React performance rules against render-time function/object/array/JSX props are off. `react: { compiler: false }` allows manual memoization and enables those four rules. `react: { componentProps: false }` turns off only `arch/component-props` (props typed with `interface XProps` directly above each component); it is on by default. `shadcn: false` disables shadcn integration while retaining Tailwind checks. `tailwind` accepts `cssEntryPoint`, `cssEntryPointsByRoot` and `rootFontSize`; `shadcn` accepts `uiImportPath` and `componentImportSources`. UI-kit files remain linted, with architecture/appearance exceptions rather than a global ignore.
 
-Shadcn allows caller-owned layout and standard opacity utilities. Add product-specific component contracts through `policies.shadcn` or native overrides, keeping `layout` and `opacity` in replacement allowances.
+Shadcn allows caller-owned layout, standard opacity utilities and exact `truncate` (including variant forms). Stock composition slots also allow these class groups:
+
+| Components | Additional groups |
+| --- | --- |
+| `CardContent`, `PopoverContent` | `p`, `px`, `py`, `ps`, `pe`, `pt`, `pr`, `pb`, `pl` |
+| `TabsContent` | The padding groups above plus `gap`, `gap-x`, `gap-y` |
+| `Tabs`, `HoverCardContent`, `SidebarHeader`, `BreadcrumbList` | `gap`, `gap-x`, `gap-y` |
+
+These are exact component-name contracts, not blanket content/spacing exceptions. Each keeps `layout`, `opacity` and `truncate`; controls such as `Button` still reject padding and gap overrides. A contract's `allow` replaces the baseline, and the last matching contract wins. Native file-specific rule options replace contract arrays rather than merging them.
+
+Arbitrary padding values may use `env(safe-area-inset-top)`, `env(safe-area-inset-right)`, `env(safe-area-inset-bottom)` or `env(safe-area-inset-left)` with any padding group above. Padding sides/axes (not `p`) also allow `max(--spacing(*),env(safe-area-inset-…))`, for example `pb-[max(--spacing(4),env(safe-area-inset-bottom))]`. Literal floors such as `max(1rem,env(…))` remain rejected. These are narrow class globs, **not CSS-expression validation**: the wildcard inside `--spacing(...)` can still match malformed arguments or extra arithmetic. The allowance does not bypass component restyling checks.
+
+Only `<web root>/src/components/ui/sonner.tsx` allows the stock Sonner selector hooks `toaster` and `toast`; all other unknown classes remain checked, including in UI files. These defaults need no extra preset options or consumer overrides.
 
 Module configuration, lookup tables, limits and defaults belong in domain `.constants.ts` files, including frontend services. All frontend constant declarations carry the domain prefix (for example `BOT_MODEL_PRIORITY`). Frontend service scopes enable `modules/domain-constants` with `includeData: true`: it detects module-level literal/object/array data, literal calculations and seeded Map/Set tables, plus the existing uppercase constants. Function-local calculations and call-created service instances remain in their owner; empty Map/Set state is not classified as configuration. This is syntactic enforcement, not semantic data-flow analysis: imported aliases and arbitrary call-created configuration still need review. Backend rule defaults are unchanged. Every scope follows the configured architecture roots; a web `.server.ts` file remains frontend-owned.
 

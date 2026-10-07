@@ -433,6 +433,8 @@ integrationTest.for([1])('custom missing assertion %s', (amount) => { Math.abs(a
         resolve(repository, 'node_modules/typescript/bin/tsc'),
         '--ignoreConfig',
         '--noEmit',
+        '--pretty',
+        'false',
         '--strict',
         '--skipLibCheck',
         '--module',
@@ -1424,6 +1426,166 @@ export function ChatMessage() {
       ]),
     )
     expect(output.diagnostics.filter((entry) => entry.code === 'shadcn(no-arbitrary-values)')).toHaveLength(1)
+  })
+
+  test('stock composition contracts allow every padding/gap group and retain layout, opacity and truncation', () => {
+    const padding = ['p-4', 'px-4', 'py-4', 'ps-4', 'pe-4', 'pt-4', 'pr-4', 'pb-4', 'pl-4']
+    const gap = ['gap-4', 'gap-x-4', 'gap-y-4']
+    const cases = {
+      CardContent: padding,
+      PopoverContent: padding,
+      TabsContent: [...gap, ...padding],
+      Tabs: gap,
+      HoverCardContent: gap,
+      SidebarHeader: gap,
+      BreadcrumbList: gap,
+      Button: [],
+    }
+    const names = Object.keys(cases)
+    const result = fixture("tailwind: { cssEntryPoint: 'apps/web/src/application/styles.css' },", {
+      'apps/web/src/application/styles.css': '@import "tailwindcss";\n',
+      'apps/web/src/components/ui/composition.tsx': names.map((name) =>
+        `export function ${name}({ className, ...props }: React.ComponentProps<'div'>) { return <div className={className} {...props} />; }`,
+      ).join('\n'),
+      'apps/web/src/components/chat/chat-message.tsx': `import { ${names.join(', ')} } from '@/components/ui/composition';
+export function ChatMessage() {
+  return <>${Object.entries(cases).flatMap(([name, classes]) =>
+    [...classes, 'w-full', 'opacity-70', 'truncate', 'md:truncate'].map((value) => `<${name} className="${value}" />`),
+  ).join('')}</>;
+}
+`,
+    })
+    const output: PresetFixtureOutput = JSON.parse(result.output)
+    expect(output.diagnostics.filter((entry) => entry.code.startsWith('shadcn(')), result.output).toEqual([])
+  })
+
+  test('stock composition contracts keep controls, other slots and non-composition appearance protected', () => {
+    const padding = ['p-4', 'px-4', 'py-4', 'ps-4', 'pe-4', 'pt-4', 'pr-4', 'pb-4', 'pl-4']
+    const gap = ['gap-4', 'gap-x-4', 'gap-y-4']
+    const cases = {
+      Button: [...padding, ...gap, 'text-ellipsis', 'text-red-500'],
+      Card: padding,
+      CustomContent: padding,
+      Tabs: padding,
+      HoverCardContent: padding,
+      SidebarHeader: padding,
+      BreadcrumbList: padding,
+      CardContent: [...gap, 'rounded-xl', 'bg-red-500'],
+      PopoverContent: gap,
+      TabsContent: ['rounded-xl', 'bg-red-500'],
+    }
+    const names = Object.keys(cases)
+    const result = fixture("tailwind: { cssEntryPoint: 'apps/web/src/application/styles.css' },", {
+      'apps/web/src/application/styles.css': '@import "tailwindcss";\n',
+      'apps/web/src/components/ui/composition.tsx': names.map((name) =>
+        `export function ${name}({ className, ...props }: React.ComponentProps<'div'>) { return <div className={className} {...props} />; }`,
+      ).join('\n'),
+      'apps/web/src/components/chat/chat-message.tsx': `import { ${names.join(', ')} } from '@/components/ui/composition';
+export function ChatMessage() {
+  return <>${Object.entries(cases).flatMap(([name, classes]) =>
+    classes.map((value) => `<${name} className="${value}" />`),
+  ).join('')}</>;
+}
+`,
+    })
+    const output: PresetFixtureOutput = JSON.parse(result.output)
+    expect(output.diagnostics.filter((entry) => entry.code === 'shadcn(no-restyle)'), result.output).toHaveLength(
+      Object.values(cases).flat().length,
+    )
+  })
+
+  test('safe-area allowances cover four insets on padding groups and scale-based floors on sides/axes', () => {
+    const padding = ['p', 'px', 'py', 'ps', 'pe', 'pt', 'pr', 'pb', 'pl']
+    const classes = padding.flatMap((group) => ['top', 'right', 'bottom', 'left'].flatMap((side) => [
+      `${group}-[env(safe-area-inset-${side})]`,
+      ...(group === 'p' ? [] : [`${group}-[max(--spacing(4),env(safe-area-inset-${side}))]`]),
+    ]))
+    classes.push('md:pb-[max(--spacing(2.5),env(safe-area-inset-bottom))]')
+    const result = fixture("tailwind: { cssEntryPoint: 'apps/web/src/application/styles.css' },", {
+      'apps/web/src/application/styles.css': '@import "tailwindcss";\n',
+      'apps/web/src/components/chat/chat-message.tsx': `export function ChatMessage() {
+  return <>${classes.map((value) => `<div className="${value}" />`).join('')}</>;
+}
+`,
+    })
+    const output: PresetFixtureOutput = JSON.parse(result.output)
+    expect(output.diagnostics.filter((entry) => entry.code === 'shadcn(no-arbitrary-values)'), result.output).toEqual([])
+  })
+
+  test('safe-area allowances reject unrelated values, malformed boundaries and off-token arithmetic', () => {
+    const classes = [
+      'pt-[env(safe-area-inset-middle)]',
+      'pt-[env(safe-area-inset-top,13px)]',
+      'pt-[env(safe-area-inset-top)+13px]',
+      'pt-[calc(env(safe-area-inset-top)+13px)]',
+      'pt-[env(safe-area-inset-top]',
+      'pt-[env(safe-area-inset-top))]',
+      'pb-[max(1rem,env(safe-area-inset-bottom))]',
+      'pb-[max(13px,env(safe-area-inset-bottom))]',
+      'pb-[max(--spacing(),env(safe-area-inset-bottom))]',
+      'pb-[max(--spacing(4),env(safe-area-inset-middle))]',
+      'pb-[max(--spacing(4),env(safe-area-inset-bottom),13px)]',
+      'p-[max(--spacing(4),env(safe-area-inset-bottom))]',
+      'bg-[env(safe-area-inset-top)]',
+    ]
+    const result = fixture("tailwind: { cssEntryPoint: 'apps/web/src/application/styles.css' },", {
+      'apps/web/src/application/styles.css': '@import "tailwindcss";\n',
+      'apps/web/src/components/chat/chat-message.tsx': `export function ChatMessage() {
+  return <>${classes.map((value) => `<div className="${value}" />`).join('')}</>;
+}
+`,
+    })
+    const output: PresetFixtureOutput = JSON.parse(result.output)
+    const arbitrary = output.diagnostics.filter((entry) => entry.code === 'shadcn(no-arbitrary-values)')
+    expect(arbitrary, result.output).toHaveLength(classes.length)
+    for (const value of classes) expect(arbitrary.some((entry) => entry.message.includes(`"${value}"`)), value).toBe(true)
+  })
+
+  test('safe-area scale globs are not a CSS-expression validator or a no-restyle exemption', () => {
+    const result = fixture("tailwind: { cssEntryPoint: 'apps/web/src/application/styles.css' },", {
+      'apps/web/src/application/styles.css': '@import "tailwindcss";\n',
+      'apps/web/src/components/ui/button.tsx':
+        "export function Button({ className, ...props }: React.ComponentProps<'button'>) { return <button className={className} {...props} />; }\n",
+      'apps/web/src/components/chat/chat-message.tsx': `import { Button } from '@/components/ui/button';
+export function ChatMessage() {
+  return <><div className="pb-[max(--spacing(bogus),env(safe-area-inset-bottom))]" /><div className="pb-[max(--spacing(4)+13px),env(safe-area-inset-bottom))]" /><Button className="pb-[env(safe-area-inset-bottom)]" /></>;
+}
+`,
+    })
+    const output: PresetFixtureOutput = JSON.parse(result.output)
+    expect(output.diagnostics.filter((entry) => entry.code === 'shadcn(no-arbitrary-values)'), result.output).toEqual([])
+    expect(output.diagnostics.filter((entry) => entry.code === 'shadcn(no-restyle)'), result.output).toHaveLength(1)
+  })
+
+  test('Sonner selector hooks are allowed only in the stock UI file for each configured web root', () => {
+    const files: Record<string, string> = {}
+    for (const root of ['dashboard', 'storefront']) {
+      files[`${root}/src/application/styles.css`] = '@import "tailwindcss";\n'
+      files[`${root}/src/components/ui/sonner.tsx`] =
+        'export function Sonner() { return <div className="toaster toast misspelled-hook" />; }\n'
+      files[`${root}/src/components/ui/other.tsx`] =
+        'export function Other() { return <div className="toaster toast" />; }\n'
+      files[`${root}/src/components/chat/sonner.tsx`] =
+        'export function Sonner() { return <div className="toaster toast" />; }\n'
+    }
+    const result = fixture("architecture: { dashboard: 'web', storefront: 'web', api: 'server' }, tailwind: {},", files)
+    const output: PresetFixtureOutput = JSON.parse(result.output)
+    const unknown = output.diagnostics.filter((entry) => entry.code === 'shadcn(no-unknown-classes)')
+    for (const root of ['dashboard', 'storefront']) {
+      const sonner = unknown.filter((entry) => entry.filename === `${root}/src/components/ui/sonner.tsx`)
+      expect(sonner, result.output).toHaveLength(1)
+      expect(sonner[0]?.message).toContain('misspelled-hook')
+      for (const file of ['ui/other.tsx', 'chat/sonner.tsx'])
+        expect(unknown.filter((entry) => entry.filename === `${root}/src/components/${file}`), result.output).toHaveLength(2)
+    }
+    expect(unknown).toHaveLength(10)
+    const config = tanstackStartReactModulesPreset({ architecture: { '.': 'web' }, severity: 'warn' })
+    const sonner = config.overrides!.find((entry) => entry.files.includes('src/components/ui/sonner.tsx'))
+    expect(sonner?.rules?.['shadcn/no-unknown-classes']).toEqual(['warn', { allow: ['toaster', 'toast'] }])
+    expect(JSON.stringify(tanstackStartReactModulesPreset({ architecture: { dashboard: 'web', api: 'server' } })))
+      .not.toContain('api/src/components/ui/sonner.tsx')
+    for (const options of [{ shadcn: false }, { tailwind: false }, { policies: { shadcn: false } }] as const)
+      expect(JSON.stringify(tanstackStartReactModulesPreset(options))).not.toContain('toaster')
   })
 
   test('scripts can use console output and reasoned inline exceptions', () => {

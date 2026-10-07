@@ -127,12 +127,31 @@ export function presetReactConfig(context: PresetContext): PresetPolicies {
   }
 
   if (Object.keys(css).length && options.shadcn !== false) {
+    const allow = ['layout', 'opacity', 'truncate']
+    const padding = ['p', 'px', 'py', 'ps', 'pe', 'pt', 'pr', 'pb', 'pl']
+    const gap = ['gap', 'gap-x', 'gap-y']
+    const safeArea = padding.flatMap((group) =>
+      ['top', 'right', 'bottom', 'left'].flatMap((side) => [
+        `${group}-[env(safe-area-inset-${side})]`,
+        ...(group === 'p' ? [] : [`${group}-[max(--spacing(*),env(safe-area-inset-${side}))]`]),
+      ]),
+    )
     policies.shadcn = [
       presetOverride(
         webFiles,
         {
-          'shadcn/no-restyle': ['error', { allow: ['layout', 'opacity'] }],
-          'shadcn/no-arbitrary-values': ['error', { allow: ['layout'] }],
+          'shadcn/no-restyle': [
+            'error',
+            {
+              allow,
+              contracts: [
+                { pattern: '^(CardContent|PopoverContent)$', allow: [...allow, ...padding] },
+                { pattern: '^TabsContent$', allow: [...allow, ...gap, ...padding] },
+                { pattern: '^(Tabs|HoverCardContent|SidebarHeader|BreadcrumbList)$', allow: [...allow, ...gap] },
+              ],
+            },
+          ],
+          'shadcn/no-arbitrary-values': ['error', { allow: ['layout', ...safeArea] }],
           'shadcn/require-static-classes': 'error',
           'modules/dynamic-classes': 'error',
         },
@@ -140,6 +159,9 @@ export function presetReactConfig(context: PresetContext): PresetPolicies {
       ),
       presetOverride(webFiles, {
         'shadcn/no-unknown-classes': ['error', { allow: [] }],
+      }),
+      presetOverride(presetScopes(web, 'components/ui/sonner.tsx'), {
+        'shadcn/no-unknown-classes': ['error', { allow: ['toaster', 'toast'] }],
       }),
     ]
   }
