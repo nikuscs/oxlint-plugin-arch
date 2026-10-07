@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.6.1
+
+- Relax the preset's shadcn defaults for stock composition, so strict consumers need no overrides: exact padding groups on `CardContent`/`PopoverContent`, gap and padding on `TabsContent`, and gap on `Tabs`/`HoverCardContent`/`SidebarHeader`/`BreadcrumbList`; exact `truncate` everywhere. Controls such as `Button` stay protected.
+- Allow safe-area padding values (`env(safe-area-inset-*)` and `max(--spacing(*),env(safe-area-inset-*))` on padding sides/axes) in `shadcn/no-arbitrary-values`. Literal floors such as `max(1rem,…)` stay rejected.
+- Allow the stock Sonner hooks `toaster` and `toast` only in each web root's `components/ui/sonner.tsx`. No new preset options.
+
 ## 0.6.0
 
 - Add `tests.profile` (`fixtures` by default, or `standard`), explicit custom test/assertion names, parameterized-test recognition and assertion-based narrowing guidance. Both profiles retain assertion, mock and type-safety checks; fixtures additionally require named fixture/support imports.
