@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.6.2
+
+- Export `oxlint-plugin-arch/rules/dillon-anti-slop` and `oxlint-plugin-arch/rules/module-policy` with TypeScript declarations. Resolve the preset's three first-party plugins through public package entry points, without changing rules or policy. Document standalone registration and third-party dependency ownership; verify built exports expose every supporting rule.
+
 ## 0.6.1
 
 - Relax the preset's shadcn defaults for stock composition, so strict consumers need no overrides: exact padding groups on `CardContent`/`PopoverContent`, gap and padding on `TabsContent`, and gap on `Tabs`/`HoverCardContent`/`SidebarHeader`/`BreadcrumbList`; exact `truncate` everywhere. Controls such as `Button` stay protected.

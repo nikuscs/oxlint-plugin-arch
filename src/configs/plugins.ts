@@ -1,5 +1,4 @@
 import { createRequire } from 'node:module'
-import { fileURLToPath } from 'node:url'
 import type { OxlintConfig } from 'oxlint'
 import type { PresetContext, PresetJsPlugins, PresetSettings } from '../types/preset.types.ts'
 
@@ -20,15 +19,15 @@ export function presetPluginsConfig(context: PresetContext): OxlintConfig {
     require.resolve('@eslint-community/eslint-plugin-eslint-comments'),
     {
       name: 'arch',
-      specifier: fileURLToPath(new URL('../index.js', import.meta.url)),
+      specifier: require.resolve('oxlint-plugin-arch'),
     },
     {
       name: 'dillon-anti-slop',
-      specifier: fileURLToPath(new URL('../rules/dillon-anti-slop/index.js', import.meta.url)),
+      specifier: require.resolve('oxlint-plugin-arch/rules/dillon-anti-slop'),
     },
     {
       name: 'modules',
-      specifier: fileURLToPath(new URL('../rules/module-policy/index.js', import.meta.url)),
+      specifier: require.resolve('oxlint-plugin-arch/rules/module-policy'),
     },
   ]
   const settings: PresetSettings = {

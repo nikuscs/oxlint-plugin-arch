@@ -1,6 +1,6 @@
 {
   "name": "oxlint-plugin-arch",
-  "version": "0.6.1",
+  "version": "0.6.2",
   "description": "Configurable architecture rules for Oxlint JavaScript plugins.",
   "type": "module",
   "main": "./dist/index.js",
@@ -13,6 +13,14 @@
     "./presets/tanstack-start-react-modules-preset": {
       "types": "./dist/presets/tanstack-start-react-modules-preset.d.ts",
       "default": "./dist/presets/tanstack-start-react-modules-preset.js"
+    },
+    "./rules/dillon-anti-slop": {
+      "types": "./dist/rules/dillon-anti-slop/index.d.ts",
+      "default": "./dist/rules/dillon-anti-slop/index.js"
+    },
+    "./rules/module-policy": {
+      "types": "./dist/rules/module-policy/index.d.ts",
+      "default": "./dist/rules/module-policy/index.js"
     }
   },
   "files": [

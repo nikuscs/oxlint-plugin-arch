@@ -264,6 +264,40 @@ export default defineConfig({
 })
 ```
 
+### Use the supporting plugins without the preset
+
+All three first-party rule sets have public package entry points. Register only the plugins and rules you need; this does not enable the preset or its policies.
+
+```ts
+import { defineConfig } from 'oxlint'
+
+export default defineConfig({
+  jsPlugins: [
+    { name: 'arch', specifier: 'oxlint-plugin-arch' },
+    { name: 'dillon-anti-slop', specifier: 'oxlint-plugin-arch/rules/dillon-anti-slop' },
+    { name: 'modules', specifier: 'oxlint-plugin-arch/rules/module-policy' },
+  ],
+  rules: {
+    'arch/no-literal-in': 'error',
+    'dillon-anti-slop/no-chained-type-assertions': 'error',
+    'modules/no-unknown': 'error',
+  },
+})
+```
+
+Both `/rules/` entry points also provide a default plugin export and TypeScript declarations. Do not import `dist/` paths. The preset resolves these same public entry points, including the existing package root for `arch`; it needs no other first-party plugin entry points. Individual rule implementations and helpers are bundled into those plugins.
+
+If you copy the preset's third-party plugin registrations into your own config, install those packages directly with `bun add -d` rather than relying on transitive dependency hoisting:
+
+| Scope | Packages |
+| --- | --- |
+| Always | `oxlint-plugin-eslint`, `eslint-plugin-import`, `@regru/eslint-plugin-prefer-early-return`, `eslint-plugin-unused-imports`, `eslint-plugin-perfectionist`, `eslint-plugin-tsdoc`, `@eslint-community/eslint-plugin-eslint-comments` |
+| Web roots | `eslint-plugin-react`, `eslint-plugin-react-you-might-not-need-an-effect`, `eslint-plugin-svg-jsx` |
+| CSS entry points with Tailwind enabled | `oxlint-tailwindcss` |
+| Same CSS scope with shadcn enabled | `@shadcn/lint` |
+
+These plugins remain **dependencies** of `oxlint-plugin-arch`, not peer dependencies: the preset loads its own installed copies. In an application-owned config, list directly used plugins as **devDependencies**. A reusable config package should use dependencies for plugins it resolves itself, or peerDependencies if it intentionally requires consumers to supply them. `@oxlint/plugins` is the bundled plugins' runtime dependency, not another preset rule set. `oxlint` remains a peer dependency; `oxlint-tsgolint` is an optional peer required when using the preset's type-aware checks. Native Oxlint plugin groups need no separate npm plugin packages.
+
 ## 🚀 Quick start
 
 Rules are switched on per folder with `overrides`. Here are three small ones:
