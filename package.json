@@ -1,6 +1,6 @@
 {
   "name": "oxlint-plugin-arch",
-  "version": "0.6.2",
+  "version": "0.6.1",
   "description": "Configurable architecture rules for Oxlint JavaScript plugins.",
   "type": "module",
   "main": "./dist/index.js",
@@ -38,7 +38,6 @@
     "check:examples": "oxlint examples/minimal.oxlint.config.ts -c examples/minimal.oxlint.config.ts --disable-nested-config && oxlint examples/full.oxlint.config.ts -c examples/full.oxlint.config.ts --disable-nested-config && oxlint examples/dist.oxlint.config.ts -c examples/dist.oxlint.config.ts --disable-nested-config && oxlint examples/monorepo.oxlint.config.ts -c examples/monorepo.oxlint.config.ts --disable-nested-config && oxlint --print-config -c examples/preset.oxlint.config.ts > /dev/null",
     "prepublishOnly": "bun run check",
     "release": "bash scripts/release.sh",
-    "release:dry-run": "bash scripts/release.sh --dry-run",
     "release:patch": "bash scripts/release.sh patch --yes",
     "release:minor": "bash scripts/release.sh minor --yes",
     "release:major": "bash scripts/release.sh major --yes"

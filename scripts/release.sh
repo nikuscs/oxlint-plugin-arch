@@ -5,17 +5,16 @@ ROOT=$(cd "$(dirname "$0")/.." && pwd)
 cd "$ROOT"
 
 increment=""
-dry_run=false
 yes=false
 
 usage() {
   cat >&2 <<'EOF'
 usage:
-  scripts/release.sh [patch|minor|major] [--yes] [--dry-run]
+  scripts/release.sh [patch|minor|major] [--yes]
 
-Runs check, bumps the version with bumpp, pushes the tag, and publishes to npm.
+Runs check, bumps the version with bumpp, and pushes the tag.
+GitHub Actions publishes to npm and creates the GitHub Release.
 patch|minor|major skips the bumpp prompt. --yes confirms the chosen bump.
---dry-run only runs check and npm publish --dry-run.
 EOF
   exit 2
 }
@@ -29,7 +28,6 @@ for argument in "$@"; do
   case "$argument" in
     patch|minor|major) increment=$argument ;;
     --yes) yes=true ;;
-    --dry-run) dry_run=true ;;
     -h|--help) usage ;;
     *) usage ;;
   esac
@@ -42,13 +40,6 @@ git fetch origin main --tags
 
 bun run check
 
-if [[ "$dry_run" == true ]]; then
-  npm publish --access public --dry-run
-  exit 0
-fi
-
-npm whoami >/dev/null 2>&1 || fail 'npm login is required before publish'
-
 bumpp_args=(--commit --tag --push)
 if [[ -n "$increment" ]]; then
   bumpp_args+=(--release "$increment")
@@ -58,4 +49,3 @@ if [[ "$yes" == true ]]; then
 fi
 
 bunx bumpp "${bumpp_args[@]}"
-npm publish --access public
