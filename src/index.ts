@@ -1,4 +1,5 @@
 import { eslintCompatPlugin } from '@oxlint/plugins'
+import { callArgumentsMultiline } from './rules/call-arguments-multiline.ts'
 import { callArrayMultiline } from './rules/call-array-multiline.ts'
 import { chainNewline } from './rules/chain-newline.ts'
 import { componentProps } from './rules/component-props.ts'
@@ -42,11 +43,13 @@ import { requireObjectParams } from './rules/require-object-params.ts'
 import { requireOrpcOutput } from './rules/require-orpc-output.ts'
 import { requirePairedCall } from './rules/require-paired-call.ts'
 import { routeSurface } from './rules/route-surface.ts'
+import { ternaryLayout } from './rules/ternary-layout.ts'
 import { testTitlePattern } from './rules/test-title-pattern.ts'
 
 export default eslintCompatPlugin({
   meta: { name: 'arch' },
   rules: {
+    'call-arguments-multiline': callArgumentsMultiline,
     'call-array-multiline': callArrayMultiline,
     'chain-newline': chainNewline,
     'component-props': componentProps,
@@ -90,6 +93,7 @@ export default eslintCompatPlugin({
     'require-orpc-output': requireOrpcOutput,
     'require-paired-call': requirePairedCall,
     'route-surface': routeSurface,
+    'ternary-layout': ternaryLayout,
     'test-title-pattern': testTitlePattern,
   },
 })

@@ -56,6 +56,8 @@ export default defineConfig({
     'arch/no-promise-all-mutation': 'error',
     'arch/padding-between-statements': 'error',
     'arch/object-multiline': 'error',
+    'arch/ternary-layout': ['error', { maxLength: 160, indent: 2 }],
+    'arch/call-arguments-multiline': ['error', { minArguments: 3, indent: 2 }],
     'arch/key-value-same-line': 'error',
     'arch/call-array-multiline': 'error',
     'arch/chain-newline': [

@@ -6,7 +6,7 @@ Keep a codebase shaped the way you designed it: files in the right folders, expo
 
 - 🗂️ **Filename-aware.** Rules derive expected names from the file they run on (`user-action.create.ts` → `makeUserActionCreate`).
 - 🎛️ **Configurable.** No app names, folders, or libraries are baked in. Globs and policy live in your config.
-- 🛟 **Safe autofix.** Layout and comment rules only touch whitespace or comments. Type-import fixes qualify scope-resolved references and skip unsafe rewrites.
+- 🛟 **Safe autofix.** Layout and comment rules touch whitespace or comments; `object-multiline` and `call-arguments-multiline` can also add trailing commas. Type-import fixes qualify scope-resolved references and skip unsafe rewrites.
 - ⚡ **Fast.** Built on Oxlint's JS plugin API and ESTree, with no extra parser.
 
 ---
@@ -427,7 +427,9 @@ Options that take one regex string (`pattern`, `allowPattern`, `forbid`, `requir
 | Rule | What it enforces |
 | --- | --- |
 | `padding-between-statements` 🔧 | Blank lines around functions and classes, around control flow, and before `return` in longer blocks; `multilineVariables: true` also separates multiline declarations, including exports (default `false`). |
-| `object-multiline` 🔧 | Objects with 3+ properties passed to a call go one property per line (`scope: 'all'` for every object). |
+| `object-multiline` 🔧 | Objects with 3+ properties passed to a call go one property per line with a trailing comma (`scope: 'all'` for every object). |
+| `ternary-layout` 🔧 | Join short conditionals or split long ones before `?` and `:`. [Details ↓](#ternary-layout) |
+| `call-arguments-multiline` 🔧 | Calls and constructors with 3+ arguments go one argument per line. [Details ↓](#call-arguments-multiline) |
 | `key-value-same-line` 🔧 | An object key and the start of its value stay on the same line. |
 | `chain-newline` 🔧 | Long method chains go one call per line. You pick which chains with `groups`. |
 | `call-array-multiline` 🔧 | Arrays passed to `Promise.all` (or callees you list) go one element per line. |
@@ -439,6 +441,18 @@ Options that take one regex string (`pattern`, `allowPattern`, `forbid`, `requir
 ---
 
 ## 🔍 Rule details
+
+### ternary-layout
+
+Options: `maxLength` (integer ≥ 1, default `160`) and `indent` (integer ≥ 1, default `2` spaces). The full resulting line, including its prefix and suffix, determines whether a conditional fits. Short multiline conditionals join; long single-line conditionals split before `?` and `:`, one indent deeper than their starting line. Direct template interpolations stay on one line regardless of length.
+
+Conditionals with a conditional parent or operand, comments inside, or multiline operands are skipped. Existing long multiline conditionals are left unchanged.
+
+### call-arguments-multiline
+
+Options: `minArguments` (integer ≥ 2, default `3`) and `indent` (integer ≥ 1, default `2` spaces). Calls and `new` expressions at the threshold put each argument and the closing `)` on separate lines. Arguments use one indent deeper than the line containing `(`. Fixes add a trailing comma, including after spread arguments.
+
+Calls already using separate lines for every argument and `)` are left unchanged, including their indentation and optional trailing comma. Calls containing comments, parenthesized arguments, or multiline arrow/function arguments are skipped. These are code fixes because they can add punctuation. Both new rules are opt-in and absent from presets.
 
 ### File size
 

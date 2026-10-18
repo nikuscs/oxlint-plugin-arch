@@ -20,6 +20,8 @@ export default defineConfig({
         'arch/padding-between-statements': ['error', { returnMinStatements: 3, multilineVariables: true }],
         'arch/key-value-same-line': 'error',
         'arch/object-multiline': ['error', { minProperties: 3, scope: 'call-args', indent: 2 }],
+        'arch/ternary-layout': ['error', { maxLength: 160, indent: 2 }],
+        'arch/call-arguments-multiline': ['error', { minArguments: 3, indent: 2 }],
         'arch/call-array-multiline': [
           'error',
           {

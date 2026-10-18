@@ -48,21 +48,21 @@ function objectMultilineGaps(text: string, node: ESTree.ObjectExpression): Array
     ) {
       return null
     }
-    gaps.push([after + comma + 1, limit])
+    gaps.push([next ? after + comma + 1 : after, limit])
   }
 
   return gaps
 }
 
 /**
- * Splits a single-line object literal with enough properties onto one property per line.
+ * Splits a single-line object literal with enough properties onto one property per line, with a trailing comma.
  *
  * Example: `save({ id, name, email })` becomes a multiline object; two-property objects stay put.
  */
 export const objectMultiline = defineRule({
   meta: {
     type: 'layout',
-    fixable: 'whitespace',
+    fixable: 'code',
     schema: [
       {
         type: 'object',
@@ -115,7 +115,10 @@ export const objectMultiline = defineRule({
               return null
             }
             return gaps.map((gap, index) =>
-              fixer.replaceTextRange(gap, `${newline}${index === gaps.length - 1 ? baseIndent : propIndent}`),
+              fixer.replaceTextRange(
+                gap,
+                index === gaps.length - 1 ? `,${newline}${baseIndent}` : `${newline}${propIndent}`,
+              ),
             )
           },
         })

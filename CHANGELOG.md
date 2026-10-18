@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Add a trailing comma when `object-multiline` splits an object, so the fix agrees with multiline comma rules.
+
+- Add opt-in `ternary-layout` and `call-arguments-multiline` layout rules with configurable thresholds and indentation. Presets remain unchanged.
+
 ## 0.6.2
 
 - Export `oxlint-plugin-arch/rules/dillon-anti-slop` and `oxlint-plugin-arch/rules/module-policy` with TypeScript declarations. Resolve the preset's three first-party plugins through public package entry points, without changing rules or policy. Document standalone registration and third-party dependency ownership; verify built exports expose every supporting rule.
