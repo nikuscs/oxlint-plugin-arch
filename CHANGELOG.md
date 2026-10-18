@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.6.3
 
 - Add a trailing comma when `object-multiline` splits an object, so the fix agrees with multiline comma rules.
 
