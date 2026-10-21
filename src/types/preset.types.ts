@@ -28,14 +28,18 @@ export type PresetPolicyName =
 
 export type PresetRole = 'web' | 'server' | 'runner' | 'scripts' | 'packages'
 export type PresetFolderLayout = 'flat' | 'domain'
+export type PresetFramework = 'tanstack-start' | 'next'
 export interface PresetArchitectureEntry {
   role: PresetRole
   layout?: Record<string, PresetFolderLayout>
+  /** Web roots only: selects the route and runtime-boundary policies. */
+  framework?: PresetFramework
 }
 export type PresetArchitecture = Record<string, PresetRole | PresetArchitectureEntry>
 export interface PresetResolvedRoot {
   role: PresetRole
   layout: Record<string, PresetFolderLayout>
+  framework?: PresetFramework
 }
 export interface PresetFolderScope {
   path: string
@@ -45,6 +49,8 @@ export interface PresetFolderScope {
 
 export interface PresetOptions {
   root?: string
+  /** Default framework for web roots that do not set their own; `tanstack-start` when omitted. */
+  framework?: PresetFramework
   architecture?: PresetArchitecture
   severity?: 'error' | 'warn'
   limits?: PresetLimitsOptions
@@ -60,6 +66,7 @@ export interface PresetOptions {
   ruleExclusions?: Record<string, string[]>
   cliFiles?: string[]
   tanstackStart?: PresetTanstackStartOptions
+  next?: PresetNextOptions
   tailwind?: false | PresetTailwindOptions
   shadcn?: false | PresetShadcnOptions
 }
@@ -113,6 +120,12 @@ export interface PresetTanstackStartOptions {
   computedImportAllowedFiles?: string[]
 }
 
+export interface PresetNextOptions {
+  additionalServerOnlyImports?: string[]
+  additionalClientOnlyImports?: string[]
+  computedImportAllowedFiles?: string[]
+}
+
 export interface PresetTailwindOptions {
   cssEntryPoint?: string
   cssEntryPointsByRoot?: Record<string, string>
@@ -147,6 +160,9 @@ export interface PresetContext {
   css: Record<string, string>
   baseImports: PresetImportRestriction[]
   web: string[]
+  /** Web `src` roots per framework. */
+  tanstackWeb: string[]
+  nextWeb: string[]
   backend: string[]
   app: string[]
   appFiles: string[]

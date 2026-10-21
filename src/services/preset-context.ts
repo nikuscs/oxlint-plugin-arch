@@ -16,9 +16,14 @@ export function presetResolveContext(options: PresetOptions): PresetContext {
     const entry = typeof configuredRoot === 'string' ? { role: configuredRoot } : configuredRoot
     if (!entry || typeof entry !== 'object')
       throw new Error('Architecture entries must be roles or role/layout objects.')
-    if (Object.keys(entry).some((key) => !['role', 'layout'].includes(key)))
+    if (Object.keys(entry).some((key) => !['role', 'layout', 'framework'].includes(key)))
       throw new Error('Unknown architecture entry option.')
     const role = entry.role
+    if ('framework' in entry && entry.framework !== undefined && role !== 'web')
+      throw new Error('Only web architecture roots accept a framework.')
+    const framework = role === 'web' ? (entry.framework ?? options.framework ?? 'tanstack-start') : undefined
+    if (framework !== undefined && framework !== 'tanstack-start' && framework !== 'next')
+      throw new Error(`Unknown framework: ${framework}`)
     const portable = path.replaceAll('\\', '/')
     if (!portable.trim() || posix.isAbsolute(portable) || /^[a-z]:/i.test(portable))
       throw new Error('Architecture roots must be nonempty project-relative paths.')
@@ -56,7 +61,7 @@ export function presetResolveContext(options: PresetOptions): PresetContext {
         throw new Error('Layout folders must not overlap.')
       }
     }
-    return [normalized, { role, layout }] as const
+    return [normalized, framework ? { role, layout, framework } : { role, layout }] as const
   })
   for (const [index, [path]] of entries.entries()) {
     const overlaps = entries
@@ -95,7 +100,15 @@ export function presetResolveContext(options: PresetOptions): PresetContext {
     )
   )
     throw new Error('File roles must not replace built-in roles.')
+  if (options.framework !== undefined && options.framework !== 'tanstack-start' && options.framework !== 'next')
+    throw new Error(`Unknown framework: ${options.framework}`)
   const web = entries.filter(([, { role }]) => role === 'web').map(([path]) => posix.join(path, 'src'))
+  const webFor = (framework: 'tanstack-start' | 'next') =>
+    entries
+      .filter(([, entry]) => entry.role === 'web' && 'framework' in entry && entry.framework === framework)
+      .map(([path]) => posix.join(path, 'src'))
+  const tanstackWeb = webFor('tanstack-start')
+  const nextWeb = webFor('next')
   const backendRoots = entries.filter(([, { role }]) => role === 'server' || role === 'runner').map(([path]) => path)
   const backend = backendRoots.map((path) => posix.join(path, 'src'))
   const packages = entries.filter(([, { role }]) => role === 'packages').map(([path]) => path)
@@ -152,7 +165,9 @@ export function presetResolveContext(options: PresetOptions): PresetContext {
             path,
             resolve(
               root,
-              entryPoints[posix.dirname(path)] ?? tailwind?.cssEntryPoint ?? `${path}/application/styles.css`,
+              entryPoints[posix.dirname(path)] ??
+                tailwind?.cssEntryPoint ??
+                (nextWeb.includes(path) ? `${path}/app/globals.css` : `${path}/application/styles.css`),
             ),
           ]),
         )
@@ -165,6 +180,8 @@ export function presetResolveContext(options: PresetOptions): PresetContext {
     packages,
     scripts,
     web,
+    tanstackWeb,
+    nextWeb,
     backend,
     app,
     appFiles,

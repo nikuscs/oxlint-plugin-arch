@@ -9,6 +9,7 @@ import { directives } from './reasoned-directives.ts'
 import { tanstackRuntime } from './tanstack-runtime.ts'
 import { importBoundaries } from './import-boundaries.ts'
 import { memoization } from './memoization.ts'
+import { nextRuntime } from './next-runtime.ts'
 
 export default eslintCompatPlugin({
   meta: { name: 'modules' },
@@ -40,6 +41,7 @@ export default eslintCompatPlugin({
     ),
     'no-unknown': syntaxRule('TSUnknownKeyword', 'Use an owned domain type rather than unknown.'),
     memoization: memoization,
+    'next-runtime': nextRuntime,
     'pascal-interface': syntaxRule(
       'TSInterfaceDeclaration:not([id.name=/^[A-Z][a-zA-Z0-9]*$/])',
       'Use PascalCase for interfaces.',

@@ -3,7 +3,7 @@ import { presetScopes, presetOverride } from '../utils/helpers/preset.ts'
 import { presetReactRules, presetEffectsRules, presetTailwindRules } from '../constants/preset.constants.ts'
 
 export function presetReactConfig(context: PresetContext): PresetPolicies {
-  const { options, web, webFiles, ui, testFiles, components, css } = context
+  const { options, web, tanstackWeb, nextWeb, webFiles, ui, testFiles, components, css } = context
   const policies: PresetPolicies = {}
   if (web.length) {
     policies.react = [
@@ -37,33 +37,99 @@ export function presetReactConfig(context: PresetContext): PresetPolicies {
     policies.effects = [presetOverride(webFiles, { ...presetEffectsRules, 'modules/empty-effect': 'error' }, ui)]
   }
 
-  if (web.length) {
-    policies.routes = [
-      presetOverride(
-        presetScopes(web, 'routes/**/*.{ts,tsx}'),
-        {
-          'arch/route-surface': [
-            'error',
+  const nextPage = { bannedHooks: ['useState', 'useEffect', 'useMutation'], inspectExports: true }
+  const nextHandlerMethods = ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
+  const nextSegmentExports = [
+    'generateMetadata',
+    'metadata',
+    'generateStaticParams',
+    'generateViewport',
+    'viewport',
+    'dynamic',
+    'dynamicParams',
+    'revalidate',
+    'fetchCache',
+    'runtime',
+    'preferredRegion',
+    'maxDuration',
+  ]
+  const routes = [
+    ...(tanstackWeb.length
+      ? [
+          presetOverride(
+            presetScopes(tanstackWeb, 'routes/**/*.{ts,tsx}'),
             {
-              exportName: 'Route',
-              bannedHooks: ['useState', 'useEffect', 'useMutation'],
-              banIntrinsicJsx: true,
+              'arch/route-surface': [
+                'error',
+                {
+                  exportName: 'Route',
+                  bannedHooks: ['useState', 'useEffect', 'useMutation'],
+                  banIntrinsicJsx: true,
+                },
+              ],
             },
-          ],
-        },
-        testFiles,
-      ),
-      presetOverride(presetScopes(web, 'routes/handlers/**/*.ts'), {
-        'arch/no-file-level-helpers': [
-          'error',
-          {
-            detectComponents: false,
-            message:
-              'Nest this helper in its owning route handler callback, or move genuine domain logic to a service. Do not create a component, hook or public helper to bypass this rule.',
-          },
-        ],
-      }),
-    ]
+            testFiles,
+          ),
+          presetOverride(presetScopes(tanstackWeb, 'routes/handlers/**/*.ts'), {
+            'arch/no-file-level-helpers': [
+              'error',
+              {
+                detectComponents: false,
+                message:
+                  'Nest this helper in its owning route handler callback, or move genuine domain logic to a service. Do not create a component, hook or public helper to bypass this rule.',
+              },
+            ],
+          }),
+        ]
+      : []),
+    ...(nextWeb.length
+      ? [
+          presetOverride(
+            presetScopes(nextWeb, 'app/**/{page,template,default,not-found,forbidden,unauthorized,loading}.tsx'),
+            {
+              'arch/route-surface': [
+                'error',
+                { exportName: 'default', allowedExports: nextSegmentExports, banIntrinsicJsx: true, ...nextPage },
+              ],
+            },
+            [...testFiles, ...presetScopes(nextWeb, 'app/not-found.tsx')],
+          ),
+          // The root not-found renders its own document when the root layout only passes children through.
+          presetOverride(
+            [...presetScopes(nextWeb, 'app/**/{layout,global-not-found}.tsx'), ...presetScopes(nextWeb, 'app/not-found.tsx')],
+            {
+              'arch/route-surface': [
+                'error',
+                { exportName: 'default', allowedExports: nextSegmentExports, banIntrinsicJsx: false, ...nextPage },
+              ],
+            },
+            testFiles,
+          ),
+          presetOverride(presetScopes(nextWeb, 'app/**/route.ts'), {
+            'arch/route-surface': [
+              'error',
+              {
+                exportName: 'GET',
+                allowedExports: [...nextHandlerMethods.slice(1), ...nextSegmentExports],
+                bannedHooks: [],
+                banIntrinsicJsx: false,
+              },
+            ],
+            'arch/no-file-level-helpers': [
+              'error',
+              {
+                detectComponents: false,
+                allowPattern: `^(${[...nextHandlerMethods, ...nextSegmentExports].join('|')})$`,
+                message:
+                  'Nest this helper in its owning route handler, or move genuine domain logic to a service. Do not create a component, hook or public helper to bypass this rule.',
+              },
+            ],
+          }),
+        ]
+      : []),
+  ]
+  if (routes.length) {
+    policies.routes = routes
   }
 
   if (web.length) {

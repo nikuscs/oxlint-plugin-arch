@@ -1,5 +1,14 @@
 # Changelog
 
+## Unreleased
+
+- Add a `framework` setting per web root (`tanstack-start` by default, or `next` for the App Router) and a top-level default. Add the generic `reactModulesPreset` and `nextReactModulesPreset`; `tanstackStartReactModulesPreset` is unchanged and produces the same configuration as before.
+- For `next` roots, apply App Router route policies to pages, layouts and `route.ts` handlers, default Tailwind to `src/app/globals.css`, and ignore `.next/**` and `next-env.d.ts`. Monorepos can mix TanStack Start and Next web roots in one config.
+- Add `modules/next-runtime`: server/client ownership for Next services and lib from file names (`.server`, `.rsc`, `.action`, `.client`) and `'use server'`/`'use client'` directives, with `next.additionalServerOnlyImports`, `next.additionalClientOnlyImports` and `next.computedImportAllowedFiles`.
+- Add `allowedExports` and `inspectExports` to `arch/route-surface`. Defaults keep today's behavior.
+- Next `route.ts` handlers may export HTTP methods and segment exports such as `generateStaticParams` without `no-file-level-helpers` reporting them.
+- When the architecture has no backend root, web `types/` files own schemas: Zod construction is allowed there and `no-runtime-in-types` does not apply. Configurations with a backend produce the same output as before.
+
 ## 0.6.3
 
 - Add a trailing comma when `object-multiline` splits an object, so the fix agrees with multiline comma rules.

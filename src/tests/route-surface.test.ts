@@ -29,3 +29,20 @@ test('route-surface', () => {
     ],
   })
 })
+
+test('route-surface admits framework exports and inspects the exported component when configured', () => {
+  const options = [{ exportName: 'default', allowedExports: ['generateMetadata', 'metadata'], inspectExports: true, bannedHooks: ['useState', 'useEffect'], banIntrinsicJsx: true }]
+  createRuleTester('tsx').run('arch/route-surface', routeSurface, {
+    valid: [
+      { code: "import { HomePage } from '@/components/home/home-page'\nexport async function generateMetadata() { return { title: 'Home' } }\nexport default function Page() { return <HomePage /> }", options },
+      { code: "export const metadata = { title: 'Home' }\nconst Page = () => <HomePage />\nexport default Page", options },
+      { code: "export default async function Page() { const data = await load(); return <HomePage data={data} /> }", options },
+    ],
+    invalid: [
+      { code: "export const revalidate = 60\nexport default function Page() { return <HomePage /> }", options, errors: [extraExport] },
+      { code: "export default function Page() { return <main><HomePage /></main> }", options, errors: [hostJsx] },
+      { code: "export default function Page() { const [open] = useState(false); return <HomePage open={open} /> }", options, errors: [bannedHook] },
+      { code: "const Page = () => <div />\nexport default Page", options, errors: [hostJsx] },
+    ],
+  })
+})

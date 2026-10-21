@@ -31,6 +31,13 @@ export interface ModuleRuntimeOptions
   allowComputedImportsIn?: string[]
 }
 
+export interface ModuleNextRuntimeOptions
+  extends Pick<ModuleBoundaryOptions, 'web' | 'backend' | 'aliases' | 'backendPackages'> {
+  serverImports?: string[]
+  clientImports?: string[]
+  allowComputedImportsIn?: string[]
+}
+
 export interface ModuleTestModifiersOptions {
   additionalTestFunctions?: string[]
 }

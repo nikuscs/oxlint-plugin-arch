@@ -65,6 +65,36 @@ Folder keys are literal paths relative to an app's `src` (relative to the root f
 
 RPC ownership follows each web root's service layout: `services/rpc.client.ts` for flat, `services/rpc/rpc.client.ts` for domain. `orpc.clientOwnerFile` remains the explicit consumer override. There is no mixed-layout mode.
 
+### Frameworks and the generic preset
+
+Each web root has a `framework`: `tanstack-start` (the default) or `next` (App Router). The framework only selects the route policy, the runtime-boundary rule and the default stylesheet; every other policy is shared. `framework` is accepted on web roots only.
+
+```ts
+import { reactModulesPreset } from 'oxlint-plugin-arch/presets';
+
+export default reactModulesPreset({
+  root: import.meta.dirname,
+  architecture: {
+    'apps/dashboard': { role: 'web', framework: 'tanstack-start' },
+    'apps/site': { role: 'web', framework: 'next' },
+    'apps/api': 'server',
+    packages: 'packages',
+  },
+});
+```
+
+`reactModulesPreset` is the generic factory; a top-level `framework` sets the default for web roots without one. `nextReactModulesPreset` (`oxlint-plugin-arch/presets/next-react-modules-preset`) defaults web roots to `next`, and `tanstackStartReactModulesPreset` keeps defaulting to `tanstack-start`, unchanged. A standalone Next app uses `nextReactModulesPreset({ root: import.meta.dirname, architecture: { '.': 'web' } })`.
+
+For `next` roots:
+
+- `app/**/{page,template,default,not-found,forbidden,unauthorized,loading}.tsx` default-export a component and may also export Next segment config and metadata (`generateMetadata`, `metadata`, `generateStaticParams`, `generateViewport`, `viewport`, `dynamic`, `dynamicParams`, `revalidate`, `fetchCache`, `runtime`, `preferredRegion`, `maxDuration`). The exported component and its local adapters must not call `useState`, `useEffect` or `useMutation` or render intrinsic JSX: pages compose components.
+- `app/**/{layout,global-not-found}.tsx` and the root `app/not-found.tsx` follow the same export surface and hook ban but may render `<html>` and `<body>`, since a root not-found renders its own document when the root layout only passes children through (the next-intl pattern).
+- `app/**/route.ts` export HTTP method handlers and segment config only; helpers belong inside their handler or in a service.
+- `modules/next-runtime` replaces `modules/tanstack-runtime` for the root's services and lib (see [Next runtime boundaries](#next-runtime-boundaries)).
+- The default Tailwind entry point is `src/app/globals.css`, and `.next/**` and `next-env.d.ts` are ignored.
+
+Services, oRPC client ownership, hooks, types, constants and the backend roles work the same for both frameworks, so an oRPC server with a Next frontend uses the same `imports.backendEntryPoints` and `orpc` options as a TanStack Start app.
+
 ### Configure settings and policies
 
 Settings are grouped by responsibility. The unreleased preset uses only this grouped API; old flat preset keys are not aliases. Standalone rule options are unchanged.
@@ -231,7 +261,7 @@ Oxlint reads `typeAware` from the root config only. The direct `export default p
 - Routes wire components, forms use a schema resolver, context creation has an owner directory, and effects cannot replace derived values or event handlers. React Compiler projects reject manual memoization. Test IDs are allowed. JSX rejects new object/function props inside render, and noninteractive elements cannot receive a tab index.
 - Safety rules reject unknown/any, chained assertions, unjustified assertions, loose dictionaries, module mocks, shared mutable bindings and focused/skipped/placeholder tests. Comments are limited to supported directives, SAFETY notes and explicit exceptions. Type/constant files do not allow SAFETY comments; prompt files require explicit comment exceptions. UI-kit code retains type-safety, formatting and layout checks.
 - Unbound methods and untyped mocks are rejected, including in tests. Console calls require an explicit script/CLI scope or adapter exclusion. Promise rejection callbacks must not receive implicit `any`; omitting the error parameter is allowed. App code needing an `unknown` boundary must use an explicit rule-specific exception.
-- Backend owns shared schemas and exposes a public client entry point; frontend type files are runtime-free. Packages cannot import app internals, RPC handlers delegate database work, and service dependencies are injected.
+- Backend owns shared schemas and exposes a public client entry point; frontend type files are runtime-free. Without a backend root, each web root owns its schemas instead: its `types/*.types.ts` files may build Zod schemas, like backend type files. Packages cannot import app internals, RPC handlers delegate database work, and service dependencies are injected.
 
 Provide `orpc: { publicProcedureFiles: ['apps/server/src/rpc/api/**/*.ts'] }` for externally exposed oRPC endpoints requiring output schemas; exposure cannot be inferred from filenames or authentication. `imports.backendEntryPoints` defaults to `<backend package name>/client` read from each configured backend manifest. Configure it for another public import surface.
 
@@ -332,6 +362,7 @@ export default defineConfig({
 | [`minimal.oxlint.config.ts`](examples/minimal.oxlint.config.ts) | You want the smallest possible starting point. |
 | [`monorepo.oxlint.config.ts`](examples/monorepo.oxlint.config.ts) | ⭐ You are starting an `apps/server` + `apps/web` monorepo and want a strict, copy-ready setup. |
 | [`full.oxlint.config.ts`](examples/full.oxlint.config.ts) | You want to see every one of the 44 rules with its options. |
+| [`next-preset.oxlint.config.ts`](examples/next-preset.oxlint.config.ts) | You use the preset with a Next.js App Router web root, alone or next to TanStack Start apps. |
 
 > [!TIP]
 > `monorepo.oxlint.config.ts` already loads `oxlint-plugin-arch`, so you can copy it as-is and adjust globs and names. The other two load `../src/index.ts`; change that specifier to `oxlint-plugin-arch` when you copy them.
@@ -412,7 +443,7 @@ Options that take one regex string (`pattern`, `allowPattern`, `forbid`, `requir
 | --- | --- |
 | `component-props` | Components type props with `interface XProps` declared directly above them; pass-through components may use `ComponentProps<'tag'>`. [Details ↓](#component-props) |
 | `only-export-components` | Component files export only components. `denyTypePattern: 'Props$'` keeps props private. |
-| `route-surface` | Route files export the route only, with no banned hooks or raw JSX. |
+| `route-surface` | Route files export the route (plus configured `allowedExports`) only, with no banned hooks or raw JSX; `inspectExports` also checks the exported component. |
 
 ### 💬 Comments & tests
 
@@ -469,6 +500,14 @@ Calls already using separate lines for every argument and `)` are left unchanged
 `tanstackStart.additionalServerOnlyImports` and `additionalClientOnlyImports` add package/module prefixes. `tanstackStart.computedImportAllowedFiles` permits computed imports only in explicitly named project-relative files; review all targets before using it. Other checks still run. This is direct syntax and lexical-reference enforcement, not an import graph, interprocedural alias analysis, sandbox, or proof of SSR safety. Wrapper factories, indirect callback references, re-exported framework factories and arbitrary computed member aliases are not recognized as boundary proofs. Native rule exclusions remain explicit consumer decisions.
 
 TanStack's [environment functions](https://tanstack.com/start/latest/docs/framework/react/guide/environment-functions) remove opposite branches, and [import protection](https://tanstack.com/start/latest/docs/framework/react/guide/import-protection) checks the resulting graph. Start's default import protection treats `.client.*` as browser-only, unlike this preset's service convention: SSR consumers must deliberately configure its server file pattern (Orbs uses `server.files: []`). Keep build-side protection enabled for server dependencies; lint does not replace it.
+
+### Next runtime boundaries
+
+`modules/next-runtime` checks every `next` web root's services and lib. A module's runtime comes from its name and directives: `.server`, `.rsc` and `.action` files, and files starting with `'use server'`, are server modules; `.client` files and files starting with `'use client'` are client modules; `.utils`, `.constants` and `lib/` files are shared.
+
+Server-only dependencies are Node builtins (bare and `node:`), Bun/Cloudflare modules, `server-only`, `next/headers`, `next/cache`, `next/server`, `react-dom/server`, `@orpc/server`, configured backend server/RPC APIs and `.server`/`.rsc` targets. They are allowed only in server modules. Browser-only dependencies (`client-only`, `react-dom/client`, `hooks/` and `.client-only` targets) and React hooks other than `use` and `useId` are rejected in server modules; shared modules accept neither side. Server globals are rejected in client and shared modules, except `process.env.NEXT_PUBLIC_*`; browser globals are rejected in server modules. Client modules may import server actions from `.action` files, which must start with `'use server'`. A `'use client'` directive in a server-named file, or `'use server'` in a `.client` file, is reported. Type-only imports and re-exports are ignored.
+
+`next.additionalServerOnlyImports` and `additionalClientOnlyImports` add package/module prefixes; `next.computedImportAllowedFiles` permits computed dynamic imports in explicitly named project-relative files. Like the TanStack rule, this is direct syntax enforcement, not an import graph; keep `server-only`/`client-only` and the bundler's own checks in place.
 
 ### Private domain helpers and precise wrapper detection
 
