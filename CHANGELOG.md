@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.7.0
 
 - Update bundled plugins: `@oxlint/plugins` and `oxlint-plugin-eslint` 1.89, `oxlint-tailwindcss` 1.16, `eslint-plugin-perfectionist` 5.13, `eslint-plugin-tsdoc` 0.5.4 and `@shadcn/lint` 0.2. `@shadcn/lint` now prints a notice when a project's `cn` is older than 0.4 and lints with its bundled `cn` instead.
 - Add a `framework` setting per web root (`tanstack-start` by default, or `next` for the App Router) and a top-level default. Add the generic `reactModulesPreset` and `nextReactModulesPreset`; `tanstackStartReactModulesPreset` equals `reactModulesPreset` with the default framework; apart from the `.illustration.tsx` role below, it keeps its previous output.

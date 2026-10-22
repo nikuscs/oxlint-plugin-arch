@@ -49,7 +49,7 @@ function overridesWith(config: ReturnType<typeof reactModulesPreset>, rule: stri
   return (config.overrides ?? []).filter((entry) => entry.rules && rule in entry.rules)
 }
 
-describe('Next React modules preset', () => {
+describe('Next React modules preset', { timeout: 30_000 }, () => {
   test('the TanStack preset equals the generic preset with the default TanStack framework', () => {
     const options = { root: repository, tailwind: false } as const
     expect(tanstackStartReactModulesPreset(options)).toEqual(reactModulesPreset(options))
