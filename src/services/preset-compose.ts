@@ -1,10 +1,13 @@
 import type { OxlintConfig, OxlintOverride } from 'oxlint'
 import type { PresetContext, PresetPolicies } from '../types/preset.types.ts'
 import { presetCommonRules, presetPolicyOrder } from '../constants/preset.constants.ts'
-import { presetOverride, presetSeverity } from '../utils/helpers/preset.ts'
+import { presetOverride, presetRuleSeverities, presetSeverity } from '../utils/helpers/preset.ts'
 
 export function presetCompose(context: PresetContext, policies: PresetPolicies, plugins: OxlintConfig): OxlintConfig {
   const { options, level, safetyFiles, ui, generated } = context
+  const severities = options.ruleSeverities ?? {}
+  const levels = (rules: NonNullable<OxlintOverride['rules']>) =>
+    presetRuleSeverities(presetSeverity(rules, level), severities)
   const overrideList: OxlintOverride[] = []
   for (const name of presetPolicyOrder) {
     const setting = options.policies?.[name]
@@ -16,20 +19,23 @@ export function presetCompose(context: PresetContext, policies: PresetPolicies, 
     for (const entry of entries) {
       overrideList.push({
         ...entry,
-        rules: entry.rules ? presetSeverity(entry.rules, level) : undefined,
+        rules: entry.rules ? levels(entry.rules) : undefined,
       })
     }
   }
   overrideList.push(
     presetOverride(
       safetyFiles,
-      {
-        'max-lines': [level, { max: options.limits?.maxFileLines ?? 400, skipBlankLines: true, skipComments: true }],
-        complexity: [level, { max: options.limits?.maxFunctionComplexity ?? 32 }],
-      },
+      levels({
+        'max-lines': ['error', { max: options.limits?.maxFileLines ?? 400, skipBlankLines: true, skipComments: true }],
+        complexity: ['error', { max: options.limits?.maxFunctionComplexity ?? 32 }],
+      }),
       ui,
     ),
   )
+  // Rules the preset never names, such as those from the correctness category, get their level at the top.
+  const named = new Set([...Object.keys(presetCommonRules), ...overrideList.flatMap((entry) => Object.keys(entry.rules ?? {}))])
+  const unnamedLevels = Object.fromEntries(Object.entries(severities).filter(([rule]) => !named.has(rule)))
   for (const [rule, files] of Object.entries(options.ruleExclusions ?? {})) {
     overrideList.push({ files, rules: { [rule]: 'off' } })
   }
@@ -48,7 +54,7 @@ export function presetCompose(context: PresetContext, policies: PresetPolicies, 
       ...(options.ignorePatterns ?? []),
     ],
     ...plugins,
-    rules: presetSeverity(presetCommonRules, level),
+    rules: { ...levels(presetCommonRules), ...unnamedLevels },
     overrides: overrideList.filter((entry) => entry.files.length > 0),
   }
 }

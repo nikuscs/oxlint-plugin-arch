@@ -3,7 +3,7 @@ import { presetScopes, presetOverride } from '../utils/helpers/preset.ts'
 import { presetTestRules } from '../constants/preset.constants.ts'
 
 export function presetTestsConfig(context: PresetContext): PresetPolicies {
-  const { backend, testFiles, baseImports, options } = context
+  const { backendRoots, testFiles, baseImports, options } = context
   const profile = options.tests?.profile ?? 'fixtures'
   if (profile !== 'standard' && profile !== 'fixtures') throw new Error('Unknown test profile.')
   const testFunctions = ['test', 'it', ...(options.tests?.additionalTestFunctions ?? [])]
@@ -34,10 +34,7 @@ export function presetTestsConfig(context: PresetContext): PresetPolicies {
       ],
     }),
     presetOverride(
-      presetScopes(
-        backend.map((path) => path.replace(/\/src$/, '')),
-        'tests/**/*.ts',
-      ),
+      presetScopes(backendRoots, 'tests/**/*.ts'),
       {
         'modules/concurrent-db': 'error',
         ...(profile === 'fixtures'

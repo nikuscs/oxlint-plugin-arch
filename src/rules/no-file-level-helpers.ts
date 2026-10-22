@@ -1,6 +1,7 @@
 import { defineRule } from '@oxlint/plugins'
 import {
   declarationsFileLevelFunctionCandidates,
+  exportsCollect,
   optionsFirst,
   optionsOptionalPatterns,
   optionsPatterns,
@@ -52,12 +53,17 @@ export const noFileLevelHelpers = defineRule({
         } = optionsFirst<NoFileLevelHelpersOptions>(context, {})
         const allowed = optionsOptionalPatterns(allowPattern)
         const hooks = optionsPatterns(hookPattern)
+        // `export { handler as GET }` is allowed by its public name, not its local one.
+        const exported = exportsCollect(program)
+        const allowedExport = (name: string) =>
+          exported.some((binding) => binding.localName === name && optionsPatternsTest(allowed, binding.exportedName))
 
         for (const candidate of declarationsFileLevelFunctionCandidates(program)) {
           if (
             (detectComponents && reactComponentsIsLike(program, candidate)) ||
             optionsPatternsTest(hooks, candidate.name) ||
-            optionsPatternsTest(allowed, candidate.name)
+            optionsPatternsTest(allowed, candidate.name) ||
+            allowedExport(candidate.name)
           ) {
             continue
           }

@@ -16,7 +16,7 @@ export function presetResolveContext(options: PresetOptions): PresetContext {
     const entry = typeof configuredRoot === 'string' ? { role: configuredRoot } : configuredRoot
     if (!entry || typeof entry !== 'object')
       throw new Error('Architecture entries must be roles or role/layout objects.')
-    if (Object.keys(entry).some((key) => !['role', 'layout', 'framework'].includes(key)))
+    if (Object.keys(entry).some((key) => !['role', 'layout', 'framework', 'sourceDir'].includes(key)))
       throw new Error('Unknown architecture entry option.')
     const role = entry.role
     if ('framework' in entry && entry.framework !== undefined && role !== 'web')
@@ -24,6 +24,15 @@ export function presetResolveContext(options: PresetOptions): PresetContext {
     const framework = role === 'web' ? (entry.framework ?? options.framework ?? 'tanstack-start') : undefined
     if (framework !== undefined && framework !== 'tanstack-start' && framework !== 'next')
       throw new Error(`Unknown framework: ${framework}`)
+    const sourced = role === 'web' || role === 'server' || role === 'runner'
+    if ('sourceDir' in entry && entry.sourceDir !== undefined && !sourced)
+      throw new Error('Only web, server and runner architecture roots accept a sourceDir.')
+    const sourceDir = entry.sourceDir ?? 'src'
+    if (
+      typeof sourceDir !== 'string' ||
+      (sourceDir !== '.' && sourceDir.split('/').some((segment) => !/^[a-zA-Z0-9][a-zA-Z0-9_-]*$/.test(segment)))
+    )
+      throw new Error('Source folders must be `.` or literal root-relative paths without escapes, globs or empty segments.')
     const portable = path.replaceAll('\\', '/')
     if (!portable.trim() || posix.isAbsolute(portable) || /^[a-z]:/i.test(portable))
       throw new Error('Architecture roots must be nonempty project-relative paths.')
@@ -61,7 +70,15 @@ export function presetResolveContext(options: PresetOptions): PresetContext {
         throw new Error('Layout folders must not overlap.')
       }
     }
-    return [normalized, framework ? { role, layout, framework } : { role, layout }] as const
+    return [
+      normalized,
+      {
+        role,
+        layout,
+        ...(framework ? { framework } : {}),
+        ...(entry.sourceDir === undefined ? {} : { sourceDir }),
+      },
+    ] as const
   })
   for (const [index, [path]] of entries.entries()) {
     const overlaps = entries
@@ -102,20 +119,20 @@ export function presetResolveContext(options: PresetOptions): PresetContext {
     throw new Error('File roles must not replace built-in roles.')
   if (options.framework !== undefined && options.framework !== 'tanstack-start' && options.framework !== 'next')
     throw new Error(`Unknown framework: ${options.framework}`)
-  const web = entries.filter(([, { role }]) => role === 'web').map(([path]) => posix.join(path, 'src'))
+  const source = (path: string, entry: PresetResolvedRoot) => posix.join(path, entry.sourceDir ?? 'src')
+  const web = entries.filter(([, { role }]) => role === 'web').map(([path, entry]) => source(path, entry))
   const webFor = (framework: 'tanstack-start' | 'next') =>
-    entries
-      .filter(([, entry]) => entry.role === 'web' && 'framework' in entry && entry.framework === framework)
-      .map(([path]) => posix.join(path, 'src'))
+    entries.filter(([, entry]) => entry.framework === framework).map(([path, entry]) => source(path, entry))
   const tanstackWeb = webFor('tanstack-start')
   const nextWeb = webFor('next')
-  const backendRoots = entries.filter(([, { role }]) => role === 'server' || role === 'runner').map(([path]) => path)
-  const backend = backendRoots.map((path) => posix.join(path, 'src'))
+  const backendEntries = entries.filter(([, { role }]) => role === 'server' || role === 'runner')
+  const backendRoots = backendEntries.map(([path]) => path)
+  const backend = backendEntries.map(([path, entry]) => source(path, entry))
   const packages = entries.filter(([, { role }]) => role === 'packages').map(([path]) => path)
   const scripts = entries.filter(([, { role }]) => role === 'scripts').map(([path]) => path)
   const folders = entries.flatMap(([path, entry]) =>
     Object.entries(entry.layout).map(([folder, mode]) => ({
-      path: posix.join(path, ['web', 'server', 'runner'].includes(entry.role) ? 'src' : '', folder),
+      path: posix.join(['web', 'server', 'runner'].includes(entry.role) ? source(path, entry) : path, folder),
       folder,
       mode,
     })),
@@ -123,7 +140,7 @@ export function presetResolveContext(options: PresetOptions): PresetContext {
   const rpcClients = entries
     .filter(([, entry]) => entry.role === 'web')
     .map(([path, entry]) =>
-      posix.join(path, 'src/services', entry.layout.services === 'domain' ? 'rpc/rpc.client.ts' : 'rpc.client.ts'),
+      posix.join(source(path, entry), 'services', entry.layout.services === 'domain' ? 'rpc/rpc.client.ts' : 'rpc.client.ts'),
     )
   const app = [...web, ...backend]
   const appFiles = presetScopes(app)
@@ -161,15 +178,16 @@ export function presetResolveContext(options: PresetOptions): PresetContext {
     tailwind === false
       ? {}
       : Object.fromEntries(
-          web.map((path) => [
-            path,
-            resolve(
-              root,
-              entryPoints[posix.dirname(path)] ??
-                tailwind?.cssEntryPoint ??
-                (nextWeb.includes(path) ? `${path}/app/globals.css` : `${path}/application/styles.css`),
-            ),
-          ]),
+          entries
+            .filter(([, entry]) => entry.role === 'web')
+            .map(([path, entry]) => {
+              const sourcePath = source(path, entry)
+              const fallback = entry.framework === 'next' ? 'app/globals.css' : 'application/styles.css'
+              return [
+                sourcePath,
+                resolve(root, entryPoints[path] ?? tailwind?.cssEntryPoint ?? posix.join(sourcePath, fallback)),
+              ]
+            }),
         )
   return {
     options,
@@ -183,6 +201,7 @@ export function presetResolveContext(options: PresetOptions): PresetContext {
     tanstackWeb,
     nextWeb,
     backend,
+    backendRoots,
     app,
     appFiles,
     webFiles,

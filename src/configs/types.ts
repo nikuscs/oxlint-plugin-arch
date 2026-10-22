@@ -18,14 +18,18 @@ export function presetTypesConfig(context: PresetContext): PresetPolicies {
     components,
     hooks,
     publicEntrypoints,
+    tanstackWeb,
+    nextWeb,
   } = context
-  // Without a backend, web roots own their schemas, so their types/ follows the backend contract.
-  const schemaOwners = backend.length ? backend : web
-  const runtimeFreeTypes = backend.length ? web : []
+  // Without a backend, Next web roots own their schemas, so their types/ follows the backend contract.
+  const schemaOwners = backend.length ? backend : nextWeb
+  const runtimeFreeTypes = backend.length ? web : tanstackWeb
+  const colocatedTypes = options.modules?.colocatedTypeFiles ?? []
   const policies: PresetPolicies = {}
   policies.typePlacement = [
     presetOverride(appFiles, { 'arch/no-type-declarations': 'error' }, [
       ...types,
+      ...colocatedTypes,
       ...components,
       ...hooks,
       ...services,
@@ -57,7 +61,7 @@ export function presetTypesConfig(context: PresetContext): PresetPolicies {
       {
         'arch/no-restricted-files': ['error', { message: 'Domain types belong in src/types.' }],
       },
-      [...types, ...ui],
+      [...types, ...colocatedTypes, ...ui],
     ),
     presetOverride(
       presetScopes(app, '**/*.{utils,constants}.ts'),
@@ -66,9 +70,12 @@ export function presetTypesConfig(context: PresetContext): PresetPolicies {
       },
       [...ui, ...testFiles],
     ),
-    presetOverride([...presetScopes(schemaOwners, 'types/**/*.types.ts'), ...presetScopes(app, '**/*.constants.ts')], {
-      'arch/no-top-level-functions': ['error', { banReExports: false }],
-    }),
+    presetOverride(
+      [...presetScopes(schemaOwners, 'types/**/*.types.ts'), ...colocatedTypes, ...presetScopes(app, '**/*.constants.ts')],
+      {
+        'arch/no-top-level-functions': ['error', { banReExports: false }],
+      },
+    ),
     ...(runtimeFreeTypes.length
       ? [
           presetOverride(presetScopes(runtimeFreeTypes, 'types/**/*.types.ts'), {
@@ -117,7 +124,7 @@ export function presetTypesConfig(context: PresetContext): PresetPolicies {
       {
         'arch/no-local-schema-construction': ['error', { packages: ['zod'], namespaces: ['z'] }],
       },
-      [...presetScopes(schemaOwners, 'types/**'), ...ui],
+      [...presetScopes(schemaOwners, 'types/**'), ...colocatedTypes, ...ui],
     ),
     presetOverride(webFiles, {
       'arch/no-rederive-schema': [

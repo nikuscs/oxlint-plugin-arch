@@ -1,34 +1,16 @@
-import { builtinModules } from 'node:module'
 import { defineRule } from '@oxlint/plugins'
 import type { ESTree, Scope } from '@oxlint/plugins'
 import type { ModuleNextRuntimeOptions } from '../../types/module-policy.types.ts'
-import { boundaryResolveTarget, optionsFirst } from '../../utils/index.ts'
-
-const SERVER_GLOBALS = ['process', 'Bun', 'Deno', 'Buffer', '__dirname', '__filename', 'require']
-const BROWSER_GLOBALS = [
-  'window',
-  'document',
-  'navigator',
-  'localStorage',
-  'sessionStorage',
-  'location',
-  'history',
-  'screen',
-  'HTMLElement',
-  'Element',
-  'HTMLInputElement',
-  'ResizeObserver',
-  'MutationObserver',
-  'IntersectionObserver',
-  'FileReader',
-  'matchMedia',
-  'getComputedStyle',
-  'requestAnimationFrame',
-  'cancelAnimationFrame',
-  'alert',
-  'confirm',
-  'prompt',
-]
+import {
+  boundaryResolveTarget,
+  optionsFirst,
+  runtimeBrowserGlobals,
+  runtimeIsBackendImport,
+  runtimeIsServerPlatformImport,
+  runtimeMatchesImport,
+  runtimeMemberName,
+  runtimeServerGlobals,
+} from '../../utils/index.ts'
 
 /**
  * Checks Next.js runtime ownership from file names and directives: `.server`/`.rsc` and `'use server'` modules stay off
@@ -69,6 +51,7 @@ export const nextRuntime = defineRule({
     let server = false
     let client = false
     let shared = false
+    const reactNamespaces = new Set<ESTree.Node>()
 
     function report(node: ESTree.Node, source: string, reason: string) {
       context.report({ node, messageId: 'runtime', data: { source, reason } })
@@ -77,28 +60,16 @@ export const nextRuntime = defineRule({
     function check(node: ESTree.Node, source: string, typeOnly: boolean) {
       if (typeOnly) return
       const target = boundaryResolveTarget(options, file, source)
-      const matches = (values: string[] | undefined) =>
-        values?.some((value) => source === value || source.startsWith(value + '/'))
-      const backend =
-        options.backend.some((path) => target.startsWith(path + '/')) ||
-        options.backendPackages.some(
-          (name) =>
-            source === name ||
-            (source.startsWith(name + '/') && /\/(?:server|rpc)(?:\/|$)/.test(source.slice(name.length))),
-        )
       const serverOnly =
-        builtinModules.includes(source) ||
-        backend ||
-        source === '@orpc/server' ||
+        runtimeIsServerPlatformImport(source) ||
+        runtimeIsBackendImport(options, target, source) ||
         /\.(?:server|rsc)(?:\.[cm]?[jt]sx?)?$/.test(target) ||
-        /^(?:node:|bun(?::|$)|cloudflare:)/.test(source) ||
         /^(?:server-only|next\/headers|next\/cache|next\/server)$/.test(source) ||
-        /^react-dom\/server(?:\.|\/|$)/.test(source) ||
-        matches(options.serverImports)
+        runtimeMatchesImport(options.serverImports, source)
       const clientOnly =
         /(?:\/hooks\/|\.client-only(?:\.|$))/.test(target) ||
         /^(?:client-only|react-dom\/client)$/.test(source) ||
-        matches(options.clientImports)
+        runtimeMatchesImport(options.clientImports, source)
 
       if (clientOnly && (server || shared)) {
         report(node, source, 'browser-only dependencies do not belong in server, RSC or shared modules')
@@ -113,38 +84,61 @@ export const nextRuntime = defineRule({
       }
     }
 
-    function global(node: Extract<ESTree.Node, { type: 'Identifier' }>) {
-      const serverGlobal = SERVER_GLOBALS.includes(node.name)
-      const browserGlobal = BROWSER_GLOBALS.includes(node.name)
-      if (!serverGlobal && !browserGlobal) return
-      const parent = node.parent
-      if (
-        (parent.type === 'MemberExpression' && parent.property === node && !parent.computed) ||
-        (parent.type === 'Property' && parent.key === node && !parent.computed) ||
-        parent.type.startsWith('TS')
-      )
-        return
+    function resolve(node: Extract<ESTree.Node, { type: 'Identifier' }>) {
       let scope: Scope | null = context.sourceCode.getScope(node)
       while (scope) {
-        if (scope.set.get(node.name)?.defs.length) return
+        const variable = scope.set.get(node.name)
+        if (variable?.defs.length) return variable
         scope = scope.upper
       }
+      return null
+    }
+
+    function clientHook(name: string) {
+      return /^use[A-Z]/.test(name) && !['useId', 'use'].includes(name)
+    }
+
+    function inType(node: ESTree.Node) {
+      return ['TSTypeQuery', 'TSQualifiedName', 'TSTypeReference'].includes(node.parent?.type ?? '')
+    }
+
+    // Unresolved runtime references only: declarations, property keys and erased type positions are not globals.
+    function globalReferences() {
+      const scope = context.sourceCode.scopeManager.scopes[0]
+      if (!scope) return []
+      const implicit = [...scope.set.values()].filter((variable) => !variable.defs.length)
+      return [...scope.through, ...implicit.flatMap((variable) => variable.references)]
+        .map((reference) => reference.identifier)
+        .filter((node): node is Extract<ESTree.Node, { type: 'Identifier' }> => node.type === 'Identifier' && !inType(node))
+    }
+
+    function global(reference: Extract<ESTree.Node, { type: 'Identifier' }>) {
+      // `globalThis.window` reaches the same global as a bare `window`.
+      const owned = reference.name === 'globalThis' ? runtimeMemberName(reference.parent) : null
+      const name = owned ?? reference.name
+      const serverGlobal = runtimeServerGlobals.includes(name)
+      const browserGlobal = runtimeBrowserGlobals.includes(name)
+      if (!serverGlobal && !browserGlobal) return
+      const node: ESTree.Node = owned ? reference.parent : reference
+      const env: ESTree.Node | null = node.parent
+      const key: ESTree.Node | null | undefined = env?.parent
       const publicEnv =
-        node.name === 'process' &&
-        parent.type === 'MemberExpression' &&
-        parent.property.type === 'Identifier' &&
-        parent.property.name === 'env' &&
-        parent.parent.type === 'MemberExpression' &&
-        parent.parent.property.type === 'Identifier' &&
-        parent.parent.property.name.startsWith('NEXT_PUBLIC_')
+        name === 'process' &&
+        runtimeMemberName(env) === 'env' &&
+        env?.type === 'MemberExpression' &&
+        env.object === node &&
+        key?.type === 'MemberExpression' &&
+        key.object === env &&
+        (runtimeMemberName(key) ?? '').startsWith('NEXT_PUBLIC_')
       if (serverGlobal && !server && !publicEnv && (client || shared))
-        report(node, node.name, 'server globals are unavailable in browser and shared modules')
-      if (browserGlobal && server) report(node, node.name, 'browser globals are unavailable during server execution')
+        report(node, name, 'server globals are unavailable in browser and shared modules')
+      if (browserGlobal && server) report(node, name, 'browser globals are unavailable during server execution')
     }
 
     return {
       Program(program) {
         options = optionsFirst<ModuleNextRuntimeOptions>(context)
+        reactNamespaces.clear()
         file = context.filename.replaceAll('\\', '/')
         const directives = program.body
           .filter(
@@ -174,17 +168,23 @@ export const nextRuntime = defineRule({
           (node.specifiers.length > 0 &&
             node.specifiers.every((specifier) => specifier.type === 'ImportSpecifier' && specifier.importKind === 'type'))
         check(node, node.source.value, typeOnly)
-        if (typeOnly || !server || node.source.value !== 'react') return
+        if (typeOnly || !(server || shared) || node.source.value !== 'react') return
         for (const specifier of node.specifiers) {
-          if (
-            specifier.type === 'ImportSpecifier' &&
+          if (specifier.type !== 'ImportSpecifier') reactNamespaces.add(specifier)
+          else if (
             specifier.importKind !== 'type' &&
             specifier.imported.type === 'Identifier' &&
-            /^use[A-Z]/.test(specifier.imported.name) &&
-            !['useId', 'use'].includes(specifier.imported.name)
+            clientHook(specifier.imported.name)
           )
-            report(specifier, specifier.imported.name, 'client hooks do not belong in server or RSC modules')
+            report(specifier, specifier.imported.name, 'client hooks do not belong in server, RSC or shared modules')
         }
+      },
+      MemberExpression(node) {
+        const name = runtimeMemberName(node)
+        if (!name || !clientHook(name) || node.object.type !== 'Identifier') return
+        const binding = resolve(node.object)?.defs[0]?.node
+        if (binding && reactNamespaces.has(binding))
+          report(node, `${node.object.name}.${name}`, 'client hooks do not belong in server, RSC or shared modules')
       },
       ExportNamedDeclaration(node) {
         if (node.source)
@@ -202,7 +202,9 @@ export const nextRuntime = defineRule({
         if (node.source.type === 'Literal' && typeof node.source.value === 'string') check(node, node.source.value, false)
         else if (!options.allowComputedImportsIn?.includes(file)) context.report({ node, messageId: 'computed' })
       },
-      Identifier: global,
+      'Program:exit'() {
+        for (const reference of globalReferences()) global(reference)
+      },
     }
   },
 })

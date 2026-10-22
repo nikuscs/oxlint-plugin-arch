@@ -57,8 +57,10 @@ export const onlyExportComponents = defineRule({
         const basename = namingFileBasename(context.filename)
         const extension = basename.slice(basename.lastIndexOf('.'))
         const role = trailingRoles.find((candidate) => basename.endsWith(`.${candidate}${extension}`))
-        const expected = reactComponentsPascalFromBasename(
-          role ? `${basename.slice(0, -(role.length + 1 + extension.length))}${extension}` : basename,
+        const expected = reactComponentsPascalFromBasename(role ? basename.replace(`.${role}${extension}`, extension) : basename)
+        // A trailing role is optional in the name: `hero.illustration.tsx` accepts `Hero*` and `HeroIllustration*`.
+        const expectedKeys = [expected, ...(role ? [reactComponentsPascalFromBasename(basename)] : [])].map((name) =>
+          name.toLowerCase(),
         )
         const denied = optionsOptionalPatterns(denyTypePattern)
         const components = []
@@ -97,11 +99,12 @@ export const onlyExportComponents = defineRule({
           return
         }
 
-        const expectedKey = expected.toLowerCase()
-        const exact = components.some((candidate) => candidate.name.toLowerCase() === expectedKey)
-        const allPrefixed = components.every((candidate) => candidate.name.toLowerCase().startsWith(expectedKey))
+        const names = components.map((candidate) => candidate.name.toLowerCase())
+        const matches = expectedKeys.some(
+          (expectedKey) => names.includes(expectedKey) || names.every((name) => name.startsWith(expectedKey)),
+        )
 
-        if (!exact && !allPrefixed) {
+        if (!matches) {
           for (const candidate of components) {
             context.report({
               node: candidate.node,

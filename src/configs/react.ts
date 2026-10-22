@@ -1,6 +1,13 @@
 import type { PresetContext, PresetPolicies } from '../types/preset.types.ts'
 import { presetScopes, presetOverride } from '../utils/helpers/preset.ts'
-import { presetReactRules, presetEffectsRules, presetTailwindRules } from '../constants/preset.constants.ts'
+import {
+  presetReactRules,
+  presetEffectsRules,
+  presetTailwindRules,
+  presetNextHandlerMethods,
+  presetNextSegmentConfig,
+  presetNextSegmentExports,
+} from '../constants/preset.constants.ts'
 
 export function presetReactConfig(context: PresetContext): PresetPolicies {
   const { options, web, tanstackWeb, nextWeb, webFiles, ui, testFiles, components, css } = context
@@ -38,21 +45,6 @@ export function presetReactConfig(context: PresetContext): PresetPolicies {
   }
 
   const nextPage = { bannedHooks: ['useState', 'useEffect', 'useMutation'], inspectExports: true }
-  const nextHandlerMethods = ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
-  const nextSegmentExports = [
-    'generateMetadata',
-    'metadata',
-    'generateStaticParams',
-    'generateViewport',
-    'viewport',
-    'dynamic',
-    'dynamicParams',
-    'revalidate',
-    'fetchCache',
-    'runtime',
-    'preferredRegion',
-    'maxDuration',
-  ]
   const routes = [
     ...(tanstackWeb.length
       ? [
@@ -89,7 +81,7 @@ export function presetReactConfig(context: PresetContext): PresetPolicies {
             {
               'arch/route-surface': [
                 'error',
-                { exportName: 'default', allowedExports: nextSegmentExports, banIntrinsicJsx: true, ...nextPage },
+                { exportName: 'default', allowedExports: presetNextSegmentExports, banIntrinsicJsx: true, ...nextPage },
               ],
             },
             [...testFiles, ...presetScopes(nextWeb, 'app/not-found.tsx')],
@@ -100,7 +92,7 @@ export function presetReactConfig(context: PresetContext): PresetPolicies {
             {
               'arch/route-surface': [
                 'error',
-                { exportName: 'default', allowedExports: nextSegmentExports, banIntrinsicJsx: false, ...nextPage },
+                { exportName: 'default', allowedExports: presetNextSegmentExports, banIntrinsicJsx: false, ...nextPage },
               ],
             },
             testFiles,
@@ -110,7 +102,7 @@ export function presetReactConfig(context: PresetContext): PresetPolicies {
               'error',
               {
                 exportName: 'GET',
-                allowedExports: [...nextHandlerMethods.slice(1), ...nextSegmentExports],
+                allowedExports: [...presetNextHandlerMethods.slice(1), ...presetNextSegmentConfig],
                 bannedHooks: [],
                 banIntrinsicJsx: false,
               },
@@ -119,7 +111,7 @@ export function presetReactConfig(context: PresetContext): PresetPolicies {
               'error',
               {
                 detectComponents: false,
-                allowPattern: `^(${[...nextHandlerMethods, ...nextSegmentExports].join('|')})$`,
+                allowPattern: `^(${[...presetNextHandlerMethods, ...presetNextSegmentConfig].join('|')})$`,
                 message:
                   'Nest this helper in its owning route handler, or move genuine domain logic to a service. Do not create a component, hook or public helper to bypass this rule.',
               },
@@ -228,31 +220,34 @@ export function presetReactConfig(context: PresetContext): PresetPolicies {
       'blur',
       'saturate',
     ]
+    // Illustrations extend the base allowance, so component contracts must be rebuilt on top of the palette.
+    const restyle = (base: string[]) => ({
+      allow: base,
+      contracts: [
+        { pattern: '^(CardContent|PopoverContent)$', allow: [...base, ...padding] },
+        { pattern: '^TabsContent$', allow: [...base, ...gap, ...padding] },
+        { pattern: '^(Tabs|HoverCardContent|SidebarHeader|BreadcrumbList)$', allow: [...base, ...gap] },
+      ],
+    })
     policies.shadcn = [
       presetOverride(
         webFiles,
         {
-          'shadcn/no-restyle': [
-            'error',
-            {
-              allow,
-              contracts: [
-                { pattern: '^(CardContent|PopoverContent)$', allow: [...allow, ...padding] },
-                { pattern: '^TabsContent$', allow: [...allow, ...gap, ...padding] },
-                { pattern: '^(Tabs|HoverCardContent|SidebarHeader|BreadcrumbList)$', allow: [...allow, ...gap] },
-              ],
-            },
-          ],
+          'shadcn/no-restyle': ['error', restyle(allow)],
           'shadcn/no-arbitrary-values': ['error', { allow: ['layout', ...safeArea] }],
           'shadcn/require-static-classes': 'error',
           'modules/dynamic-classes': 'error',
         },
         ui,
       ),
-      presetOverride(presetScopes(web, 'components/**/*.illustration.tsx'), {
-        'shadcn/no-restyle': ['error', { allow: [...allow, ...illustrationPalette] }],
-        'shadcn/no-arbitrary-values': ['error', { allow: ['layout', ...safeArea, ...illustrationPalette] }],
-      }),
+      presetOverride(
+        presetScopes(web, 'components/**/*.illustration.tsx'),
+        {
+          'shadcn/no-restyle': ['error', restyle([...allow, ...illustrationPalette])],
+          'shadcn/no-arbitrary-values': ['error', { allow: ['layout', ...safeArea, ...illustrationPalette] }],
+        },
+        ui,
+      ),
       presetOverride(webFiles, {
         'shadcn/no-unknown-classes': ['error', { allow: [] }],
       }),

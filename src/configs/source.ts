@@ -6,7 +6,14 @@ export function presetSourceConfig(context: PresetContext): PresetPolicies {
   const { options, web, scripts, app, appFiles, backendFiles, ui, safetyFiles, publicEntrypoints, baseImports } =
     context
   const policies: PresetPolicies = {}
-  policies.formatting = [presetOverride([`**/${presetExtensions}`], presetFormattingRules)]
+  const { semi = 'always', quotes = 'single' } = options.formatting ?? {}
+  policies.formatting = [
+    presetOverride([`**/${presetExtensions}`], {
+      ...presetFormattingRules,
+      'eslint-js/semi': ['error', semi],
+      'eslint-js/quotes': ['error', quotes, { avoidEscape: true }],
+    }),
+  ]
 
   policies.statementLayout = [
     presetOverride([`**/${presetExtensions}`], {

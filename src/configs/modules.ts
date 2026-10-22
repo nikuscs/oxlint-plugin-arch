@@ -1,9 +1,10 @@
+import { posix } from 'node:path'
 import type { PresetContext, PresetPolicies } from '../types/preset.types.ts'
 import { presetScopes, presetOverride } from '../utils/helpers/preset.ts'
 import { presetExtensions, presetNamingRules, presetExportPrefix } from '../constants/preset.constants.ts'
 
 export function presetModulesConfig(context: PresetContext): PresetPolicies {
-  const { web, backend, app, services, utilities, ui, testFiles, components, hooks, options } = context
+  const { web, nextWeb, backend, app, services, utilities, ui, testFiles, components, hooks, options } = context
   const conceptFiles = (options.modules?.customFileRoles ?? []).map((role) => `**/*.${role}.ts`)
   const migrations = options.modules?.migrationFiles ?? []
   const frontendEntries = [
@@ -48,7 +49,7 @@ export function presetModulesConfig(context: PresetContext): PresetPolicies {
     ]),
     presetOverride(
       presetScopes(
-        web.filter((path) => !context.folders.some((scope) => scope.path === path + '/components')),
+        web.filter((path) => !context.folders.some((scope) => scope.path === posix.join(path, 'components'))),
         `components/*/*/**/${presetExtensions}`,
       ),
       {
@@ -81,7 +82,13 @@ export function presetModulesConfig(context: PresetContext): PresetPolicies {
           },
         ],
       },
-      ['**/*.{client,server,rsc,utils,constants}.ts', '**/*.rsc.tsx', ...conceptFiles],
+      [
+        '**/*.{client,server,rsc,utils,constants}.ts',
+        '**/*.rsc.tsx',
+        ...presetScopes(nextWeb, 'services/**/*.action.ts'),
+        ...conceptFiles,
+        ...(options.modules?.colocatedTypeFiles ?? []),
+      ],
     ),
   ]
 
@@ -269,7 +276,7 @@ export function presetModulesConfig(context: PresetContext): PresetPolicies {
     ),
     presetOverride(
       presetScopes(
-        web.filter((path) => !context.folders.some((scope) => scope.path === path + '/components')),
+        web.filter((path) => !context.folders.some((scope) => scope.path === posix.join(path, 'components'))),
         'components/**/*.tsx',
       ),
       {

@@ -5,6 +5,17 @@ import { resolve } from 'node:path'
 
 export function presetBoundariesConfig(context: PresetContext): PresetPolicies {
   const { options, root, architecture, packages, web, tanstackWeb, nextWeb, backend, appFiles, publicEntrypoints, baseImports } = context
+  const runtimeBoundary = {
+    web: web.map((path) => resolve(root, path)),
+    backend: backend.map((path) => resolve(root, path)),
+    aliases: Object.fromEntries(
+      Object.entries(options.imports?.aliases ?? {}).map(([alias, path]) => [alias.replace(/\/$/, ''), resolve(root, path)]),
+    ),
+    backendPackages: Object.entries(architecture).flatMap(([directory, { role }]) => {
+      const name = role === 'server' || role === 'runner' ? presetPackageName(root, directory) : undefined
+      return name ? [name] : []
+    }),
+  }
   const policies: PresetPolicies = {}
   policies.boundaries = [
     presetOverride([...appFiles, ...presetScopes(packages, '**/' + presetExtensions)], {
@@ -39,18 +50,7 @@ export function presetBoundariesConfig(context: PresetContext): PresetPolicies {
       'modules/tanstack-runtime': [
         'error',
         {
-          web: web.map((path) => resolve(root, path)),
-          backend: backend.map((path) => resolve(root, path)),
-          aliases: Object.fromEntries(
-            Object.entries(options.imports?.aliases ?? {}).map(([alias, path]) => [
-              alias.replace(/\/$/, ''),
-              resolve(root, path),
-            ]),
-          ),
-          backendPackages: Object.entries(architecture).flatMap(([directory, { role }]) => {
-            const name = role === 'server' || role === 'runner' ? presetPackageName(root, directory) : undefined
-            return name ? [name] : []
-          }),
+          ...runtimeBoundary,
           rpcClients: (options.orpc?.clientOwnerFile ? [options.orpc?.clientOwnerFile] : context.rpcClients).map(
             (path) => resolve(root, path),
           ),
@@ -65,18 +65,7 @@ export function presetBoundariesConfig(context: PresetContext): PresetPolicies {
       'modules/next-runtime': [
         'error',
         {
-          web: web.map((path) => resolve(root, path)),
-          backend: backend.map((path) => resolve(root, path)),
-          aliases: Object.fromEntries(
-            Object.entries(options.imports?.aliases ?? {}).map(([alias, path]) => [
-              alias.replace(/\/$/, ''),
-              resolve(root, path),
-            ]),
-          ),
-          backendPackages: Object.entries(architecture).flatMap(([directory, { role }]) => {
-            const name = role === 'server' || role === 'runner' ? presetPackageName(root, directory) : undefined
-            return name ? [name] : []
-          }),
+          ...runtimeBoundary,
           serverImports: options.next?.additionalServerOnlyImports ?? [],
           clientImports: options.next?.additionalClientOnlyImports ?? [],
           allowComputedImportsIn: options.next?.computedImportAllowedFiles?.map((path) => resolve(root, path)) ?? [],

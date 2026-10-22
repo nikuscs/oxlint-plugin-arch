@@ -1,8 +1,17 @@
-import { builtinModules } from 'node:module'
 import { defineRule } from '@oxlint/plugins'
 import type { ESTree, Scope } from '@oxlint/plugins'
 import type { ModuleRuntimeOptions } from '../../types/module-policy.types.ts'
-import { astVisit, boundaryResolveTarget, optionsFirst } from '../../utils/index.ts'
+import {
+  astVisit,
+  boundaryResolveTarget,
+  optionsFirst,
+  runtimeBrowserGlobals,
+  runtimeIsBackendImport,
+  runtimeIsServerPlatformImport,
+  runtimeMatchesImport,
+  runtimeMemberName,
+  runtimeServerGlobals,
+} from '../../utils/index.ts'
 
 /** Check direct runtime dependencies and imported TanStack boundaries; compilation still owns graph isolation. */
 export const tanstackRuntime = defineRule({
@@ -90,29 +99,17 @@ export const tanstackRuntime = defineRule({
     ) {
       if (typeOnly) return
       const target = boundaryResolveTarget(options, file, source)
-      const matches = (values: string[] | undefined) =>
-        values?.some((value) => source === value || source.startsWith(value + '/'))
-      const backend =
-        options.backend.some((path) => target.startsWith(path + '/')) ||
-        options.backendPackages.some(
-          (name) =>
-            source === name ||
-            (source.startsWith(name + '/') && /\/(?:server|rpc)(?:\/|$)/.test(source.slice(name.length))),
-        )
       const server =
         Boolean(renderer) ||
-        builtinModules.includes(source) ||
-        source === '@orpc/server' ||
-        backend ||
+        runtimeIsServerPlatformImport(source) ||
+        runtimeIsBackendImport(options, target, source) ||
         /\.server(?:\.[cm]?[jt]sx?)?$/.test(target) ||
-        /^(?:node:|bun(?::|$)|cloudflare:)/.test(source) ||
         /^@tanstack\/(?:react|solid|vue)-start\/(?:server|server-only)(?:\/|$)/.test(source) ||
-        /^react-dom\/server(?:\.|\/|$)/.test(source) ||
-        matches(options.serverImports)
+        runtimeMatchesImport(options.serverImports, source)
       const client =
         /(?:\/hooks\/|\.client-only(?:\.|$))/.test(target) ||
         /^(?:react-dom\/client|@tanstack\/(?:react|solid|vue)-start\/client-only)(?:\/|$)/.test(source) ||
-        matches(options.clientImports)
+        runtimeMatchesImport(options.clientImports, source)
       if (client && (serverFile || rscFile || shared) && boundary(node.start)?.side !== 'client') {
         const references =
           node.type === 'ImportDeclaration'
@@ -158,42 +155,12 @@ export const tanstackRuntime = defineRule({
       )
     }
     function global(node: Extract<ESTree.Node, { type: 'Identifier' }>) {
-      const serverNames = ['process', 'Bun', 'Deno', 'Buffer', '__dirname', '__filename', 'require']
-      const browserNames = [
-        'window',
-        'document',
-        'navigator',
-        'localStorage',
-        'sessionStorage',
-        'location',
-        'history',
-        'screen',
-        'HTMLElement',
-        'Element',
-        'HTMLInputElement',
-        'ResizeObserver',
-        'MutationObserver',
-        'IntersectionObserver',
-        'FileReader',
-        'matchMedia',
-        'getComputedStyle',
-        'requestAnimationFrame',
-        'cancelAnimationFrame',
-        'alert',
-        'confirm',
-        'prompt',
-      ]
       const member =
         node.parent.type === 'MemberExpression' && node.parent.object === node && node.name === 'globalThis'
           ? node.parent
           : undefined
-      const name =
-        member && !member.computed && member.property.type === 'Identifier'
-          ? member.property.name
-          : member?.computed && member.property.type === 'Literal' && typeof member.property.value === 'string'
-            ? member.property.value
-            : node.name
-      if (!serverNames.includes(name) && !browserNames.includes(name)) return
+      const name = runtimeMemberName(member) ?? node.name
+      if (!runtimeServerGlobals.includes(name) && !runtimeBrowserGlobals.includes(name)) return
       let scope: Scope | null = context.sourceCode.getScope(node)
       while (scope) {
         const variable = scope.set.get(node.name)
@@ -208,9 +175,9 @@ export const tanstackRuntime = defineRule({
         )
       )
         return
-      if (serverNames.includes(name) && (shared || !serverPosition(node.start)))
+      if (runtimeServerGlobals.includes(name) && (shared || !serverPosition(node.start)))
         report(node, name, 'server globals require a server execution boundary')
-      if (browserNames.includes(name) && (serverFile || rscFile) && boundary(node.start)?.side !== 'client')
+      if (runtimeBrowserGlobals.includes(name) && (serverFile || rscFile) && boundary(node.start)?.side !== 'client')
         report(node, name, 'browser globals are unavailable during server execution')
     }
     return {

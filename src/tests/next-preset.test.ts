@@ -50,7 +50,7 @@ function overridesWith(config: ReturnType<typeof reactModulesPreset>, rule: stri
 }
 
 describe('Next React modules preset', () => {
-  test('the TanStack preset and the generic default stay identical to the TanStack framework', () => {
+  test('the TanStack preset equals the generic preset with the default TanStack framework', () => {
     const options = { root: repository, tailwind: false } as const
     expect(tanstackStartReactModulesPreset(options)).toEqual(reactModulesPreset(options))
     expect(reactModulesPreset(options)).toEqual(reactModulesPreset({ ...options, framework: 'tanstack-start' }))

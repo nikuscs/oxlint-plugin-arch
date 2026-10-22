@@ -34,12 +34,15 @@ export interface PresetArchitectureEntry {
   layout?: Record<string, PresetFolderLayout>
   /** Web roots only: selects the route and runtime-boundary policies. */
   framework?: PresetFramework
+  /** Web, server and runner roots only: the source folder inside the root; `src` when omitted, `.` for the root itself. */
+  sourceDir?: string
 }
 export type PresetArchitecture = Record<string, PresetRole | PresetArchitectureEntry>
 export interface PresetResolvedRoot {
   role: PresetRole
   layout: Record<string, PresetFolderLayout>
   framework?: PresetFramework
+  sourceDir?: string
 }
 export interface PresetFolderScope {
   path: string
@@ -53,6 +56,9 @@ export interface PresetOptions {
   framework?: PresetFramework
   architecture?: PresetArchitecture
   severity?: 'error' | 'warn'
+  /** Per-rule levels applied after `severity`, for rules the preset enables. */
+  ruleSeverities?: Record<string, 'error' | 'warn' | 'off'>
+  formatting?: PresetFormattingOptions
   limits?: PresetLimitsOptions
   modules?: PresetModulesOptions
   imports?: PresetImportsOptions
@@ -73,6 +79,11 @@ export interface PresetOptions {
 
 export interface PresetPolicyOptions extends Partial<Record<PresetPolicyName, PresetPolicy>> {}
 
+export interface PresetFormattingOptions {
+  semi?: 'always' | 'never'
+  quotes?: 'single' | 'double'
+}
+
 export interface PresetLimitsOptions {
   maxFileLines?: number
   maxFunctionComplexity?: number
@@ -81,6 +92,8 @@ export interface PresetLimitsOptions {
 export interface PresetModulesOptions {
   customFileRoles?: string[]
   migrationFiles?: string[]
+  /** Type files allowed outside `types/`; they follow the backend `types/` contract. */
+  colocatedTypeFiles?: string[]
 }
 
 export interface PresetTestsOptions {
@@ -164,6 +177,8 @@ export interface PresetContext {
   tanstackWeb: string[]
   nextWeb: string[]
   backend: string[]
+  /** Server and runner architecture roots, without their source folder. */
+  backendRoots: string[]
   app: string[]
   appFiles: string[]
   webFiles: string[]

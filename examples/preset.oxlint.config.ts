@@ -10,7 +10,12 @@ export default preset({
   },
   limits: { maxFileLines: 400 },
   tests: { profile: 'fixtures' },
-  modules: { migrationFiles: ['apps/server/src/services/database/migrations/**/*.ts'] },
+  modules: {
+    migrationFiles: ['apps/server/src/services/database/migrations/**/*.ts'],
+    colocatedTypeFiles: ['apps/server/src/services/legacy/*.types.ts'],
+  },
+  formatting: { quotes: 'single' },
+  ruleSeverities: { 'arch/no-comments': 'warn' },
   policies: {
     typePlacement: (current) =>
       current.map((scope) => ({

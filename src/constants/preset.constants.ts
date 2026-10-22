@@ -425,6 +425,30 @@ export const presetTestRules: PresetRules = {
   'vitest/require-mock-type-parameters': 'error',
 }
 
+/** HTTP methods a Next `route.ts` handler may export. */
+export const presetNextHandlerMethods = ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']
+
+/** Next route segment config exports, shared by pages, layouts and route handlers. */
+export const presetNextSegmentConfig = [
+  'generateStaticParams',
+  'dynamic',
+  'dynamicParams',
+  'revalidate',
+  'fetchCache',
+  'runtime',
+  'preferredRegion',
+  'maxDuration',
+]
+
+/** Exports a Next page or layout may add next to its default component. */
+export const presetNextSegmentExports = [
+  'generateMetadata',
+  'metadata',
+  'generateViewport',
+  'viewport',
+  ...presetNextSegmentConfig,
+]
+
 export const presetExportPrefix = {
   stem: 'before-first-dot',
   trailingRoles: ['constants', 'utils', 'handler', 'service', 'types'],

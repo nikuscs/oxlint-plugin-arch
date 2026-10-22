@@ -2,13 +2,17 @@
 
 ## Unreleased
 
-- Add a `framework` setting per web root (`tanstack-start` by default, or `next` for the App Router) and a top-level default. Add the generic `reactModulesPreset` and `nextReactModulesPreset`; `tanstackStartReactModulesPreset` is unchanged and produces the same configuration as before.
+- Add a `framework` setting per web root (`tanstack-start` by default, or `next` for the App Router) and a top-level default. Add the generic `reactModulesPreset` and `nextReactModulesPreset`; `tanstackStartReactModulesPreset` equals `reactModulesPreset` with the default framework; apart from the `.illustration.tsx` role below, it keeps its previous output.
 - For `next` roots, apply App Router route policies to pages, layouts and `route.ts` handlers, default Tailwind to `src/app/globals.css`, and ignore `.next/**` and `next-env.d.ts`. Monorepos can mix TanStack Start and Next web roots in one config.
-- Add `modules/next-runtime`: server/client ownership for Next services and lib from file names (`.server`, `.rsc`, `.action`, `.client`) and `'use server'`/`'use client'` directives, with `next.additionalServerOnlyImports`, `next.additionalClientOnlyImports` and `next.computedImportAllowedFiles`.
+- Add `modules/next-runtime`: server/client ownership for Next services and lib from file names (`.server`, `.rsc`, `.action`, `.client`) and `'use server'`/`'use client'` directives. Client hooks are rejected in server, RSC and shared modules, named or through a `React` namespace, and `globalThis.window`-style access counts as a bare global. Options: `next.additionalServerOnlyImports`, `next.additionalClientOnlyImports` and `next.computedImportAllowedFiles`.
 - Add `allowedExports` and `inspectExports` to `arch/route-surface`. Defaults keep today's behavior.
-- Next `route.ts` handlers may export HTTP methods and segment exports such as `generateStaticParams` without `no-file-level-helpers` reporting them.
-- Add the `.illustration.tsx` component role for artwork: the shadcn rules allow arbitrary colour, shadow, gradient, background, mask, blur, fill and stroke values there, while type size, tracking, leading, radius and spacing stay on the theme scale. `only-export-components` accepts `trailingRoles` so `foo-bar.illustration.tsx` exports `FooBar`.
-- When the architecture has no backend root, web `types/` files own schemas: Zod construction is allowed there and `no-runtime-in-types` does not apply. Configurations with a backend produce the same output as before.
+- Next `route.ts` handlers may export HTTP methods and route segment config such as `generateStaticParams`, also through aliases like `export { handler as GET }`, without `no-file-level-helpers` reporting them. Page-only exports such as `metadata` stay rejected there. Next service roots accept `.action.ts` files.
+- Add the `.illustration.tsx` component role for artwork: the shadcn rules allow arbitrary colour, shadow, gradient, background, mask, blur, fill and stroke values there, while type size, tracking, leading, radius and spacing stay on the theme scale. Component contracts and the `components/ui` exemption still apply. `only-export-components` accepts `trailingRoles` so `foo-bar.illustration.tsx` may export `FooBar` as well as the existing `FooBarIllustration`.
+- When the architecture has no backend root, Next web `types/` files own schemas: Zod construction is allowed there and `no-runtime-in-types` does not apply. TanStack Start roots and configurations with a backend keep their previous schema policy.
+- Add `sourceDir` to web, server and runner architecture entries for code outside `src`, such as a Next app with `app/` at the root (`sourceDir: '.'`). Defaults to `src`.
+- Add `formatting: { semi, quotes }` to choose semicolons (`always` or `never`) and quote style (`single` or `double`). Defaults keep today's style.
+- Add `ruleSeverities` to set single preset rules to `error`, `warn` or `off` after the global `severity` and policy callbacks. Rules from Oxlint categories, such as `no-debugger`, are set at the top level.
+- Add `modules.colocatedTypeFiles` to allow listed type files outside `types/`; they follow the backend `types/` contract.
 
 ## 0.6.3
 

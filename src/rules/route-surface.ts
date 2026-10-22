@@ -58,8 +58,9 @@ export const routeSurface = defineRule({
         const { exportName, allowedExports = [], inspectExports = false, bannedHooks, banIntrinsicJsx } =
           optionsFirst<RouteSurfaceOptions>(context)
         const allowed = new Set([exportName, ...allowedExports])
+        const bindings = exportsCollect(program)
 
-        for (const binding of exportsCollect(program)) {
+        for (const binding of bindings) {
           if (!allowed.has(binding.exportedName)) {
             context.report({
               node: binding.node,
@@ -79,10 +80,18 @@ export const routeSurface = defineRule({
 
         if (!inspectExports) return
 
-        const exported = exportsCollect(program).filter((binding) => binding.exportedName === exportName)
-        const names = new Set(exported.map((binding) => binding.localName ?? binding.exportedName))
+        const names = new Set(
+          bindings.filter((binding) => binding.exportedName === exportName).map((binding) => binding.localName ?? binding.exportedName),
+        )
 
-        for (const item of exportsCollectFunctions(program)) {
+        const defaultExport = program.body.find((statement) => statement.type === 'ExportDefaultDeclaration')
+        const declaration = defaultExport?.declaration
+        const defaultFunctions =
+          declaration?.type === 'ArrowFunctionExpression' || declaration?.type === 'FunctionExpression'
+            ? [{ name: 'default', node: declaration }]
+            : []
+
+        for (const item of [...exportsCollectFunctions(program), ...defaultFunctions]) {
           if (names.has(item.name) && !inspected.has(item.node.start)) routesInspectFunction(context, item, banned, banIntrinsicJsx)
         }
       },

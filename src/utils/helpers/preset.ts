@@ -5,7 +5,7 @@ import type { PresetRules, PresetManifest } from '../../types/preset.types.ts'
 import { presetExtensions, presetGeneratedFiles } from '../../constants/preset.constants.ts'
 
 export function presetScopes(roots: string[], suffix = `**/${presetExtensions}`): string[] {
-  return roots.map((root) => `${root}/${suffix}`)
+  return roots.map((root) => (root === '.' ? suffix : `${root}/${suffix}`))
 }
 
 export function presetOverride(files: string[], rules: PresetRules, excludeFiles: string[] = []): OxlintOverride {
@@ -14,6 +14,24 @@ export function presetOverride(files: string[], rules: PresetRules, excludeFiles
     excludeFiles: [...presetGeneratedFiles, ...excludeFiles],
     rules,
   }
+}
+
+export function presetRuleSeverities(
+  rules: PresetRules,
+  severities: Record<string, 'error' | 'warn' | 'off'>,
+): PresetRules {
+  const result = structuredClone(rules)
+
+  for (const [name, level] of Object.entries(severities)) {
+    const value = result[name]
+    const current = Array.isArray(value) ? value[0] : value
+    if (value === undefined || current === 'off' || current === 'allow' || current === 0) {
+      continue
+    }
+    result[name] = Array.isArray(value) && level !== 'off' ? [level, ...value.slice(1)] : level
+  }
+
+  return result
 }
 
 export function presetPackageName(root: string, directory: string): string | undefined {

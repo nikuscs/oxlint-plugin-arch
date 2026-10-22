@@ -43,7 +43,7 @@
     "lint": "oxlint src examples scripts",
     "test": "vitest run src/tests",
     "typecheck": "tsrs --noEmit",
-    "check:examples": "oxlint examples/minimal.oxlint.config.ts -c examples/minimal.oxlint.config.ts --disable-nested-config && oxlint examples/full.oxlint.config.ts -c examples/full.oxlint.config.ts --disable-nested-config && oxlint examples/dist.oxlint.config.ts -c examples/dist.oxlint.config.ts --disable-nested-config && oxlint examples/monorepo.oxlint.config.ts -c examples/monorepo.oxlint.config.ts --disable-nested-config && oxlint --print-config -c examples/preset.oxlint.config.ts > /dev/null && oxlint --print-config -c examples/next-preset.oxlint.config.ts > /dev/null",
+    "check:examples": "oxlint examples/minimal.oxlint.config.ts -c examples/minimal.oxlint.config.ts --disable-nested-config && oxlint examples/full.oxlint.config.ts -c examples/full.oxlint.config.ts --disable-nested-config && oxlint examples/dist.oxlint.config.ts -c examples/dist.oxlint.config.ts --disable-nested-config && oxlint examples/monorepo.oxlint.config.ts -c examples/monorepo.oxlint.config.ts --disable-nested-config && oxlint --print-config -c examples/preset.oxlint.config.ts > /dev/null && oxlint --print-config -c examples/mixed-frameworks.oxlint.config.ts > /dev/null",
     "prepublishOnly": "bun run check",
     "release": "bash scripts/release.sh",
     "release:patch": "bash scripts/release.sh patch --yes",

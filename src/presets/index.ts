@@ -6,6 +6,7 @@ export type {
   PresetArchitecture,
   PresetArchitectureEntry,
   PresetFolderLayout,
+  PresetFormattingOptions,
   PresetFramework,
   PresetNextOptions,
   PresetTanstackStartOptions,
