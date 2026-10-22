@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Update bundled plugins: `@oxlint/plugins` and `oxlint-plugin-eslint` 1.89, `oxlint-tailwindcss` 1.16, `eslint-plugin-perfectionist` 5.13, `eslint-plugin-tsdoc` 0.5.4 and `@shadcn/lint` 0.2. `@shadcn/lint` now prints a notice when a project's `cn` is older than 0.4 and lints with its bundled `cn` instead.
 - Add a `framework` setting per web root (`tanstack-start` by default, or `next` for the App Router) and a top-level default. Add the generic `reactModulesPreset` and `nextReactModulesPreset`; `tanstackStartReactModulesPreset` equals `reactModulesPreset` with the default framework; apart from the `.illustration.tsx` role below, it keeps its previous output.
 - For `next` roots, apply App Router route policies to pages, layouts and `route.ts` handlers, default Tailwind to `src/app/globals.css`, and ignore `.next/**` and `next-env.d.ts`. Monorepos can mix TanStack Start and Next web roots in one config.
 - Add `modules/next-runtime`: server/client ownership for Next services and lib from file names (`.server`, `.rsc`, `.action`, `.client`) and `'use server'`/`'use client'` directives. Client hooks are rejected in server, RSC and shared modules, named or through a `React` namespace, and `globalThis.window`-style access counts as a bare global. Options: `next.additionalServerOnlyImports`, `next.additionalClientOnlyImports` and `next.computedImportAllowedFiles`.
