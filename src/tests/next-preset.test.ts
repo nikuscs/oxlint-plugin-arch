@@ -16,7 +16,7 @@ let sequence = 0
 
 afterAll(() => rmSync(temporary, { recursive: true, force: true }))
 
-function fixture(files: Record<string, string>) {
+function fixture(files: Record<string, string>, presetOptions = 'tailwind: false') {
   const root = resolve(temporary, String(sequence++))
   mkdirSync(root)
   symlinkSync(resolve(repository, 'node_modules'), resolve(root, 'node_modules'), 'dir')
@@ -26,7 +26,7 @@ function fixture(files: Record<string, string>) {
       compilerOptions: { strict: true, target: 'ESNext', module: 'Preserve', moduleResolution: 'Bundler', jsx: 'react-jsx', skipLibCheck: true },
       include: ['**/*.ts', '**/*.tsx'],
     }),
-    'oxlint.config.ts': `import preset from ${JSON.stringify(resolve(repository, 'dist/presets/next-react-modules-preset.js'))};\nexport default preset({ root: import.meta.dirname, tailwind: false, architecture: { site: 'web' } });\n`,
+    'oxlint.config.ts': `import preset from ${JSON.stringify(resolve(repository, 'dist/presets/next-react-modules-preset.js'))};\nexport default preset({ root: import.meta.dirname, ${presetOptions}, architecture: { site: 'web' } });\n`,
     ...files,
   }
   for (const [path, code] of Object.entries(allFiles)) {
@@ -156,5 +156,21 @@ describe('Next React modules preset', () => {
     expect(diagnostics(types)).not.toContain('arch(no-local-schema-construction)')
     expect(diagnostics(types)).not.toContain('arch(no-runtime-in-types)')
     expect(diagnostics(service)).toContain('arch(no-local-schema-construction)')
+  })
+
+  test('illustration files may use palette values but keep the type scale', () => {
+    const art = 'site/src/components/promo/promo-scene.illustration.tsx'
+    const page = 'site/src/components/promo/promo-banner.tsx'
+    const code = (name: string, classes: string) => `export function ${name}() { return <div className="${classes}" /> }\n`
+    const diagnostics = fixture({
+      'site/src/app/globals.css': '@import "tailwindcss";\n',
+      [art]: code('PromoScene', 'bg-[#f2e7da] text-[#435e3d]'),
+      [page]: code('PromoBanner', 'bg-[#f2e7da]'),
+      'site/src/components/promo/promo-label.illustration.tsx': code('PromoLabel', 'text-[9px]'),
+    }, "tailwind: { cssEntryPointsByRoot: { site: 'site/src/app/globals.css' } }")
+    expect(diagnostics(art)).not.toContain('shadcn(no-arbitrary-values)')
+    expect(diagnostics(art)).not.toContain('arch(only-export-components)')
+    expect(diagnostics(page)).toContain('shadcn(no-arbitrary-values)')
+    expect(diagnostics('site/src/components/promo/promo-label.illustration.tsx')).toContain('shadcn(no-arbitrary-values)')
   })
 })

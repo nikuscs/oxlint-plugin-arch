@@ -263,7 +263,7 @@ export function presetModulesConfig(context: PresetContext): PresetPolicies {
     presetOverride(
       components,
       {
-        'arch/only-export-components': ['error', { matchFileName: true, allowTypeExports: true }],
+        'arch/only-export-components': ['error', { matchFileName: true, allowTypeExports: true, trailingRoles: ['illustration'] }],
       },
       [...ui, ...testFiles],
     ),

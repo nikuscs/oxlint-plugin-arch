@@ -202,6 +202,32 @@ export function presetReactConfig(context: PresetContext): PresetPolicies {
         ...(group === 'p' ? [] : [`${group}-[max(--spacing(*),env(safe-area-inset-${side}))]`]),
       ]),
     )
+    const illustrationPalette = [
+      'text-color',
+      'bg-color',
+      'gradient-from',
+      'gradient-via',
+      'gradient-to',
+      'border-color',
+      'divide-color',
+      'outline-color',
+      'ring-color',
+      'ring-offset-color',
+      'shadow',
+      'shadow-color',
+      'inset-shadow',
+      'inset-shadow-color',
+      'drop-shadow',
+      'drop-shadow-color',
+      'fill',
+      'stroke',
+      'bg-image',
+      'bg-size',
+      'bg-position',
+      'mask-image',
+      'blur',
+      'saturate',
+    ]
     policies.shadcn = [
       presetOverride(
         webFiles,
@@ -223,6 +249,10 @@ export function presetReactConfig(context: PresetContext): PresetPolicies {
         },
         ui,
       ),
+      presetOverride(presetScopes(web, 'components/**/*.illustration.tsx'), {
+        'shadcn/no-restyle': ['error', { allow: [...allow, ...illustrationPalette] }],
+        'shadcn/no-arbitrary-values': ['error', { allow: ['layout', ...safeArea, ...illustrationPalette] }],
+      }),
       presetOverride(webFiles, {
         'shadcn/no-unknown-classes': ['error', { allow: [] }],
       }),

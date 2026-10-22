@@ -7,6 +7,7 @@
 - Add `modules/next-runtime`: server/client ownership for Next services and lib from file names (`.server`, `.rsc`, `.action`, `.client`) and `'use server'`/`'use client'` directives, with `next.additionalServerOnlyImports`, `next.additionalClientOnlyImports` and `next.computedImportAllowedFiles`.
 - Add `allowedExports` and `inspectExports` to `arch/route-surface`. Defaults keep today's behavior.
 - Next `route.ts` handlers may export HTTP methods and segment exports such as `generateStaticParams` without `no-file-level-helpers` reporting them.
+- Add the `.illustration.tsx` component role for artwork: the shadcn rules allow arbitrary colour, shadow, gradient, background, mask, blur, fill and stroke values there, while type size, tracking, leading, radius and spacing stay on the theme scale. `only-export-components` accepts `trailingRoles` so `foo-bar.illustration.tsx` exports `FooBar`.
 - When the architecture has no backend root, web `types/` files own schemas: Zod construction is allowed there and `no-runtime-in-types` does not apply. Configurations with a backend produce the same output as before.
 
 ## 0.6.3

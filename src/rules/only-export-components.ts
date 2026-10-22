@@ -13,6 +13,7 @@ import type { OptionsPattern } from '../utils/index.ts'
 
 interface OnlyExportComponentsOptions {
   matchFileName?: boolean
+  trailingRoles?: string[]
   allowTypeExports?: boolean
   denyTypePattern?: OptionsPattern
 }
@@ -31,6 +32,7 @@ export const onlyExportComponents = defineRule({
         additionalProperties: false,
         properties: {
           matchFileName: { type: 'boolean' },
+          trailingRoles: { type: 'array', items: { type: 'string' } },
           allowTypeExports: { type: 'boolean' },
           denyTypePattern: optionsPatternSchema,
         },
@@ -48,10 +50,16 @@ export const onlyExportComponents = defineRule({
       Program(program) {
         const {
           matchFileName = true,
+          trailingRoles = [],
           allowTypeExports = true,
           denyTypePattern,
         } = optionsFirst<OnlyExportComponentsOptions>(context, {})
-        const expected = reactComponentsPascalFromBasename(namingFileBasename(context.filename))
+        const basename = namingFileBasename(context.filename)
+        const extension = basename.slice(basename.lastIndexOf('.'))
+        const role = trailingRoles.find((candidate) => basename.endsWith(`.${candidate}${extension}`))
+        const expected = reactComponentsPascalFromBasename(
+          role ? `${basename.slice(0, -(role.length + 1 + extension.length))}${extension}` : basename,
+        )
         const denied = optionsOptionalPatterns(denyTypePattern)
         const components = []
 

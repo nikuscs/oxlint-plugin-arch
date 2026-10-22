@@ -13,6 +13,11 @@ test('only-export-components', () => {
   createRuleTester('tsx').run('arch/only-export-components', onlyExportComponents, {
     valid: [
       {
+        filename: '/repo/components/services/services-search.illustration.tsx',
+        code: 'export function ServicesSearch() { return <div /> }',
+        options: [{ trailingRoles: ['illustration'] }],
+      },
+      {
         filename: '/repo/components/button/button-loading.tsx',
         code: 'export interface ButtonLoadingProps { label: string }\nexport function ButtonLoading({ label }: ButtonLoadingProps) { return <button>{label}</button> }',
       },
@@ -64,6 +69,11 @@ test('only-export-components', () => {
       },
     ],
     invalid: [
+      {
+        filename: '/repo/components/services/services-search.illustration.tsx',
+        code: 'export function ServicesSearch() { return <div /> }',
+        errors: [nameMismatch],
+      },
       {
         filename: '/repo/components/example/example-card.tsx',
         code: 'export const exampleComponents = { div: () => <div /> }',
