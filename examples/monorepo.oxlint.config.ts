@@ -48,7 +48,10 @@ const factoryHelpers = {
 
 export default defineConfig({
   plugins: ['typescript', 'react', 'import', 'unicorn', 'promise', 'vitest', 'node', 'oxc'],
-  jsPlugins: [{ name: 'arch', specifier: 'oxlint-plugin-arch' }],
+  jsPlugins: [
+    { name: 'arch', specifier: 'oxlint-plugin-arch' },
+    { name: 'dillon-anti-slop', specifier: 'oxlint-plugin-arch/rules/dillon-anti-slop' },
+  ],
   rules: {
     'no-restricted-imports': ['error', { patterns: restrictedImportPatterns }],
     'arch/prefer-namespace-type-import': ['error', { max: 3 }],
@@ -303,6 +306,14 @@ export default defineConfig({
       files: ['**/test/**', '**/tests/**', '**/*.test.{ts,tsx}', '**/*.spec.ts'],
       rules: {
         'arch/test-title-pattern': ['error', { forbid: '^should\\b', flags: 'i' }],
+        'dillon-anti-slop/no-module-mocking': [
+          'error',
+          {
+            deny: ['*.mock', '*.doMock', '*.unstable_mockModule', '*.spyOn', '*.stubGlobal', '*.stubEnv'],
+            allow: ['*.fn'],
+            checkDestructured: true,
+          },
+        ],
       },
     },
     {

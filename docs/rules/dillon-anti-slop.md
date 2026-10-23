@@ -1,6 +1,6 @@
 # `dillon-anti-slop/*` rules
 
-Dillon Mulroy's [anti-slop](https://github.com/dmmulroy/anti-slop) rules, vendored in this package under the `dillon-anti-slop/*` namespace (MIT, see [`UPSTREAM.md`](../../src/rules/dillon-anti-slop/UPSTREAM.md)). They catch low-evidence TypeScript patterns inside functions. Upstream owns their behavior, so this page only lists them; read the rule source for details.
+Dillon Mulroy's [anti-slop](https://github.com/dmmulroy/anti-slop) rules, vendored in this package under the `dillon-anti-slop/*` namespace (MIT, see [`UPSTREAM.md`](../../src/rules/dillon-anti-slop/UPSTREAM.md)). They catch low-evidence TypeScript patterns inside functions. Upstream owns their behavior, so this page only lists them; read the rule source for details. `no-module-mocking` has local options and its own [page](dillon-anti-slop/no-module-mocking.md).
 
 Register them without the preset:
 
@@ -14,7 +14,7 @@ rules: { 'dillon-anti-slop/no-chained-type-assertions': 'error' },
 | [`no-chained-type-assertions`](../../src/rules/dillon-anti-slop/rules/no-chained-type-assertions.ts) | Disallow chained TypeScript as and angle-bracket assertions, including parenthesized chains. |
 | [`no-conditional-empty-object-spread`](../../src/rules/dillon-anti-slop/rules/no-conditional-empty-object-spread.ts) | Disallow object spreads that conditionally spread an empty object to omit fields. |
 | [`no-known-value-widening`](../../src/rules/dillon-anti-slop/rules/no-known-value-widening.ts) | Disallow syntactically established values from flowing into explicitly broad or anonymous target types that discard useful evidence. |
-| [`no-module-mocking`](../../src/rules/dillon-anti-slop/rules/no-module-mocking.ts) | Disallow Vitest and Jest module mocking; tests must replace dependencies through real interfaces. |
+| [`no-module-mocking`](dillon-anti-slop/no-module-mocking.md) | Disallow Vitest and Jest module mocking; tests must replace dependencies through real interfaces. Options can ban other test-double APIs. |
 | [`no-object-parameters`](../../src/rules/dillon-anti-slop/rules/no-object-parameters.ts) | Disallow object function parameters; inputs must use an owner-provided type and be parsed at their boundary. |
 | [`no-reflect-apply`](../../src/rules/dillon-anti-slop/rules/no-reflect-apply.ts) | Disallow Reflect.apply; call typed functions directly or model dynamic dispatch behind an interface. |
 | [`no-reflect-get`](../../src/rules/dillon-anti-slop/rules/no-reflect-get.ts) | Disallow Reflect.get; use typed property access or parse dynamic input into a domain type. |

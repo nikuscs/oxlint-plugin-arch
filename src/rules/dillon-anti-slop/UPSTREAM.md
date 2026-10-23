@@ -17,3 +17,9 @@ vendoring and does not publish an official npm package.
 Local behavior fixes recognize `SAFETY:` comments on exported declarations and
 export-default assertions, while retaining statement boundaries for other
 assertions. Covered by `src/tests/safety-comment.test.ts` and preset fixtures.
+
+Local option changes let `no-module-mocking` take `deny` and `allow` API
+patterns and `checkDestructured`, so the preset can also ban stubs such as
+`vi.spyOn`. With no options
+it reports the same calls as before. Covered by
+`src/tests/no-module-mocking.test.ts` and preset tests.

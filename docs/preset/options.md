@@ -93,4 +93,4 @@ Details: [`modules/tanstack-runtime`](../rules/modules/tanstack-runtime.md), [`m
 
 ## Tests
 
-See [tests](tests.md) for `tests.profile`, `tests.additionalTestFunctions` and `tests.additionalAssertionFunctions`.
+See [tests](tests.md) for `tests.profile`, `tests.additionalTestFunctions`, `tests.additionalAssertionFunctions` and `tests.mocking`.

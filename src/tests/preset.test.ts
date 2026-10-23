@@ -200,6 +200,79 @@ integrationTest.for([1])('custom missing assertion %s', (amount) => { Math.abs(a
     }
   })
 
+  test('default test mocking bans only module mocking, unchanged from previous output', () => {
+    const before = tanstackStartReactModulesPreset({ root: '/repo' })
+    expect(tanstackStartReactModulesPreset({ root: '/repo', tests: { mocking: 'modules' } })).toEqual(before)
+    expect(tanstackStartReactModulesPreset({ root: '/repo', tests: { mocking: { preset: 'modules' } } })).toEqual(before)
+    const rules = before.overrides?.filter((entry) => entry.rules?.['dillon-anti-slop/no-module-mocking'] !== undefined)
+    expect(rules?.map((entry) => entry.rules?.['dillon-anti-slop/no-module-mocking'])).toEqual(['error'])
+
+    const doubles = "vi.spyOn(mailer, 'send');\nvi.stubGlobal('fetch', fetch);\nvi.stubEnv('MODE', 'test');\nconst send = vi.fn();\n"
+    const result = fixture('', {
+      'apps/server/tests/order.test.ts': `import { vi } from 'vitest';\nconst mailer = { send() {} };\n${doubles}vi.mock('./mailer');\n`,
+      'apps/web/tests/page.test.ts': `import { vi } from 'vitest';\nconst mailer = { send() {} };\n${doubles}`,
+    })
+    const diagnostics: PresetFixtureOutput = JSON.parse(result.output)
+    const mocking = diagnostics.diagnostics.filter((entry) => entry.code === 'dillon-anti-slop(no-module-mocking)')
+    expect(mocking.map((entry) => entry.filename)).toEqual(['apps/server/tests/order.test.ts'])
+  })
+
+  test('default test mocking allow entries keep destructured calls unchecked', () => {
+    const allow = "[{ files: ['apps/server/tests/**'], apis: ['vi.mock'] }]"
+    const result = fixture(`tests: { mocking: { allow: ${allow} } },`, {
+      'apps/server/tests/example.test.ts': "import { vi } from 'vitest';\nconst { doMock } = vi;\ndoMock('./mailer');\n",
+    })
+    const diagnostics: PresetFixtureOutput = JSON.parse(result.output)
+    const mocking = diagnostics.diagnostics.filter((entry) => entry.code === 'dillon-anti-slop(no-module-mocking)')
+    expect(mocking).toEqual([])
+  })
+
+  test('strict test mocking bans stubs in every root with driver and configured exceptions', () => {
+    const code = "import { vi } from 'vitest';\nconst mailer = { send() {} };\nconst { spyOn: spy } = vi;\nvi.spyOn(mailer, 'send');\nspy(mailer, 'send');\nvi.stubGlobal('fetch', fetch);\nvi.useFakeTimers();\nconst send = vi.fn();\n"
+    const deny = "[{ api: 'vi.useFakeTimers', message: 'Use the clock driver.' }, { api: 'vi.spyOn', message: 'Use the mailer driver.' }]"
+    const allow = "[{ files: ['apps/web/tests/**'], apis: ['vi.stubGlobal'] }, { files: ['apps/web/tests/legacy.test.ts'], apis: ['vi.useFakeTimers'] }]"
+    const result = fixture(`tests: { mocking: { preset: 'strict', deny: ${deny}, allow: ${allow} } },`, {
+      'apps/server/tests/order.test.ts': code,
+      'apps/server/tests/mailer.driver.test.ts': code,
+      'apps/web/tests/page.test.ts': code,
+      'apps/web/tests/mailer.driver.test.ts': code,
+      'apps/web/tests/legacy.test.ts': code,
+    })
+    const diagnostics: PresetFixtureOutput = JSON.parse(result.output)
+    const mocking = diagnostics.diagnostics.filter((entry) => entry.code === 'dillon-anti-slop(no-module-mocking)')
+    const messages = (file: string) =>
+      mocking
+        .filter((entry) => entry.filename === file)
+        .map((entry) => entry.message)
+        .sort()
+    const clock = 'Use the clock driver.'
+    const driver = 'Use the mailer driver.'
+    const fake = 'Inject a fake driver through the dependencies of the code under test instead of mocking or stubbing.'
+    expect(messages('apps/server/tests/order.test.ts')).toEqual([fake, clock, driver, driver])
+    expect(messages('apps/web/tests/page.test.ts')).toEqual([clock, driver, driver])
+    // Why: specific allow lists do not merge; the later entry replaces the earlier one.
+    expect(messages('apps/web/tests/legacy.test.ts')).toEqual([fake, driver, driver])
+    expect(mocking.map((entry) => entry.filename)).not.toContain('apps/server/tests/mailer.driver.test.ts')
+    expect(mocking.map((entry) => entry.filename)).not.toContain('apps/web/tests/mailer.driver.test.ts')
+
+    const config = tanstackStartReactModulesPreset({
+      tests: { mocking: 'strict' },
+      ruleExclusions: { 'dillon-anti-slop/no-module-mocking': ['tests/legacy.test.ts'] },
+      policies: { tests: (current) => current.filter((entry) => !entry.files.includes('**/*.driver.test.ts')) },
+    })
+    const mockingEntries = config.overrides?.filter((entry) => entry.rules?.['dillon-anti-slop/no-module-mocking'] !== undefined)
+    expect(mockingEntries?.map((entry) => entry.files)).toEqual([
+      expect.arrayContaining(['**/*.{test,spec}.{ts,tsx,mts,cts}']),
+      ['tests/legacy.test.ts'],
+    ])
+    expect(() => tanstackStartReactModulesPreset({ tests: { mocking: { deny: ['sinon.stub'] } } })).toThrow(
+      'Test mocking APIs',
+    )
+    expect(() =>
+      tanstackStartReactModulesPreset({ tests: { mocking: { allow: [{ files: ['**'], apis: ['vi.spy*'] }] } } }),
+    ).toThrow('Test mocking APIs')
+  })
+
   test('test settings validate names and preserve callbacks, severity, exclusions and caller arrays', () => {
     const additionalTestFunctions = ['integrationTest']
     const config = tanstackStartReactModulesPreset({

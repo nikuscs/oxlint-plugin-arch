@@ -1,4 +1,4 @@
-import type { PresetRules, PresetPolicyName } from '../types/preset.types.ts'
+import type { PresetRules, PresetPolicyName, PresetTestMockingException, PresetTestMockingPreset } from '../types/preset.types.ts'
 
 export const presetExtensions = '*.{ts,tsx,mts,cts}'
 
@@ -424,6 +424,22 @@ export const presetTestRules: PresetRules = {
   'vitest/no-conditional-expect': 'error',
   'vitest/require-mock-type-parameters': 'error',
 }
+
+const presetModuleMockingApis = ['*.mock', '*.doMock', '*.unstable_mockModule']
+
+/** Test-double APIs each `tests.mocking` preset bans, for `vi` and `jest`. */
+export const presetTestMockingApis: Record<PresetTestMockingPreset, string[]> = {
+  modules: presetModuleMockingApis,
+  strict: [...presetModuleMockingApis, '*.spyOn', '*.stubGlobal', '*.stubEnv'],
+}
+
+export const presetTestMockingAllow: Record<PresetTestMockingPreset, PresetTestMockingException[]> = {
+  modules: [],
+  strict: [{ files: ['**/*.driver.test.ts'], apis: ['*'] }],
+}
+
+export const presetStrictMockingMessage =
+  'Inject a fake driver through the dependencies of the code under test instead of mocking or stubbing.'
 
 /** HTTP methods a Next `route.ts` handler may export. */
 export const presetNextHandlerMethods = ['GET', 'HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS']

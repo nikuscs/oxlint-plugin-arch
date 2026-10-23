@@ -230,7 +230,11 @@ Rules the preset uses to keep its policies from overwriting each other. You can 
 
 ### `dillon-anti-slop/*`
 
-15 vendored [anti-slop](https://github.com/dmmulroy/anti-slop) rules by Dillon Mulroy. [List](docs/rules/dillon-anti-slop.md).
+15 vendored [anti-slop](https://github.com/dmmulroy/anti-slop) rules by Dillon Mulroy. [List](docs/rules/dillon-anti-slop.md). Rules with local options have their own page:
+
+| Rule | What it enforces |
+| --- | --- |
+| [`no-module-mocking`](docs/rules/dillon-anti-slop/no-module-mocking.md) | No `vi.mock` or `jest.mock`. Options also ban stubs such as `vi.spyOn`. |
 
 ## ⚡ Benchmarks
 

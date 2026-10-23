@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- Add `tests.mocking` to choose which test-double APIs the preset bans in test files: `'modules'` (default, unchanged) or `'strict'`, which also bans `spyOn`, `stubGlobal` and `stubEnv` outside `*.driver.test.ts` and asks for a fake driver. The object form adds `deny` API patterns and per-file `allow` exceptions.
+- Add `deny`, `allow` and `checkDestructured` options to `dillon-anti-slop/no-module-mocking`. Invalid API patterns throw. Without options it reports the same calls as before.
+
 ## 0.7.0
 
 - Update bundled plugins: `@oxlint/plugins` and `oxlint-plugin-eslint` 1.89, `oxlint-tailwindcss` 1.16, `eslint-plugin-perfectionist` 5.13, `eslint-plugin-tsdoc` 0.5.4 and `@shadcn/lint` 0.2. `@shadcn/lint` now prints a notice when a project's `cn` is older than 0.4 and lints with its bundled `cn` instead.

@@ -1,7 +1,10 @@
 import { defineConfig } from 'oxlint'
 
 export default defineConfig({
-  jsPlugins: [{ name: 'arch', specifier: '../src/index.ts' }],
+  jsPlugins: [
+    { name: 'arch', specifier: '../src/index.ts' },
+    { name: 'dillon-anti-slop', specifier: '../src/rules/dillon-anti-slop/index.ts' },
+  ],
   overrides: [
     {
       files: ['**/*.{ts,tsx}'],
@@ -346,6 +349,19 @@ export default defineConfig({
             methods: ['array', 'union', 'record', 'tuple'],
             structuralMethods: ['and', 'array', 'object', 'or', 'pipe', 'record', 'transform', 'tuple', 'union'],
             allowZodScalars: true,
+          },
+        ],
+      },
+    },
+    {
+      files: ['**/*.test.ts'],
+      rules: {
+        'dillon-anti-slop/no-module-mocking': [
+          'error',
+          {
+            deny: ['*.mock', '*.doMock', '*.unstable_mockModule', { api: '*.spyOn', message: 'Inject a fake driver.' }],
+            allow: ['*.fn'],
+            checkDestructured: true,
           },
         ],
       },

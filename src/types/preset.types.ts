@@ -100,6 +100,29 @@ export interface PresetTestsOptions {
   profile?: 'standard' | 'fixtures'
   additionalTestFunctions?: string[]
   additionalAssertionFunctions?: string[]
+  /** Test-double APIs banned in test files; `modules` (module mocking only) when omitted. */
+  mocking?: PresetTestMockingPreset | PresetTestMockingOptions
+}
+
+export type PresetTestMockingPreset = 'modules' | 'strict'
+
+export interface PresetTestMockingApi {
+  api: string
+  message?: string
+}
+
+export interface PresetTestMockingException {
+  files: string[]
+  /** API patterns allowed in these files; `*` allows every API. */
+  apis: string[]
+}
+
+export interface PresetTestMockingOptions {
+  preset?: PresetTestMockingPreset
+  /** API patterns added to the preset list, such as `vi.*` or `jest.spyOn`. */
+  deny?: Array<string | PresetTestMockingApi>
+  /** Per-file exceptions, added after the preset's own. */
+  allow?: PresetTestMockingException[]
 }
 
 export interface PresetImportsOptions {

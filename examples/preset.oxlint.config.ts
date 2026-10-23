@@ -9,7 +9,10 @@ export default preset({
     packages: 'packages',
   },
   limits: { maxFileLines: 400 },
-  tests: { profile: 'fixtures' },
+  tests: {
+    profile: 'fixtures',
+    mocking: { preset: 'strict', allow: [{ files: ['apps/web/tests/**'], apis: ['vi.stubGlobal'] }] },
+  },
   modules: {
     migrationFiles: ['apps/server/src/services/database/migrations/**/*.ts'],
     colocatedTypeFiles: ['apps/server/src/services/legacy/*.types.ts'],
