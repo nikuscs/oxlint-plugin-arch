@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.8.0
 
 - Add `tests.mocking` to choose which test-double APIs the preset bans in test files: `'modules'` (default, unchanged) or `'strict'`, which also bans `spyOn`, `stubGlobal` and `stubEnv` outside `*.driver.test.ts` and asks for a fake driver. The object form adds `deny` API patterns and per-file `allow` exceptions.
 - Add `deny`, `allow` and `checkDestructured` options to `dillon-anti-slop/no-module-mocking`. Invalid API patterns throw. Without options it reports the same calls as before.
