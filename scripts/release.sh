@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 cd "$ROOT"
 
-increment=""
+increment="patch"
 yes=false
 
 usage() {
@@ -14,7 +14,7 @@ usage:
 
 Runs check, bumps the version with bumpp, and pushes the tag.
 GitHub Actions publishes to npm and creates the GitHub Release.
-patch|minor|major skips the bumpp prompt. --yes confirms the chosen bump.
+The bump defaults to patch; pass minor or major to override. --yes confirms the chosen bump.
 EOF
   exit 2
 }
