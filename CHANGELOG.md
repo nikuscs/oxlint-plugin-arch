@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Add `limits.maxTypeFileLines` (default `1000`): the preset applies this `max-lines` limit to `*.types.ts` files in app roots instead of `limits.maxFileLines`. Other files keep `maxFileLines`.
+
 ## 0.8.0
 
 - Add `tests.mocking` to choose which test-double APIs the preset bans in test files: `'modules'` (default, unchanged) or `'strict'`, which also bans `spyOn`, `stubGlobal` and `stubEnv` outside `*.driver.test.ts` and asks for a fake driver. The object form adds `deny` API patterns and per-file `allow` exceptions.

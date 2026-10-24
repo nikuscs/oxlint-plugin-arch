@@ -8,7 +8,7 @@ export default preset({
   severity: 'warn',
   ruleSeverities: { 'eslint-js/max-len': 'error' },
   formatting: { semi: 'never', quotes: 'double' },
-  limits: { maxFileLines: 400, maxFunctionComplexity: 32 },
+  limits: { maxFileLines: 400, maxTypeFileLines: 1000, maxFunctionComplexity: 32 },
   imports: { backendEntryPoints: ['@app/server/client'], aliases: { '@backend': 'apps/server/src' } },
   orpc: { publicProcedureFiles: ['apps/server/src/rpc/public/**/*.ts'] },
   react: { compiler: true },
@@ -27,6 +27,7 @@ export default preset({
 | `formatting.semi` | `'always'` | `'always'` or `'never'`. |
 | `formatting.quotes` | `'single'` | `'single'` or `'double'`. `avoidEscape` stays on. |
 | `limits.maxFileLines` | `400` | `max-lines` for app and test files. Blank lines and comments do not count. |
+| `limits.maxTypeFileLines` | `1000` | `max-lines` for `*.types.ts` files in app roots, in place of `maxFileLines`. Same skip flags. |
 | `limits.maxFunctionComplexity` | `32` | `complexity` limit. |
 | `cliFiles` | `[]` | CLI files that may use `console` and `switch`. |
 | `ignorePatterns` | `[]` | Extra whole-file ignores, added to build/dependency/generated defaults. |

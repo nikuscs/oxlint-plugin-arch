@@ -1,13 +1,14 @@
 import type { OxlintConfig, OxlintOverride } from 'oxlint'
 import type { PresetContext, PresetPolicies } from '../types/preset.types.ts'
 import { presetCommonRules, presetPolicyOrder } from '../constants/preset.constants.ts'
-import { presetOverride, presetRuleSeverities, presetSeverity } from '../utils/helpers/preset.ts'
+import { presetOverride, presetRuleSeverities, presetScopes, presetSeverity } from '../utils/helpers/preset.ts'
 
 export function presetCompose(context: PresetContext, policies: PresetPolicies, plugins: OxlintConfig): OxlintConfig {
-  const { options, level, safetyFiles, ui, generated } = context
+  const { options, level, app, safetyFiles, ui, generated } = context
   const severities = options.ruleSeverities ?? {}
   const levels = (rules: NonNullable<OxlintOverride['rules']>) =>
     presetRuleSeverities(presetSeverity(rules, level), severities)
+  const maxLines = (max: number) => levels({ 'max-lines': ['error', { max, skipBlankLines: true, skipComments: true }] })
   const overrideList: OxlintOverride[] = []
   for (const name of presetPolicyOrder) {
     const setting = options.policies?.[name]
@@ -27,11 +28,12 @@ export function presetCompose(context: PresetContext, policies: PresetPolicies, 
     presetOverride(
       safetyFiles,
       levels({
-        'max-lines': ['error', { max: options.limits?.maxFileLines ?? 400, skipBlankLines: true, skipComments: true }],
+        ...maxLines(options.limits?.maxFileLines ?? 400),
         complexity: ['error', { max: options.limits?.maxFunctionComplexity ?? 32 }],
       }),
       ui,
     ),
+    presetOverride(presetScopes(app, '**/*.types.ts'), maxLines(options.limits?.maxTypeFileLines ?? 1000), ui),
   )
   // Rules the preset never names, such as those from the correctness category, get their level at the top.
   const named = new Set([...Object.keys(presetCommonRules), ...overrideList.flatMap((entry) => Object.keys(entry.rules ?? {}))])

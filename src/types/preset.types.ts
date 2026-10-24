@@ -86,6 +86,8 @@ export interface PresetFormattingOptions {
 
 export interface PresetLimitsOptions {
   maxFileLines?: number
+  /** `max-lines` for `*.types.ts` files; defaults to 1000. */
+  maxTypeFileLines?: number
   maxFunctionComplexity?: number
 }
 

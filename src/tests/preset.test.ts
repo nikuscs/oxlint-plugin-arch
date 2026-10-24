@@ -526,6 +526,7 @@ integrationTest.for([1])('custom missing assertion %s', (amount) => { Math.abs(a
   test('limits.maxFileLines keeps the 400 default and native skip flags while accepting a custom ceiling', () => {
     const defaults = fixture("architecture: { web: 'web' },", {}, true)
     expect(defaults.output).toContain('"max": 400')
+    expect(defaults.output).toContain('"max": 1000')
     expect(defaults.output).toContain('"skipBlankLines": true')
     expect(defaults.output).toContain('"skipComments": true')
     const code =
@@ -545,6 +546,27 @@ integrationTest.for([1])('custom missing assertion %s', (amount) => { Math.abs(a
       ).output,
     )
     expect(native.diagnostics).toEqual([])
+    const typeCode = Array.from({ length: 6 }, (_, index) => 'export type Values' + index + ' = ' + index + ';').join('\n') + '\n'
+    const types = { 'web/src/types/values.types.ts': typeCode, 'web/src/lib/values.ts': code }
+    const typesPassed: PresetFixtureOutput = JSON.parse(
+      fixture("architecture: { web: 'web' },\n  limits: { maxFileLines: 5, maxTypeFileLines: 6 },", types).output,
+    )
+    expect(typesPassed.diagnostics.filter((entry) => entry.code === 'eslint(max-lines)').map((entry) => entry.filename)).toEqual([
+      'web/src/lib/values.ts',
+    ])
+    const typesFailed: PresetFixtureOutput = JSON.parse(
+      fixture("architecture: { web: 'web' },\n  limits: { maxFileLines: 6, maxTypeFileLines: 5 },", types).output,
+    )
+    expect(typesFailed.diagnostics.filter((entry) => entry.code === 'eslint(max-lines)').map((entry) => entry.filename)).toEqual([
+      'web/src/types/values.types.ts',
+    ])
+    const typesExcluded = JSON.parse(
+      fixture(
+        "architecture: { web: 'web' },\n  limits: { maxTypeFileLines: 5 },\n  ruleExclusions: { 'max-lines': ['web/src/types/values.types.ts'] },",
+        { 'web/src/types/values.types.ts': typeCode },
+      ).output,
+    )
+    expect(typesExcluded.diagnostics).toEqual([])
   })
 
   test('preset diagnostics identify the allowed route helper and action constant destinations', () => {
