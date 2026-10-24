@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.9.0
 
 - Add `limits.maxTypeFileLines` (default `1000`): the preset applies this `max-lines` limit to `*.types.ts` files in app roots instead of `limits.maxFileLines`. Other files keep `maxFileLines`.
 
