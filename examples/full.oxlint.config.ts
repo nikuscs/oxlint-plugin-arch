@@ -3,7 +3,7 @@ import { defineConfig } from 'oxlint'
 export default defineConfig({
   jsPlugins: [
     { name: 'arch', specifier: '../src/index.ts' },
-    { name: 'dillon-anti-slop', specifier: '../src/rules/dillon-anti-slop/index.ts' },
+    { name: 'dillon-anti-slop', specifier: '../src/vendor/dillon-anti-slop/index.ts' },
   ],
   overrides: [
     {

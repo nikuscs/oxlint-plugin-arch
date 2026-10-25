@@ -1,99 +1,99 @@
 import { eslintCompatPlugin } from '@oxlint/plugins'
-import { callArgumentsMultiline } from './rules/call-arguments-multiline.ts'
-import { callArrayMultiline } from './rules/call-array-multiline.ts'
-import { chainNewline } from './rules/chain-newline.ts'
-import { componentProps } from './rules/component-props.ts'
-import { declarationName } from './rules/declaration-name.ts'
-import { exportFilePrefix } from './rules/export-file-prefix.ts'
-import { exportNamePattern } from './rules/export-name-pattern.ts'
-import { filenameExportName } from './rules/filename-export-name.ts'
-import { filenameMatch } from './rules/filename-match.ts'
-import { folderPrefix } from './rules/folder-prefix.ts'
-import { jsxAttributesMultiline } from './rules/jsx-attributes-multiline.ts'
-import { keyValueSameLine } from './rules/key-value-same-line.ts'
-import { noComments } from './rules/no-comments.ts'
-import { noExtraExports } from './rules/no-extra-exports.ts'
-import { noExtraFactoryKeys } from './rules/no-extra-factory-keys.ts'
-import { noFileLevelHelpers } from './rules/no-file-level-helpers.ts'
-import { noImportedTypeAlias } from './rules/no-imported-type-alias.ts'
-import { noInlineSchemaElements } from './rules/no-inline-schema-elements.ts'
-import { noInlineTypes } from './rules/no-inline-types.ts'
-import { noLiteralIn } from './rules/no-literal-in.ts'
-import { noLocalSchemaConstruction } from './rules/no-local-schema-construction.ts'
-import { noMemberComments } from './rules/no-member-comments.ts'
-import { noModuleMutableState } from './rules/no-module-mutable-state.ts'
-import { noPromiseAllMutation } from './rules/no-promise-all-mutation.ts'
-import { noRederiveSchema } from './rules/no-rederive-schema.ts'
-import { noRestrictedConstructor } from './rules/no-restricted-constructor.ts'
-import { noRestrictedFiles } from './rules/no-restricted-files.ts'
-import { noRestrictedToken } from './rules/no-restricted-token.ts'
-import { noRuntimeInTypes } from './rules/no-runtime-in-types.ts'
-import { noSingleUseScalarSchema } from './rules/no-single-use-scalar-schema.ts'
-import { noTopLevelFunctions } from './rules/no-top-level-functions.ts'
-import { noTrivialFunctions } from './rules/no-trivial-functions.ts'
-import { noTypeDeclarations } from './rules/no-type-declarations.ts'
-import { noUnescapedLike } from './rules/no-unescaped-like.ts'
-import { objectMultiline } from './rules/object-multiline.ts'
-import { onlyExportComponents } from './rules/only-export-components.ts'
-import { onlyExportConstants } from './rules/only-export-constants.ts'
-import { paddingBetweenStatements } from './rules/padding-between-statements.ts'
-import { preferNamespaceTypeImport } from './rules/prefer-namespace-type-import.ts'
-import { requireFileFactory } from './rules/require-file-factory.ts'
-import { requireObjectParams } from './rules/require-object-params.ts'
-import { requireOrpcOutput } from './rules/require-orpc-output.ts'
-import { requirePairedCall } from './rules/require-paired-call.ts'
-import { routeSurface } from './rules/route-surface.ts'
-import { ternaryLayout } from './rules/ternary-layout.ts'
-import { testTitlePattern } from './rules/test-title-pattern.ts'
+import { backendOrpcOutput } from './rules/backend/backend-orpc-output.ts'
+import { backendSqlLike } from './rules/backend/backend-sql-like.ts'
+import { boundariesTokenOwner } from './rules/boundaries/boundaries-token-owner.ts'
+import { codeConstructor } from './rules/code/code-constructor.ts'
+import { codeLiteralIn } from './rules/code/code-literal-in.ts'
+import { codeMutableState } from './rules/code/code-mutable-state.ts'
+import { codeObjectParams } from './rules/code/code-object-params.ts'
+import { codePairedCall } from './rules/code/code-paired-call.ts'
+import { codePromiseMutation } from './rules/code/code-promise-mutation.ts'
+import { codeTrivialFunctions } from './rules/code/code-trivial-functions.ts'
+import { comments } from './rules/comments/comments.ts'
+import { commentsMembers } from './rules/comments/comments-members.ts'
+import { filesComponentsOnly } from './rules/files/files-components-only.ts'
+import { filesConstantsOnly } from './rules/files/files-constants-only.ts'
+import { filesExports } from './rules/files/files-exports.ts'
+import { filesFactory } from './rules/files/files-factory.ts'
+import { filesFactoryKeys } from './rules/files/files-factory-keys.ts'
+import { filesHelpers } from './rules/files/files-helpers.ts'
+import { filesNoFunctions } from './rules/files/files-no-functions.ts'
+import { filesRestricted } from './rules/files/files-restricted.ts'
+import { filesRoute } from './rules/files/files-route.ts'
+import { filesTypesOnly } from './rules/files/files-types-only.ts'
+import { layoutCallArguments } from './rules/layout/layout-call-arguments.ts'
+import { layoutCallArray } from './rules/layout/layout-call-array.ts'
+import { layoutChain } from './rules/layout/layout-chain.ts'
+import { layoutJsxAttributes } from './rules/layout/layout-jsx-attributes.ts'
+import { layoutKeyValue } from './rules/layout/layout-key-value.ts'
+import { layoutObject } from './rules/layout/layout-object.ts'
+import { layoutPadding } from './rules/layout/layout-padding.ts'
+import { layoutTernary } from './rules/layout/layout-ternary.ts'
+import { namingDeclarations } from './rules/naming/naming-declarations.ts'
+import { namingExportPattern } from './rules/naming/naming-export-pattern.ts'
+import { namingExportPrefix } from './rules/naming/naming-export-prefix.ts'
+import { namingExportTemplate } from './rules/naming/naming-export-template.ts'
+import { namingFile } from './rules/naming/naming-file.ts'
+import { namingFolder } from './rules/naming/naming-folder.ts'
+import { reactProps } from './rules/react/react-props.ts'
+import { schemasInline } from './rules/schemas/schemas-inline.ts'
+import { schemasLocal } from './rules/schemas/schemas-local.ts'
+import { schemasRederive } from './rules/schemas/schemas-rederive.ts'
+import { schemasSingleUse } from './rules/schemas/schemas-single-use.ts'
+import { testsTitles } from './rules/tests/tests-titles.ts'
+import { typesDeclarations } from './rules/types/types-declarations.ts'
+import { typesImportedAlias } from './rules/types/types-imported-alias.ts'
+import { typesInline } from './rules/types/types-inline.ts'
+import { typesNamespaceImport } from './rules/types/types-namespace-import.ts'
 
 export default eslintCompatPlugin({
   meta: { name: 'arch' },
   rules: {
-    'call-arguments-multiline': callArgumentsMultiline,
-    'call-array-multiline': callArrayMultiline,
-    'chain-newline': chainNewline,
-    'component-props': componentProps,
-    'declaration-name': declarationName,
-    'export-file-prefix': exportFilePrefix,
-    'export-name-pattern': exportNamePattern,
-    'filename-export-name': filenameExportName,
-    'filename-match': filenameMatch,
-    'folder-prefix': folderPrefix,
-    'jsx-attributes-multiline': jsxAttributesMultiline,
-    'key-value-same-line': keyValueSameLine,
-    'no-comments': noComments,
-    'no-extra-exports': noExtraExports,
-    'no-extra-factory-keys': noExtraFactoryKeys,
-    'no-file-level-helpers': noFileLevelHelpers,
-    'no-imported-type-alias': noImportedTypeAlias,
-    'no-inline-schema-elements': noInlineSchemaElements,
-    'no-inline-types': noInlineTypes,
-    'no-literal-in': noLiteralIn,
-    'no-local-schema-construction': noLocalSchemaConstruction,
-    'no-member-comments': noMemberComments,
-    'no-module-mutable-state': noModuleMutableState,
-    'no-promise-all-mutation': noPromiseAllMutation,
-    'no-rederive-schema': noRederiveSchema,
-    'no-restricted-constructor': noRestrictedConstructor,
-    'no-restricted-files': noRestrictedFiles,
-    'no-restricted-token': noRestrictedToken,
-    'no-runtime-in-types': noRuntimeInTypes,
-    'no-single-use-scalar-schema': noSingleUseScalarSchema,
-    'no-top-level-functions': noTopLevelFunctions,
-    'no-trivial-functions': noTrivialFunctions,
-    'no-type-declarations': noTypeDeclarations,
-    'no-unescaped-like': noUnescapedLike,
-    'object-multiline': objectMultiline,
-    'only-export-components': onlyExportComponents,
-    'only-export-constants': onlyExportConstants,
-    'padding-between-statements': paddingBetweenStatements,
-    'prefer-namespace-type-import': preferNamespaceTypeImport,
-    'require-file-factory': requireFileFactory,
-    'require-object-params': requireObjectParams,
-    'require-orpc-output': requireOrpcOutput,
-    'require-paired-call': requirePairedCall,
-    'route-surface': routeSurface,
-    'ternary-layout': ternaryLayout,
-    'test-title-pattern': testTitlePattern,
+    'call-arguments-multiline': layoutCallArguments,
+    'call-array-multiline': layoutCallArray,
+    'chain-newline': layoutChain,
+    'component-props': reactProps,
+    'declaration-name': namingDeclarations,
+    'export-file-prefix': namingExportPrefix,
+    'export-name-pattern': namingExportPattern,
+    'filename-export-name': namingExportTemplate,
+    'filename-match': namingFile,
+    'folder-prefix': namingFolder,
+    'jsx-attributes-multiline': layoutJsxAttributes,
+    'key-value-same-line': layoutKeyValue,
+    'no-comments': comments,
+    'no-extra-exports': filesExports,
+    'no-extra-factory-keys': filesFactoryKeys,
+    'no-file-level-helpers': filesHelpers,
+    'no-imported-type-alias': typesImportedAlias,
+    'no-inline-schema-elements': schemasInline,
+    'no-inline-types': typesInline,
+    'no-literal-in': codeLiteralIn,
+    'no-local-schema-construction': schemasLocal,
+    'no-member-comments': commentsMembers,
+    'no-module-mutable-state': codeMutableState,
+    'no-promise-all-mutation': codePromiseMutation,
+    'no-rederive-schema': schemasRederive,
+    'no-restricted-constructor': codeConstructor,
+    'no-restricted-files': filesRestricted,
+    'no-restricted-token': boundariesTokenOwner,
+    'no-runtime-in-types': filesTypesOnly,
+    'no-single-use-scalar-schema': schemasSingleUse,
+    'no-top-level-functions': filesNoFunctions,
+    'no-trivial-functions': codeTrivialFunctions,
+    'no-type-declarations': typesDeclarations,
+    'no-unescaped-like': backendSqlLike,
+    'object-multiline': layoutObject,
+    'only-export-components': filesComponentsOnly,
+    'only-export-constants': filesConstantsOnly,
+    'padding-between-statements': layoutPadding,
+    'prefer-namespace-type-import': typesNamespaceImport,
+    'require-file-factory': filesFactory,
+    'require-object-params': codeObjectParams,
+    'require-orpc-output': backendOrpcOutput,
+    'require-paired-call': codePairedCall,
+    'route-surface': filesRoute,
+    'ternary-layout': layoutTernary,
+    'test-title-pattern': testsTitles,
   },
 })

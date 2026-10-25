@@ -23,22 +23,22 @@
       "default": "./dist/presets/tanstack-start-react-modules-preset.js"
     },
     "./rules/dillon-anti-slop": {
-      "types": "./dist/rules/dillon-anti-slop/index.d.ts",
-      "default": "./dist/rules/dillon-anti-slop/index.js"
+      "types": "./dist/vendor/dillon-anti-slop/index.d.ts",
+      "default": "./dist/vendor/dillon-anti-slop/index.js"
     },
     "./rules/module-policy": {
-      "types": "./dist/rules/module-policy/index.d.ts",
-      "default": "./dist/rules/module-policy/index.js"
+      "types": "./dist/modules.d.ts",
+      "default": "./dist/modules.js"
     }
   },
   "files": [
     "CHANGELOG.md",
-    "src/rules/dillon-anti-slop/LICENSE",
-    "src/rules/dillon-anti-slop/UPSTREAM.md",
+    "src/vendor/dillon-anti-slop/LICENSE",
+    "src/vendor/dillon-anti-slop/UPSTREAM.md",
     "dist"
   ],
   "scripts": {
-    "build": "bun build src/index.ts src/presets/index.ts src/presets/react-modules-preset.ts src/presets/next-react-modules-preset.ts src/presets/tanstack-start-react-modules-preset.ts src/rules/dillon-anti-slop/index.ts src/rules/module-policy/index.ts --root src --outdir dist --target node --format esm --packages external && tsc --project tsconfig.build.json",
+    "build": "bun build src/index.ts src/presets/index.ts src/presets/react-modules-preset.ts src/presets/next-react-modules-preset.ts src/presets/tanstack-start-react-modules-preset.ts src/vendor/dillon-anti-slop/index.ts src/modules.ts --root src --outdir dist --target node --format esm --packages external && tsc --project tsconfig.build.json",
     "check": "bun run lint && bun run build && bun run typecheck && bun run check:examples",
     "lint": "oxlint src examples scripts",
     "lint:self": "bun run build && oxlint -c oxlint.self.config.ts --disable-nested-config src",

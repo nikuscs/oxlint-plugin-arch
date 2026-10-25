@@ -9,7 +9,7 @@
   },
   "include": [
     "src/presets/**/*.ts",
-    "src/rules/dillon-anti-slop/index.ts",
-    "src/rules/module-policy/index.ts"
+    "src/vendor/dillon-anti-slop/index.ts",
+    "src/modules.ts"
   ]
 }
