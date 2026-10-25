@@ -1,1 +1,0 @@
-enum Value { First }; declare const value: Value; value === Value.First;

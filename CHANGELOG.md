@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.11.0
+## Unreleased
 
 ### Breaking: rebuilt package
 
@@ -78,6 +78,8 @@
 | `modules/tanstack-runtime` | `arch/boundaries-tanstack` |
 | `modules/test-assertions` | `arch/tests-assertions` |
 | `modules/test-modifiers` | `arch/tests-modifiers` |
+
+## 0.11.0
 
 - `modules/no-unknown` allows `unknown` on the narrowed parameter of a type guard (`function isAppError(error: unknown): error is AppError`) and on the error parameter of a catch callback (`catch: (error: unknown) => E`, `.catch((error: unknown) => …)`). Other uses still fail. This applies to every root.
 - `arch/no-trivial-functions` no longer reports type guards with a predicate return type as pass-through wrappers. Banned names and structurally generic guards are still reported.

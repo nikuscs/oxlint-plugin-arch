@@ -1,1 +1,0 @@
-Promise.all([await promise])

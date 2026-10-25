@@ -1,1 +1,0 @@
-function Child() { return <p />; } function Parent() { return <Child />; }

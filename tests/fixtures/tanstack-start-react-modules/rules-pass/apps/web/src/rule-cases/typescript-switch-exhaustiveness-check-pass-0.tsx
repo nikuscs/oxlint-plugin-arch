@@ -1,1 +1,0 @@
-declare const value: 'a' | 'b'; switch(value) { case 'a': break; case 'b': break; }

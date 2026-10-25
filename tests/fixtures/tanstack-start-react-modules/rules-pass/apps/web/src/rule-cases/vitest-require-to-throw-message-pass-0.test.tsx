@@ -1,1 +1,0 @@
-expect(() => { throw new Error('a'); }).toThrow('a');

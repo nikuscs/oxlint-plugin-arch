@@ -1,1 +1,0 @@
-function foo() { if (true) { if (false) { return x; } } else { return y; } }

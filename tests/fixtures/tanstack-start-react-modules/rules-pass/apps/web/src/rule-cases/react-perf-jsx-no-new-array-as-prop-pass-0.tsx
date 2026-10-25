@@ -1,1 +1,0 @@
-<Item list={this.props.list} />

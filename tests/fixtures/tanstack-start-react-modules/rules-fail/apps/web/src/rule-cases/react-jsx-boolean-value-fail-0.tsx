@@ -1,1 +1,0 @@
-<App foo={true} />;

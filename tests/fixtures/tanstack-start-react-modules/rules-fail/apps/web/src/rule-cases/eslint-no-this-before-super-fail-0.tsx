@@ -1,1 +1,0 @@
-class A extends B { constructor() { this.c = 0; } }

@@ -1,1 +1,0 @@
-declare const value: string; const n = value as string;

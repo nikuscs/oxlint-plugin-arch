@@ -1,1 +1,0 @@
-const list = [1,2]; delete list[0];

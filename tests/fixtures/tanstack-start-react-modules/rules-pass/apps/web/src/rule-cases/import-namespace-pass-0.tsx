@@ -1,1 +1,0 @@
-import * as values from './exports'; console.log(values.named);

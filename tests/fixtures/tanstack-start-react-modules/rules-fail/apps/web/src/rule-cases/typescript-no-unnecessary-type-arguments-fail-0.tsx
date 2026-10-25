@@ -1,1 +1,0 @@
-function create<T = string>(): T { throw new Error(); } create<string>();

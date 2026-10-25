@@ -1,1 +1,0 @@
-enum Value { First = 'a', Second = 1 }

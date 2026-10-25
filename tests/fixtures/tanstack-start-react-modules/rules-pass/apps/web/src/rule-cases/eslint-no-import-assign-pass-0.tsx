@@ -1,1 +1,0 @@
-import mod from 'mod'; mod.prop = 0

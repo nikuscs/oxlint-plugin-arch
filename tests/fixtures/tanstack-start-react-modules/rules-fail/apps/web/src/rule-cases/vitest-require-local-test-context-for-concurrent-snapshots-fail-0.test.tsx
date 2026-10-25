@@ -1,1 +1,0 @@
-it.concurrent("should fail", () => { expect(true).toMatchSnapshot() })

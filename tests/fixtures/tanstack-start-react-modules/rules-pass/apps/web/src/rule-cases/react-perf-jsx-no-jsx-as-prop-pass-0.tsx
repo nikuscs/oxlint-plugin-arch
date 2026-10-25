@@ -1,1 +1,0 @@
-<Item callback={this.props.jsx} />

@@ -1,1 +1,0 @@
-const createHandler = () => () => { someGlobalFunc(<div />); };

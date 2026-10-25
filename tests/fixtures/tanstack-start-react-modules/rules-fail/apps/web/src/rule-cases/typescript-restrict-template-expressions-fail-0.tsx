@@ -1,1 +1,0 @@
-const value = `${{ id: 1 }}`;

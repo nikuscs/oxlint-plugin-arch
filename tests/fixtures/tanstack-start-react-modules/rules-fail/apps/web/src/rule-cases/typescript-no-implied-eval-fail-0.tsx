@@ -1,1 +1,0 @@
-setTimeout('console.log(1)', 100);

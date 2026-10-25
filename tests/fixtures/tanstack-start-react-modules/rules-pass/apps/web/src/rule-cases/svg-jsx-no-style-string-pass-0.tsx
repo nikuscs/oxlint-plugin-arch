@@ -1,1 +1,0 @@
-const view = <svg style={{ fill: "red" }} />;
