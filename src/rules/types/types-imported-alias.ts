@@ -1,4 +1,5 @@
 import { defineRule } from '@oxlint/plugins'
+import { astDeclaration, astModuleName } from '../../utils/ast.utils.ts'
 import type { TypesImportedBinding } from '../../types/types.types.ts'
 import type { ESTree } from '@oxlint/plugins'
 
@@ -39,14 +40,14 @@ export const typesImportedAlias = defineRule({
             let name = specifier.local.name
 
             if (specifier.type === 'ImportSpecifier') {
-              name = specifier.imported.type === 'Identifier' ? specifier.imported.name : specifier.imported.value
+              name = astModuleName(specifier.imported)
             }
             imports.set(specifier.local.name, { name, source: statement.source.value })
           }
         }
 
         for (const statement of program.body) {
-          const declaration = statement.type === 'ExportNamedDeclaration' || statement.type === 'ExportDefaultDeclaration' ? statement.declaration : statement
+          const declaration = astDeclaration(statement)
           const imported = importedAliasTarget(declaration, imports)
 
           if (declaration?.type === 'TSTypeAliasDeclaration' && imported) {
@@ -75,7 +76,7 @@ export const typesImportedAlias = defineRule({
           }
 
           for (const specifier of statement.specifiers) {
-            const local = specifier.local.type === 'Identifier' ? specifier.local.name : specifier.local.value
+            const local = astModuleName(specifier.local)
             const imported = aliases.get(local)
 
             if (imported) {

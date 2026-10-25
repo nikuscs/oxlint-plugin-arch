@@ -1,4 +1,4 @@
-import { astNearestFunction, astUnwrap, astVisit } from './ast.utils.ts'
+import { astDeclaration, astNearestFunction, astUnwrap, astVisit } from './ast.utils.ts'
 import type { AstFunction } from '../types/ast.types.ts'
 import type * as DeclarationsTypes from '../types/declarations.types.ts'
 import type { ESTree } from '@oxlint/plugins'
@@ -132,9 +132,7 @@ export function declarationsTopLevelCandidates(program: ESTree.Program): Declara
 
   for (const statement of program.body) {
     const declaration =
-      statement.type === 'ExportNamedDeclaration' || statement.type === 'ExportDefaultDeclaration'
-        ? statement.declaration
-        : statement
+      astDeclaration(statement)
 
     if (declaration?.type === 'FunctionDeclaration') {
       result.push({ name: declaration.id?.name ?? '<anonymous>', node: declaration })
@@ -165,9 +163,7 @@ export function declarationsFactories(
 ): DeclarationsTypes.DeclarationsFunction[] {
   return program.body.flatMap((statement) => {
     const declaration =
-      statement.type === 'ExportNamedDeclaration' || statement.type === 'ExportDefaultDeclaration'
-        ? statement.declaration
-        : statement
+      astDeclaration(statement)
 
     if (declaration?.type === 'FunctionDeclaration') {
       const name = declaration.id?.name ?? '<anonymous>'

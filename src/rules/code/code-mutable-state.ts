@@ -1,4 +1,5 @@
 import { defineRule } from '@oxlint/plugins'
+import { astBindings } from '../../utils/ast.utils.ts'
 import { optionsFirst, optionsPatterns, optionsPatternSchema, optionsPatternsTest } from '../../utils/options.utils.ts'
 import type { CodeMutableStateOptions } from '../../types/code.types.ts'
 import type { ESTree } from '@oxlint/plugins'
@@ -11,25 +12,6 @@ const functionScopes = new Set([
   'TSEmptyBodyFunctionExpression',
   'StaticBlock',
 ])
-
-function bindingIdentifiers(pattern: ESTree.BindingPattern | ESTree.BindingRestElement): ESTree.BindingIdentifier[] {
-  switch (pattern.type) {
-    case 'Identifier':
-      return [pattern]
-    case 'AssignmentPattern':
-      return bindingIdentifiers(pattern.left)
-    case 'RestElement':
-      return bindingIdentifiers(pattern.argument)
-    case 'ObjectPattern':
-      return pattern.properties.flatMap((property) =>
-        bindingIdentifiers(property.type === 'RestElement' ? property : property.value),
-      )
-    case 'ArrayPattern':
-      return pattern.elements.flatMap((element) => (element ? bindingIdentifiers(element) : []))
-    default:
-      return []
-  }
-}
 
 function hasAncestor(node: ESTree.Node, test: (ancestor: ESTree.Node) => boolean): boolean {
   for (let current = node.parent; current; current = current.parent) {
@@ -100,7 +82,7 @@ export const codeMutableState = defineRule({
         }
 
         for (const declarator of node.declarations) {
-          for (const identifier of bindingIdentifiers(declarator.id)) {
+          for (const identifier of astBindings(declarator.id)) {
             if (!optionsPatternsTest(allowed, identifier.name)) {
               context.report({ node: identifier, messageId: 'moduleState' })
             }

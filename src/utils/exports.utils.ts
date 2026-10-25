@@ -1,3 +1,4 @@
+import { astModuleName } from './ast.utils.ts'
 import {
   declarationsIsRuntime,
   declarationsPublicServiceMethods,
@@ -17,10 +18,6 @@ function exportsIsDeclaration(node: ESTree.Node): node is ESTree.Declaration {
     node.type === 'TSModuleDeclaration' ||
     node.type === 'TSImportEqualsDeclaration'
   )
-}
-
-function exportsName(node: ESTree.ModuleExportName): string {
-  return node.type === 'Identifier' ? node.name : node.value
 }
 
 function exportsBindings(declaration: ESTree.Declaration | null): ExportsBinding[] {
@@ -120,8 +117,8 @@ export function exportsCollect(program: ESTree.Program): ExportsBinding[] {
     return [
       ...exportsBindings(statement.declaration),
       ...statement.specifiers.map((specifier) => {
-        const localName = exportsName(specifier.local)
-        const exportedName = exportsName(specifier.exported)
+        const localName = astModuleName(specifier.local)
+        const exportedName = astModuleName(specifier.exported)
         const local = locals.get(localName)
         return {
           ...(local ?? {

@@ -1,5 +1,5 @@
 import { defineRule } from '@oxlint/plugins'
-import { astDottedName, astMatchesCallee, astUnwrap, astVisit } from '../../utils/ast.utils.ts'
+import { astDottedName, astMatchesCallee, astModuleName, astUnwrap, astVisit } from '../../utils/ast.utils.ts'
 import { optionsFirst } from '../../utils/options.utils.ts'
 import type { AstFunction } from '../../types/ast.types.ts'
 import type * as TestsTypes from '../../types/tests.types.ts'
@@ -343,7 +343,7 @@ export const testsAssertions = defineRule({
                 continue
               }
 
-              const imported = specifier.imported.type === 'Identifier' ? specifier.imported.name : specifier.imported.value
+              const imported = astModuleName(specifier.imported)
 
               if (imported === 'test' || imported === 'it') {
                 state.tests.push(variable.name)

@@ -1,15 +1,11 @@
 import { defineRule } from '@oxlint/plugins'
-import { astCallName, astVisit } from '../../utils/ast.utils.ts'
+import { astCallName, astDeclaration, astVisit } from '../../utils/ast.utils.ts'
 import { exportsCollect } from '../../utils/exports.utils.ts'
 import { namingBasename, namingFileStem, namingNormalized, namingPascalCase } from '../../utils/naming.utils.ts'
 import { optionsFirst } from '../../utils/options.utils.ts'
 import { reactIsComponent } from '../../utils/react.utils.ts'
 import type { ReactPropsComponent, ReactPropsOptions, ReactPropsTarget } from '../../types/react.types.ts'
 import type { ESTree } from '@oxlint/plugins'
-
-function reactUnwrapExport(statement: ESTree.Statement | ESTree.Directive | ESTree.ModuleDeclaration) {
-  return statement.type === 'ExportNamedDeclaration' || statement.type === 'ExportDefaultDeclaration' ? statement.declaration : statement
-}
 
 function reactPropsTarget(node: ESTree.Node | null | undefined): ReactPropsTarget | undefined {
   if (node?.type === 'FunctionDeclaration' || node?.type === 'FunctionExpression' || node?.type === 'ArrowFunctionExpression') {
@@ -77,13 +73,13 @@ export const reactProps = defineRule({
 
         const interfaces = new Map(
           program.body.flatMap((statement, index): [string, number][] => {
-            const declaration = reactUnwrapExport(statement)
+            const declaration = astDeclaration(statement)
             return declaration?.type === 'TSInterfaceDeclaration' ? [[declaration.id.name, index]] : []
           }),
         )
 
         const components = program.body.flatMap((statement, index): ReactPropsComponent[] => {
-          const declaration = reactUnwrapExport(statement)
+          const declaration = astDeclaration(statement)
 
           if (declaration?.type === 'FunctionDeclaration' && declaration.id) {
             return [{ candidate: { name: declaration.id.name, node: declaration, declaration }, index }]

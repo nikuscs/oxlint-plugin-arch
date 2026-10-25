@@ -1,5 +1,5 @@
 import { defineRule } from '@oxlint/plugins'
-import { astIsTypeOnlyImport, astMemberName, astVisit } from '../../utils/ast.utils.ts'
+import { astIsTypeOnlyImport, astMemberName, astModuleName, astVisit } from '../../utils/ast.utils.ts'
 import {
   boundariesBrowserGlobals,
   boundariesDeclaredVariable,
@@ -212,7 +212,7 @@ export const boundariesTanstack = defineRule({
                 return []
               }
 
-              return entry(specifier.imported.type === 'Identifier' ? specifier.imported.name : specifier.imported.value)
+              return entry(astModuleName(specifier.imported))
             })
           }),
         )

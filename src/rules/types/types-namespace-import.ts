@@ -1,4 +1,5 @@
 import { defineRule } from '@oxlint/plugins'
+import { astModuleName } from '../../utils/ast.utils.ts'
 import { namingBasename, namingPascalCase } from '../../utils/naming.utils.ts'
 import { optionsFirst } from '../../utils/options.utils.ts'
 import type * as TypesTypes from '../../types/types.types.ts'
@@ -117,7 +118,7 @@ export const typesNamespaceImport = defineRule({
               continue
             }
 
-            const imported = specifier.imported.type === 'Identifier' ? specifier.imported.name : specifier.imported.value
+            const imported = astModuleName(specifier.imported)
             const variable = variables.find((binding) => binding.identifiers.some((id) => id.range[0] === specifier.local.range[0]))
 
             if (!bindingName.test(imported) || variable?.defs.length !== 1) {

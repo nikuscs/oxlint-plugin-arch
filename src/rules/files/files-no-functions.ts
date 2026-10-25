@@ -1,4 +1,5 @@
 import { defineRule } from '@oxlint/plugins'
+import { astDeclaration } from '../../utils/ast.utils.ts'
 import { declarationsFunctionName } from '../../utils/declarations.utils.ts'
 import { optionsFirst, optionsPatterns, optionsPatternSchema, optionsPatternsTest } from '../../utils/options.utils.ts'
 import type { FilesNoFunctionsOptions } from '../../types/files.types.ts'
@@ -40,7 +41,7 @@ export const filesNoFunctions = defineRule({
           }
 
           const declaration =
-            statement.type === 'ExportNamedDeclaration' || statement.type === 'ExportDefaultDeclaration' ? statement.declaration : statement
+            astDeclaration(statement)
 
           let functions: (ESTree.Function | ESTree.VariableDeclarator)[] = []
 

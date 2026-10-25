@@ -1,5 +1,5 @@
 import { defineRule } from '@oxlint/plugins'
-import { astDottedName } from '../../utils/ast.utils.ts'
+import { astDottedName, astModuleName } from '../../utils/ast.utils.ts'
 import { optionsFirst } from '../../utils/options.utils.ts'
 import type { TestsModifiersOptions } from '../../types/tests.types.ts'
 
@@ -43,7 +43,7 @@ export const testsModifiers = defineRule({
             continue
           }
 
-          const imported = specifier.imported.type === 'Identifier' ? specifier.imported.name : specifier.imported.value
+          const imported = astModuleName(specifier.imported)
 
           if (testNames.includes(imported)) {
             names.add(specifier.local.name)

@@ -1,5 +1,5 @@
 import { defineRule } from '@oxlint/plugins'
-import { astIsTypeOnlyImport } from '../../utils/ast.utils.ts'
+import { astDeclaration, astIsTypeOnlyImport, astModuleName } from '../../utils/ast.utils.ts'
 import { declarationsIsRuntime, declarationsRuntimeKind, declarationsRuntimeName } from '../../utils/declarations.utils.ts'
 import { optionsFirst, optionsPatternsTest } from '../../utils/options.utils.ts'
 import type { FilesTypesOnlyImport, FilesTypesOnlyOptions } from '../../types/files.types.ts'
@@ -23,12 +23,6 @@ function importEqualsOf(statement: ESTree.Statement): ESTree.TSImportEqualsDecla
   return statement.type === 'ExportNamedDeclaration' && statement.declaration?.type === 'TSImportEqualsDeclaration'
     ? statement.declaration
     : undefined
-}
-
-function unwrapExport(statement: ESTree.Statement): ESTree.Node | undefined {
-  return statement.type === 'ExportNamedDeclaration' || statement.type === 'ExportDefaultDeclaration'
-    ? (statement.declaration ?? undefined)
-    : statement
 }
 
 function entityRootName(node: ESTree.Node): string | undefined {
@@ -143,7 +137,7 @@ function addReferencingValueNames(statements: readonly ESTree.Statement[], value
       continue
     }
 
-    const declaration = unwrapExport(statement)
+    const declaration = astDeclaration(statement)
     const name = declaration ? moduleBindingName(declaration) : undefined
 
     if (declaration && name && !valueNames.has(name) && namespaceReferencesValue(declaration, valueNames)) {
@@ -179,7 +173,7 @@ function collectValueNames(statements: readonly ESTree.Statement[]): Set<string>
       continue
     }
 
-    const declaration = unwrapExport(statement)
+    const declaration = astDeclaration(statement)
 
     if (declaration?.type === 'VariableDeclaration') {
       for (const item of declaration.declarations) {
@@ -243,7 +237,7 @@ function isRuntimeReExport(
     return statement.specifiers.length === 0 || statement.specifiers.some((specifier) => specifier.exportKind !== 'type')
   }
 
-  return statement.specifiers.some((specifier) => specifier.exportKind !== 'type' && runtimeImportLocals.has(specifier.local.type === 'Identifier' ? specifier.local.name : specifier.local.value))
+  return statement.specifiers.some((specifier) => specifier.exportKind !== 'type' && runtimeImportLocals.has(astModuleName(specifier.local)))
 }
 
 function runtimeImports(statements: readonly ESTree.Statement[]): FilesTypesOnlyImport[] {
@@ -325,7 +319,7 @@ export const filesTypesOnly = defineRule({
             context.report({ node: statement, messageId: 'runtimeReExport' })
           }
 
-          const declaration = unwrapExport(statement)
+          const declaration = astDeclaration(statement)
 
           if (!declaration) {
             continue

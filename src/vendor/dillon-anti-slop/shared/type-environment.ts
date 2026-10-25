@@ -1,3 +1,4 @@
+import { astDeclaration } from '../../../utils/ast.utils.ts'
 import { typeReferenceName } from './type-reference-name.ts'
 import type * as DillonAntiSlopTypes from '../../../types/dillon-anti-slop.types.ts'
 import type { ESTree } from '@oxlint/plugins'
@@ -13,9 +14,7 @@ export function typeEnvironmentCreate(program: ESTree.Program): DillonAntiSlopTy
 
   for (const statement of program.body) {
     const declaration =
-      statement.type === 'ExportNamedDeclaration' || statement.type === 'ExportDefaultDeclaration'
-        ? (statement.declaration ?? null)
-        : statement
+      astDeclaration(statement)
 
     if (declaration?.type === 'ImportDeclaration') {
       for (const specifier of declaration.specifiers) {

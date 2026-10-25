@@ -193,6 +193,29 @@ export function astIsForwarder(node: AstFunction, expression: ESTree.Expression)
   )
 }
 
+export function astModuleName(node: ESTree.ModuleExportName): string {
+  return node.type === 'Identifier' ? node.name : node.value
+}
+
+export function astBindings(pattern: ESTree.BindingPattern | ESTree.BindingRestElement): ESTree.BindingIdentifier[] {
+  switch (pattern.type) {
+    case 'Identifier':
+      return [pattern]
+    case 'AssignmentPattern':
+      return astBindings(pattern.left)
+    case 'RestElement':
+      return astBindings(pattern.argument)
+    case 'ObjectPattern':
+      return pattern.properties.flatMap((property) => astBindings(property.type === 'RestElement' ? property : property.value))
+    case 'ArrayPattern':
+      return pattern.elements.flatMap((element) => (element ? astBindings(element) : []))
+  }
+}
+
+export function astDeclaration(statement: ESTree.Program['body'][number]) {
+  return statement.type === 'ExportNamedDeclaration' || statement.type === 'ExportDefaultDeclaration' ? statement.declaration : statement
+}
+
 export function astMemberName(node: ESTree.MemberExpression): string | undefined {
   return !node.computed && node.property.type === 'Identifier' ? node.property.name : undefined
 }
@@ -231,7 +254,7 @@ export function astImportAliases(program: ESTree.Program): Map<string, string> {
         continue
       }
 
-      const imported = specifier.imported.type === 'Identifier' ? specifier.imported.name : specifier.imported.value
+      const imported = astModuleName(specifier.imported)
 
       if (imported !== specifier.local.name) {
         aliases.set(specifier.local.name, imported)

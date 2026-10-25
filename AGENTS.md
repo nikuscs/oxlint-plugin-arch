@@ -15,19 +15,18 @@
 - The repo follows its own preset: `bun run lint` must pass. Types live in `src/types/<topic>.types.ts`.
 - No comments. The only exception is an `oxlint-disable-next-line <rule> -- <reason>` directive where a rule truly cannot be satisfied.
 - A function used once is inlined. It stays named only when inlining would break a lint limit (complexity, file length, nesting).
-- No duplicate code: `bun run lint:dupes` and `bun run lint:dead` stay clean. Logic two files share goes into `src/utils/`; a helper only one file uses stays in that file.
-- `README.md` is a short landing page for plugin users: pitch, install, quick start and the rule index. Rule detail lives in `docs/rules/<plugin>/<rule>.md`, preset detail in `docs/preset/*.md`. Maintainer workflow lives here.
+- No duplicate code: `bun run check` runs fallow dead-code and dupes. Logic two files share goes into `src/utils/`; a helper only one file uses stays in that file.
+- `README.md` is a short landing page for plugin users: pitch, install, quick start and the rule index. Maintainer workflow lives here.
 
 ## Adding or changing a rule
 
-1. Write `src/rules/<name>.ts` with a short doc comment: plain-English behavior plus a one-line example.
+1. Write `src/rules/<family>/<family>-<subject>.ts`. Its only export is `export const <camelCase of the ID> = defineRule(...)`; selector rules use `astSelectorRule` from `src/utils/ast.utils.ts`. Option types go in `src/types/<family>.types.ts`.
 2. Tests are paused during the refactor (`feat/arch-refactor`); add one only when asked. Fixable rules that get tests need `output` for every fixable case, an idempotence case, and a comment-preservation case.
 3. Register the rule in `src/index.ts`, keeping imports and entries alphabetical.
-4. Write or update `docs/rules/<plugin>/<name>.md` (sections: Why, Examples, Options, Autofix, Preset, Related; examples come from the rule's doc comment). Add or update its linked row in the matching group table of `README.md` (mark fixable rules with 🔧).
-5. Add an entry to `examples/full.oxlint.config.ts`, and to `examples/monorepo.oxlint.config.ts` when it fits that layout.
-6. Add a bullet under `## Unreleased` in `CHANGELOG.md`.
+4. Add its row to the matching family in the `README.md` rule table (mark fixable rules with 🔧).
+5. Add a bullet under `## Unreleased` in `CHANGELOG.md`.
 
-Done when `bun run check` passes and the rule appears in the registry, its docs page, the README table, the full example, and the changelog. Preset option changes update the matching `docs/preset/*.md` page.
+Done when `bun run check` passes and the rule appears in the registry, the README table and the changelog.
 
 ## Release
 

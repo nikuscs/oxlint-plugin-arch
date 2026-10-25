@@ -26,7 +26,7 @@
   ],
   "scripts": {
     "build": "bun build src/index.ts src/preset/preset.ts src/vendor/dillon-anti-slop/index.ts --root src --outdir dist --target node --format esm --packages external && tsc --project tsconfig.build.json",
-    "check": "bun run build && bun run lint && bun run typecheck",
+    "check": "bun run build && bun run lint && bun run typecheck && bun run lint:dead && bun run lint:dupes",
     "lint": "oxlint -c oxlint.self.config.ts --disable-nested-config src",
     "lint:dead": "fallow dead-code",
     "lint:dupes": "fallow dupes",

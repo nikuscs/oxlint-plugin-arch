@@ -1,26 +1,8 @@
 import { defineRule } from '@oxlint/plugins'
+import { astBindings, astDeclaration, astModuleName } from '../../utils/ast.utils.ts'
 import { optionsFirst } from '../../utils/options.utils.ts'
 import type { FilesConstantsOnlyBinding, FilesConstantsOnlyOptions } from '../../types/files.types.ts'
 import type { ESTree } from '@oxlint/plugins'
-
-function bindingNames(pattern: ESTree.BindingPattern | ESTree.BindingRestElement): string[] {
-  switch (pattern.type) {
-    case 'Identifier':
-      return [pattern.name]
-    case 'AssignmentPattern':
-      return bindingNames(pattern.left)
-    case 'RestElement':
-      return bindingNames(pattern.argument)
-    case 'ArrayPattern':
-      return pattern.elements.flatMap((element) => (element ? bindingNames(element) : []))
-    case 'ObjectPattern':
-      return pattern.properties.flatMap((property) => bindingNames(property.type === 'RestElement' ? property : property.value))
-  }
-}
-
-function moduleName(node: ESTree.ModuleExportName): string {
-  return node.type === 'Identifier' ? node.name : node.value
-}
 
 function unwrap(expression: ESTree.Expression): ESTree.Expression {
   if (
@@ -76,7 +58,7 @@ function collectBindings(program: ESTree.Program): Map<string, FilesConstantsOnl
     }
 
     const declaration =
-      statement.type === 'ExportNamedDeclaration' || statement.type === 'ExportDefaultDeclaration' ? statement.declaration : statement
+      astDeclaration(statement)
 
     if (declaration?.type === 'TSImportEqualsDeclaration') {
       bindings.set(declaration.id.name, { kind: declaration.importKind === 'type' ? 'type' : 'import' })
@@ -88,7 +70,7 @@ function collectBindings(program: ESTree.Program): Map<string, FilesConstantsOnl
         const kind = declaration.kind === 'const' ? 'const' : 'other'
         const value = item.id.type === 'Identifier' ? item.init : undefined
 
-        for (const name of bindingNames(item.id)) {
+        for (const { name } of astBindings(item.id)) {
           bindings.set(name, { kind, value })
         }
       }
@@ -211,7 +193,7 @@ export const filesConstantsOnly = defineRule({
 
             if (declaration?.type === 'VariableDeclaration') {
               for (const item of declaration.declarations) {
-                for (const name of bindingNames(item.id)) {
+                for (const { name } of astBindings(item.id)) {
                   check(item, name, name)
                 }
               }
@@ -224,7 +206,7 @@ export const filesConstantsOnly = defineRule({
             for (const specifier of statement.specifiers) {
               const typeOnly = statement.exportKind === 'type' || specifier.exportKind === 'type'
 
-              check(specifier, moduleName(specifier.exported), moduleName(specifier.local), typeOnly, Boolean(statement.source))
+              check(specifier, astModuleName(specifier.exported), astModuleName(specifier.local), typeOnly, Boolean(statement.source))
             }
           }
         }

@@ -1,4 +1,5 @@
 import { defineRule } from '@oxlint/plugins'
+import { astModuleName } from '../../../utils/ast.utils.ts'
 import { optionsAssertMockingApis, optionsFirst } from '../../../utils/options.utils.ts'
 import { resolveVariable } from '../shared/resolve-variable.ts'
 import type * as DillonAntiSlopTypes from '../../../types/dillon-anti-slop.types.ts'
@@ -42,7 +43,7 @@ function testFramework(
     let imported: string | null = null
 
     if (specifier.type === 'ImportSpecifier') {
-      imported = specifier.imported.type === 'Identifier' ? specifier.imported.name : specifier.imported.value
+      imported = astModuleName(specifier.imported)
     }
 
     if (source === 'vitest' && imported === 'vi') {

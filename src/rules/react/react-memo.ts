@@ -1,5 +1,5 @@
 import { defineRule } from '@oxlint/plugins'
-import { astDottedName } from '../../utils/ast.utils.ts'
+import { astDottedName, astModuleName } from '../../utils/ast.utils.ts'
 
 const reactMemoNames = ['memo', 'useMemo', 'useCallback']
 
@@ -28,7 +28,7 @@ export const reactMemo = defineRule({
             continue
           }
 
-          const name = specifier.imported.type === 'Identifier' ? specifier.imported.name : specifier.imported.value
+          const name = astModuleName(specifier.imported)
 
           if (reactMemoNames.includes(name)) {
             context.report({ node: specifier, messageId: 'memo' })
