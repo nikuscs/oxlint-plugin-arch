@@ -1,5 +1,29 @@
 # Changelog
 
+## 0.10.0
+
+**Breaking:** `packages` roots now get the app rules. Until now they only got the shared baseline (formatting, imports, stock TypeScript/JavaScript rules and `modules/import-boundaries`), so expect new errors in package `src` folders.
+
+- A packages root with its own `package.json` is one package. Without one, each child folder is a package, so `packages: 'packages'` covers every `packages/*/src`. Per-package entries keep working. Files outside `src` keep the baseline only.
+- Every package file gets the app-wide rules: `arch/no-comments` (with the stricter `*.types.ts`/`*.constants.ts` variant), the `typeSafety` set (including the `dillon-anti-slop/*` rules), `arch/no-type-declarations`, `arch/no-local-schema-construction`, `arch/no-rederive-schema`, `arch/no-module-mutable-state`, `modules/double-negation`, `arch/no-trivial-functions`, `max-lines` and `complexity`.
+- Services, types and file roles in packages follow the server-root rules: `modules/service-functions`, `modules/service-types`, `modules/domain-constants`, `arch/require-object-params`, `arch/no-extra-exports`, `arch/no-inline-types`, `arch/export-file-prefix`, `arch/no-restricted-files`, `arch/no-top-level-functions`, `arch/filename-match`, `arch/filename-export-name`, `arch/folder-prefix` and `arch/no-unescaped-like`. Packages default to the `services: 'domain'` layout, and `layout` keys on a packages root now resolve inside `src`. `entry.*.ts` files stay exempt from `arch/export-file-prefix`, as in server roots.
+- React code in packages (`*.tsx`, `components/**`, `hooks/**`) follows the web-root rules: the React, effects, memoization and forms policies, `arch/jsx-attributes-multiline`, `arch/no-file-level-helpers`, `arch/component-props`, `arch/declaration-name`, `modules/local-type-alias`, `modules/pascal-interface`, `arch/only-export-components` and the hook naming rules. The React plugins now load when packages exist, even without a web root.
+- Package `types/**` and `*.types.ts` files may construct schemas, like backend `types/**`.
+- Never on packages: `modules/backend-switch`, `modules/rpc-database`, `arch/require-orpc-output`, `modules/tanstack-runtime`, `arch/no-restricted-token`, `arch/no-runtime-in-types` and `modules/dynamic-classes`. Routes, Tailwind and shadcn usage rules stay with web roots.
+- Rename `shadcn.uiImportPath` to `shadcn.ui` and `shadcn.componentImportSources` to `shadcn.components`, matching the components.json alias names. The old names throw. Migration: `shadcn: { uiImportPath: '@ui' }` becomes `shadcn: { ui: '@ui' }`.
+- `shadcn.ui` also selects the UI kit files, which keep the existing kit exceptions (type safety, formatting and layout are still checked). Use a workspace package name (`'@app/ui'` → that package's `src/**`) or a tsconfig `paths` alias (`'@/kit'` → `<root>/src/kit/**`). A value that resolves to nothing throws. When unset, the kit stays `<web source>/components/ui/**`. A UI kit in a package needs `shadcn: { ui: '<package name>' }`; without it, the kit gets the full package rules.
+
+How to fix what the new rules report:
+
+| Fix | Rules |
+| --- | --- |
+| Auto-fix (`--fix`) | `arch/no-comments`, `arch/jsx-attributes-multiline`, the `react-extra/jsx-*` layout rules |
+| Rename | `arch/export-file-prefix`, `arch/filename-match`, `arch/filename-export-name`, `arch/folder-prefix`, `arch/declaration-name`, `arch/export-name-pattern`, `modules/pascal-interface`, `modules/shape-suffix` |
+| Move | `arch/no-type-declarations` (to `types/`), `arch/no-local-schema-construction` (to `types/` or `*.types.ts`), `arch/no-restricted-files`, `arch/no-extra-exports`, `arch/only-export-components`, `arch/no-file-level-helpers`, `modules/domain-constants`, `modules/service-types`, `modules/local-type-alias`, `max-lines` |
+| Reshape | `arch/require-object-params`, `arch/component-props`, `arch/no-inline-types`, `arch/no-trivial-functions`, `arch/no-module-mutable-state`, `arch/no-restricted-constructor`, `modules/service-functions`, `modules/no-unknown`, `modules/memoization`, `typescript/no-explicit-any`, the `dillon-anti-slop/*` rules, the React and effects rules, `complexity` |
+
+To defer a package, turn single rules off for it: `ruleExclusions: { '<rule>': ['packages/foo/**'] }`.
+
 ## 0.9.0
 
 - Add `limits.maxTypeFileLines` (default `1000`): the preset applies this `max-lines` limit to `*.types.ts` files in app roots instead of `limits.maxFileLines`. Other files keep `maxFileLines`.

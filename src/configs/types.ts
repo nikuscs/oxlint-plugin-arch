@@ -6,6 +6,8 @@ export function presetTypesConfig(context: PresetContext): PresetPolicies {
     options,
     web,
     backend,
+    packageSources,
+    serviceRoots,
     app,
     appFiles,
     webFiles,
@@ -71,7 +73,11 @@ export function presetTypesConfig(context: PresetContext): PresetPolicies {
       [...ui, ...testFiles],
     ),
     presetOverride(
-      [...presetScopes(schemaOwners, 'types/**/*.types.ts'), ...colocatedTypes, ...presetScopes(app, '**/*.constants.ts')],
+      [
+        ...presetScopes([...schemaOwners, ...packageSources], 'types/**/*.types.ts'),
+        ...colocatedTypes,
+        ...presetScopes(app, '**/*.constants.ts'),
+      ],
       {
         'arch/no-top-level-functions': ['error', { banReExports: false }],
       },
@@ -124,9 +130,14 @@ export function presetTypesConfig(context: PresetContext): PresetPolicies {
       {
         'arch/no-local-schema-construction': ['error', { packages: ['zod'], namespaces: ['z'] }],
       },
-      [...presetScopes(schemaOwners, 'types/**'), ...colocatedTypes, ...ui],
+      [
+        ...presetScopes([...schemaOwners, ...packageSources], 'types/**'),
+        ...presetScopes(packageSources, '**/*.types.ts'),
+        ...colocatedTypes,
+        ...ui,
+      ],
     ),
-    presetOverride(webFiles, {
+    presetOverride([...webFiles, ...presetScopes(packageSources)], {
       'arch/no-rederive-schema': [
         'error',
         {
@@ -136,7 +147,7 @@ export function presetTypesConfig(context: PresetContext): PresetPolicies {
         },
       ],
     }),
-    presetOverride(presetScopes(backend, 'services/**/*.ts'), {
+    presetOverride(presetScopes(serviceRoots, 'services/**/*.ts'), {
       'arch/no-unescaped-like': [
         'error',
         {

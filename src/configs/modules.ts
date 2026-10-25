@@ -4,7 +4,7 @@ import { presetScopes, presetOverride } from '../utils/helpers/preset.ts'
 import { presetExtensions, presetNamingRules, presetExportPrefix } from '../constants/preset.constants.ts'
 
 export function presetModulesConfig(context: PresetContext): PresetPolicies {
-  const { web, nextWeb, backend, app, services, utilities, ui, testFiles, components, hooks, options } = context
+  const { web, nextWeb, serviceRoots, app, services, utilities, ui, testFiles, components, hooks, options } = context
   const conceptFiles = (options.modules?.customFileRoles ?? []).map((role) => `**/*.${role}.ts`)
   const migrations = options.modules?.migrationFiles ?? []
   const frontendEntries = [
@@ -150,7 +150,7 @@ export function presetModulesConfig(context: PresetContext): PresetPolicies {
       },
       testFiles,
     ),
-    presetOverride(presetScopes(backend, 'services/**/*.ts'), { 'modules/domain-constants': 'error' }, [
+    presetOverride(presetScopes(serviceRoots, 'services/**/*.ts'), { 'modules/domain-constants': 'error' }, [
       ...utilities,
       ...testFiles,
     ]),
@@ -169,7 +169,7 @@ export function presetModulesConfig(context: PresetContext): PresetPolicies {
       testFiles,
     ),
     presetOverride(
-      [...presetScopes(backend, 'services/**/*-{action,query}.*.ts'), ...frontendEntries],
+      [...presetScopes(serviceRoots, 'services/**/*-{action,query}.*.ts'), ...frontendEntries],
       { 'arch/require-object-params': ['error', { maxParams: 2 }] },
       testFiles,
     ),
@@ -181,7 +181,7 @@ export function presetModulesConfig(context: PresetContext): PresetPolicies {
       testFiles,
     ),
     presetOverride(
-      presetScopes(backend, 'services/**/*.service.ts'),
+      presetScopes(serviceRoots, 'services/**/*.service.ts'),
       {
         'arch/no-extra-exports': [
           'error',
@@ -220,7 +220,7 @@ export function presetModulesConfig(context: PresetContext): PresetPolicies {
     presetOverride(
       presetScopes(app, '**/*.{constants,utils,handler,service,types,client,server,rsc}.ts'),
       { 'arch/export-file-prefix': ['error', presetExportPrefix] },
-      [...ui, ...presetScopes(backend, 'entry.*.ts')],
+      [...ui, ...presetScopes(serviceRoots, 'entry.*.ts')],
     ),
     presetOverride(
       frontendEntries,
@@ -256,17 +256,21 @@ export function presetModulesConfig(context: PresetContext): PresetPolicies {
       },
       ui,
     ),
-    presetOverride(hooks, {
-      'arch/filename-match': [
-        'error',
-        {
-          pattern: '^use-[a-z0-9]+(?:-[a-z0-9]+)*[.]ts$',
-          message: 'Hooks use use-domain.ts filenames.',
-        },
-      ],
-      'arch/export-file-prefix': 'error',
-      'arch/export-name-pattern': ['error', { pattern: '^use[A-Z]', ignoreTypeExports: true }],
-    }),
+    presetOverride(
+      hooks,
+      {
+        'arch/filename-match': [
+          'error',
+          {
+            pattern: '^use-[a-z0-9]+(?:-[a-z0-9]+)*[.]ts$',
+            message: 'Hooks use use-domain.ts filenames.',
+          },
+        ],
+        'arch/export-file-prefix': 'error',
+        'arch/export-name-pattern': ['error', { pattern: '^use[A-Z]', ignoreTypeExports: true }],
+      },
+      ui,
+    ),
     presetOverride(
       components,
       {

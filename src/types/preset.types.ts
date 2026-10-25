@@ -171,8 +171,10 @@ export interface PresetTailwindOptions {
 }
 
 export interface PresetShadcnOptions {
-  uiImportPath?: string
-  componentImportSources?: string[]
+  /** The components.json `ui` alias: a workspace package name or a tsconfig `paths` alias. It also sets the UI kit files. */
+  ui?: string
+  /** Import sources treated as components, like the components.json `components` alias. */
+  components?: string[]
 }
 
 export type PresetRules = NonNullable<OxlintConfig['rules']>
@@ -204,13 +206,21 @@ export interface PresetContext {
   backend: string[]
   /** Server and runner architecture roots, without their source folder. */
   backendRoots: string[]
+  /** Source folders of packages roots: `src` of a package, or of each package in a folder of packages. */
+  packageSources: string[]
+  /** Backend and package source folders, whose services follow the backend contract. */
+  serviceRoots: string[]
   app: string[]
   appFiles: string[]
   webFiles: string[]
+  /** Web files plus React code in packages: `.tsx` files and the `components` and `hooks` folders. */
+  reactFiles: string[]
   backendFiles: string[]
   services: string[]
   utilities: string[]
   types: string[]
+  /** UI kit folders resolved from `shadcn.ui`. */
+  uiRoots: string[]
   ui: string[]
   generated: string[]
   testFiles: string[]

@@ -10,12 +10,14 @@ import {
 } from '../constants/preset.constants.ts'
 
 export function presetReactConfig(context: PresetContext): PresetPolicies {
-  const { options, web, tanstackWeb, nextWeb, webFiles, ui, testFiles, components, css } = context
+  const { options, web, tanstackWeb, nextWeb, webFiles, reactFiles, uiRoots, ui, testFiles, components, css } = context
   const policies: PresetPolicies = {}
-  if (web.length) {
+  // Kit folders inside a web source keep the web-only shadcn and context exceptions.
+  const webUi = uiRoots.filter((path) => web.some((root) => root === '.' || path === root || path.startsWith(root + '/')))
+  if (reactFiles.length) {
     policies.react = [
       presetOverride(
-        webFiles,
+        reactFiles,
         {
           ...presetReactRules,
           ...(options.react?.compiler === false
@@ -40,8 +42,8 @@ export function presetReactConfig(context: PresetContext): PresetPolicies {
     ]
   }
 
-  if (web.length) {
-    policies.effects = [presetOverride(webFiles, { ...presetEffectsRules, 'modules/empty-effect': 'error' }, ui)]
+  if (reactFiles.length) {
+    policies.effects = [presetOverride(reactFiles, { ...presetEffectsRules, 'modules/empty-effect': 'error' }, ui)]
   }
 
   const nextPage = { bannedHooks: ['useState', 'useEffect', 'useMutation'], inspectExports: true }
@@ -124,10 +126,10 @@ export function presetReactConfig(context: PresetContext): PresetPolicies {
     policies.routes = routes
   }
 
-  if (web.length) {
+  if (reactFiles.length) {
     policies.forms = [
       presetOverride(
-        webFiles,
+        reactFiles,
         {
           'arch/require-paired-call': [
             'error',
@@ -142,8 +144,8 @@ export function presetReactConfig(context: PresetContext): PresetPolicies {
     ]
   }
 
-  if (web.length && options.react?.compiler !== false) {
-    policies.memoization = [presetOverride(webFiles, { 'modules/memoization': 'error' }, ui)]
+  if (reactFiles.length && options.react?.compiler !== false) {
+    policies.memoization = [presetOverride(reactFiles, { 'modules/memoization': 'error' }, ui)]
   }
 
   if (web.length) {
@@ -159,7 +161,7 @@ export function presetReactConfig(context: PresetContext): PresetPolicies {
               },
               {
                 token: 'createContext',
-                allowPathPatterns: [...presetScopes(web, 'context/'), ...presetScopes(web, 'components/ui/')],
+                allowPathPatterns: [...presetScopes(web, 'context/'), ...webUi.map((path) => `${path}/`)],
               },
             ],
           },
@@ -251,7 +253,7 @@ export function presetReactConfig(context: PresetContext): PresetPolicies {
       presetOverride(webFiles, {
         'shadcn/no-unknown-classes': ['error', { allow: [] }],
       }),
-      presetOverride(presetScopes(web, 'components/ui/sonner.tsx'), {
+      presetOverride(presetScopes(webUi, 'sonner.tsx'), {
         'shadcn/no-unknown-classes': ['error', { allow: ['toaster', 'toast'] }],
       }),
     ]

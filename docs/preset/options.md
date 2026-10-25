@@ -77,8 +77,10 @@ imports: { aliases: { '@backend': 'apps/server/src' } }
 | `tailwind.cssEntryPointsByRoot` | `{}` | Stylesheet per architecture root: `{ 'apps/store': 'themes/store.css' }`. |
 | `tailwind.rootFontSize` | `16` | Root font size for class canonicalization. |
 | `shadcn` | on | `false` turns shadcn checks off; Tailwind checks stay. |
-| `shadcn.uiImportPath` | `'@/components/ui'` | Where shadcn components are imported from. |
-| `shadcn.componentImportSources` | `['^@/components/']` | Import sources treated as components. |
+| `shadcn.ui` | `'@/components/ui'` | The components.json `ui` alias: where shadcn components are imported from. Also selects the [UI kit](styling.md#ui-kit) files: a workspace package name (`'@app/ui'` → that package's `src/**`) or a tsconfig `paths` alias. A value that resolves to nothing throws. |
+| `shadcn.components` | `['^@/components/']` | Import sources treated as components, like the components.json `components` alias. |
+
+`shadcn.uiImportPath` and `shadcn.componentImportSources` were renamed to `shadcn.ui` and `shadcn.components` in 0.10.0; the old names throw.
 
 Class rules: [Tailwind and shadcn](styling.md).
 

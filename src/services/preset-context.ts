@@ -1,6 +1,7 @@
+import { existsSync, readdirSync } from 'node:fs'
 import { resolve, posix } from 'node:path'
 import type { PresetOptions, PresetContext, PresetArchitecture, PresetResolvedRoot } from '../types/preset.types.ts'
-import { presetScopes, presetPackageName } from '../utils/helpers/preset.ts'
+import { presetScopes, presetPackageName, presetTsconfigAliasTargets } from '../utils/helpers/preset.ts'
 import { presetExtensions, presetGeneratedFiles } from '../constants/preset.constants.ts'
 
 export function presetResolveContext(options: PresetOptions): PresetContext {
@@ -47,7 +48,7 @@ export function presetResolveContext(options: PresetOptions): PresetContext {
     )
       throw new Error('Folder layout must be a path-to-mode object.')
     const layout: PresetResolvedRoot['layout'] = {}
-    if (role === 'web' || role === 'server' || role === 'runner') {
+    if (role !== 'scripts') {
       layout.services = 'domain'
     }
     if (role === 'web') {
@@ -120,6 +121,9 @@ export function presetResolveContext(options: PresetOptions): PresetContext {
   if (options.framework !== undefined && options.framework !== 'tanstack-start' && options.framework !== 'next')
     throw new Error(`Unknown framework: ${options.framework}`)
   const source = (path: string, entry: PresetResolvedRoot) => posix.join(path, entry.sourceDir ?? 'src')
+  // A packages root is one package when it has a manifest, otherwise a folder of packages.
+  const isPackage = (path: string) => existsSync(resolve(root, path, 'package.json'))
+  const packageSource = (path: string) => posix.join(path, isPackage(path) ? 'src' : '*/src')
   const web = entries.filter(([, { role }]) => role === 'web').map(([path, entry]) => source(path, entry))
   const webFor = (framework: 'tanstack-start' | 'next') =>
     entries.filter(([, entry]) => entry.framework === framework).map(([path, entry]) => source(path, entry))
@@ -129,10 +133,15 @@ export function presetResolveContext(options: PresetOptions): PresetContext {
   const backendRoots = backendEntries.map(([path]) => path)
   const backend = backendEntries.map(([path, entry]) => source(path, entry))
   const packages = entries.filter(([, { role }]) => role === 'packages').map(([path]) => path)
+  const packageSources = packages.map(packageSource)
+  const serviceRoots = [...backend, ...packageSources]
   const scripts = entries.filter(([, { role }]) => role === 'scripts').map(([path]) => path)
   const folders = entries.flatMap(([path, entry]) =>
     Object.entries(entry.layout).map(([folder, mode]) => ({
-      path: posix.join(['web', 'server', 'runner'].includes(entry.role) ? source(path, entry) : path, folder),
+      path: posix.join(
+        entry.role === 'scripts' ? path : entry.role === 'packages' ? packageSource(path) : source(path, entry),
+        folder,
+      ),
       folder,
       mode,
     })),
@@ -142,18 +151,49 @@ export function presetResolveContext(options: PresetOptions): PresetContext {
     .map(([path, entry]) =>
       posix.join(source(path, entry), 'services', entry.layout.services === 'domain' ? 'rpc/rpc.client.ts' : 'rpc.client.ts'),
     )
-  const app = [...web, ...backend]
+  const app = [...web, ...backend, ...packageSources]
   const appFiles = presetScopes(app)
   const webFiles = presetScopes(web)
+  const reactFiles = [
+    ...webFiles,
+    ...presetScopes(packageSources, '**/*.tsx'),
+    ...presetScopes(packageSources, `components/**/${presetExtensions}`),
+    ...presetScopes(packageSources, `hooks/**/${presetExtensions}`),
+  ]
   const backendFiles = presetScopes(backend)
   const services = presetScopes(app, `services/**/${presetExtensions}`)
   const utilities = ['**/*.utils.ts', '**/*.constants.ts', '**/*.types.ts']
   const types = presetScopes(app, 'types/**')
-  const ui = presetScopes(web, 'components/ui/**')
+  // The kit is the workspace package named `value`, or the folders a tsconfig `paths` alias maps it to.
+  const resolveUi = (value: string): string[] => {
+    if (typeof value !== 'string' || !value) throw new Error('shadcn.ui must be a nonempty import path.')
+    const manifests = entries.flatMap(([path, entry]) => {
+      const children =
+        entry.role === 'packages' && existsSync(resolve(root, path)) && !isPackage(path)
+          ? readdirSync(resolve(root, path), { withFileTypes: true })
+              .filter((child) => child.isDirectory() && isPackage(posix.join(path, child.name)))
+              .map((child) => ({ directory: posix.join(path, child.name), sources: posix.join(path, child.name, 'src') }))
+          : []
+      const sources = ['web', 'server', 'runner'].includes(entry.role) ? source(path, entry) : posix.join(path, 'src')
+      return [{ directory: path, sources }, ...children]
+    })
+    const named = manifests.filter(({ directory }) => presetPackageName(root, directory) === value)
+    if (named.length) return named.map(({ sources }) => sources)
+    const aliased = [...new Set(['.', ...manifests.map(({ directory }) => directory)].flatMap((directory) =>
+      presetTsconfigAliasTargets(root, directory, value),
+    ))]
+    if (aliased.length) return aliased
+    throw new Error(`shadcn.ui ${JSON.stringify(value)} matches no workspace package name or existing tsconfig paths alias target.`)
+  }
+  const shadcn = options.shadcn || {}
+  if ('uiImportPath' in shadcn) throw new Error('shadcn.uiImportPath was renamed to shadcn.ui.')
+  if ('componentImportSources' in shadcn) throw new Error('shadcn.componentImportSources was renamed to shadcn.components.')
+  const uiRoots = shadcn.ui === undefined ? web.map((path) => posix.join(path, 'components/ui')) : resolveUi(shadcn.ui)
+  const ui = presetScopes(uiRoots, '**')
   const testFiles = ['**/{test,tests,e2e}/**/*.{ts,tsx,mts,cts}', '**/*.{test,spec}.{ts,tsx,mts,cts}']
   const safetyFiles = [...appFiles, ...testFiles]
-  const components = presetScopes(web, 'components/**/*.tsx')
-  const hooks = presetScopes(web, 'hooks/**/*.ts')
+  const components = presetScopes([...web, ...packageSources], 'components/**/*.tsx')
+  const hooks = presetScopes([...web, ...packageSources], 'hooks/**/*.ts')
   const level = options.severity ?? 'error'
   const publicEntrypoints =
     options.imports?.backendEntryPoints ??
@@ -202,13 +242,17 @@ export function presetResolveContext(options: PresetOptions): PresetContext {
     nextWeb,
     backend,
     backendRoots,
+    packageSources,
+    serviceRoots,
     app,
     appFiles,
     webFiles,
+    reactFiles,
     backendFiles,
     services,
     utilities,
     types,
+    uiRoots,
     ui,
     generated,
     testFiles,

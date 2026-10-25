@@ -5,7 +5,7 @@ import type { PresetContext, PresetJsPlugins, PresetSettings } from '../types/pr
 const require = createRequire(import.meta.url)
 
 export function presetPluginsConfig(context: PresetContext): OxlintConfig {
-  const { options, web, css } = context
+  const { options, reactFiles, css } = context
   const jsPlugins: PresetJsPlugins = [
     { name: 'eslint-js', specifier: require.resolve('oxlint-plugin-eslint') },
     {
@@ -35,7 +35,7 @@ export function presetPluginsConfig(context: PresetContext): OxlintConfig {
     'import/resolver': { node: { extensions: ['.js', '.jsx', '.ts', '.tsx', '.mts', '.cts'] } },
   }
 
-  if (web.length) {
+  if (reactFiles.length) {
     jsPlugins.push(
       {
         name: 'react-extra',
@@ -53,8 +53,8 @@ export function presetPluginsConfig(context: PresetContext): OxlintConfig {
     if (options.shadcn !== false) {
       jsPlugins.push(require.resolve('@shadcn/lint'))
       settings.shadcn = {
-        ui: options.shadcn?.uiImportPath ?? '@/components/ui',
-        componentImports: options.shadcn?.componentImportSources ?? ['^@/components/'],
+        ui: options.shadcn?.ui ?? '@/components/ui',
+        componentImports: options.shadcn?.components ?? ['^@/components/'],
       }
     }
   }

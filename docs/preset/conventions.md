@@ -111,7 +111,7 @@ Frontend services also catch literal objects, arrays, calculations and seeded `M
 
 - Web code imports the backend only through `imports.backendEntryPoints`.
 - `src/lib/` is portable: no app services or app package imports, even type-only. It may type-import its own `types/<module>.types.ts` (`lib/fade.ts` → `types/fade.types.ts`).
-- Packages cannot import app internals.
+- Packages cannot import app internals. Package `src` follows the app conventions; see [packages](architecture.md#packages).
 - RPC handlers delegate database work to services. Service dependencies are injected.
 
 ## Safety

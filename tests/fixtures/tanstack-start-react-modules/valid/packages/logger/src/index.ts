@@ -1,3 +1,3 @@
 export function loggerWrite(message: string) {
-  console.log(message);
+  console.log(`[${new Date().toISOString()}] ${message}`);
 }

@@ -10,8 +10,9 @@ import {
   readFileSync,
 } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { dirname, resolve } from 'node:path'
+import { dirname, posix, resolve } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import type { OxlintConfig } from 'oxlint'
 import type { PresetArchitecture } from '../types/preset.types.ts'
 import type { PresetFixtureOutput } from './types/preset-fixture.types.ts'
 import { tanstackStartReactModulesPreset } from '../presets/index.ts'
@@ -68,6 +69,28 @@ function fixture(options: string, files: Record<string, string>, print = false) 
   if (result.stderr.includes('Failed to') || result.stdout.startsWith('Failed to'))
     throw new Error(result.stdout + result.stderr)
   return { status: result.status, output: result.stdout + result.stderr, root }
+}
+
+function enabledRules(config: OxlintConfig, file: string) {
+  const rules = new Map(Object.entries(config.rules ?? {}))
+  const matches = (globs: string[] = []) => globs.some((glob) => posix.matchesGlob(file, glob))
+  for (const scope of config.overrides ?? []) {
+    if (!matches(scope.files) || matches(scope.excludeFiles)) continue
+    for (const [name, value] of Object.entries(scope.rules ?? {})) rules.set(name, value)
+  }
+  return [...rules]
+    .filter(([, value]) => {
+      const level = Array.isArray(value) ? value[0] : value
+      return level !== undefined && !['off', 'allow', 0].includes(level)
+    })
+    .map(([name]) => name)
+}
+
+function codes(output: string, file: string) {
+  const parsed: PresetFixtureOutput = JSON.parse(output)
+  return parsed.diagnostics
+    .filter((entry) => entry.filename === file)
+    .map((entry) => entry.code.replace(/^([^()]+)\(([^)]+)\)$/, '$1/$2'))
 }
 
 describe('TanStack Start React modules preset', { timeout: 30_000 }, () => {
@@ -377,7 +400,7 @@ integrationTest.for([1])('custom missing assertion %s', (amount) => { Math.abs(a
         computedImportAllowedFiles: ['dashboard/src/services/loader.server.ts'],
       },
       tailwind: { cssEntryPoint: 'theme.css', cssEntryPointsByRoot: { storefront: 'store.css' }, rootFontSize: 18 },
-      shadcn: { uiImportPath: '@ui', componentImportSources: ['^@company/ui'] },
+      shadcn: { components: ['^@company/ui'] },
       policies: {
         imports: (current) => {
           seen.push('imports')
@@ -416,7 +439,7 @@ integrationTest.for([1])('custom missing assertion %s', (amount) => { Math.abs(a
     expect(rules('arch/no-unescaped-like')[0]).toMatchObject(['warn', { sanitizers: ['escapePattern'] }])
     expect(JSON.stringify(config)).toContain('customResolver')
     expect(rules('modules/memoization')).toEqual([])
-    expect(config.settings?.shadcn).toEqual({ ui: '@ui', componentImports: ['^@company/ui'] })
+    expect(config.settings?.shadcn).toEqual({ ui: '@/components/ui', componentImports: ['^@company/ui'] })
     expect(JSON.stringify(config)).toContain('/fixture/theme.css')
     expect(JSON.stringify(config)).toContain('/fixture/store.css')
     expect(JSON.stringify(config)).toContain('"rootFontSize":18')
@@ -491,7 +514,8 @@ integrationTest.for([1])('custom missing assertion %s', (amount) => { Math.abs(a
       '{ policies: { banTypes: false } }',
       '{ tailwind: { entryPoint: "old.css" } }',
       '{ tailwind: { entryPoints: {} } }',
-      '{ shadcn: { ui: "@ui" } }',
+      '{ shadcn: { uiImportPath: "@ui" } }',
+      '{ shadcn: { componentImportSources: [] } }',
       '{ shadcn: { componentImports: [] } }',
       '{ tanstackStart: { serverImports: [] } }',
     ]
@@ -1998,5 +2022,196 @@ export function ChatMessage() {
     expect(rules['unicorn/filename-case']).toBeUndefined()
     expect(rules['perfectionist/sort-imports']).toBeUndefined()
     expect(rules['perfectionist/sort-named-imports']).toBeUndefined()
+  })
+})
+
+describe('packages roots', { timeout: 30_000 }, () => {
+  const manifest = (name: string) => JSON.stringify({ name, type: 'module' })
+
+  test('a library package gets the app safety, comment and state rules inside src only', () => {
+    const result = fixture("architecture: { 'apps/server': 'server', 'packages/format': 'packages' },", {
+      'packages/format/package.json': manifest('@fixture/format'),
+      'packages/format/src/format.ts': '// Formats a label.\nexport function formatLabel(value: any) {\n  return `${String(value).trim()}!`;\n}\n',
+      'packages/format/src/state.ts': 'export let formatCount = 0;\n',
+      'packages/format/src/clean.ts':
+        "export function cleanLabel(value: string) {\n  return value.trim().replaceAll(' ', '-').toLowerCase();\n}\n",
+      'packages/format/scripts/build.ts': '// Build step.\nexport const buildStep = 1;\n',
+    })
+    expect(codes(result.output, 'packages/format/src/format.ts')).toEqual(
+      expect.arrayContaining(['arch/no-comments', 'typescript/no-explicit-any']),
+    )
+    expect(codes(result.output, 'packages/format/src/state.ts')).toContain('arch/no-module-mutable-state')
+    expect(codes(result.output, 'packages/format/src/clean.ts'), result.output).toEqual([])
+    expect(codes(result.output, 'packages/format/scripts/build.ts')).toEqual([])
+  })
+
+  test('a services package follows the backend service contract and domain layout', () => {
+    const result = fixture("architecture: { 'apps/server': 'server', 'packages/billing': 'packages' },", {
+      'packages/billing/package.json': manifest('@fixture/billing'),
+      'packages/billing/src/services/invoice/invoice.service.ts':
+        'export function makeInvoiceService() {\n  return { total: (amount: number) => amount * 2 };\n}\n\nexport const invoiceRate = 2;\n',
+      'packages/billing/src/services/invoice/invoice-action.create.ts':
+        'export function invoiceActionCreate(id: string, amount: number, currency: string) {\n  return `${id}:${amount * 2}:${currency}`;\n}\n',
+      'packages/billing/src/services/loose.ts': 'export const looseValue = 1;\n',
+      'packages/billing/src/entry.server.ts': "export { makeInvoiceService } from './services/invoice/invoice.service';\n",
+    })
+    expect(codes(result.output, 'packages/billing/src/entry.server.ts')).not.toContain('arch/export-file-prefix')
+    expect(codes(result.output, 'packages/billing/src/services/invoice/invoice.service.ts')).toContain(
+      'arch/no-extra-exports',
+    )
+    expect(codes(result.output, 'packages/billing/src/services/invoice/invoice-action.create.ts')).toContain(
+      'arch/require-object-params',
+    )
+    expect(codes(result.output, 'packages/billing/src/services/loose.ts')).toContain('arch/no-restricted-files')
+  })
+
+  test('a single packages root covers the src folder of every package in it', () => {
+    const result = fixture("architecture: { 'apps/server': 'server', packages: 'packages' },", {
+      'packages/first/package.json': manifest('@fixture/first'),
+      'packages/second/package.json': manifest('@fixture/second'),
+      'packages/first/src/index.ts': '// First.\nexport const firstValue = 1;\n',
+      'packages/second/src/index.ts': '// Second.\nexport const secondValue = 2;\n',
+      'packages/second/tooling.ts': '// Tooling.\nexport const toolingValue = 3;\n',
+    })
+    expect(codes(result.output, 'packages/first/src/index.ts')).toContain('arch/no-comments')
+    expect(codes(result.output, 'packages/second/src/index.ts')).toContain('arch/no-comments')
+    expect(codes(result.output, 'packages/second/tooling.ts')).toEqual([])
+    const config = tanstackStartReactModulesPreset({ architecture: { packages: 'packages' } })
+    expect(enabledRules(config, 'packages/any/src/services/order/order.service.ts')).toContain('arch/no-extra-exports')
+  })
+
+  test('React code in packages gets the web component, hook and effect rules', () => {
+    const result = fixture("architecture: { 'apps/server': 'server', 'packages/widgets': 'packages' },", {
+      'packages/widgets/package.json': manifest('@fixture/widgets'),
+      'packages/widgets/src/components/widget-card.tsx':
+        'export function WidgetCard({ title }: { title: string }) {\n  return <h2>{title}</h2>;\n}\n',
+      'packages/widgets/src/hooks/use-widget.ts':
+        "import { useMemo } from 'react';\n\nexport function widgetDouble(value: number) {\n  return useMemo(() => value * 2, [value]);\n}\n",
+    })
+    expect(codes(result.output, 'packages/widgets/src/components/widget-card.tsx')).toContain('arch/component-props')
+    expect(codes(result.output, 'packages/widgets/src/hooks/use-widget.ts')).toEqual(
+      expect.arrayContaining(['arch/export-name-pattern', 'modules/memoization']),
+    )
+    const config = tanstackStartReactModulesPreset({ root: result.root, architecture: { 'packages/widgets': 'packages' } })
+    expect(enabledRules(config, 'packages/widgets/src/lib/format.ts')).not.toContain('react/display-name')
+    expect(enabledRules(config, 'packages/widgets/src/lib/badge.tsx')).toContain('react/display-name')
+    expect(JSON.stringify(config.jsPlugins)).toContain('eslint-plugin-react')
+  })
+
+  test('package types folders and type files own their schemas', () => {
+    const schema = "import { z } from 'zod';\n\nexport const orderSchema = z.object({ id: z.string() });\n"
+    const result = fixture("architecture: { 'apps/server': 'server', 'packages/core': 'packages' },", {
+      'packages/core/package.json': manifest('@fixture/core'),
+      'packages/core/src/types/order.types.ts': schema,
+      'packages/core/src/lib/order.ts': schema,
+    })
+    expect(codes(result.output, 'packages/core/src/types/order.types.ts')).not.toContain(
+      'arch/no-local-schema-construction',
+    )
+    expect(codes(result.output, 'packages/core/src/lib/order.ts')).toContain('arch/no-local-schema-construction')
+    const config = tanstackStartReactModulesPreset({ root: result.root, architecture: { 'packages/core': 'packages' } })
+    expect(enabledRules(config, 'packages/core/src/lib/order.types.ts')).not.toContain('arch/no-local-schema-construction')
+  })
+
+  test('shadcn.ui resolves a workspace UI kit package that keeps the kit relaxations', () => {
+    const kit = 'packages/ui/src/components/button.tsx'
+    const result = fixture("architecture: { 'apps/web': 'web', 'apps/server': 'server', packages: 'packages' }, shadcn: { ui: '@fixture/ui' },", {
+      'packages/ui/package.json': manifest('@fixture/ui'),
+      'packages/widgets/package.json': manifest('@fixture/widgets'),
+      [kit]: '// Stock kit file.\nexport function Button({ label }: { label: any }) {\n  return <button type="button">{label}</button>;\n}\n',
+      'packages/widgets/src/components/widget-card.tsx':
+        'export function WidgetCard({ title }: { title: string }) {\n  return <h2>{title}</h2>;\n}\n',
+    })
+    expect(codes(result.output, kit)).toContain('typescript/no-explicit-any')
+    expect(codes(result.output, kit)).not.toContain('arch/no-comments')
+    expect(codes(result.output, kit)).not.toContain('arch/component-props')
+    expect(codes(result.output, 'packages/widgets/src/components/widget-card.tsx')).toContain('arch/component-props')
+    const config = tanstackStartReactModulesPreset({ root: result.root, shadcn: { ui: '@fixture/ui', components: ['^@fixture/'] } })
+    expect(config.settings?.shadcn).toEqual({ ui: '@fixture/ui', componentImports: ['^@fixture/'] })
+    expect(enabledRules(config, 'apps/web/src/components/ui/button.tsx')).toContain('arch/no-comments')
+  })
+
+  test('shadcn.ui resolves tsconfig paths aliases and rejects unknown or renamed options', () => {
+    const root = resolve(temporary, 'ui-alias')
+    for (const directory of ['apps/web/src/kit', 'apps/web/src/components/ui']) mkdirSync(resolve(root, directory), { recursive: true })
+    writeFileSync(
+      resolve(root, 'apps/web/tsconfig.json'),
+      '{\n  // Aliases.\n  "compilerOptions": { "paths": { "@/*": ["./src/*"], }, },\n}\n',
+    )
+    const config = tanstackStartReactModulesPreset({ root, architecture: { 'apps/web': 'web' }, shadcn: { ui: '@/kit' } })
+    expect(enabledRules(config, 'apps/web/src/kit/button.tsx')).not.toContain('arch/no-comments')
+    expect(enabledRules(config, 'apps/web/src/components/ui/button.tsx')).toContain('arch/no-comments')
+    const shared = resolve(temporary, 'ui-package-alias')
+    mkdirSync(resolve(shared, 'packages/ui/src/components'), { recursive: true })
+    mkdirSync(resolve(shared, 'apps/web'), { recursive: true })
+    writeFileSync(resolve(shared, 'packages/ui/package.json'), manifest('@fixture/ui'))
+    writeFileSync(
+      resolve(shared, 'apps/web/tsconfig.json'),
+      JSON.stringify({ compilerOptions: { paths: { '@kit/*': ['../../packages/ui/src/*'] } } }),
+    )
+    const packaged = tanstackStartReactModulesPreset({
+      root: shared,
+      architecture: { 'apps/web': 'web', packages: 'packages' },
+      shadcn: { ui: '@kit/components' },
+    })
+    expect(enabledRules(packaged, 'packages/ui/src/components/button.tsx')).not.toContain('arch/no-comments')
+    expect(enabledRules(packaged, 'packages/ui/src/lib/format.ts')).toContain('arch/no-comments')
+    const stock = tanstackStartReactModulesPreset({ root, architecture: { 'apps/web': 'web' }, shadcn: { ui: '@/components/ui' } })
+    const fallback = tanstackStartReactModulesPreset({ root, architecture: { 'apps/web': 'web' } })
+    expect(stock.overrides).toEqual(fallback.overrides)
+    expect(() => tanstackStartReactModulesPreset({ root, architecture: { 'apps/web': 'web' }, shadcn: { ui: '@/missing' } })).toThrow(
+      'matches no workspace package',
+    )
+    expect(() => tanstackStartReactModulesPreset(JSON.parse('{"shadcn":{"uiImportPath":"@ui"}}'))).toThrow(
+      'shadcn.uiImportPath was renamed to shadcn.ui.',
+    )
+    expect(() => tanstackStartReactModulesPreset(JSON.parse('{"shadcn":{"componentImportSources":[]}}'))).toThrow(
+      'shadcn.componentImportSources was renamed to shadcn.components.',
+    )
+  })
+
+  test('backend, RPC, runtime, token, type-runtime and class rules never apply to packages', () => {
+    const excluded = [
+      'modules/backend-switch',
+      'modules/rpc-database',
+      'arch/require-orpc-output',
+      'modules/tanstack-runtime',
+      'arch/no-restricted-token',
+      'arch/no-runtime-in-types',
+      'modules/dynamic-classes',
+    ]
+    const files = [
+      'src/lib/switch.ts',
+      'src/rpc/orders.ts',
+      'src/rpc/public/orders.ts',
+      'src/services/order/order.service.ts',
+      'src/types/order.types.ts',
+      'src/components/order-card.tsx',
+      'src/hooks/use-order.ts',
+    ]
+    const architectures: PresetArchitecture[] = [
+      { 'apps/web': 'web', 'apps/server': 'server', packages: 'packages' },
+      { 'apps/web': 'web', 'apps/server': 'server', 'packages/orders': 'packages' },
+    ]
+    const root = resolve(temporary, 'excluded-rules')
+    mkdirSync(resolve(root, 'packages/orders'), { recursive: true })
+    writeFileSync(resolve(root, 'packages/orders/package.json'), manifest('@fixture/orders'))
+    for (const architecture of architectures) {
+      const config = tanstackStartReactModulesPreset({
+        root,
+        architecture,
+        orpc: { publicProcedureFiles: ['apps/server/src/rpc/public/**/*.ts'] },
+      })
+      for (const file of files) {
+        const rules = enabledRules(config, `packages/orders/${file}`)
+        expect(rules).toContain('arch/no-comments')
+        for (const rule of excluded) expect(rules, file).not.toContain(rule)
+      }
+      const apps = files.flatMap((file) => [
+        ...enabledRules(config, `apps/server/${file}`),
+        ...enabledRules(config, `apps/web/${file}`),
+      ])
+      for (const rule of excluded) expect(apps, rule).toContain(rule)
+    }
   })
 })

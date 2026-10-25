@@ -63,5 +63,6 @@ Artwork goes in `*.illustration.tsx` (`hero-card.illustration.tsx` exports `Hero
 
 ## UI kit
 
-- `components/ui/**` stays linted (type safety, formatting, layout) with architecture/appearance exceptions.
-- Only `components/ui/sonner.tsx` may use the Sonner `toaster` and `toast` classes.
+- The kit is `<web source>/components/ui/**` by default. Set `shadcn.ui` to move it: a workspace package name (`'@app/ui'` → `packages/ui/src/**`) or a tsconfig `paths` alias (`'@/kit'` with `"@/*": ["./src/*"]` in a root's `tsconfig.json` → `<root>/src/kit/**`). A value that resolves to nothing throws.
+- Kit files stay linted (type safety, formatting, layout) with architecture/appearance exceptions.
+- Only the kit's `sonner.tsx` in a web root may use the Sonner `toaster` and `toast` classes.

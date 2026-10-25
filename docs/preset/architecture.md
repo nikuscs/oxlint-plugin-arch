@@ -24,7 +24,7 @@ This is the default. Passing `architecture` replaces it. Keys are app roots, not
 | `server` | `<root>/src` | Strict backend: services, RPC, schemas, public client entry point. |
 | `runner` | `<root>/src` | Same as `server`, for another backend (worker, daemon). |
 | `scripts` | `<root>` | Console output allowed. |
-| `packages` | `<root>` | No app layout; cannot import app internals. |
+| `packages` | `<root>/src`, or `<root>/*/src` | App rules with backend-style services and web-style React code; cannot import app internals. See [packages](#packages). |
 
 - Several apps can share a role: `{ 'apps/dashboard': 'web', 'apps/store': 'web', 'apps/api': 'server' }`.
 - Standalone frontend: `{ '.': 'web' }`.
@@ -50,10 +50,25 @@ services/                     flat                    domain
   chat/x/y.client.ts   ❌                      ❌ (one level only)
 ```
 
-- Keys are literal paths inside the source folder (inside the root for packages/scripts).
+- Keys are literal paths inside the source folder (inside the root for scripts). Packages also default to `services: 'domain'`.
 - No globs, escapes, empty segments or overlapping folders.
 - `domain` files start with their folder name (`chat/chat-action.send.ts`). Hooks keep `use-`, components keep their naming.
 - Layout never turns off other rules.
+
+## Packages
+
+A packages root with its own `package.json` is one package (`'packages/ui': 'packages'`). Without one, each child folder is a package (`packages: 'packages'` covers `packages/*/src`). Only `src` gets the app rules; files elsewhere in a package keep the shared baseline and import boundaries.
+
+| Package code | Rules, same as |
+| --- | --- |
+| Every file | Comments, type safety, type placement, schemas, mutable state, trivial functions, `max-lines`, `complexity`: all app roots. |
+| `services/`, `types/`, file roles (`*.utils.ts`, `*.service.ts`, …) | Server roots, including the `services: 'domain'` layout. |
+| `*.tsx`, `components/`, `hooks/` | Web roots: React, effects, memoization, forms, component and hook naming. |
+| `types/**` and `*.types.ts` | May construct schemas. |
+
+Never on packages: `modules/backend-switch`, `modules/rpc-database`, `arch/require-orpc-output`, `modules/tanstack-runtime`, `arch/no-restricted-token`, `arch/no-runtime-in-types`, `modules/dynamic-classes`, routes, Tailwind and shadcn usage rules. A UI kit package named in [`shadcn.ui`](styling.md#ui-kit) keeps the kit exceptions.
+
+Opt one package out of one rule with `ruleExclusions: { 'arch/no-comments': ['packages/legacy/**'] }`.
 
 ## `sourceDir`
 
