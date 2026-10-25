@@ -64,9 +64,11 @@ A packages root with its own `package.json` is one package (`'packages/ui': 'pac
 | Every file | Comments, type safety, type placement, schemas, mutable state, trivial functions, `max-lines`, `complexity`: all app roots. |
 | `services/`, `types/`, file roles (`*.utils.ts`, `*.service.ts`, …) | Server roots, including the `services: 'domain'` layout. |
 | `*.tsx`, `components/`, `hooks/` | Web roots: React, effects, memoization, forms, component and hook naming. |
-| `types/**` and `*.types.ts` | May construct schemas. |
+| `types/**` | May construct schemas. `*.types.ts` files belong there too. |
 
-Never on packages: `modules/backend-switch`, `modules/rpc-database`, `arch/require-orpc-output`, `modules/tanstack-runtime`, `arch/no-restricted-token`, `arch/no-runtime-in-types`, `modules/dynamic-classes`, routes, Tailwind and shadcn usage rules. A UI kit package named in [`shadcn.ui`](styling.md#ui-kit) keeps the kit exceptions.
+Never on packages: `modules/backend-switch`, `modules/rpc-database`, `arch/require-orpc-output`, `modules/tanstack-runtime`, `arch/no-restricted-token`, `arch/no-runtime-in-types`, `modules/dynamic-classes`, routes, Tailwind and shadcn usage rules. A UI kit package named in [`shadcn.ui`](styling.md#ui-kit) keeps the kit exceptions and gets the Tailwind checks.
+
+Hooks may carry a React Native platform suffix: `use-chat-draft.web.ts`, `.native.ts`, `.ios.ts`, `.android.ts`. This applies to web roots too.
 
 Opt one package out of one rule with `ruleExclusions: { 'arch/no-comments': ['packages/legacy/**'] }`.
 

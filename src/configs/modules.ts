@@ -262,8 +262,8 @@ export function presetModulesConfig(context: PresetContext): PresetPolicies {
         'arch/filename-match': [
           'error',
           {
-            pattern: '^use-[a-z0-9]+(?:-[a-z0-9]+)*[.]ts$',
-            message: 'Hooks use use-domain.ts filenames.',
+            pattern: '^use-[a-z0-9]+(?:-[a-z0-9]+)*(?:[.](?:web|native|ios|android))?[.]ts$',
+            message: 'Hooks use use-domain.ts filenames, with an optional .web, .native, .ios or .android platform suffix.',
           },
         ],
         'arch/export-file-prefix': 'error',

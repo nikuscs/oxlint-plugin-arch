@@ -10,10 +10,8 @@ import {
 } from '../constants/preset.constants.ts'
 
 export function presetReactConfig(context: PresetContext): PresetPolicies {
-  const { options, web, tanstackWeb, nextWeb, webFiles, reactFiles, uiRoots, ui, testFiles, components, css } = context
+  const { options, web, tanstackWeb, nextWeb, webFiles, reactFiles, webUiRoots, ui, testFiles, components, css } = context
   const policies: PresetPolicies = {}
-  // Kit folders inside a web source keep the web-only shadcn and context exceptions.
-  const webUi = uiRoots.filter((path) => web.some((root) => root === '.' || path === root || path.startsWith(root + '/')))
   if (reactFiles.length) {
     policies.react = [
       presetOverride(
@@ -161,7 +159,7 @@ export function presetReactConfig(context: PresetContext): PresetPolicies {
               },
               {
                 token: 'createContext',
-                allowPathPatterns: [...presetScopes(web, 'context/'), ...webUi.map((path) => `${path}/`)],
+                allowPathPatterns: [...presetScopes(web, 'context/'), ...webUiRoots.map((path) => `${path}/`)],
               },
             ],
           },
@@ -253,7 +251,7 @@ export function presetReactConfig(context: PresetContext): PresetPolicies {
       presetOverride(webFiles, {
         'shadcn/no-unknown-classes': ['error', { allow: [] }],
       }),
-      presetOverride(presetScopes(webUi, 'sonner.tsx'), {
+      presetOverride(presetScopes(webUiRoots, 'sonner.tsx'), {
         'shadcn/no-unknown-classes': ['error', { allow: ['toaster', 'toast'] }],
       }),
     ]

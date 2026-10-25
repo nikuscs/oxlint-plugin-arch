@@ -1,5 +1,19 @@
 # Changelog
 
+## 0.11.0
+
+- `modules/no-unknown` allows `unknown` on the narrowed parameter of a type guard (`function isAppError(error: unknown): error is AppError`) and on the error parameter of a catch callback (`catch: (error: unknown) => E`, `.catch((error: unknown) => …)`). Other uses still fail. This applies to every root.
+- `arch/no-trivial-functions` no longer reports type guards with a predicate return type as pass-through wrappers. Banned names and structurally generic guards are still reported.
+- Package schemas: construction is allowed only in `types/**`. Package `*.types.ts` files outside `types/` are reported again (fix: move them to `src/types/`), matching `arch/no-restricted-files`.
+- Hook filenames accept a React Native platform suffix: `use-chat-draft.web.ts`, `.native.ts`, `.ios.ts` and `.android.ts`. This applies to web roots and packages.
+- A UI kit outside every web root, resolved from `shadcn.ui`, gets the Tailwind checks. Its stylesheet is `tailwind.cssEntryPointsByRoot` for the kit's package folder or architecture root, otherwise the one stylesheet the web roots share. With several web stylesheets and no entry, the preset throws and names `cssEntryPointsByRoot`.
+
+| Fix | Rules |
+| --- | --- |
+| Auto-fix (`--fix`) | `tailwindcss/*` sort, canonical, shorthand and whitespace rules on a kit package |
+| Move | `arch/no-local-schema-construction` in package `*.types.ts` outside `types/` (to `src/types/`) |
+| Reshape | `tailwindcss/no-conflicting-classes`, `tailwindcss/no-deprecated-classes` on a kit package |
+
 ## 0.10.0
 
 **Breaking:** `packages` roots now get the app rules. Until now they only got the shared baseline (formatting, imports, stock TypeScript/JavaScript rules and `modules/import-boundaries`), so expect new errors in package `src` folders.

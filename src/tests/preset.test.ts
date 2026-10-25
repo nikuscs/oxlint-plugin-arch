@@ -2098,7 +2098,7 @@ describe('packages roots', { timeout: 30_000 }, () => {
     expect(JSON.stringify(config.jsPlugins)).toContain('eslint-plugin-react')
   })
 
-  test('package types folders and type files own their schemas', () => {
+  test('package types folders own their schemas', () => {
     const schema = "import { z } from 'zod';\n\nexport const orderSchema = z.object({ id: z.string() });\n"
     const result = fixture("architecture: { 'apps/server': 'server', 'packages/core': 'packages' },", {
       'packages/core/package.json': manifest('@fixture/core'),
@@ -2110,7 +2110,7 @@ describe('packages roots', { timeout: 30_000 }, () => {
     )
     expect(codes(result.output, 'packages/core/src/lib/order.ts')).toContain('arch/no-local-schema-construction')
     const config = tanstackStartReactModulesPreset({ root: result.root, architecture: { 'packages/core': 'packages' } })
-    expect(enabledRules(config, 'packages/core/src/lib/order.types.ts')).not.toContain('arch/no-local-schema-construction')
+    expect(enabledRules(config, 'packages/core/src/lib/order.types.ts')).toContain('arch/no-local-schema-construction')
   })
 
   test('shadcn.ui resolves a workspace UI kit package that keeps the kit relaxations', () => {
@@ -2213,5 +2213,51 @@ describe('packages roots', { timeout: 30_000 }, () => {
       ])
       for (const rule of excluded) expect(apps, rule).toContain(rule)
     }
+  })
+
+  test('hook filenames accept React Native platform suffixes in web roots and packages', () => {
+    const hook = "export function useChatDraft() {\n  return 'draft';\n}\n"
+    const result = fixture("architecture: { 'apps/web': 'web', 'apps/server': 'server', 'packages/client': 'packages' },", {
+      'packages/client/package.json': manifest('@fixture/client'),
+      'packages/client/src/hooks/use-chat-draft.web.ts': hook,
+      'packages/client/src/hooks/use-chat-draft.native.ts': hook,
+      'apps/web/src/hooks/use-chat-draft.ios.ts': hook,
+      'apps/web/src/hooks/use-chat-draft.android.ts': hook,
+      'apps/web/src/hooks/use-chat-draft.desktop.ts': hook,
+    })
+    for (const file of [
+      'packages/client/src/hooks/use-chat-draft.web.ts',
+      'packages/client/src/hooks/use-chat-draft.native.ts',
+      'apps/web/src/hooks/use-chat-draft.ios.ts',
+      'apps/web/src/hooks/use-chat-draft.android.ts',
+    ])
+      expect(codes(result.output, file), file).not.toContain('arch/filename-match')
+    expect(codes(result.output, 'apps/web/src/hooks/use-chat-draft.desktop.ts')).toContain('arch/filename-match')
+  })
+
+  test('a UI kit package gets the Tailwind checks with its package or shared web stylesheet', () => {
+    const root = resolve(temporary, 'kit-tailwind')
+    mkdirSync(resolve(root, 'packages/ui/src'), { recursive: true })
+    writeFileSync(resolve(root, 'packages/ui/package.json'), manifest('@fixture/ui'))
+    const tailwindFor = (config: OxlintConfig, file: string) =>
+      config.overrides!.filter((scope) => scope.files.some((glob) => posix.matchesGlob(file, glob)))
+        .map((scope) => scope.rules?.['tailwindcss/enforce-canonical'])
+        .filter(Boolean)
+    const single = tanstackStartReactModulesPreset({
+      root,
+      architecture: { 'apps/web': 'web', packages: 'packages' },
+      shadcn: { ui: '@fixture/ui' },
+    })
+    expect(tailwindFor(single, 'packages/ui/src/button.tsx')).toEqual([
+      ['error', { entryPoint: resolve(root, 'apps/web/src/application/styles.css') }],
+    ])
+    expect(tailwindFor(single, 'packages/other/src/card.tsx')).toEqual([])
+    const several = { root, architecture: { 'apps/admin': 'web', 'apps/store': 'web', packages: 'packages' }, shadcn: { ui: '@fixture/ui' } } as const
+    expect(() => tanstackStartReactModulesPreset(several)).toThrow('tailwind.cssEntryPointsByRoot for packages/ui')
+    for (const key of ['packages/ui', 'packages']) {
+      const keyed = tanstackStartReactModulesPreset({ ...several, tailwind: { cssEntryPointsByRoot: { [key]: 'kit.css' } } })
+      expect(tailwindFor(keyed, 'packages/ui/src/button.tsx')).toEqual([['error', { entryPoint: resolve(root, 'kit.css') }]])
+    }
+    expect(() => tanstackStartReactModulesPreset({ ...several, tailwind: false })).not.toThrow()
   })
 })

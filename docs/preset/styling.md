@@ -65,4 +65,5 @@ Artwork goes in `*.illustration.tsx` (`hero-card.illustration.tsx` exports `Hero
 
 - The kit is `<web source>/components/ui/**` by default. Set `shadcn.ui` to move it: a workspace package name (`'@app/ui'` → `packages/ui/src/**`) or a tsconfig `paths` alias (`'@/kit'` with `"@/*": ["./src/*"]` in a root's `tsconfig.json` → `<root>/src/kit/**`). A value that resolves to nothing throws.
 - Kit files stay linted (type safety, formatting, layout) with architecture/appearance exceptions.
+- A kit outside every web root gets the Tailwind checks. Its stylesheet is `tailwind.cssEntryPointsByRoot` for the kit's package folder (`packages/ui`) or its architecture root (`packages`); otherwise the stylesheet all web roots share. With several web stylesheets and no entry, the preset throws.
 - Only the kit's `sonner.tsx` in a web root may use the Sonner `toaster` and `toast` classes.

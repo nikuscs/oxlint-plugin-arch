@@ -6,6 +6,8 @@ Rejects empty, constant, identity, and pass-through functions that add no transf
 
 Thin wrappers and generic guard helpers add names without adding a useful boundary. Precise mode preserves transformations, queries, reordered arguments, and other meaningful work.
 
+Type guards with a predicate return type (`value is T`, `asserts value is T`) are never reported as pass-through wrappers, because the predicate narrows the caller's type. Banned names and structurally generic guards are still reported.
+
 ## Examples
 
 ❌ Incorrect
@@ -22,6 +24,10 @@ export function loadUser(id: string) {
 export function createUser(params: { name: string }) {
   if (!params.name) throw new Error('missing')
   return saveUser(params)
+}
+
+export function isAppError(error: unknown): error is AppError {
+  return isKnownAppError(error)
 }
 ```
 

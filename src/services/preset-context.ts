@@ -190,6 +190,8 @@ export function presetResolveContext(options: PresetOptions): PresetContext {
   if ('componentImportSources' in shadcn) throw new Error('shadcn.componentImportSources was renamed to shadcn.components.')
   const uiRoots = shadcn.ui === undefined ? web.map((path) => posix.join(path, 'components/ui')) : resolveUi(shadcn.ui)
   const ui = presetScopes(uiRoots, '**')
+  // Kit folders inside a web source keep the web-only shadcn and context exceptions and that root's Tailwind theme.
+  const webUiRoots = uiRoots.filter((path) => web.some((webRoot) => webRoot === '.' || path === webRoot || path.startsWith(webRoot + '/')))
   const testFiles = ['**/{test,tests,e2e}/**/*.{ts,tsx,mts,cts}', '**/*.{test,spec}.{ts,tsx,mts,cts}']
   const safetyFiles = [...appFiles, ...testFiles]
   const components = presetScopes([...web, ...packageSources], 'components/**/*.tsx')
@@ -214,7 +216,7 @@ export function presetResolveContext(options: PresetOptions): PresetContext {
       entry,
     ]),
   )
-  const css =
+  const webCss: Record<string, string> =
     tailwind === false
       ? {}
       : Object.fromEntries(
@@ -229,6 +231,24 @@ export function presetResolveContext(options: PresetOptions): PresetContext {
               ]
             }),
         )
+  // A kit outside every web root uses its package's entry, or the one stylesheet all web roots share.
+  const webStylesheets = [...new Set(Object.values(webCss))]
+  const kitCss = Object.fromEntries(
+    (tailwind === false ? [] : uiRoots.filter((path) => !webUiRoots.includes(path))).map((path) => {
+      const owners = packages.flatMap((packageRoot) => {
+        if (path !== packageRoot && !path.startsWith(packageRoot + '/')) return []
+        const child = path.slice(packageRoot.length + 1).split('/')[0]
+        return isPackage(packageRoot) || !child ? [packageRoot] : [posix.join(packageRoot, child), packageRoot]
+      })
+      const entry = owners.map((owner) => entryPoints[owner]).find(Boolean)
+      if (entry) return [path, resolve(root, entry)]
+      if (webStylesheets.length === 1) return [path, webStylesheets[0]]
+      throw new Error(
+        `The UI kit ${path} needs a Tailwind stylesheet: set tailwind.cssEntryPointsByRoot for ${owners[0] ?? path}.`,
+      )
+    }),
+  )
+  const css = { ...webCss, ...kitCss }
   return {
     options,
     root,
@@ -253,6 +273,7 @@ export function presetResolveContext(options: PresetOptions): PresetContext {
     utilities,
     types,
     uiRoots,
+    webUiRoots,
     ui,
     generated,
     testFiles,

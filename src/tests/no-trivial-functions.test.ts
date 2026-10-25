@@ -222,3 +222,20 @@ test('explicit service method checking rejects wrappers and guards without chang
     ],
   })
 })
+
+test('type guards with a predicate return type are not reported as trivial', () => {
+  createRuleTester().run('arch/no-trivial-functions', noTrivialFunctions, {
+    valid: [
+      { options: [{ mode: 'precise' }], code: 'export function isAppError(error: unknown): error is AppError { return isKnownAppError(error) }' },
+      { options: [{ mode: 'precise' }], code: 'export const isAdmin = (user: User): user is Admin => checkAdmin(user)' },
+      'export function assertUser(value: unknown): asserts value is User { return check(value) }',
+    ],
+    invalid: [
+      {
+        options: [{ mode: 'precise' }],
+        code: 'export function isAppError(error: unknown): boolean { return isKnownAppError(error) }',
+        errors: [{ messageId: 'trivial' }],
+      },
+    ],
+  })
+})

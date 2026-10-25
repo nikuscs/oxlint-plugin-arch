@@ -138,7 +138,7 @@ export const noTrivialFunctions = defineRule({
 
           seen.add(key)
           checkHelper(item.node)
-          if (reported.has(item.node.start)) continue
+          if (reported.has(item.node.start) || item.node.returnType?.typeAnnotation.type === 'TSTypePredicate') continue
           const expression = trivialExpression(item.node)
           const trivial =
             mode === 'legacy'

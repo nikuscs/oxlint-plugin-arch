@@ -74,7 +74,7 @@ imports: { aliases: { '@backend': 'apps/server/src' } }
 | `react.componentProps` | `true` | `false` turns off only `arch/component-props`. |
 | `tailwind` | on | `false` turns Tailwind checks off. |
 | `tailwind.cssEntryPoint` | per root, see [architecture](architecture.md#stylesheet) | One stylesheet for every web root. |
-| `tailwind.cssEntryPointsByRoot` | `{}` | Stylesheet per architecture root: `{ 'apps/store': 'themes/store.css' }`. |
+| `tailwind.cssEntryPointsByRoot` | `{}` | Stylesheet per architecture root: `{ 'apps/store': 'themes/store.css' }`. A UI kit package also reads its package folder (`'packages/ui'`). |
 | `tailwind.rootFontSize` | `16` | Root font size for class canonicalization. |
 | `shadcn` | on | `false` turns shadcn checks off; Tailwind checks stay. |
 | `shadcn.ui` | `'@/components/ui'` | The components.json `ui` alias: where shadcn components are imported from. Also selects the [UI kit](styling.md#ui-kit) files: a workspace package name (`'@app/ui'` → that package's `src/**`) or a tsconfig `paths` alias. A value that resolves to nothing throws. |

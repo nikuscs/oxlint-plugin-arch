@@ -221,6 +221,8 @@ export interface PresetContext {
   types: string[]
   /** UI kit folders resolved from `shadcn.ui`. */
   uiRoots: string[]
+  /** UI kit folders inside a web source. */
+  webUiRoots: string[]
   ui: string[]
   generated: string[]
   testFiles: string[]

@@ -6,6 +6,7 @@ import { domainConstants } from '../rules/module-policy/domain-constants.ts'
 import { testModifiers } from '../rules/module-policy/test-modifiers.ts'
 import { memoization } from '../rules/module-policy/memoization.ts'
 import { importBoundaries } from '../rules/module-policy/import-boundaries.ts'
+import { noUnknown } from '../rules/module-policy/no-unknown.ts'
 import { createRuleTester } from './rule-tester.ts'
 
 const boundaryOptions = {
@@ -390,6 +391,34 @@ test('ownership diagnostics give scope-correct helper and constant fixes', () =>
           },
         ],
       },
+    ],
+  })
+})
+
+test('unknown is allowed only on type-guard subjects and catch-callback errors', () => {
+  const forbidden = { messageId: 'forbidden' }
+  createRuleTester().run('modules/no-unknown', noUnknown, {
+    valid: [
+      'export function isUser(value: unknown): value is User { return isKnownUser(value) }',
+      'export const isUser = (value: unknown): value is User => isKnownUser(value)',
+      'export function assertUser(value: unknown): asserts value is User { check(value) }',
+      'interface AttemptArgs<E> { catch: (error: unknown) => E }',
+      'interface Handler<E> { catch(error: unknown): E }',
+      'attempt({ try: run, catch: (error: unknown) => toAppError(error) })',
+      'promise.catch((error: unknown) => report(error))',
+      'promise.catch(function (error: unknown) { report(error) })',
+    ],
+    invalid: [
+      { code: 'export type Value = unknown', errors: [forbidden] },
+      { code: 'export function read(value: unknown) { return String(value) }', errors: [forbidden] },
+      { code: 'export function isUser(value: unknown, extra: unknown): value is User { return Boolean(extra) }', errors: [forbidden] },
+      { code: 'export function isUser(value: User): value is Admin { const raw: unknown = value; return Boolean(raw) }', errors: [forbidden] },
+      { code: 'export function isUser(value: unknown): unknown { return value }', errors: [forbidden, forbidden] },
+      { code: 'promise.then((value: unknown) => value)', errors: [forbidden] },
+      { code: 'promise.catch((error: Error, extra: unknown) => extra)', errors: [forbidden] },
+      { code: 'interface Args { catch: (error: Error) => unknown }', errors: [forbidden] },
+      { code: 'interface Args { onError: (error: unknown) => void }', errors: [forbidden] },
+      { code: 'promise[method]((error: unknown) => error)', errors: [forbidden] },
     ],
   })
 })

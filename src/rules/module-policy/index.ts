@@ -10,6 +10,7 @@ import { tanstackRuntime } from './tanstack-runtime.ts'
 import { importBoundaries } from './import-boundaries.ts'
 import { memoization } from './memoization.ts'
 import { nextRuntime } from './next-runtime.ts'
+import { noUnknown } from './no-unknown.ts'
 
 export default eslintCompatPlugin({
   meta: { name: 'modules' },
@@ -39,7 +40,7 @@ export default eslintCompatPlugin({
       'TSTypeAliasDeclaration',
       'Local component/hook contracts use interfaces named for their owner. Derived or reusable aliases belong in domain types; do not substitute an empty interface.',
     ),
-    'no-unknown': syntaxRule('TSUnknownKeyword', 'Use an owned domain type rather than unknown.'),
+    'no-unknown': noUnknown,
     memoization: memoization,
     'next-runtime': nextRuntime,
     'pascal-interface': syntaxRule(

@@ -132,7 +132,6 @@ export function presetTypesConfig(context: PresetContext): PresetPolicies {
       },
       [
         ...presetScopes([...schemaOwners, ...packageSources], 'types/**'),
-        ...presetScopes(packageSources, '**/*.types.ts'),
         ...colocatedTypes,
         ...ui,
       ],
