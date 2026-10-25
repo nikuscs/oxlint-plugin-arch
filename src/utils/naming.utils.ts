@@ -1,9 +1,10 @@
 import { posix } from 'node:path'
-import type { NamingExportPrefixOptions, NamingStemMode } from '../types/naming.types.ts'
+import type { NamingExportsStem, NamingStemMode } from '../types/naming.types.ts'
+import type { OptionsSchemaProperties } from '../types/options.types.ts'
 
 export const namingStemModes: readonly NamingStemMode[] = ['before-first-dot', 'full-basename']
 
-export const namingStemSchemaProperties = {
+export const namingStemSchemaProperties: OptionsSchemaProperties = {
   stem: { type: 'string', enum: [...namingStemModes] },
   trailingRoles: { type: 'array', items: { type: 'string' } },
   roleSeparators: { type: 'array', items: { type: 'string' } },
@@ -147,7 +148,7 @@ export function namingFileStem(
   return stem
 }
 
-export function namingFilePrefixesFor(filename: string, options: Pick<NamingExportPrefixOptions, 'stem' | 'trailingRoles' | 'roleSeparators' | 'normalize' | 'singularize'>): string[] {
+export function namingFilePrefixesFor(filename: string, options: NamingExportsStem): string[] {
   const basename = namingBasename(filename).replace(/\.(tsx?|jsx?)$/, '')
   const stem = namingFileStem(basename, options.stem, options.trailingRoles, options.roleSeparators)
   const normalize = options.normalize ?? 'remove-separators'
@@ -162,7 +163,7 @@ export function namingFilePrefixesFor(filename: string, options: Pick<NamingExpo
   return [...new Set(prefixes.filter(Boolean))]
 }
 
-export function namingHasFilePrefix(name: string, prefixes: readonly string[], normalize: NamingExportPrefixOptions['normalize']): boolean {
+export function namingHasFilePrefix(name: string, prefixes: readonly string[], normalize: NamingExportsStem['normalize']): boolean {
   const comparable = normalize === 'none' ? name : name.replaceAll('_', '').toLowerCase()
   return prefixes.some((prefix) => comparable.startsWith(prefix))
 }

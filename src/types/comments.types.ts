@@ -4,15 +4,12 @@ export interface CommentsOptions {
   allowWhy?: boolean
   allowPatterns?: string[]
   allowJsdoc?: boolean
+  members?: 'off' | 'also' | 'only'
 }
 
 export interface CommentsLines {
   starts: number[]
   ends: number[]
-}
-
-export interface CommentsMembersOptions {
-  allowWhy?: boolean
 }
 
 export type CommentsMemberNode =

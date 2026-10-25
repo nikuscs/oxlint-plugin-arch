@@ -1,9 +1,9 @@
-import type { OptionsPattern } from '../types/options.types.ts'
+import type { OptionsPattern, OptionsSchema } from '../types/options.types.ts'
 import type { Context } from '@oxlint/plugins'
 
 class OptionsError extends Error {}
 
-export const optionsPatternSchema = {
+export const optionsPatternSchema: OptionsSchema = {
   anyOf: [{ type: 'string' }, { type: 'array', items: { type: 'string' }, minItems: 1 }],
 }
 

@@ -1,0 +1,18 @@
+{
+  "worktree": {
+    "setup": "./.agents/orchestrators/workspace.sh setup"
+  },
+  "scripts": {
+    "check": {
+      "command": "./.agents/orchestrators/workspace.sh check"
+    }
+  },
+  "metadataGeneration": {
+    "branchName": {
+      "instructions": "Use <type>/<short-description> in lowercase kebab-case, for example feat/naming-exports or fix/layout-ternary-fix. Types: feat, fix, chore, docs, refactor."
+    },
+    "commitMessage": {
+      "instructions": "Use a Conventional Commit subject in plain imperative words, for example 'feat: add a message option to selector rules'. Mark breaking changes with '!'."
+    }
+  }
+}

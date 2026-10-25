@@ -17,14 +17,12 @@ import { codePromiseMutation } from './rules/code/code-promise-mutation.ts'
 import { codeSwitch } from './rules/code/code-switch.ts'
 import { codeTrivialFunctions } from './rules/code/code-trivial-functions.ts'
 import { commentsDirectives } from './rules/comments/comments-directives.ts'
-import { commentsMembers } from './rules/comments/comments-members.ts'
 import { comments } from './rules/comments/comments.ts'
 import { filesComponentsOnly } from './rules/files/files-components-only.ts'
 import { filesConstantsOnly } from './rules/files/files-constants-only.ts'
 import { filesDomainConstants } from './rules/files/files-domain-constants.ts'
 import { filesExports } from './rules/files/files-exports.ts'
 import { filesFactoryKeys } from './rules/files/files-factory-keys.ts'
-import { filesFactory } from './rules/files/files-factory.ts'
 import { filesHelpers } from './rules/files/files-helpers.ts'
 import { filesNoFunctions } from './rules/files/files-no-functions.ts'
 import { filesRestricted } from './rules/files/files-restricted.ts'
@@ -39,12 +37,9 @@ import { layoutObject } from './rules/layout/layout-object.ts'
 import { layoutPadding } from './rules/layout/layout-padding.ts'
 import { layoutTernary } from './rules/layout/layout-ternary.ts'
 import { namingDeclarations } from './rules/naming/naming-declarations.ts'
-import { namingExportPattern } from './rules/naming/naming-export-pattern.ts'
-import { namingExportPrefix } from './rules/naming/naming-export-prefix.ts'
-import { namingExportTemplate } from './rules/naming/naming-export-template.ts'
+import { namingExports } from './rules/naming/naming-exports.ts'
 import { namingFile } from './rules/naming/naming-file.ts'
 import { namingFolder } from './rules/naming/naming-folder.ts'
-import { namingShape } from './rules/naming/naming-shape.ts'
 import { namingTypes } from './rules/naming/naming-types.ts'
 import { reactDynamicClasses } from './rules/react/react-dynamic-classes.ts'
 import { reactEmptyEffect } from './rules/react/react-empty-effect.ts'
@@ -88,12 +83,10 @@ export default eslintCompatPlugin({
     'code-trivial-functions': codeTrivialFunctions,
     comments,
     'comments-directives': commentsDirectives,
-    'comments-members': commentsMembers,
     'files-components-only': filesComponentsOnly,
     'files-constants-only': filesConstantsOnly,
     'files-domain-constants': filesDomainConstants,
     'files-exports': filesExports,
-    'files-factory': filesFactory,
     'files-factory-keys': filesFactoryKeys,
     'files-helpers': filesHelpers,
     'files-no-functions': filesNoFunctions,
@@ -109,12 +102,9 @@ export default eslintCompatPlugin({
     'layout-padding': layoutPadding,
     'layout-ternary': layoutTernary,
     'naming-declarations': namingDeclarations,
-    'naming-export-pattern': namingExportPattern,
-    'naming-export-prefix': namingExportPrefix,
-    'naming-export-template': namingExportTemplate,
+    'naming-exports': namingExports,
     'naming-file': namingFile,
     'naming-folder': namingFolder,
-    'naming-shape': namingShape,
     'naming-types': namingTypes,
     'react-dynamic-classes': reactDynamicClasses,
     'react-empty-effect': reactEmptyEffect,

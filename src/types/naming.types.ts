@@ -3,46 +3,48 @@ import type { OptionsPattern } from './options.types.ts'
 
 export type NamingStemMode = 'before-first-dot' | 'full-basename'
 
-export interface NamingDeclarationsOptions {
+export interface NamingExportsStem {
+  stem?: NamingStemMode
+  trailingRoles?: string[]
+  roleSeparators?: string[]
+  normalize?: 'remove-separators' | 'none'
+  singularize?: 'none' | 'trailing-s'
+}
+
+export interface NamingDeclarationsOptions extends NamingExportsStem {
   kinds?: DeclarationsKind[]
   pattern?: OptionsPattern
   flags?: string
-  stem?: NamingStemMode
-  trailingRoles?: string[]
-  roleSeparators?: string[]
-  normalize?: 'remove-separators' | 'none'
-  singularize?: 'none' | 'trailing-s'
   allowPattern?: OptionsPattern
 }
 
-export interface NamingExportPatternOptions {
+interface NamingExportsBase {
+  scope?: 'exports' | 'functions' | 'declarations'
+  ignoreTypeExports?: boolean
+  serviceMethods?: boolean
+  allowPattern?: OptionsPattern
+}
+
+export interface NamingExportsPrefixOptions extends NamingExportsBase, NamingExportsStem {
+  mode?: 'prefix'
+}
+
+export interface NamingExportsPatternOptions extends NamingExportsBase {
+  mode: 'pattern'
   pattern: OptionsPattern
   flags?: string
-  ignoreTypeExports?: boolean
-  allDeclarations?: boolean
-  allowPattern?: OptionsPattern
 }
 
-export interface NamingExportPrefixOptions {
-  stem?: NamingStemMode
-  trailingRoles?: string[]
-  roleSeparators?: string[]
-  normalize?: 'remove-separators' | 'none'
-  singularize?: 'none' | 'trailing-s'
-  serviceMethods?: boolean
-  allFunctions?: boolean
-  allDeclarations?: boolean
-  allowPattern?: OptionsPattern
-}
-
-export interface NamingExportTemplateOptions {
+export interface NamingExportsTemplateOptions extends NamingExportsBase {
+  mode: 'template'
   file: string
   export: string
-  mode?: 'all' | 'some'
+  match?: 'all' | 'some'
   placeholderPattern?: string
   camelCase?: boolean
-  allDeclarations?: boolean
 }
+
+export type NamingExportsOptions = NamingExportsPrefixOptions | NamingExportsPatternOptions | NamingExportsTemplateOptions
 
 export interface NamingFileOptions {
   pattern: OptionsPattern

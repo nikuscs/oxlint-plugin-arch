@@ -2,12 +2,6 @@ import type * as PresetTypes from '../types/preset.types.ts'
 
 export const presetExtensions = '*.{ts,tsx,mts,cts}'
 
-export const presetPolicyOrder: PresetTypes.PresetPolicyName[] = [
-  'formatting', 'statementLayout', 'imports', 'typePlacement', 'typeSafety', 'fileLayout', 'serviceStructure',
-  'naming', 'comments', 'trivialFunctions', 'mutableState', 'backend', 'tests', 'schemas', 'react', 'effects',
-  'routes', 'forms', 'memoization', 'boundaries', 'rpcClientOwnership', 'tailwind', 'shadcn',
-]
-
 export const presetCommonRules: PresetTypes.PresetRules = {
   'vitest/expect-expect': 'off',
   'vitest/no-standalone-expect': 'off',
@@ -288,12 +282,12 @@ const presetModuleMockingApis = ['*.mock', '*.doMock', '*.unstable_mockModule']
 export const presetTestMockingApis = {
   modules: presetModuleMockingApis,
   strict: [...presetModuleMockingApis, '*.spyOn', '*.stubGlobal', '*.stubEnv'],
-} satisfies Record<PresetTypes.PresetTestMockingPreset, string[]>
+} satisfies Record<PresetTypes.PresetMockingPreset, string[]>
 
 export const presetTestMockingAllow = {
   modules: [],
   strict: [{ files: ['**/*.driver.test.ts'], apis: ['*'] }],
-} satisfies Record<PresetTypes.PresetTestMockingPreset, PresetTypes.PresetTestMockingException[]>
+} satisfies Record<PresetTypes.PresetMockingPreset, PresetTypes.PresetMockingException[]>
 
 export const presetStrictMockingMessage =
   'Inject a fake driver through the dependencies of the code under test instead of mocking or stubbing.'
@@ -321,21 +315,6 @@ export const presetGeneratedFiles = [
   '**/*.generated.*', '**/*.gen.*', '**/*.d.ts', '**/routes.tree.ts', '**/routeTree.gen.ts', '**/paraglide/**',
 ]
 
-export const presetDefaultArchitecture: PresetTypes.PresetArchitecture = {
-  'apps/web': 'web',
-  'apps/server': 'server',
-  scripts: 'scripts',
-  packages: 'packages',
-}
-
-export const presetRoles: PresetTypes.PresetRole[] = ['web', 'server', 'runner', 'scripts', 'packages']
-
-export const presetSourcedRoles: PresetTypes.PresetRole[] = ['web', 'server', 'runner']
-
-export const presetFrameworks: PresetTypes.PresetFramework[] = ['tanstack-start', 'next']
-
-export const presetEntryKeys = ['role', 'layout', 'framework', 'sourceDir']
-
 export const presetBuiltinFileRoles = [
   'service', 'client', 'server', 'rsc', 'utils', 'action', 'query', 'types', 'constants', 'handler', 'test', 'spec',
 ]
@@ -349,4 +328,54 @@ export const presetIllustrationPalette = [
   'saturate',
 ]
 
-export const presetLayoutModes: PresetTypes.PresetFolderLayout[] = ['flat', 'domain']
+export const presetGroupOrder: PresetTypes.PresetGroupName[] = [
+  'style', 'imports', 'types', 'layout', 'naming', 'comments', 'basics', 'console', 'tests', 'schemas', 'sql', 'orpc',
+  'react', 'forms', 'tanstack', 'next', 'expo', 'backend', 'tailwind', 'shadcn', 'kit', 'limits',
+]
+
+export const presetDefaultGroups: PresetTypes.PresetGroupName[] = ['layout', 'limits', 'style', 'basics', 'naming', 'comments', 'types', 'imports', 'tests']
+
+export const presetGroupOptions: PresetTypes.PresetGroupDefaults = {
+  layout: { level: 'error', services: undefined, hooks: undefined, components: undefined, suffixes: [] },
+  limits: { level: 'error', lines: 400, types: 1000, complexity: 32 },
+  style: { level: 'error', quotes: 'single', semicolons: true, multiline: true, padding: true },
+  basics: { level: 'error', trivial: true, state: true, switch: true, negation: true },
+  naming: { level: 'error', files: true, exports: true, folders: true },
+  comments: { level: 'error', directives: true },
+  types: { level: 'error', placement: true, safety: true, colocated: [] },
+  imports: { level: 'error', sort: true, boundaries: true, aliases: {}, internal: undefined },
+  tests: { level: 'error', assertions: [], functions: [], mocking: 'modules', titles: true, fixtures: true },
+  react: { level: 'error', a11y: true, effects: true, memo: undefined, props: true, perf: undefined, compiler: true },
+  tanstack: { level: 'error', server: [], client: [], dynamic: [] },
+  next: { level: 'error', server: [], client: [], dynamic: [] },
+  expo: { level: 'error', server: [], client: [], dynamic: [] },
+  tailwind: { level: 'error', css: undefined, rem: 16 },
+  shadcn: { level: 'error', ui: '@/components/ui', components: ['^@/components/'] },
+  kit: { level: 'error' },
+  backend: { level: 'error', exports: undefined },
+  orpc: { level: 'error', public: [], composers: [], client: undefined },
+  schemas: { level: 'error' },
+  forms: { level: 'error', resolver: 'standardSchemaResolver' },
+  sql: { level: 'error', sanitizers: ['escapeLikeWildcards'] },
+  console: { level: 'error' },
+}
+
+export const presetFolderKeys = ['severity', 'source', 'rules']
+
+export const presetA11yRules = [
+  'alt-text', 'anchor-has-content', 'anchor-is-valid', 'aria-activedescendant-has-tabindex', 'aria-props',
+  'aria-proptypes', 'aria-role', 'aria-unsupported-elements', 'autocomplete-valid', 'click-events-have-key-events',
+  'control-has-associated-label', 'heading-has-content', 'html-has-lang', 'iframe-has-title', 'img-redundant-alt',
+  'interactive-supports-focus', 'label-has-associated-control', 'lang', 'media-has-caption',
+  'mouse-events-have-key-events', 'no-access-key', 'no-aria-hidden-on-focusable', 'no-autofocus',
+  'no-distracting-elements', 'no-interactive-element-to-noninteractive-role',
+  'no-noninteractive-element-interactions', 'no-noninteractive-element-to-interactive-role',
+  'no-noninteractive-tabindex', 'no-redundant-roles', 'no-static-element-interactions', 'prefer-tag-over-role',
+  'role-has-required-aria-props', 'role-supports-aria-props', 'scope', 'tabindex-no-positive',
+].map((rule) => `jsx-a11y/${rule}`)
+
+export const presetExpoRouteExports = ['ErrorBoundary', 'unstable_settings', 'generateStaticParams']
+
+export const presetTestFiles = ['**/{test,tests,e2e}/**/*.{ts,tsx,mts,cts}', '**/*.{test,spec}.{ts,tsx,mts,cts}']
+
+export const presetBaseImports = [{ group: ['zod/v4', 'zod/v4/**'], message: 'Import from zod, not its transition entry point.' }]

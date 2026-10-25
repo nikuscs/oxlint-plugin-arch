@@ -25,17 +25,14 @@ export interface FilesDomainConstantsOptions {
 }
 
 export interface FilesExportsOptions {
-  names: string[]
+  names?: string[]
   patterns?: string[]
   domainStem?: 'before-first-dot' | 'full-basename'
   trailingRoles?: string[]
   roleSeparators?: string[]
   allowTypeExports?: boolean
-}
-
-export interface FilesFactoryOptions {
-  factory: string
-  allDeclarations?: boolean
+  factory?: string
+  factoryScope?: 'exports' | 'declarations'
 }
 
 export interface FilesFactoryKeySet {

@@ -1,4 +1,9 @@
 {
   "$schema": "https://raw.githubusercontent.com/fallow-rs/fallow/main/schema.json",
-  "ignoreDependencies": ["bumpp"]
+  "ignoreDependencies": [
+    "bumpp"
+  ],
+  "entry": [
+    "examples/*.oxlint.config.ts"
+  ]
 }

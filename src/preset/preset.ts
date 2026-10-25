@@ -1,94 +1,216 @@
-import { presetBoundariesConfig } from './preset-boundaries.ts'
-import { presetResolveContext } from './preset-context.ts'
-import { presetModulesConfig } from './preset-modules.ts'
-import { presetPluginsConfig } from './preset-plugins.ts'
-import { presetReactConfig } from './preset-react.ts'
-import { presetSourceConfig } from './preset-source.ts'
-import { presetTestsConfig } from './preset-tests.ts'
-import { presetTypesConfig } from './preset-types.ts'
-import { presetCommonRules, presetPolicyOrder } from './preset.constants.ts'
-import { presetOverride, presetRuleSeverities, presetScopes, presetSeverity } from './preset.utils.ts'
-import type { PresetOptions, PresetPolicies, PresetRules } from '../types/preset.types.ts'
+import { createRequire } from 'node:module'
+import { backendGroup } from './groups/backend.ts'
+import { basicsGroup } from './groups/basics.ts'
+import { commentsGroup } from './groups/comments.ts'
+import { consoleGroup } from './groups/console.ts'
+import { expoGroup } from './groups/expo.ts'
+import { formsGroup } from './groups/forms.ts'
+import { importsGroup } from './groups/imports.ts'
+import { layoutGroup } from './groups/layout.ts'
+import { limitsGroup } from './groups/limits.ts'
+import { namingGroup } from './groups/naming.ts'
+import { nextGroup } from './groups/next.ts'
+import { orpcGroup } from './groups/orpc.ts'
+import { reactGroup } from './groups/react.ts'
+import { schemasGroup } from './groups/schemas.ts'
+import { shadcnGroup } from './groups/shadcn.ts'
+import { sqlGroup } from './groups/sql.ts'
+import { styleGroup } from './groups/style.ts'
+import { tailwindGroup } from './groups/tailwind.ts'
+import { tanstackGroup } from './groups/tanstack.ts'
+import { testsGroup } from './groups/tests.ts'
+import { typesGroup } from './groups/types.ts'
+import { presetProject } from './preset-folders.ts'
+import { presetRecipes, presetTemplates } from './preset-recipes.ts'
+import { presetCommonRules, presetGroupOrder } from './preset.constants.ts'
+import { presetIntersect, presetSeverity } from './preset.utils.ts'
+import type * as PresetTypes from '../types/preset.types.ts'
 import type { OxlintConfig, OxlintOverride } from 'oxlint'
 
 export type {
-  PresetOptions,
-  PresetArchitecture,
-  PresetArchitectureEntry,
-  PresetFolderLayout,
-  PresetFormattingOptions,
-  PresetFramework,
-  PresetNextOptions,
-  PresetTanstackStartOptions,
+  PresetConfig,
+  PresetFolder,
+  PresetFolders,
+  PresetGroups,
+  PresetGroupName,
+  PresetRecipe,
+  PresetLevel,
+  PresetSwitch,
+  PresetLayoutMode,
+  PresetLayoutOptions,
   PresetLimitsOptions,
-  PresetModulesOptions,
+  PresetStyleOptions,
+  PresetBasicsOptions,
+  PresetNamingOptions,
+  PresetCommentsOptions,
+  PresetTypesOptions,
   PresetImportsOptions,
-  PresetOrpcOptions,
-  PresetSqlOptions,
-  PresetFormsOptions,
-  PresetReactOptions,
   PresetTestsOptions,
-  PresetTestMockingApi,
-  PresetTestMockingException,
-  PresetTestMockingOptions,
-  PresetTestMockingPreset,
-  PresetPolicyOptions,
-  PresetPolicy,
-  PresetPolicyName,
+  PresetMockingOptions,
+  PresetMockingApi,
+  PresetMockingException,
+  PresetMockingPreset,
+  PresetReactOptions,
+  PresetFrameworkOptions,
   PresetTailwindOptions,
   PresetShadcnOptions,
+  PresetBackendOptions,
+  PresetOrpcOptions,
+  PresetFormsOptions,
+  PresetSqlOptions,
 } from '../types/preset.types.ts'
 
-export function reactModulesPreset(options: PresetOptions = {}): OxlintConfig {
-  const context = presetResolveContext(options)
+export { PresetError } from './preset.utils.ts'
 
-  const policies: PresetPolicies = {
-    ...presetSourceConfig(context),
-    ...presetTypesConfig(context),
-    ...presetModulesConfig(context),
-    ...presetTestsConfig(context),
-    ...presetReactConfig(context),
-    ...presetBoundariesConfig(context),
+export const recipes = presetRecipes
+export const templates = presetTemplates
+
+const require = createRequire(import.meta.url)
+
+const presetBuilders: PresetTypes.PresetBuilders = {
+  style: styleGroup,
+  imports: importsGroup,
+  types: typesGroup,
+  layout: layoutGroup,
+  naming: namingGroup,
+  comments: commentsGroup,
+  basics: basicsGroup,
+  console: consoleGroup,
+  tests: testsGroup,
+  schemas: schemasGroup,
+  sql: sqlGroup,
+  orpc: orpcGroup,
+  react: reactGroup,
+  forms: formsGroup,
+  tanstack: tanstackGroup,
+  next: nextGroup,
+  expo: expoGroup,
+  backend: backendGroup,
+  tailwind: tailwindGroup,
+  shadcn: shadcnGroup,
+  limits: limitsGroup,
+}
+
+function presetSettings<K extends PresetTypes.PresetGroupName>(scope: PresetTypes.PresetScope, name: K): PresetTypes.PresetGroupSettings<K> | null {
+  const settings: PresetTypes.PresetEffective[K] = scope.effective[name]
+
+  if (name !== 'console') {
+    return settings ?? null
   }
 
-  const plugins = presetPluginsConfig(context)
-  const { level, app, safetyFiles, ui, generated, nextWeb } = context
-  const severities = options.ruleSeverities ?? {}
-  const levels = (rules: PresetRules) => presetRuleSeverities(presetSeverity(rules, level), severities)
+  // SAFETY: the console group has no options; its builder only reads the level.
+  return settings ? null : ({ level: scope.folder.severity ?? 'error' } as PresetTypes.PresetGroupSettings<K>)
+}
 
-  const maxLines = (max: number): PresetRules => ({
-    'max-lines': ['error', { max, skipBlankLines: true, skipComments: true }],
-  })
+function presetEmit<K extends PresetTypes.PresetGroupName>(
+  project: PresetTypes.PresetProject,
+  name: K,
+  builder: PresetTypes.PresetBuilder<K>,
+): OxlintOverride[] {
+  const key = (scope: PresetTypes.PresetScope) => JSON.stringify(presetSettings(scope, name))
+  const breaks = project.scopes.filter((scope) => scope.parent === null || key(scope) !== key(scope.parent))
 
-  const overrides: OxlintOverride[] = presetPolicyOrder.flatMap((name) => {
-    const setting = options.policies?.[name]
-    const defaults = policies[name]
+  const nearest = (owner: PresetTypes.PresetScope) =>
+    breaks.filter((scope) => {
+      let current = scope.parent
 
-    if (setting === false || !defaults) {
+      while (current && current !== owner && !breaks.includes(current)) {
+        current = current.parent
+      }
+
+      return scope !== owner && current === owner
+    })
+
+  return breaks.flatMap((owner) => {
+    const settings = presetSettings(owner, name)
+
+    if (!settings) {
       return []
     }
 
-    const entries = typeof setting === 'function' ? setting(structuredClone(defaults)) : structuredClone(defaults)
-    return entries.map((entry) => ({ ...entry, rules: entry.rules ? levels(entry.rules) : undefined }))
+    const excluded = nearest(owner).map((scope) => `${scope.key}/**`)
+
+    return builder(project, settings).flatMap((override) => {
+      const files = override.files.flatMap((glob) => presetIntersect(glob, owner.key))
+
+      if (files.length === 0 || !override.rules) {
+        return []
+      }
+
+      return [
+        {
+          ...override,
+          files,
+          excludeFiles: [...(override.excludeFiles ?? []), ...excluded],
+          rules: presetSeverity(override.rules, settings.level),
+        },
+      ]
+    })
   })
+}
 
-  overrides.push(
-    presetOverride(
-      safetyFiles,
-      levels({
-        ...maxLines(options.limits?.maxFileLines ?? 400),
-        complexity: ['error', { max: options.limits?.maxFunctionComplexity ?? 32 }],
-      }),
-      ui,
-    ),
-    presetOverride(presetScopes(app, '**/*.types.ts'), levels(maxLines(options.limits?.maxTypeFileLines ?? 1000)), ui),
-  )
-  const overrideRules = overrides.flatMap((entry) => Object.keys(entry.rules ?? {}))
-  const named = new Set([...Object.keys(presetCommonRules), ...overrideRules])
-  const unnamedLevels = Object.fromEntries(Object.entries(severities).filter(([rule]) => !named.has(rule)))
+function presetPlugins(project: PresetTypes.PresetProject): Pick<OxlintConfig, 'jsPlugins' | 'settings'> {
+  const react = project.scopes.some((scope) => scope.effective.react)
+  const tailwind = project.scopes.find((scope) => scope.effective.tailwind)?.effective.tailwind
+  const shadcn = project.scopes.find((scope) => scope.effective.shadcn)?.effective.shadcn
 
-  for (const [rule, files] of Object.entries(options.ruleExclusions ?? {})) {
-    overrides.push({ files, rules: { [rule]: 'off' } })
+  const jsPlugins: PresetTypes.PresetJsPlugins = [
+    { name: 'eslint-js', specifier: require.resolve('oxlint-plugin-eslint') },
+    { name: 'import-extra', specifier: require.resolve('eslint-plugin-import') },
+    require.resolve('@regru/eslint-plugin-prefer-early-return'),
+    require.resolve('eslint-plugin-unused-imports'),
+    require.resolve('eslint-plugin-perfectionist'),
+    require.resolve('eslint-plugin-tsdoc'),
+    require.resolve('@eslint-community/eslint-plugin-eslint-comments'),
+    { name: 'arch', specifier: require.resolve('oxlint-plugin-arch') },
+    { name: 'dillon-anti-slop', specifier: require.resolve('oxlint-plugin-arch/dillon-anti-slop') },
+  ]
+
+  const settings: PresetTypes.PresetSettings = {
+    react: { version: '19' },
+    'import/resolver': { node: { extensions: ['.js', '.jsx', '.ts', '.tsx', '.mts', '.cts'] } },
+  }
+
+  if (react) {
+    jsPlugins.push(
+      { name: 'react-extra', specifier: require.resolve('eslint-plugin-react') },
+      require.resolve('eslint-plugin-react-you-might-not-need-an-effect'),
+      require.resolve('eslint-plugin-svg-jsx'),
+    )
+  }
+
+  if (!tailwind || Object.keys(project.css).length === 0) {
+    return { jsPlugins, settings }
+  }
+
+  jsPlugins.push(require.resolve('oxlint-tailwindcss'))
+  settings.tailwindcss = { rootFontSize: tailwind.rem }
+
+  if (shadcn) {
+    jsPlugins.push(require.resolve('@shadcn/lint'))
+    settings.shadcn = { ui: shadcn.ui, componentImports: shadcn.components }
+  }
+
+  return { jsPlugins, settings }
+}
+
+export function preset(config: PresetTypes.PresetConfig): OxlintConfig {
+  const project = presetProject(config)
+  const [root] = project.scopes
+  const level = root.folder.severity ?? 'error'
+
+  const emitGroup = <K extends PresetTypes.PresetGroupName>(name: K) => {
+    const builder: PresetTypes.PresetBuilders[K] = presetBuilders[name]
+
+    return builder ? presetEmit(project, name, builder) : []
+  }
+
+  const overrides = presetGroupOrder.flatMap(emitGroup)
+
+  for (const scope of project.scopes.toSorted((left, right) => left.depth - right.depth)) {
+    if (scope.folder.rules) {
+      overrides.push({ files: [scope.key === '.' ? '**' : `${scope.key}/**`], rules: scope.folder.rules })
+    }
   }
 
   return {
@@ -101,20 +223,13 @@ export function reactModulesPreset(options: PresetOptions = {}): OxlintConfig {
       '**/build/**',
       '**/coverage/**',
       '**/.output/**',
-      ...(nextWeb.length ? ['**/.next/**', '**/next-env.d.ts'] : []),
-      ...generated,
-      ...(options.ignorePatterns ?? []),
+      ...(project.nextWeb.length > 0 ? ['**/.next/**', '**/next-env.d.ts'] : []),
+      ...(project.expoWeb.length > 0 ? ['**/.expo/**', '**/expo-env.d.ts'] : []),
+      ...project.generated,
+      ...project.ignores,
     ],
-    ...plugins,
-    rules: { ...levels(presetCommonRules), ...unnamedLevels },
-    overrides: overrides.filter((entry) => entry.files.length > 0),
+    ...presetPlugins(project),
+    rules: presetSeverity(presetCommonRules, level),
+    overrides,
   }
-}
-
-export function nextReactModulesPreset(options: PresetOptions = {}): OxlintConfig {
-  return reactModulesPreset({ ...options, framework: options.framework ?? 'next' })
-}
-
-export function tanstackStartReactModulesPreset(options: PresetOptions = {}): OxlintConfig {
-  return reactModulesPreset({ ...options, framework: options.framework ?? 'tanstack-start' })
 }

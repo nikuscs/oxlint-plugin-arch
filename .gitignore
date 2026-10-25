@@ -3,3 +3,16 @@ coverage/
 dist/
 .DS_Store
 .fallow/
+
+# Local agent state
+.agents/plans/
+.agents/research/
+.agents/state.md
+
+# Linked by bun run agents:sync
+.claude/skills
+.claude/agents
+/paseo.json
+/orca.yaml
+/conductor.json
+/t3.json

@@ -4,11 +4,40 @@
 
 ### Breaking: rebuilt package
 
-- Every owned rule is now `arch/<family>-<subject>`; the `modules` plugin is gone. Update configs, `ruleSeverities`, `ruleExclusions` and `oxlint-disable` comments with the table below. Old IDs are not aliased: an old ID in a disable comment no longer suppresses anything.
-- Entry points: `oxlint-plugin-arch` (rules), `oxlint-plugin-arch/preset` (named exports `reactModulesPreset`, `nextReactModulesPreset`, `tanstackStartReactModulesPreset`) and `oxlint-plugin-arch/dillon-anti-slop`. The `presets/*` and `rules/*` subpaths are removed.
-- Selector rules (`code-switch`, `code-double-negation`, `naming-types`, `naming-shape`, `types-local-alias`, `react-empty-effect`, `react-dynamic-classes`, `boundaries-rpc-database`, `tests-concurrent-db`) accept an optional `message` option.
-- Preset option errors are `PresetError` instances; messages are unchanged.
-- Rule behavior, option schemas and messages are otherwise unchanged; checked by linting two consumer monorepos before and after.
+- Every owned rule is now `arch/<family>-<subject>`; the `modules` plugin is gone. Update configs and `oxlint-disable` comments with the table below. Old IDs are not aliased: an old ID in a disable comment no longer suppresses anything.
+- Entry points: `oxlint-plugin-arch` (rules), `oxlint-plugin-arch/preset` (`preset`, `recipes`, `templates`, `PresetError` and the option types) and `oxlint-plugin-arch/dillon-anti-slop`. The `presets/*` and `rules/*` subpaths are removed.
+- Selector rules (`code-switch`, `code-double-negation`, `naming-types`, `types-local-alias`, `react-empty-effect`, `react-dynamic-classes`, `boundaries-rpc-database`, `tests-concurrent-db`) accept an optional `message` option.
+- The preset is `preset({ root, folders })`: folders map to groups, nested folders inherit and refine, recipes and templates hold shared defaults. `reactModulesPreset`, `nextReactModulesPreset`, `tanstackStartReactModulesPreset`, `architecture`, roles, `policies`, `ruleSeverities` and `ruleExclusions` are removed; see the option table below. Expo apps get an `expo` group. `naming-shape` in the preset is replaced by `dillon-anti-slop/no-shape-in-symbol-names`. Invalid folders and options throw `PresetError`.
+- Rule behavior, option schemas and messages are otherwise unchanged; checked by running the 0.11 rule tests against the new rules, and by linting two consumer monorepos with equivalent folder configs.
+- Merged rules: `naming-export-prefix`, `naming-export-pattern` and `naming-export-template` are now `naming-exports`, one check per option object (`mode: 'prefix' | 'pattern' | 'template'`), so several checks can share a file: `['error', { mode: 'prefix' }, { mode: 'pattern', pattern: '^use[A-Z]' }]`. `allDeclarations: true` → `scope: 'declarations'`, `allFunctions: true` → `scope: 'functions'`, `naming-export-template`'s `mode: 'all' | 'some'` → `match`; the other options keep their names. `files-factory` is now `files-exports` with `factory` (its `allDeclarations: true` → `factoryScope: 'declarations'`; `names` is no longer required). `comments-members` is now `comments` with `members: 'only'` (`'also'` adds member checks to the normal ones). `naming-shape` is removed; use `dillon-anti-slop/no-shape-in-symbol-names`. `code-switch` now defaults to `'Avoid switch statements.'`. Message IDs and texts are unchanged.
+- Docs: `docs/folders.md`, one page per group in `docs/groups/`, one page per rule in `docs/rules/`, `docs/vendor.md` and `docs/plugin-only.md`. The README group and rule tables are generated (`bun run docs`).
+
+| Old preset option | New |
+| --- | --- |
+| `tanstackStartReactModulesPreset(...)` | `preset({ root, folders })` |
+| `architecture: { 'apps/web': 'web' }` | `folders: { 'apps/web': recipes.tanstack }` (`recipes.next`, `recipes.expo`) |
+| role `server` / `runner` | `recipes.backend` |
+| role `packages` | `recipes.library` (`'packages/*'` for a folder of packages) |
+| role `scripts`, `cliFiles` | `recipes.cli` on the folder |
+| entry `layout: { services: 'flat' }`, `sourceDir` | folder `layout: { services: 'flat' }`, `source` |
+| `framework` | the `tanstack` / `next` / `expo` group on the folder |
+| `severity` | folder `severity` |
+| `ruleSeverities`, `ruleExclusions` | folder `rules: { 'arch/x': 'warn' \| 'off' }` |
+| `policies: { x: false }` | the group set to `false` on the folder |
+| `ignorePatterns` | the folder set to `false` |
+| `formatting.semi`, `formatting.quotes` | `style.semicolons`, `style.quotes` |
+| `limits.maxFileLines`, `maxTypeFileLines`, `maxFunctionComplexity` | `limits.lines`, `limits.types`, `limits.complexity` |
+| `modules.customFileRoles` | `layout.suffixes` |
+| `modules.migrationFiles` | the migrations folder with `layout: false` |
+| `modules.colocatedTypeFiles` | `types.colocated` |
+| `imports.backendEntryPoints`, `aliases`, `internalSortPatterns` | `backend.exports`, `imports.aliases`, `imports.internal` |
+| `orpc.publicProcedureFiles`, `outputSchemaComposers`, `clientOwnerFile` | `orpc.public`, `orpc.composers`, `orpc.client` |
+| `sql.likeSanitizers`, `forms.schemaResolver` | `sql.sanitizers`, `forms.resolver` |
+| `react.compiler`, `react.componentProps` | `react.compiler`, `react.props` |
+| `tests.profile`, `additionalTestFunctions`, `additionalAssertionFunctions`, `mocking` | `tests.fixtures`, `tests.functions`, `tests.assertions`, `tests.mocking` |
+| `tanstackStart.*` / `next.*` server, client, computed imports | `tanstack` / `next` group `server`, `client`, `dynamic` |
+| `tailwind.cssEntryPoint(sByRoot)`, `rootFontSize` | folder `tailwind.css`, `tailwind.rem` |
+| `shadcn.ui`, `shadcn.components` | `shadcn.ui`, `shadcn.components`; mark UI kit packages with `kit: true` |
 
 | Old ID | New ID |
 | --- | --- |
@@ -17,9 +46,9 @@
 | `arch/chain-newline` | `arch/layout-chain` |
 | `arch/component-props` | `arch/react-props` |
 | `arch/declaration-name` | `arch/naming-declarations` |
-| `arch/export-file-prefix` | `arch/naming-export-prefix` |
-| `arch/export-name-pattern` | `arch/naming-export-pattern` |
-| `arch/filename-export-name` | `arch/naming-export-template` |
+| `arch/export-file-prefix` | `arch/naming-exports` |
+| `arch/export-name-pattern` | `arch/naming-exports` (`mode: 'pattern'`) |
+| `arch/filename-export-name` | `arch/naming-exports` (`mode: 'template'`) |
 | `arch/filename-match` | `arch/naming-file` |
 | `arch/folder-prefix` | `arch/naming-folder` |
 | `arch/jsx-attributes-multiline` | `arch/layout-jsx-attributes` |
@@ -33,7 +62,7 @@
 | `arch/no-inline-types` | `arch/types-inline` |
 | `arch/no-literal-in` | `arch/code-literal-in` |
 | `arch/no-local-schema-construction` | `arch/schemas-local` |
-| `arch/no-member-comments` | `arch/comments-members` |
+| `arch/no-member-comments` | `arch/comments` (`members: 'only'`) |
 | `arch/no-module-mutable-state` | `arch/code-mutable-state` |
 | `arch/no-promise-all-mutation` | `arch/code-promise-mutation` |
 | `arch/no-rederive-schema` | `arch/schemas-rederive` |
@@ -51,7 +80,7 @@
 | `arch/only-export-constants` | `arch/files-constants-only` |
 | `arch/padding-between-statements` | `arch/layout-padding` |
 | `arch/prefer-namespace-type-import` | `arch/types-namespace-import` |
-| `arch/require-file-factory` | `arch/files-factory` |
+| `arch/require-file-factory` | `arch/files-exports` (`factory`) |
 | `arch/require-object-params` | `arch/code-object-params` |
 | `arch/require-orpc-output` | `arch/backend-orpc-output` |
 | `arch/require-paired-call` | `arch/code-paired-call` |
@@ -74,7 +103,7 @@
 | `modules/rpc-database` | `arch/boundaries-rpc-database` |
 | `modules/service-functions` | `arch/backend-service-functions` |
 | `modules/service-types` | `arch/types-service` |
-| `modules/shape-suffix` | `arch/naming-shape` |
+| `modules/shape-suffix` | `dillon-anti-slop/no-shape-in-symbol-names` |
 | `modules/tanstack-runtime` | `arch/boundaries-tanstack` |
 | `modules/test-assertions` | `arch/tests-assertions` |
 | `modules/test-modifiers` | `arch/tests-modifiers` |

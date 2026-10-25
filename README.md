@@ -1,70 +1,86 @@
 # 🏛️ oxlint-plugin-arch
 
-> Architecture rules for [Oxlint](https://oxc.rs), driven by filenames and fully configurable.
+> Architecture rules for [Oxlint](https://oxc.rs): files in the right folders, exports named after their file, types where they belong.
 
-Keep a codebase shaped the way you designed it: files in the right folders, exports named after their file, types where they belong, and no shortcuts across boundaries. Rules are generic; paths, names and policy live in your Oxlint config.
+Linters catch bugs; this catches drift. Describe your folders once, and the preset wires the right rules into each one: apps, backends, libraries, UI kits and scripts. Relax a folder by changing one key, not by writing overrides.
 
-## 🚀 Preset
+## ✨ Features
 
-A ready policy for React apps with a typed backend (TanStack Start, Next.js, or both).
+- 🗂️ **Folders, not flags.** Each folder says what it holds (`react`, `tanstack`, `backend`, `kit`); nested folders inherit and refine.
+- 🏷️ **Filename-aware.** Rules derive names from the file they run on: `user-action.create.ts` must export `userActionCreate`.
+- 🎛️ **Configurable.** No app names or paths baked in. Every rule works on its own too.
+- 🛟 **Safe autofix.** 🔧 rules only touch whitespace or comments.
+- ⚡ **Fast.** Oxlint's JS plugin API, no extra parser.
+
+## 🧰 Built with
+
+[Oxlint](https://oxc.rs) · [oxlint-tsgolint](https://github.com/oxc-project/tsgolint) · [Bun](https://bun.sh) · TypeScript
+
+## 🚀 Install in 3 steps
+
+**You need:** Oxlint 1.85 or newer.
+
+**1. Install**
 
 ```sh
 bun add -d oxlint oxlint-tsgolint oxlint-plugin-arch
 ```
 
+**2. Describe your folders**
+
 ```ts
 // oxlint.config.ts
-import { tanstackStartReactModulesPreset } from 'oxlint-plugin-arch/preset'
+import { preset, recipes } from 'oxlint-plugin-arch/preset'
 
-export default tanstackStartReactModulesPreset({
+export default preset({
   root: import.meta.dirname,
-  architecture: {
-    'apps/web': 'web',
-    'apps/server': 'server',
-    scripts: 'scripts',
-    packages: 'packages',
+  folders: {
+    'apps/web': recipes.tanstack,
+    'apps/server': recipes.backend,
+    'packages/*': recipes.library,
+    'packages/ui': { ...recipes.kit, react: { a11y: false } },
+    scripts: recipes.cli,
   },
 })
 ```
 
-`nextReactModulesPreset` and `reactModulesPreset` take the same options.
+Inheritance, groups, recipes and templates: [docs/folders.md](docs/folders.md). Rules without the preset: [docs/plugin-only.md](docs/plugin-only.md).
 
-## 📦 Rules only
+**3. Lint**
 
-```ts
-// oxlint.config.ts
-import { defineConfig } from 'oxlint'
-
-export default defineConfig({
-  jsPlugins: [{ name: 'arch', specifier: 'oxlint-plugin-arch' }],
-  rules: {
-    'arch/layout-object': ['error', { minProperties: 3 }],
-  },
-})
+```sh
+bunx oxlint
 ```
 
-The vendored [anti-slop rules](src/vendor/dillon-anti-slop/UPSTREAM.md) by Dillon Mulroy register as `{ name: 'dillon-anti-slop', specifier: 'oxlint-plugin-arch/dillon-anti-slop' }`.
+## 📚 Groups and rules
 
-## 📚 Rules
+<!-- generated:start -->
+On by default: [`layout`](docs/groups/layout.md), [`limits`](docs/groups/limits.md), [`style`](docs/groups/style.md), [`basics`](docs/groups/basics.md), [`naming`](docs/groups/naming.md), [`comments`](docs/groups/comments.md), [`types`](docs/groups/types.md), [`imports`](docs/groups/imports.md), [`tests`](docs/groups/tests.md).
 
-🔧 marks rules with a safe autofix.
+Opt-in: [`react`](docs/groups/react.md), [`tanstack`](docs/groups/tanstack.md), [`next`](docs/groups/next.md), [`expo`](docs/groups/expo.md), [`tailwind`](docs/groups/tailwind.md), [`shadcn`](docs/groups/shadcn.md), [`kit`](docs/groups/kit.md), [`backend`](docs/groups/backend.md), [`orpc`](docs/groups/orpc.md), [`schemas`](docs/groups/schemas.md), [`forms`](docs/groups/forms.md), [`sql`](docs/groups/sql.md), [`console`](docs/groups/console.md).
+
+61 rules, IDs `arch/<rule>`. 🔧 = autofix.
 
 | Family | Covers | Rules |
 | --- | --- | --- |
-| `backend` | Service and RPC structure | `backend-orpc-output`, `backend-service-functions`, `backend-sql-like` |
-| `boundaries` | Import and runtime boundaries | `boundaries-imports`, `boundaries-next`, `boundaries-rpc-database`, `boundaries-tanstack`, `boundaries-token-owner` |
-| `code` | Code shapes to avoid | `code-constructor`, `code-double-negation`, `code-literal-in`, `code-mutable-state`, `code-object-params`, `code-paired-call`, `code-promise-mutation`, `code-switch`, `code-trivial-functions` |
-| `comments` | Comments and directives | `comments` 🔧, `comments-directives`, `comments-members` 🔧 |
-| `files` | What a file may contain or export | `files-components-only`, `files-constants-only`, `files-domain-constants`, `files-exports`, `files-factory`, `files-factory-keys`, `files-helpers`, `files-no-functions`, `files-restricted`, `files-route`, `files-types-only` |
-| `layout` | Statement and expression layout | `layout-call-arguments` 🔧, `layout-call-array` 🔧, `layout-chain` 🔧, `layout-jsx-attributes` 🔧, `layout-key-value` 🔧, `layout-object` 🔧, `layout-padding` 🔧, `layout-ternary` 🔧 |
-| `naming` | File, folder and export names | `naming-declarations`, `naming-export-pattern`, `naming-export-prefix`, `naming-export-template`, `naming-file`, `naming-folder`, `naming-shape`, `naming-types` |
-| `react` | React components and hooks | `react-dynamic-classes`, `react-empty-effect`, `react-memo`, `react-props` |
-| `schemas` | Schema placement | `schemas-inline`, `schemas-local`, `schemas-rederive`, `schemas-single-use` |
-| `tests` | Test structure | `tests-assertions`, `tests-concurrent-db`, `tests-modifiers`, `tests-titles` |
-| `types` | Type placement and shape | `types-declarations`, `types-imported-alias`, `types-inline`, `types-local-alias`, `types-namespace-import` 🔧, `types-service`, `types-unknown` |
+| `backend` | Service and RPC structure | [`backend-orpc-output`](docs/rules/backend-orpc-output.md), [`backend-service-functions`](docs/rules/backend-service-functions.md), [`backend-sql-like`](docs/rules/backend-sql-like.md) |
+| `boundaries` | Import and runtime boundaries | [`boundaries-imports`](docs/rules/boundaries-imports.md), [`boundaries-next`](docs/rules/boundaries-next.md), [`boundaries-rpc-database`](docs/rules/boundaries-rpc-database.md), [`boundaries-tanstack`](docs/rules/boundaries-tanstack.md), [`boundaries-token-owner`](docs/rules/boundaries-token-owner.md) |
+| `code` | Code shapes to avoid | [`code-constructor`](docs/rules/code-constructor.md), [`code-double-negation`](docs/rules/code-double-negation.md), [`code-literal-in`](docs/rules/code-literal-in.md), [`code-mutable-state`](docs/rules/code-mutable-state.md), [`code-object-params`](docs/rules/code-object-params.md), [`code-paired-call`](docs/rules/code-paired-call.md), [`code-promise-mutation`](docs/rules/code-promise-mutation.md), [`code-switch`](docs/rules/code-switch.md), [`code-trivial-functions`](docs/rules/code-trivial-functions.md) |
+| `comments` | Comments and directives | [`comments`](docs/rules/comments.md) 🔧, [`comments-directives`](docs/rules/comments-directives.md) |
+| `files` | What a file may contain or export | [`files-components-only`](docs/rules/files-components-only.md), [`files-constants-only`](docs/rules/files-constants-only.md), [`files-domain-constants`](docs/rules/files-domain-constants.md), [`files-exports`](docs/rules/files-exports.md), [`files-factory-keys`](docs/rules/files-factory-keys.md), [`files-helpers`](docs/rules/files-helpers.md), [`files-no-functions`](docs/rules/files-no-functions.md), [`files-restricted`](docs/rules/files-restricted.md), [`files-route`](docs/rules/files-route.md), [`files-types-only`](docs/rules/files-types-only.md) |
+| `layout` | Layout a formatter leaves alone | [`layout-call-arguments`](docs/rules/layout-call-arguments.md) 🔧, [`layout-call-array`](docs/rules/layout-call-array.md) 🔧, [`layout-chain`](docs/rules/layout-chain.md) 🔧, [`layout-jsx-attributes`](docs/rules/layout-jsx-attributes.md) 🔧, [`layout-key-value`](docs/rules/layout-key-value.md) 🔧, [`layout-object`](docs/rules/layout-object.md) 🔧, [`layout-padding`](docs/rules/layout-padding.md) 🔧, [`layout-ternary`](docs/rules/layout-ternary.md) 🔧 |
+| `naming` | File, folder and export names | [`naming-declarations`](docs/rules/naming-declarations.md), [`naming-exports`](docs/rules/naming-exports.md), [`naming-file`](docs/rules/naming-file.md), [`naming-folder`](docs/rules/naming-folder.md), [`naming-types`](docs/rules/naming-types.md) |
+| `react` | Components, effects, class names | [`react-dynamic-classes`](docs/rules/react-dynamic-classes.md), [`react-empty-effect`](docs/rules/react-empty-effect.md), [`react-memo`](docs/rules/react-memo.md), [`react-props`](docs/rules/react-props.md) |
+| `schemas` | Schema placement | [`schemas-inline`](docs/rules/schemas-inline.md), [`schemas-local`](docs/rules/schemas-local.md), [`schemas-rederive`](docs/rules/schemas-rederive.md), [`schemas-single-use`](docs/rules/schemas-single-use.md) |
+| `tests` | Test structure | [`tests-assertions`](docs/rules/tests-assertions.md), [`tests-concurrent-db`](docs/rules/tests-concurrent-db.md), [`tests-modifiers`](docs/rules/tests-modifiers.md), [`tests-titles`](docs/rules/tests-titles.md) |
+| `types` | Type placement and shape | [`types-declarations`](docs/rules/types-declarations.md), [`types-imported-alias`](docs/rules/types-imported-alias.md), [`types-inline`](docs/rules/types-inline.md), [`types-local-alias`](docs/rules/types-local-alias.md), [`types-namespace-import`](docs/rules/types-namespace-import.md) 🔧, [`types-service`](docs/rules/types-service.md), [`types-unknown`](docs/rules/types-unknown.md) |
+<!-- generated:end -->
 
-Upgrading from 0.11 or earlier: rule IDs and entry points changed; see the [changelog](CHANGELOG.md).
+Also bundled: [Dillon Mulroy's anti-slop rules](docs/vendor.md) as `oxlint-plugin-arch/dillon-anti-slop`.
 
-## License
+> [!WARNING]
+> Upgrading from 0.11 or earlier: the preset API, rule IDs and entry points changed. See the [changelog](CHANGELOG.md).
 
-MIT
+## 📄 License
+
+MIT. The `dillon-anti-slop` rules are by [Dillon Mulroy](https://github.com/dmmulroy/anti-slop), MIT, vendored with [attribution](src/vendor/dillon-anti-slop/UPSTREAM.md).

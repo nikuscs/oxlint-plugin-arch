@@ -1,5 +1,6 @@
 import { defineRule } from '@oxlint/plugins'
-import { exportsCollect } from '../../utils/exports.utils.ts'
+import { declarationsFunctions } from '../../utils/declarations.utils.ts'
+import { exportsCollect, exportsFunctions } from '../../utils/exports.utils.ts'
 import { namingBasename, namingCamelCase, namingFileStem, namingPascalCase, namingStemModes } from '../../utils/naming.utils.ts'
 import { optionsFirst } from '../../utils/options.utils.ts'
 import type { FilesExportsOptions } from '../../types/files.types.ts'
@@ -22,23 +23,54 @@ export const filesExports = defineRule({
           trailingRoles: { type: 'array', items: { type: 'string' } },
           roleSeparators: { type: 'array', items: { type: 'string' } },
           allowTypeExports: { type: 'boolean' },
+          factory: { type: 'string' },
+          factoryScope: { type: 'string', enum: ['exports', 'declarations'] },
         },
-        required: ['names'],
+        anyOf: [{ required: ['names'] }, { required: ['patterns'] }, { required: ['factory'] }],
       },
     ],
     messages: {
       extraExport: "Export '{{name}}' is not allowed; expected one of: {{allowed}}.",
+      factory: "Function '{{actual}}' must be named '{{expected}}'.",
     },
   },
   createOnce(context) {
     return {
       Program(program) {
-        const options = optionsFirst<FilesExportsOptions>(context)
+        const options = optionsFirst<FilesExportsOptions>(context, {})
         const basename = namingBasename(context.filename).replace(/\.(tsx?|jsx?)$/, '')
+
+        if (options.factory !== undefined) {
+          const expected = options.factory.replaceAll('{Stem}', namingPascalCase(basename)).replaceAll('{stem}', basename)
+          const functions = options.factoryScope === 'declarations' ? declarationsFunctions(program) : exportsFunctions(program)
+
+          if (functions.length === 0) {
+            context.report({
+              node: program,
+              messageId: 'factory',
+              data: { actual: '<none>', expected },
+            })
+          }
+
+          for (const item of functions) {
+            if (item.name !== expected) {
+              context.report({
+                node: item.node,
+                messageId: 'factory',
+                data: { actual: item.name, expected },
+              })
+            }
+          }
+        }
+
+        if (options.names === undefined && options.patterns === undefined) {
+          return
+        }
+
         const domain = namingFileStem(basename, options.domainStem, options.trailingRoles, options.roleSeparators)
         const pascalDomain = namingPascalCase(domain)
         const camelDomain = namingCamelCase(domain)
-        const allowed = options.names.map((template) => template.replaceAll('{Domain}', pascalDomain).replaceAll('{domain}', camelDomain))
+        const allowed = (options.names ?? []).map((template) => template.replaceAll('{Domain}', pascalDomain).replaceAll('{domain}', camelDomain))
 
         const patterns = (options.patterns ?? []).map((template) => {
           const source = template

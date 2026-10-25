@@ -1,0 +1,6 @@
+{
+  "scripts": {
+    "setup": "./.agents/orchestrators/workspace.sh setup",
+    "run": "./.agents/orchestrators/workspace.sh check"
+  }
+}

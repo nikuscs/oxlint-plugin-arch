@@ -8,7 +8,7 @@ import {
   sourceIsJsdoc,
   sourceIsWhy,
 } from '../../utils/source.utils.ts'
-import type { CommentsLines, CommentsOptions } from '../../types/comments.types.ts'
+import type { CommentsLines, CommentsMemberNode, CommentsOptions } from '../../types/comments.types.ts'
 import type { ESTree } from '@oxlint/plugins'
 
 const commentsLineGap = /^[\t \r\n\u2028\u2029]*$/
@@ -82,17 +82,108 @@ export const comments = defineRule({
           allowWhy: { type: 'boolean', default: true },
           allowPatterns: { type: 'array', items: { type: 'string' } },
           allowJsdoc: { type: 'boolean', default: false },
+          members: { type: 'string', enum: ['off', 'also', 'only'] },
         },
       },
     ],
     messages: {
       comment: 'Remove this comment.',
+      memberComment: 'Remove this comment from the type member.',
     },
   },
   createOnce(context) {
     let allowWhy = true
     let allowJsdoc = false
     let allowed: RegExp[] = []
+    let members: CommentsOptions['members'] = 'off'
+    const reported = new Set<number>()
+
+    function checkMember(node: CommentsMemberNode) {
+      const parent = node.parent
+
+      if (
+        members === 'off' ||
+        (parent.type !== 'TSInterfaceBody' && parent.type !== 'TSTypeLiteral' && parent.type !== 'ObjectExpression')
+      ) {
+        return
+      }
+
+      const source = context.sourceCode
+      let whyContinuation = false
+      let previousLine = -1
+      const removable: ESTree.Comment[] = []
+
+      const previousToken = source.getTokenBefore(node)
+
+      const before = source
+        .getCommentsBefore(node)
+        .filter(
+          (comment) =>
+            !previousToken || previousToken.range[0] === parent.range[0] || previousToken.loc.end.line !== comment.loc.start.line,
+        )
+
+      const after = source.getCommentsAfter(node).filter((comment) => comment.loc.start.line === node.loc.end.line)
+      const candidates = [...before, ...after].filter((comment) => comment.range[0] > parent.range[0] && comment.range[1] < parent.range[1])
+
+      for (const comment of candidates) {
+        const text = sourceCommentText(comment)
+
+        const isWhy: boolean =
+          sourceIsWhy(text) || (comment.type === 'Line' && whyContinuation && comment.loc.start.line === previousLine + 1)
+
+        whyContinuation = comment.type === 'Line' && isWhy
+        previousLine = comment.loc.end.line
+        if (reported.has(comment.range[0])) {
+          continue
+        }
+        reported.add(comment.range[0])
+        if ((allowWhy && isWhy) || sourceIsDirective(text)) {
+          continue
+        }
+        removable.push(comment)
+      }
+
+      const runs: ESTree.Comment[][] = []
+
+      for (const comment of removable) {
+        const run = runs.at(-1)
+        const previous = run?.at(-1)
+
+        if (run && previous && comment.loc.start.line === previous.loc.end.line + 1) {
+          run.push(comment)
+        } else {
+          runs.push([comment])
+        }
+      }
+
+      for (const run of runs) {
+        const [first] = run
+        const final = run.at(-1) ?? first
+        context.report({
+          loc: { start: first.loc.start, end: final.loc.end },
+          messageId: 'memberComment',
+          fix: (fixer) => {
+            const text = source.text
+            const lineStart = text.lastIndexOf('\n', first.range[0] - 1) + 1
+            const beforeComment = text.slice(lineStart, first.range[0])
+            const start = first.range[0] - (/[\t ]*$/.exec(beforeComment)?.[0].length ?? 0)
+            const trailingLines = /^[\t ]*\r?\n(?:[\t ]*\r?\n)*/.exec(text.slice(final.range[1]))
+
+            if (!trailingLines) {
+              return fixer.removeRange([start, final.range[1]])
+            }
+
+            const end = final.range[1] + trailingLines[0].length
+
+            if (/^[\t ]*$/.test(beforeComment)) {
+              return fixer.removeRange([lineStart, end])
+            }
+
+            return fixer.replaceTextRange([start, end], trailingLines[0].includes('\r\n') ? '\r\n' : '\n')
+          },
+        })
+      }
+    }
 
     return {
       before() {
@@ -100,10 +191,19 @@ export const comments = defineRule({
         allowWhy = options.allowWhy ?? true
         allowJsdoc = options.allowJsdoc ?? false
         allowed = (options.allowPatterns ?? []).map((pattern) => new RegExp(pattern))
+        members = options.members ?? 'off'
+        reported.clear()
       },
-      Program(program) {
+      TSPropertySignature: checkMember,
+      TSMethodSignature: checkMember,
+      TSIndexSignature: checkMember,
+      TSCallSignatureDeclaration: checkMember,
+      TSConstructSignatureDeclaration: checkMember,
+      Property: checkMember,
+      SpreadElement: checkMember,
+      'Program:exit'(program) {
         const text = context.sourceCode.text
-        const removable: ESTree.Comment[] = []
+        const found: ESTree.Comment[] = []
         const protectedLines: number[] = []
         let mightContainJsxComment = false
         let whyContinuation = false
@@ -148,8 +248,10 @@ export const comments = defineRule({
           if (allowed.some((pattern) => pattern.test(value.trim()))) {
             continue
           }
-          removable.push(comment)
+          found.push(comment)
         }
+
+        const removable = found.filter((comment) => members !== 'only' && !reported.has(comment.range[0]))
 
         if (removable.length === 0) {
           return
