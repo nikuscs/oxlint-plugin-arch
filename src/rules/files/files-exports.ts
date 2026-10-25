@@ -1,29 +1,13 @@
 import { defineRule } from '@oxlint/plugins'
-import {
-  exportsCollect,
-  namingCamelCase,
-  namingFileBasename,
-  namingFileStem,
-  namingPascalCase,
-  namingStemModes,
-  optionsFirst,
-} from '../../utils/index.ts'
+import { exportsCollect } from '../../utils/exports.utils.ts'
+import { namingBasename, namingCamelCase, namingFileStem, namingPascalCase, namingStemModes } from '../../utils/naming.utils.ts'
+import { optionsFirst } from '../../utils/options.utils.ts'
+import type { FilesExportsOptions } from '../../types/files.types.ts'
 
-interface NoExtraExportsOptions {
-  names: string[]
-  patterns?: string[]
-  domainStem?: 'before-first-dot' | 'full-basename'
-  trailingRoles?: string[]
-  roleSeparators?: string[]
-  allowTypeExports?: boolean
+function escapeRegExp(value: string): string {
+  return value.replaceAll(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
-/**
- * Allows only the configured export-name templates, with placeholders derived from the filename.
- *
- * Example: `billing.service.ts` may allow `makeBillingService`; an exported `helper` then fails.
- * Example: With `trailingRoles: ['utils']`, `onchain-utils.ts` allows `makeOnchainService` the same way `onchain.utils.ts` does.
- */
 export const filesExports = defineRule({
   meta: {
     type: 'problem',
@@ -49,22 +33,22 @@ export const filesExports = defineRule({
   createOnce(context) {
     return {
       Program(program) {
-        const options = optionsFirst<NoExtraExportsOptions>(context)
-        const basename = namingFileBasename(context.filename).replace(/\.(tsx?|jsx?)$/, '')
+        const options = optionsFirst<FilesExportsOptions>(context)
+        const basename = namingBasename(context.filename).replace(/\.(tsx?|jsx?)$/, '')
         const domain = namingFileStem(basename, options.domainStem, options.trailingRoles, options.roleSeparators)
-        const replacements = {
-          Domain: namingPascalCase(domain),
-          domain: namingCamelCase(domain),
-        }
-        const allowed = options.names.map((template) =>
-          template.replaceAll('{Domain}', replacements.Domain).replaceAll('{domain}', replacements.domain),
-        )
+        const pascalDomain = namingPascalCase(domain)
+        const camelDomain = namingCamelCase(domain)
+        const allowed = options.names.map((template) => template.replaceAll('{Domain}', pascalDomain).replaceAll('{domain}', camelDomain))
+
         const patterns = (options.patterns ?? []).map((template) => {
           const source = template
-            .replaceAll('{Domain}', replacements.Domain.replaceAll(/[.*+?^${}()|[\]\\]/g, '\\$&'))
-            .replaceAll('{domain}', replacements.domain.replaceAll(/[.*+?^${}()|[\]\\]/g, '\\$&'))
+            .replaceAll('{Domain}', escapeRegExp(pascalDomain))
+            .replaceAll('{domain}', escapeRegExp(camelDomain))
+
           return new RegExp(`^(?:${source})$`)
         })
+
+        const allowedLabel = [...allowed, ...patterns.map((pattern) => pattern.toString())].join(', ')
 
         for (const binding of exportsCollect(program)) {
           if (options.allowTypeExports && binding.typeOnly) {
@@ -77,10 +61,7 @@ export const filesExports = defineRule({
             context.report({
               node: binding.node,
               messageId: 'extraExport',
-              data: {
-                name,
-                allowed: [...allowed, ...patterns.map((pattern) => pattern.toString())].join(', '),
-              },
+              data: { name, allowed: allowedLabel },
             })
           }
         }

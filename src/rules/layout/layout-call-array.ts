@@ -1,105 +1,16 @@
 import { defineRule } from '@oxlint/plugins'
-import type { Context, ESTree, Scope, SourceCode } from '@oxlint/plugins'
-import { layoutIndentSchema, layoutIndentUnit, layoutLineIndent, layoutNewline, optionsFirst } from '../../utils/index.ts'
-import type { LayoutIndent } from '../../utils/index.ts'
+import { astDottedName } from '../../utils/ast.utils.ts'
+import { optionsFirst } from '../../utils/options.utils.ts'
+import { sourceIndentSchema, sourceIndentUnit, sourceLineIndent, sourceNewline } from '../../utils/source.utils.ts'
+import type { LayoutCallArrayOptions, LayoutEdit } from '../../types/layout.types.ts'
+import type { ESTree, Scope } from '@oxlint/plugins'
 
-interface CallArrayMultilineOptions {
-  callees?: string[]
-  minElements?: number
-  indent?: LayoutIndent
+const layoutCallArrayDefaultCallees = ['Promise.all', 'Promise.allSettled']
+
+function layoutCallArrayRoot(node: ESTree.Expression): ESTree.Expression {
+  return node.type === 'MemberExpression' ? layoutCallArrayRoot(node.object) : node
 }
 
-interface CallArrayMultilineEdit {
-  range: [number, number]
-  text: string
-}
-
-function callArrayMultilineCallee(node: ESTree.Expression): { name: string; root: ESTree.Expression } | null {
-  if (node.type === 'Identifier') return { name: node.name, root: node }
-  if (node.type !== 'MemberExpression' || node.computed || node.property.type !== 'Identifier') return null
-
-  const object = callArrayMultilineCallee(node.object)
-  return object ? { name: `${object.name}.${node.property.name}`, root: object.root } : null
-}
-
-function callArrayMultilineIsShadowed(context: Context, root: ESTree.Expression): boolean {
-  if (root.type !== 'Identifier') return false
-
-  let scope: Scope | null = context.sourceCode.getScope(root)
-  while (scope) {
-    const variable = scope.set.get(root.name)
-    if (variable) return variable.defs.length > 0
-    scope = scope.upper
-  }
-
-  return false
-}
-
-// Why: ESTree drops parentheses; an element's neighbours are only `[` `,` `]` or wrapping parens.
-function callArrayMultilineOuterRange(source: SourceCode, node: ESTree.Node): [number, number] {
-  let range: [number, number] = [node.range[0], node.range[1]]
-  let before = source.getTokenBefore(node)
-  let after = source.getTokenAfter(node)
-
-  while (before?.value === '(' && after?.value === ')') {
-    range = [before.range[0], after.range[1]]
-    before = source.getTokenBefore(before)
-    after = source.getTokenAfter(after)
-  }
-
-  return range
-}
-
-function callArrayMultilineEdits(
-  array: ESTree.ArrayExpression,
-  source: SourceCode,
-  text: string,
-  elementIndent: string,
-  baseIndent: string,
-  newline: string,
-): CallArrayMultilineEdit[] | null {
-  const elements = array.elements
-  if (elements.some((element) => element === null)) return null
-
-  const present = elements
-    .filter((element): element is Exclude<typeof element, null> => element !== null)
-    .map((element) => callArrayMultilineOuterRange(source, element))
-  const first = present[0]
-  const last = present.at(-1)
-  if (!first || !last) return null
-
-  const edits: CallArrayMultilineEdit[] = []
-  const openingRange: [number, number] = [array.range[0] + 1, first[0]]
-  if (!/^\s*$/.test(text.slice(...openingRange))) return null
-  edits.push({ range: openingRange, text: `${newline}${elementIndent}` })
-
-  for (let index = 1; index < present.length; index++) {
-    const previous = present[index - 1]
-    const current = present[index]
-    const gap = text.slice(previous[1], current[0])
-    if (!/^,\s*$/.test(gap)) return null
-    edits.push({
-      range: [previous[1] + 1, current[0]],
-      text: `${newline}${elementIndent}`,
-    })
-  }
-
-  const closingRange: [number, number] = [last[1], array.range[1] - 1]
-  const closingGap = text.slice(...closingRange)
-  if (!/^,?\s*$/.test(closingGap)) return null
-  edits.push({
-    range: [closingRange[0] + (closingGap.startsWith(',') ? 1 : 0), closingRange[1]],
-    text: `${newline}${baseIndent}`,
-  })
-
-  return edits
-}
-
-/**
- * Splits large single-line array arguments for configured calls onto one element per line.
- *
- * Example: `queue.run([first, second])` becomes a multiline array argument.
- */
 export const layoutCallArray = defineRule({
   meta: {
     type: 'layout',
@@ -111,7 +22,7 @@ export const layoutCallArray = defineRule({
         properties: {
           callees: { type: 'array', items: { type: 'string' } },
           minElements: { type: 'integer', minimum: 1 },
-          indent: layoutIndentSchema,
+          indent: sourceIndentSchema,
         },
       },
     ],
@@ -120,49 +31,119 @@ export const layoutCallArray = defineRule({
     },
   },
   createOnce(context) {
-    let callees = new Set(['Promise.all', 'Promise.allSettled'])
+    let callees = new Set(layoutCallArrayDefaultCallees)
     let minElements = 2
-    let indentUnit = layoutIndentUnit()
+    let indentUnit = sourceIndentUnit()
     let newline = '\n'
 
     return {
       before() {
-        const options = optionsFirst<CallArrayMultilineOptions>(context, {})
-        callees = new Set(options.callees ?? ['Promise.all', 'Promise.allSettled'])
+        const options = optionsFirst<LayoutCallArrayOptions>(context, {})
+        callees = new Set(options.callees ?? layoutCallArrayDefaultCallees)
         minElements = options.minElements ?? 2
-        indentUnit = layoutIndentUnit(options.indent)
-        newline = layoutNewline(context.sourceCode.text)
-        if (callees.size === 0) return false
+        indentUnit = sourceIndentUnit(options.indent)
+        newline = sourceNewline(context.sourceCode.text)
+        if (callees.size === 0) {
+          return false
+        }
       },
       CallExpression(node) {
-        const callee = callArrayMultilineCallee(node.callee)
-        if (!callee || !callees.has(callee.name)) return
+        const name = astDottedName(node.callee)
 
-        // Why: most matching calls do not contain a qualifying array, so avoid scope work first.
-        const array = node.arguments[0]
-        if (array?.type !== 'ArrayExpression' || array.elements.length < minElements) return
-        if (array.loc.start.line !== array.loc.end.line) return
-
-        // Why: only Promise names a built-in whose local shadow changes the configured call's meaning.
-        if (
-          callee.root.type === 'Identifier' &&
-          callee.root.name === 'Promise' &&
-          callArrayMultilineIsShadowed(context, callee.root)
-        )
+        if (!name || !callees.has(name)) {
           return
+        }
+
+        const array = node.arguments.at(0)
+
+        if (array?.type !== 'ArrayExpression' || array.elements.length < minElements) {
+          return
+        }
+
+        if (array.loc.start.line !== array.loc.end.line) {
+          return
+        }
 
         const source = context.sourceCode
+        const root = layoutCallArrayRoot(node.callee)
+
+        if (root.type === 'Identifier' && root.name === 'Promise') {
+          let scope: Scope | null = source.getScope(root)
+
+          while (scope && !scope.set.has(root.name)) {
+            scope = scope.upper
+          }
+
+          if ((scope?.set.get(root.name)?.defs.length ?? 0) > 0) {
+            return
+          }
+        }
+
         const text = source.text
-        const baseIndent = layoutLineIndent(text, array.range[0])
-        const hasComments = source.getCommentsInside(array).length > 0
-        const edits = hasComments
-          ? null
-          : callArrayMultilineEdits(array, source, text, baseIndent + indentUnit, baseIndent, newline)
+        const baseIndent = sourceLineIndent(text, array.range[0])
+        const elementIndent = baseIndent + indentUnit
 
         context.report({
           node: array,
           messageId: 'multiline',
-          fix: edits ? (fixer) => edits.map((edit) => fixer.replaceTextRange(edit.range, edit.text)) : undefined,
+          fix: (fixer) => {
+            const elements = array.elements.filter((element) => element !== null)
+
+            if (source.getCommentsInside(array).length > 0 || elements.length !== array.elements.length) {
+              return null
+            }
+
+            const ranges = elements.map((element): [number, number] => {
+              let range: [number, number] = [element.range[0], element.range[1]]
+              let before = source.getTokenBefore(element)
+              let after = source.getTokenAfter(element)
+
+              while (before?.value === '(' && after?.value === ')') {
+                range = [before.range[0], after.range[1]]
+                before = source.getTokenBefore(before)
+                after = source.getTokenAfter(after)
+              }
+
+              return range
+            })
+
+            const [first] = ranges
+            const last = ranges.at(-1)
+
+            if (!last) {
+              return null
+            }
+
+            const opening: [number, number] = [array.range[0] + 1, first[0]]
+
+            if (!/^\s*$/.test(text.slice(...opening))) {
+              return null
+            }
+
+            const edits: LayoutEdit[] = [{ range: opening, text: `${newline}${elementIndent}` }]
+
+            for (let index = 1; index < ranges.length; index++) {
+              const previous = ranges[index - 1]
+              const current = ranges[index]
+
+              if (!/^,\s*$/.test(text.slice(previous[1], current[0]))) {
+                return null
+              }
+              edits.push({ range: [previous[1] + 1, current[0]], text: `${newline}${elementIndent}` })
+            }
+
+            const closingGap = text.slice(last[1], array.range[1] - 1)
+
+            if (!/^,?\s*$/.test(closingGap)) {
+              return null
+            }
+            edits.push({
+              range: [last[1] + (closingGap.startsWith(',') ? 1 : 0), array.range[1] - 1],
+              text: `${newline}${baseIndent}`,
+            })
+
+            return edits.map((edit) => fixer.replaceTextRange(edit.range, edit.text))
+          },
         })
       },
     }

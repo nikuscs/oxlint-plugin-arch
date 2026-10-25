@@ -1,16 +1,10 @@
 import { defineRule } from '@oxlint/plugins'
+import { astDottedName, astMemberName, astVisit } from '../../utils/ast.utils.ts'
+import { optionsFirst } from '../../utils/options.utils.ts'
+import type { CodePromiseMutationBinding, CodePromiseMutationOptions } from '../../types/code.types.ts'
 import type { ESTree, Variable } from '@oxlint/plugins'
-import { astDottedName, astStaticMemberName, astVisit, optionsFirst } from '../../utils/index.ts'
 
-interface NoPromiseAllMutationOptions {
-  combinators: string[]
-  methods: string[]
-  checkAssignments: boolean
-}
-
-type MutationBinding = Pick<ESTree.IdentifierReference, 'name' | 'range'>
-
-function mutationBinding(node: ESTree.Node): MutationBinding | undefined {
+function mutationBinding(node: ESTree.Node): CodePromiseMutationBinding | undefined {
   if (node.type === 'Identifier') {
     return node
   }
@@ -29,32 +23,34 @@ function mutationBinding(node: ESTree.Node): MutationBinding | undefined {
   ) {
     return mutationBinding(node.expression)
   }
+
+  return undefined
 }
 
-function mutationBindings(node: ESTree.Node): MutationBinding[] {
-  switch (node.type) {
-    case 'ArrayPattern':
-      return node.elements.flatMap((element) => (element ? mutationBindings(element) : []))
-    case 'ObjectPattern':
-      return node.properties.flatMap((property) =>
-        property.type === 'RestElement' ? mutationBindings(property) : mutationBindings(property.value),
-      )
-    case 'AssignmentPattern':
-      return mutationBindings(node.left)
-    case 'RestElement':
-      return mutationBindings(node.argument)
-    default: {
-      const binding = mutationBinding(node)
-      return binding ? [binding] : []
-    }
+function mutationBindings(node: ESTree.Node): CodePromiseMutationBinding[] {
+  if (node.type === 'ArrayPattern') {
+    return node.elements.flatMap((element) => (element ? mutationBindings(element) : []))
   }
+
+  if (node.type === 'ObjectPattern') {
+    return node.properties.flatMap((property) =>
+      mutationBindings(property.type === 'RestElement' ? property : property.value),
+    )
+  }
+
+  if (node.type === 'AssignmentPattern') {
+    return mutationBindings(node.left)
+  }
+
+  if (node.type === 'RestElement') {
+    return mutationBindings(node.argument)
+  }
+
+  const binding = mutationBinding(node)
+
+  return binding ? [binding] : []
 }
 
-/**
- * Rejects mutation of outer bindings from inside configured promise combinators.
- *
- * Example: `Promise.all(items.map(async item => results.push(await load(item))))` fails.
- */
 export const codePromiseMutation = defineRule({
   meta: {
     type: 'problem',
@@ -86,43 +82,24 @@ export const codePromiseMutation = defineRule({
     let combinators = new Set<string>()
     let methods = new Set<string>()
     let checkAssignments = true
-    let referencesReady = false
 
-    function ensureReferences() {
-      if (referencesReady) {
-        return
-      }
-
-      referencesReady = true
-      for (const scope of context.sourceCode.scopeManager.scopes) {
-        for (const reference of scope.references) {
-          references.set(reference.identifier.range[0], reference.resolved)
-        }
-      }
-    }
-
-    function isOuterBinding(identifier: MutationBinding, call: ESTree.CallExpression): boolean {
-      const variable = references.get(identifier.range[0])
-      return (
-        variable !== undefined &&
-        variable !== null &&
-        variable.identifiers.length > 0 &&
-        variable.identifiers.every(
-          (declaration) => declaration.range[0] < call.range[0] || declaration.range[1] > call.range[1],
-        )
-      )
-    }
-
-    function reportMutation(
+    function report(
       node: ESTree.Node,
-      binding: MutationBinding | undefined,
+      binding: CodePromiseMutationBinding | undefined,
       call: ESTree.CallExpression,
       combinator: string,
     ) {
-      if (!binding || reported.has(binding.range[0]) || !isOuterBinding(binding, call)) {
+      const variable = binding ? references.get(binding.range[0]) : undefined
+
+      const outer =
+        variable !== undefined &&
+        variable !== null &&
+        variable.identifiers.length > 0 &&
+        variable.identifiers.every((declaration) => declaration.range[0] < call.range[0] || declaration.range[1] > call.range[1])
+
+      if (!binding || reported.has(binding.range[0]) || !outer) {
         return
       }
-
       reported.add(binding.range[0])
       context.report({
         node,
@@ -133,44 +110,51 @@ export const codePromiseMutation = defineRule({
 
     return {
       before() {
-        const options = optionsFirst<NoPromiseAllMutationOptions>(context)
+        const options = optionsFirst<CodePromiseMutationOptions>(context)
         combinators = new Set(options.combinators)
         methods = new Set(options.methods)
         checkAssignments = options.checkAssignments
         references.clear()
         reported.clear()
-        referencesReady = false
       },
       CallExpression(node) {
         const combinator = astDottedName(node.callee)
+
         if (!combinator || !combinators.has(combinator)) {
           return
         }
 
-        ensureReferences()
-
-        for (const argument of node.arguments) {
-          astVisit(argument, [node], (candidate) => {
-            if (candidate.type === 'CallExpression' && candidate.callee.type === 'MemberExpression') {
-              const method = astStaticMemberName(candidate.callee)
-              if (method && methods.has(method)) {
-                reportMutation(candidate, mutationBinding(candidate.callee.object), node, combinator)
-              }
-              return
+        if (references.size === 0) {
+          for (const scope of context.sourceCode.scopeManager.scopes) {
+            for (const reference of scope.references) {
+              references.set(reference.identifier.range[0], reference.resolved)
             }
-
-            if (checkAssignments && candidate.type === 'AssignmentExpression') {
-              for (const binding of mutationBindings(candidate.left)) {
-                reportMutation(candidate, binding, node, combinator)
-              }
-              return
-            }
-
-            if (checkAssignments && candidate.type === 'UpdateExpression') {
-              reportMutation(candidate, mutationBinding(candidate.argument), node, combinator)
-            }
-          })
+          }
         }
+
+        astVisit(node.arguments, [node], (candidate) => {
+          if (candidate.type === 'CallExpression' && candidate.callee.type === 'MemberExpression') {
+            const method = astMemberName(candidate.callee)
+
+            if (method && methods.has(method)) {
+              report(candidate, mutationBinding(candidate.callee.object), node, combinator)
+            }
+
+            return
+          }
+
+          if (!checkAssignments) {
+            return
+          }
+
+          if (candidate.type === 'AssignmentExpression') {
+            for (const binding of mutationBindings(candidate.left)) {
+              report(candidate, binding, node, combinator)
+            }
+          } else if (candidate.type === 'UpdateExpression') {
+            report(candidate, mutationBinding(candidate.argument), node, combinator)
+          }
+        })
       },
     }
   },

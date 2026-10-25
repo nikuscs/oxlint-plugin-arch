@@ -1,28 +1,9 @@
 import { defineRule } from '@oxlint/plugins'
-import {
-  declarationsIsObjectParam,
-  declarationsPublicServiceMethods,
-  declarationsTopLevelUnexportedFunctions,
-  exportsCollectFunctions,
-  optionsFirst,
-  optionsOptionalPatterns,
-  optionsPatternSchema,
-  optionsPatternsTest,
-} from '../../utils/index.ts'
-import type { OptionsPattern } from '../../utils/index.ts'
+import { declarationsIsObjectParam } from '../../utils/declarations.utils.ts'
+import { exportsCheckedFunctions } from '../../utils/exports.utils.ts'
+import { optionsFirst, optionsPatterns, optionsPatternSchema } from '../../utils/options.utils.ts'
+import type { CodeObjectParamsOptions } from '../../types/code.types.ts'
 
-interface RequireObjectParamsOptions {
-  maxParams?: number
-  allDeclarations?: boolean
-  serviceMethods?: boolean
-  allowPattern?: OptionsPattern
-}
-
-/**
- * Requires functions to take at most N object-shaped parameters instead of positional arguments.
- *
- * Example: `createUser({ name })` passes; `createUser(name, email)` fails. With `maxParams: 2`, `(deps, params)` passes.
- */
 export const codeObjectParams = defineRule({
   meta: {
     type: 'problem',
@@ -50,39 +31,22 @@ export const codeObjectParams = defineRule({
           allDeclarations = false,
           serviceMethods = false,
           allowPattern,
-        } = optionsFirst<RequireObjectParamsOptions>(context, {})
-        const allowed = optionsOptionalPatterns(allowPattern)
-        const seen = new Set<string>()
-        const functions = allDeclarations
-          ? [...exportsCollectFunctions(program), ...declarationsTopLevelUnexportedFunctions(program)]
-          : exportsCollectFunctions(program)
+        } = optionsFirst<CodeObjectParamsOptions>(context, {})
 
-        if (serviceMethods) functions.push(...declarationsPublicServiceMethods(program))
-
-        for (const item of functions) {
-          const key = `${item.name}:${item.node.start}:${item.node.end}`
-
-          if (seen.has(key) || optionsPatternsTest(allowed, item.name)) {
+        for (const { name, node } of exportsCheckedFunctions(program, allDeclarations, serviceMethods, optionsPatterns(allowPattern))) {
+          if (node.params.length <= maxParams && node.params.every(declarationsIsObjectParam)) {
             continue
           }
-
-          seen.add(key)
-
-          if (
-            item.node.params.length > maxParams ||
-            item.node.params.some((param) => !declarationsIsObjectParam(param))
-          ) {
-            context.report({
-              node: item.node,
-              messageId: 'objectParams',
-              data: {
-                label: allDeclarations ? 'Function' : 'Exported function',
-                name: item.name,
-                maxParams: maxParams === 1 ? 'one' : String(maxParams),
-                s: maxParams === 1 ? '' : 's',
-              },
-            })
-          }
+          context.report({
+            node,
+            messageId: 'objectParams',
+            data: {
+              label: allDeclarations ? 'Function' : 'Exported function',
+              name,
+              maxParams: maxParams === 1 ? 'one' : String(maxParams),
+              s: maxParams === 1 ? '' : 's',
+            },
+          })
         }
       },
     }

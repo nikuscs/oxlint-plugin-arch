@@ -1,29 +1,9 @@
 import { defineRule } from '@oxlint/plugins'
-import {
-  declarationsCollectNamed,
-  exportsCollect,
-  optionsFirst,
-  optionsOptionalPatterns,
-  optionsPatternLabel,
-  optionsPatterns,
-  optionsPatternSchema,
-  optionsPatternsTest,
-} from '../../utils/index.ts'
-import type { OptionsPattern } from '../../utils/index.ts'
+import { declarationsNamed, declarationsUnique } from '../../utils/declarations.utils.ts'
+import { exportsCollect } from '../../utils/exports.utils.ts'
+import { optionsFirst, optionsPatternLabel, optionsPatterns, optionsPatternSchema, optionsPatternsTest, optionsPatternsWithEmpty } from '../../utils/options.utils.ts'
+import type { NamingExportPatternOptions } from '../../types/naming.types.ts'
 
-interface ExportNamePatternOptions {
-  pattern: OptionsPattern
-  flags?: string
-  ignoreTypeExports?: boolean
-  allDeclarations?: boolean
-  allowPattern?: OptionsPattern
-}
-
-/**
- * Checks exported names, or every function and type, against a regular expression supplied in the rule options.
- *
- * Example: With `^user[A-Z]`, `userGet` passes while `getUser` fails.
- */
 export const namingExportPattern = defineRule({
   meta: {
     type: 'problem',
@@ -48,32 +28,23 @@ export const namingExportPattern = defineRule({
   createOnce(context) {
     return {
       Program(program) {
-        const {
-          pattern,
-          flags,
-          ignoreTypeExports = false,
-          allDeclarations = false,
-          allowPattern,
-        } = optionsFirst<ExportNamePatternOptions>(context)
-        const allowed = optionsOptionalPatterns(allowPattern)
-        const expected = optionsPatterns(pattern, flags)
+        const { pattern, flags, ignoreTypeExports = false, allDeclarations = false, allowPattern } =
+          optionsFirst<NamingExportPatternOptions>(context)
+
+        const allowed = optionsPatterns(allowPattern)
+        const expected = optionsPatternsWithEmpty(pattern, flags)
+
         const names = allDeclarations
-          ? declarationsCollectNamed(program)
+          ? declarationsNamed(program)
           : exportsCollect(program).flatMap((binding) =>
-              ignoreTypeExports && binding.typeOnly
-                ? []
-                : [{ name: binding.localName ?? binding.exportedName, node: binding.node }],
-            )
-        const seen = new Set<string>()
+            ignoreTypeExports && binding.typeOnly ? [] : [{ name: binding.localName ?? binding.exportedName, node: binding.node }],
+          )
 
-        for (const item of names) {
-          const key = `${item.name}:${item.node.start}:${item.node.end}`
-
-          if (seen.has(key) || optionsPatternsTest(allowed, item.name) || optionsPatternsTest(expected, item.name)) {
+        for (const item of declarationsUnique(names)) {
+          if (optionsPatternsTest(allowed, item.name) || optionsPatternsTest(expected, item.name)) {
             continue
           }
 
-          seen.add(key)
           context.report({
             node: item.node,
             messageId: 'pattern',

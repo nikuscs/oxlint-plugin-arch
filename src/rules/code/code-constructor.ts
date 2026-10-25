@@ -1,39 +1,9 @@
 import { defineRule } from '@oxlint/plugins'
+import { astDottedName } from '../../utils/ast.utils.ts'
+import { optionsFirst } from '../../utils/options.utils.ts'
+import type { CodeConstructorOptions } from '../../types/code.types.ts'
 import type { ESTree } from '@oxlint/plugins'
-import { astDottedName, optionsFirst } from '../../utils/index.ts'
 
-type RestrictedConstructor = string | { name: string; message?: string }
-
-interface NoRestrictedConstructorOptions {
-  constructors: RestrictedConstructor[]
-  checkCalls?: boolean
-  message?: string
-}
-
-function restrictedConstructorEntries(constructors: RestrictedConstructor[]): Map<string, string | undefined> {
-  const entries = new Map<string, string | undefined>()
-
-  for (const item of constructors) {
-    if (typeof item === 'string') {
-      if (!entries.has(item)) {
-        entries.set(item, undefined)
-      }
-      continue
-    }
-
-    if (!entries.has(item.name)) {
-      entries.set(item.name, item.message)
-    }
-  }
-
-  return entries
-}
-
-/**
- * Rejects `new` of configured constructors, and can also reject calling them without `new`.
- *
- * Example: `constructors: ['Error']` allows `throw new DomainError('x')` and rejects `throw new Error('x')`.
- */
 export const codeConstructor = defineRule({
   meta: {
     type: 'problem',
@@ -77,6 +47,7 @@ export const codeConstructor = defineRule({
 
     function report(node: ESTree.NewExpression | ESTree.CallExpression, messageId: 'construct' | 'call') {
       const name = astDottedName(node.callee)
+
       if (!name || !entries.has(name)) {
         return
       }
@@ -91,11 +62,19 @@ export const codeConstructor = defineRule({
 
     return {
       before() {
-        const options = optionsFirst<NoRestrictedConstructorOptions>(context)
-        entries = restrictedConstructorEntries(options.constructors)
+        const options = optionsFirst<CodeConstructorOptions>(context)
+        entries = new Map()
+
+        for (const item of options.constructors) {
+          const [name, message] = typeof item === 'string' ? [item, undefined] : [item.name, item.message]
+
+          if (!entries.has(name)) {
+            entries.set(name, message)
+          }
+        }
+
         checkCalls = options.checkCalls === true
         fallbackMessage = options.message
-
         if (entries.size === 0) {
           return false
         }

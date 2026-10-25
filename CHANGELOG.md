@@ -2,6 +2,83 @@
 
 ## 0.11.0
 
+### Breaking: rebuilt package
+
+- Every owned rule is now `arch/<family>-<subject>`; the `modules` plugin is gone. Update configs, `ruleSeverities`, `ruleExclusions` and `oxlint-disable` comments with the table below. Old IDs are not aliased: an old ID in a disable comment no longer suppresses anything.
+- Entry points: `oxlint-plugin-arch` (rules), `oxlint-plugin-arch/preset` (named exports `reactModulesPreset`, `nextReactModulesPreset`, `tanstackStartReactModulesPreset`) and `oxlint-plugin-arch/dillon-anti-slop`. The `presets/*` and `rules/*` subpaths are removed.
+- Selector rules (`code-switch`, `code-double-negation`, `naming-types`, `naming-shape`, `types-local-alias`, `react-empty-effect`, `react-dynamic-classes`, `boundaries-rpc-database`, `tests-concurrent-db`) accept an optional `message` option.
+- Preset option errors are `PresetError` instances; messages are unchanged.
+- Rule behavior, option schemas and messages are otherwise unchanged; checked by linting two consumer monorepos before and after.
+
+| Old ID | New ID |
+| --- | --- |
+| `arch/call-arguments-multiline` | `arch/layout-call-arguments` |
+| `arch/call-array-multiline` | `arch/layout-call-array` |
+| `arch/chain-newline` | `arch/layout-chain` |
+| `arch/component-props` | `arch/react-props` |
+| `arch/declaration-name` | `arch/naming-declarations` |
+| `arch/export-file-prefix` | `arch/naming-export-prefix` |
+| `arch/export-name-pattern` | `arch/naming-export-pattern` |
+| `arch/filename-export-name` | `arch/naming-export-template` |
+| `arch/filename-match` | `arch/naming-file` |
+| `arch/folder-prefix` | `arch/naming-folder` |
+| `arch/jsx-attributes-multiline` | `arch/layout-jsx-attributes` |
+| `arch/key-value-same-line` | `arch/layout-key-value` |
+| `arch/no-comments` | `arch/comments` |
+| `arch/no-extra-exports` | `arch/files-exports` |
+| `arch/no-extra-factory-keys` | `arch/files-factory-keys` |
+| `arch/no-file-level-helpers` | `arch/files-helpers` |
+| `arch/no-imported-type-alias` | `arch/types-imported-alias` |
+| `arch/no-inline-schema-elements` | `arch/schemas-inline` |
+| `arch/no-inline-types` | `arch/types-inline` |
+| `arch/no-literal-in` | `arch/code-literal-in` |
+| `arch/no-local-schema-construction` | `arch/schemas-local` |
+| `arch/no-member-comments` | `arch/comments-members` |
+| `arch/no-module-mutable-state` | `arch/code-mutable-state` |
+| `arch/no-promise-all-mutation` | `arch/code-promise-mutation` |
+| `arch/no-rederive-schema` | `arch/schemas-rederive` |
+| `arch/no-restricted-constructor` | `arch/code-constructor` |
+| `arch/no-restricted-files` | `arch/files-restricted` |
+| `arch/no-restricted-token` | `arch/boundaries-token-owner` |
+| `arch/no-runtime-in-types` | `arch/files-types-only` |
+| `arch/no-single-use-scalar-schema` | `arch/schemas-single-use` |
+| `arch/no-top-level-functions` | `arch/files-no-functions` |
+| `arch/no-trivial-functions` | `arch/code-trivial-functions` |
+| `arch/no-type-declarations` | `arch/types-declarations` |
+| `arch/no-unescaped-like` | `arch/backend-sql-like` |
+| `arch/object-multiline` | `arch/layout-object` |
+| `arch/only-export-components` | `arch/files-components-only` |
+| `arch/only-export-constants` | `arch/files-constants-only` |
+| `arch/padding-between-statements` | `arch/layout-padding` |
+| `arch/prefer-namespace-type-import` | `arch/types-namespace-import` |
+| `arch/require-file-factory` | `arch/files-factory` |
+| `arch/require-object-params` | `arch/code-object-params` |
+| `arch/require-orpc-output` | `arch/backend-orpc-output` |
+| `arch/require-paired-call` | `arch/code-paired-call` |
+| `arch/route-surface` | `arch/files-route` |
+| `arch/ternary-layout` | `arch/layout-ternary` |
+| `arch/test-title-pattern` | `arch/tests-titles` |
+| `modules/backend-switch` | `arch/code-switch` |
+| `modules/concurrent-db` | `arch/tests-concurrent-db` |
+| `modules/domain-constants` | `arch/files-domain-constants` |
+| `modules/double-negation` | `arch/code-double-negation` |
+| `modules/dynamic-classes` | `arch/react-dynamic-classes` |
+| `modules/empty-effect` | `arch/react-empty-effect` |
+| `modules/import-boundaries` | `arch/boundaries-imports` |
+| `modules/local-type-alias` | `arch/types-local-alias` |
+| `modules/memoization` | `arch/react-memo` |
+| `modules/next-runtime` | `arch/boundaries-next` |
+| `modules/no-unknown` | `arch/types-unknown` |
+| `modules/pascal-interface` | `arch/naming-types` |
+| `modules/reasoned-directives` | `arch/comments-directives` |
+| `modules/rpc-database` | `arch/boundaries-rpc-database` |
+| `modules/service-functions` | `arch/backend-service-functions` |
+| `modules/service-types` | `arch/types-service` |
+| `modules/shape-suffix` | `arch/naming-shape` |
+| `modules/tanstack-runtime` | `arch/boundaries-tanstack` |
+| `modules/test-assertions` | `arch/tests-assertions` |
+| `modules/test-modifiers` | `arch/tests-modifiers` |
+
 - `modules/no-unknown` allows `unknown` on the narrowed parameter of a type guard (`function isAppError(error: unknown): error is AppError`) and on the error parameter of a catch callback (`catch: (error: unknown) => E`, `.catch((error: unknown) => …)`). Other uses still fail. This applies to every root.
 - `arch/no-trivial-functions` no longer reports type guards with a predicate return type as pass-through wrappers. Banned names and structurally generic guards are still reported.
 - Package schemas: construction is allowed only in `types/**`. Package `*.types.ts` files outside `types/` are reported again (fix: move them to `src/types/`), matching `arch/no-restricted-files`.

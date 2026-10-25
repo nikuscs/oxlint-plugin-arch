@@ -1,26 +1,34 @@
 import { defineRule } from '@oxlint/plugins'
-import {
-  declarationsTopLevelUnexportedFunctions,
-  exportsCollect,
-  exportsCollectFunctions,
-  optionsFirst,
-  routesInspectFunction,
-} from '../../utils/index.ts'
+import { astCallName, astVisit } from '../../utils/ast.utils.ts'
+import { declarationsTopLevelUnexportedFunctions } from '../../utils/declarations.utils.ts'
+import { exportsCollect, exportsFunctions } from '../../utils/exports.utils.ts'
+import { optionsFirst } from '../../utils/options.utils.ts'
+import type { DeclarationsFunction } from '../../types/declarations.types.ts'
+import type { FilesRouteOptions } from '../../types/files.types.ts'
+import type { Context } from '@oxlint/plugins'
 
-interface RouteSurfaceOptions {
-  exportName: string
-  allowedExports?: string[]
-  inspectExports?: boolean
-  bannedHooks: string[]
-  banIntrinsicJsx: boolean
+function inspectAdapter(context: Context, item: DeclarationsFunction, bannedHooks: Set<string>, banIntrinsicJsx: boolean): void {
+  astVisit(item.node.body, [item.node], (node) => {
+    if (banIntrinsicJsx && node.type === 'JSXOpeningElement' && node.name.type === 'JSXIdentifier' && /^[a-z]/.test(node.name.name)) {
+      context.report({
+        node,
+        messageId: 'hostJsx',
+        data: { name: item.name },
+      })
+    }
+
+    const hook = node.type === 'CallExpression' ? astCallName(node) : undefined
+
+    if (hook && bannedHooks.has(hook)) {
+      context.report({
+        node,
+        messageId: 'bannedHook',
+        data: { hook, name: item.name },
+      })
+    }
+  })
 }
 
-/**
- * Keeps route files on a small configurable surface: one export plus adapters without banned hooks or intrinsic JSX.
- * `allowedExports` admits framework metadata exports; `inspectExports` also checks the exported route component.
- *
- * Example: A route rendering `<UserPage />` passes; an adapter rendering `<div>` or calling `useState` fails.
- */
 export const filesRoute = defineRule({
   meta: {
     type: 'problem',
@@ -56,8 +64,10 @@ export const filesRoute = defineRule({
     return {
       Program(program) {
         const { exportName, allowedExports = [], inspectExports = false, bannedHooks, banIntrinsicJsx } =
-          optionsFirst<RouteSurfaceOptions>(context)
+          optionsFirst<FilesRouteOptions>(context)
+
         const allowed = new Set([exportName, ...allowedExports])
+        const expected = [...allowed].join("', '")
         const bindings = exportsCollect(program)
 
         for (const binding of bindings) {
@@ -65,7 +75,7 @@ export const filesRoute = defineRule({
             context.report({
               node: binding.node,
               messageId: 'extraExport',
-              data: { expected: [...allowed].join("', '"), actual: binding.exportedName },
+              data: { expected, actual: binding.exportedName },
             })
           }
         }
@@ -75,24 +85,28 @@ export const filesRoute = defineRule({
 
         for (const item of declarationsTopLevelUnexportedFunctions(program)) {
           inspected.add(item.node.start)
-          routesInspectFunction(context, item, banned, banIntrinsicJsx)
+          inspectAdapter(context, item, banned, banIntrinsicJsx)
         }
 
-        if (!inspectExports) return
+        if (!inspectExports) {
+          return
+        }
 
-        const names = new Set(
+        const routeNames = new Set(
           bindings.filter((binding) => binding.exportedName === exportName).map((binding) => binding.localName ?? binding.exportedName),
         )
 
-        const defaultExport = program.body.find((statement) => statement.type === 'ExportDefaultDeclaration')
-        const declaration = defaultExport?.declaration
-        const defaultFunctions =
-          declaration?.type === 'ArrowFunctionExpression' || declaration?.type === 'FunctionExpression'
-            ? [{ name: 'default', node: declaration }]
+        const defaultExport = program.body.find((statement) => statement.type === 'ExportDefaultDeclaration')?.declaration
+
+        const defaultFunctions: DeclarationsFunction[] =
+          defaultExport?.type === 'ArrowFunctionExpression' || defaultExport?.type === 'FunctionExpression'
+            ? [{ name: 'default', node: defaultExport }]
             : []
 
-        for (const item of [...exportsCollectFunctions(program), ...defaultFunctions]) {
-          if (names.has(item.name) && !inspected.has(item.node.start)) routesInspectFunction(context, item, banned, banIntrinsicJsx)
+        for (const item of [...exportsFunctions(program), ...defaultFunctions]) {
+          if (routeNames.has(item.name) && !inspected.has(item.node.start)) {
+            inspectAdapter(context, item, banned, banIntrinsicJsx)
+          }
         }
       },
     }

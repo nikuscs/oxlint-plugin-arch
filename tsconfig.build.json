@@ -8,8 +8,8 @@
     "rootDir": "src"
   },
   "include": [
-    "src/presets/**/*.ts",
-    "src/vendor/dillon-anti-slop/index.ts",
-    "src/modules.ts"
+    "src/index.ts",
+    "src/preset/preset.ts",
+    "src/vendor/dillon-anti-slop/index.ts"
   ]
 }

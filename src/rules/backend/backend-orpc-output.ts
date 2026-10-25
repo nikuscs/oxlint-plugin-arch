@@ -1,17 +1,25 @@
 import { defineRule } from '@oxlint/plugins'
-import { astStaticMemberName, optionsFirst, orpcFindChainCall, orpcIsNamedOrComposedArgument } from '../../utils/index.ts'
+import { astMemberName } from '../../utils/ast.utils.ts'
+import { optionsFirst } from '../../utils/options.utils.ts'
+import type { BackendOrpcOutputOptions } from '../../types/backend.types.ts'
+import type { ESTree } from '@oxlint/plugins'
 
-interface RequireOrpcOutputOptions {
-  composers: string[]
-  handlerMethod?: string
-  outputMethod?: string
+function backendFindChainCall(expression: ESTree.Expression, method: string): ESTree.CallExpression | undefined {
+  if (expression.type === 'ChainExpression') {
+    return backendFindChainCall(expression.expression, method)
+  }
+
+  if (expression.type === 'MemberExpression') {
+    return backendFindChainCall(expression.object, method)
+  }
+
+  if (expression.type !== 'CallExpression' || expression.callee.type !== 'MemberExpression') {
+    return undefined
+  }
+
+  return astMemberName(expression.callee) === method ? expression : backendFindChainCall(expression.callee.object, method)
 }
 
-/**
- * Checks oRPC procedure chains for a configured output method before the configured handler method.
- *
- * Example: `.output(userSchema).handler(...)` passes; `.handler(...)` without output fails.
- */
 export const backendOrpcOutput = defineRule({
   meta: {
     type: 'problem',
@@ -39,24 +47,29 @@ export const backendOrpcOutput = defineRule({
           return
         }
 
-        const {
-          composers,
-          handlerMethod = 'handler',
-          outputMethod = 'output',
-        } = optionsFirst<RequireOrpcOutputOptions>(context)
+        const { composers, handlerMethod = 'handler', outputMethod = 'output' } = optionsFirst<BackendOrpcOutputOptions>(context)
 
-        if (astStaticMemberName(node.callee) !== handlerMethod) {
+        if (astMemberName(node.callee) !== handlerMethod) {
           return
         }
 
-        const output = orpcFindChainCall(node.callee.object, outputMethod)
+        const output = backendFindChainCall(node.callee.object, outputMethod)
 
         if (!output) {
           context.report({ node, messageId: 'missing' })
           return
         }
 
-        if (!orpcIsNamedOrComposedArgument(output.arguments[0], new Set(composers))) {
+        const schema = output.arguments.at(0)
+
+        const named =
+          schema?.type === 'Identifier' ||
+          (schema?.type === 'CallExpression' &&
+            schema.callee.type === 'Identifier' &&
+            composers.includes(schema.callee.name) &&
+            schema.arguments[0]?.type === 'Identifier')
+
+        if (!named) {
           context.report({ node: output, messageId: 'invalid' })
         }
       },

@@ -1,8 +1,14 @@
 import { defineRule } from '@oxlint/plugins'
-import type { ModuleTestModifiersOptions } from '../../types/module-policy.types.ts'
-import { astDottedName, optionsFirst } from '../../utils/index.ts'
+import { astDottedName } from '../../utils/ast.utils.ts'
+import { optionsFirst } from '../../utils/options.utils.ts'
+import type { TestsModifiersOptions } from '../../types/tests.types.ts'
 
-/** Reject focused, skipped and placeholder tests, including renamed imports such as check.only. */
+const testNames = ['test', 'it', 'describe', 'suite']
+
+const testPackages = new Set(['vitest', 'bun:test', '@playwright/test', '@jest/globals'])
+
+const modifiers = new Set(['only', 'skip', 'todo'])
+
 export const testsModifiers = defineRule({
   meta: {
     type: 'problem',
@@ -19,41 +25,39 @@ export const testsModifiers = defineRule({
   },
   createOnce(context) {
     let names = new Set<string>()
+
     return {
       before() {
         names = new Set([
-          'test',
-          'it',
-          'describe',
-          'suite',
-          ...(optionsFirst<ModuleTestModifiersOptions>(context, {}).additionalTestFunctions ?? []),
+          ...testNames,
+          ...(optionsFirst<TestsModifiersOptions>(context, {}).additionalTestFunctions ?? []),
         ])
       },
       ImportDeclaration(node) {
-        if (!['vitest', 'bun:test', '@playwright/test', '@jest/globals'].includes(node.source.value)) {
+        if (!testPackages.has(node.source.value)) {
           return
         }
+
         for (const specifier of node.specifiers) {
           if (specifier.type !== 'ImportSpecifier') {
             continue
           }
-          const imported =
-            specifier.imported.type === 'Identifier' ? specifier.imported.name : specifier.imported.value
-          if (['test', 'it', 'describe', 'suite'].includes(imported)) {
+
+          const imported = specifier.imported.type === 'Identifier' ? specifier.imported.name : specifier.imported.value
+
+          if (testNames.includes(imported)) {
             names.add(specifier.local.name)
           }
         }
       },
       MemberExpression(node) {
         const name = astDottedName(node)
-        if (!name) {
+
+        if (!name || !modifiers.has(name.split('.').at(-1) ?? '')) {
           return
         }
-        const parts = name.split('.')
-        if (
-          [...names].some((test) => name.startsWith(test + '.')) &&
-          ['only', 'skip', 'todo'].includes(parts.at(-1) ?? '')
-        ) {
+
+        if ([...names].some((test) => name.startsWith(`${test}.`))) {
           context.report({ node, messageId: 'modifier' })
         }
       },

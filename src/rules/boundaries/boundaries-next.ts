@@ -1,23 +1,31 @@
 import { defineRule } from '@oxlint/plugins'
-import type { ESTree, Scope } from '@oxlint/plugins'
-import type { ModuleNextRuntimeOptions } from '../../types/module-policy.types.ts'
+import { astIsTypeOnlyImport } from '../../utils/ast.utils.ts'
 import {
-  boundaryResolveTarget,
-  optionsFirst,
-  runtimeBrowserGlobals,
-  runtimeIsBackendImport,
-  runtimeIsServerPlatformImport,
-  runtimeMatchesImport,
-  runtimeMemberName,
-  runtimeServerGlobals,
-} from '../../utils/index.ts'
+  boundariesBrowserGlobals,
+  boundariesDeclaredVariable,
+  boundariesImportExpression,
+  boundariesIsBackendImport,
+  boundariesIsServerPlatformImport,
+  boundariesIsSharedFile,
+  boundariesIsTypeOnlyExport,
+  boundariesMatchesImport,
+  boundariesMemberName,
+  boundariesReport,
+  boundariesResolveTarget,
+  boundariesRuntimeMessages,
+  boundariesRuntimeProperties,
+  boundariesServerGlobals,
+} from '../../utils/boundaries.utils.ts'
+import { optionsFirst } from '../../utils/options.utils.ts'
+import type { BoundariesIdentifier, BoundariesNextOptions } from '../../types/boundaries.types.ts'
+import type { ESTree } from '@oxlint/plugins'
 
-/**
- * Checks Next.js runtime ownership from file names and directives: `.server`/`.rsc` and `'use server'` modules stay off
- * the browser, `.client` and `'use client'` modules stay off server-only APIs, and shared modules use neither.
- *
- * Example: `chat.client.ts` importing `next/headers` fails; `chat.server.ts` importing it passes.
- */
+const boundariesClientHookReason = 'client hooks do not belong in server, RSC or shared modules'
+
+function boundariesIsClientHook(name: string): boolean {
+  return /^use[A-Z]/.test(name) && name !== 'useId' && name !== 'use'
+}
+
 export const boundariesNext = defineRule({
   meta: {
     type: 'problem',
@@ -25,185 +33,190 @@ export const boundariesNext = defineRule({
       {
         type: 'object',
         additionalProperties: false,
-        properties: {
-          web: { type: 'array', items: { type: 'string' } },
-          backend: { type: 'array', items: { type: 'string' } },
-          aliases: { type: 'object', additionalProperties: { type: 'string' } },
-          backendPackages: { type: 'array', items: { type: 'string' } },
-          serverImports: { type: 'array', items: { type: 'string' } },
-          clientImports: { type: 'array', items: { type: 'string' } },
-          allowComputedImportsIn: { type: 'array', items: { type: 'string' } },
-        },
+        properties: boundariesRuntimeProperties,
         required: ['web', 'backend', 'aliases', 'backendPackages'],
       },
     ],
     messages: {
-      runtime: '{{source}} is not valid here: {{reason}}.',
+      ...boundariesRuntimeMessages,
       directive: "'{{directive}}' does not match this {{side}} module; rename the file or remove the directive.",
       action: "Server actions modules must start with 'use server'.",
-      computed:
-        'Use a literal dynamic import so runtime ownership can be checked, or declare this exact file in allowComputedImportsIn after reviewing its targets.',
     },
   },
   createOnce(context) {
-    let options: ModuleNextRuntimeOptions
+    let options: BoundariesNextOptions
     let file = ''
     let server = false
     let client = false
     let shared = false
     const reactNamespaces = new Set<ESTree.Node>()
 
-    function report(node: ESTree.Node, source: string, reason: string) {
-      context.report({ node, messageId: 'runtime', data: { source, reason } })
-    }
+    function check(node: ESTree.Node, source: string, typeOnly: boolean): void {
+      if (typeOnly) {
+        return
+      }
 
-    function check(node: ESTree.Node, source: string, typeOnly: boolean) {
-      if (typeOnly) return
-      const target = boundaryResolveTarget(options, file, source)
-      const serverOnly =
-        runtimeIsServerPlatformImport(source) ||
-        runtimeIsBackendImport(options, target, source) ||
-        /\.(?:server|rsc)(?:\.[cm]?[jt]sx?)?$/.test(target) ||
-        /^(?:server-only|next\/headers|next\/cache|next\/server)$/.test(source) ||
-        runtimeMatchesImport(options.serverImports, source)
+      const target = boundariesResolveTarget(options, file, source)
+
       const clientOnly =
         /(?:\/hooks\/|\.client-only(?:\.|$))/.test(target) ||
         /^(?:client-only|react-dom\/client)$/.test(source) ||
-        runtimeMatchesImport(options.clientImports, source)
+        boundariesMatchesImport(options.clientImports, source)
 
       if (clientOnly && (server || shared)) {
-        report(node, source, 'browser-only dependencies do not belong in server, RSC or shared modules')
-      } else if (serverOnly && !server) {
-        report(
-          node,
-          source,
-          shared
-            ? 'shared utilities/constants/lib cannot import server-only dependencies'
-            : 'server-only dependencies belong in .server, .rsc or server action modules',
-        )
+        boundariesReport(context, node, source, 'browser-only dependencies do not belong in server, RSC or shared modules')
+        return
       }
-    }
 
-    function resolve(node: Extract<ESTree.Node, { type: 'Identifier' }>) {
-      let scope: Scope | null = context.sourceCode.getScope(node)
-      while (scope) {
-        const variable = scope.set.get(node.name)
-        if (variable?.defs.length) return variable
-        scope = scope.upper
+      const serverOnly =
+        boundariesIsServerPlatformImport(source) ||
+        boundariesIsBackendImport(options, target, source) ||
+        /\.(?:server|rsc)(?:\.[cm]?[jt]sx?)?$/.test(target) ||
+        /^(?:server-only|next\/headers|next\/cache|next\/server)$/.test(source) ||
+        boundariesMatchesImport(options.serverImports, source)
+
+      if (!serverOnly || server) {
+        return
       }
-      return null
-    }
-
-    function clientHook(name: string) {
-      return /^use[A-Z]/.test(name) && !['useId', 'use'].includes(name)
-    }
-
-    function inType(node: ESTree.Node) {
-      return ['TSTypeQuery', 'TSQualifiedName', 'TSTypeReference'].includes(node.parent?.type ?? '')
-    }
-
-    // Unresolved runtime references only: declarations, property keys and erased type positions are not globals.
-    function globalReferences() {
-      const scope = context.sourceCode.scopeManager.scopes[0]
-      if (!scope) return []
-      const implicit = [...scope.set.values()].filter((variable) => !variable.defs.length)
-      return [...scope.through, ...implicit.flatMap((variable) => variable.references)]
-        .map((reference) => reference.identifier)
-        .filter((node): node is Extract<ESTree.Node, { type: 'Identifier' }> => node.type === 'Identifier' && !inType(node))
-    }
-
-    function global(reference: Extract<ESTree.Node, { type: 'Identifier' }>) {
-      // `globalThis.window` reaches the same global as a bare `window`.
-      const owned = reference.name === 'globalThis' ? runtimeMemberName(reference.parent) : null
-      const name = owned ?? reference.name
-      const serverGlobal = runtimeServerGlobals.includes(name)
-      const browserGlobal = runtimeBrowserGlobals.includes(name)
-      if (!serverGlobal && !browserGlobal) return
-      const node: ESTree.Node = owned ? reference.parent : reference
-      const env: ESTree.Node | null = node.parent
-      const key: ESTree.Node | null | undefined = env?.parent
-      const publicEnv =
-        name === 'process' &&
-        runtimeMemberName(env) === 'env' &&
-        env?.type === 'MemberExpression' &&
-        env.object === node &&
-        key?.type === 'MemberExpression' &&
-        key.object === env &&
-        (runtimeMemberName(key) ?? '').startsWith('NEXT_PUBLIC_')
-      if (serverGlobal && !server && !publicEnv && (client || shared))
-        report(node, name, 'server globals are unavailable in browser and shared modules')
-      if (browserGlobal && server) report(node, name, 'browser globals are unavailable during server execution')
+      boundariesReport(
+        context,
+        node,
+        source,
+        shared
+          ? 'shared utilities/constants/lib cannot import server-only dependencies'
+          : 'server-only dependencies belong in .server, .rsc or server action modules',
+      )
     }
 
     return {
       Program(program) {
-        options = optionsFirst<ModuleNextRuntimeOptions>(context)
+        options = optionsFirst<BoundariesNextOptions>(context)
         reactNamespaces.clear()
         file = context.filename.replaceAll('\\', '/')
-        const directives = program.body
-          .filter(
-            (statement): statement is Extract<ESTree.Statement, { type: 'ExpressionStatement' }> =>
-              statement.type === 'ExpressionStatement' && 'directive' in statement && Boolean(statement.directive),
-          )
-          .map((statement) => ({ node: statement, value: statement.directive ?? '' }))
-        const useServer = directives.find((entry) => entry.value === 'use server')
-        const useClient = directives.find((entry) => entry.value === 'use client')
+        const directives = new Map<string, ESTree.Node>()
+
+        for (const statement of program.body) {
+          if (statement.type === 'ExpressionStatement' && statement.directive && !directives.has(statement.directive)) {
+            directives.set(statement.directive, statement)
+          }
+        }
+
+        const useServer = directives.get('use server')
+        const useClient = directives.get('use client')
         const serverName = /\.(?:server|rsc|action)\.[cm]?[jt]sx?$/.test(file)
         const clientName = /\.client\.[cm]?[jt]sx?$/.test(file)
-        shared =
-          /\.(?:utils|constants)\.[cm]?[jt]sx?$/.test(file) ||
-          options.web.some((path) => file.startsWith(path + '/lib/'))
-        server = serverName || Boolean(useServer)
+        shared = boundariesIsSharedFile(options, file)
+        server = !useClient && (serverName || Boolean(useServer))
         client = clientName || Boolean(useClient)
-        if (useClient && serverName)
-          context.report({ node: useClient.node, messageId: 'directive', data: { directive: 'use client', side: 'server' } })
-        if (useServer && clientName)
-          context.report({ node: useServer.node, messageId: 'directive', data: { directive: 'use server', side: 'client' } })
-        if (/\.action\.[cm]?[jt]sx?$/.test(file) && !useServer) context.report({ node: program, messageId: 'action' })
-        if (useClient) server = false
+        if (useClient && serverName) {
+          context.report({
+            node: useClient,
+            messageId: 'directive',
+            data: { directive: 'use client', side: 'server' },
+          })
+        }
+
+        if (useServer && clientName) {
+          context.report({
+            node: useServer,
+            messageId: 'directive',
+            data: { directive: 'use server', side: 'client' },
+          })
+        }
+
+        if (/\.action\.[cm]?[jt]sx?$/.test(file) && !useServer) {
+          context.report({ node: program, messageId: 'action' })
+        }
       },
       ImportDeclaration(node) {
-        const typeOnly =
-          node.importKind === 'type' ||
-          (node.specifiers.length > 0 &&
-            node.specifiers.every((specifier) => specifier.type === 'ImportSpecifier' && specifier.importKind === 'type'))
+        const typeOnly = astIsTypeOnlyImport(node)
         check(node, node.source.value, typeOnly)
-        if (typeOnly || !(server || shared) || node.source.value !== 'react') return
+        if (typeOnly || !(server || shared) || node.source.value !== 'react') {
+          return
+        }
+
         for (const specifier of node.specifiers) {
-          if (specifier.type !== 'ImportSpecifier') reactNamespaces.add(specifier)
-          else if (
-            specifier.importKind !== 'type' &&
-            specifier.imported.type === 'Identifier' &&
-            clientHook(specifier.imported.name)
-          )
-            report(specifier, specifier.imported.name, 'client hooks do not belong in server, RSC or shared modules')
+          if (specifier.type !== 'ImportSpecifier') {
+            reactNamespaces.add(specifier)
+            continue
+          }
+
+          if (specifier.importKind !== 'type' && specifier.imported.type === 'Identifier' && boundariesIsClientHook(specifier.imported.name)) {
+            boundariesReport(context, specifier, specifier.imported.name, boundariesClientHookReason)
+          }
         }
       },
       MemberExpression(node) {
-        const name = runtimeMemberName(node)
-        if (!name || !clientHook(name) || node.object.type !== 'Identifier') return
-        const binding = resolve(node.object)?.defs[0]?.node
-        if (binding && reactNamespaces.has(binding))
-          report(node, `${node.object.name}.${name}`, 'client hooks do not belong in server, RSC or shared modules')
+        const name = boundariesMemberName(node)
+
+        if (!name || !boundariesIsClientHook(name) || node.object.type !== 'Identifier') {
+          return
+        }
+
+        const binding = boundariesDeclaredVariable(context.sourceCode.getScope(node.object), node.object.name)?.defs[0]?.node
+
+        if (binding && reactNamespaces.has(binding)) {
+          boundariesReport(context, node, `${node.object.name}.${name}`, boundariesClientHookReason)
+        }
       },
       ExportNamedDeclaration(node) {
-        if (node.source)
-          check(
-            node,
-            node.source.value,
-            node.exportKind === 'type' ||
-              (node.specifiers.length > 0 && node.specifiers.every((specifier) => specifier.exportKind === 'type')),
-          )
+        if (node.source) {
+          check(node, node.source.value, boundariesIsTypeOnlyExport(node))
+        }
       },
       ExportAllDeclaration(node) {
         check(node, node.source.value, node.exportKind === 'type')
       },
       ImportExpression(node) {
-        if (node.source.type === 'Literal' && typeof node.source.value === 'string') check(node, node.source.value, false)
-        else if (!options.allowComputedImportsIn?.includes(file)) context.report({ node, messageId: 'computed' })
+        boundariesImportExpression(context, node, Boolean(options.allowComputedImportsIn?.includes(file)), (source) => check(node, source, false))
       },
       'Program:exit'() {
-        for (const reference of globalReferences()) global(reference)
+        const scope = context.sourceCode.scopeManager.scopes.at(0)
+
+        if (!scope) {
+          return
+        }
+
+        const implicit = [...scope.set.values()].filter((variable) => !variable.defs.length)
+
+        const references = [...scope.through, ...implicit.flatMap((variable) => variable.references)]
+          .map((reference): ESTree.Node => reference.identifier)
+          .filter(
+            (node): node is BoundariesIdentifier =>
+              node.type === 'Identifier' && !['TSTypeQuery', 'TSQualifiedName', 'TSTypeReference'].includes(node.parent.type),
+          )
+
+        for (const reference of references) {
+          const owned = reference.name === 'globalThis' ? boundariesMemberName(reference.parent) : null
+          const name = owned ?? reference.name
+          const serverGlobal = boundariesServerGlobals.includes(name)
+          const browserGlobal = boundariesBrowserGlobals.includes(name)
+
+          if (!serverGlobal && !browserGlobal) {
+            continue
+          }
+
+          const node: ESTree.Node = owned ? reference.parent : reference
+          const env = node.parent
+          const key = env?.parent
+
+          const publicEnv =
+            name === 'process' &&
+            env?.type === 'MemberExpression' &&
+            boundariesMemberName(env) === 'env' &&
+            env.object === node &&
+            key?.type === 'MemberExpression' &&
+            key.object === env &&
+            (boundariesMemberName(key) ?? '').startsWith('NEXT_PUBLIC_')
+
+          if (serverGlobal && !server && (client || shared) && !publicEnv) {
+            boundariesReport(context, node, name, 'server globals are unavailable in browser and shared modules')
+          }
+
+          if (browserGlobal && server) {
+            boundariesReport(context, node, name, 'browser globals are unavailable during server execution')
+          }
+        }
       },
     }
   },

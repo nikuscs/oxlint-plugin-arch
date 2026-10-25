@@ -1,17 +1,8 @@
 import { defineRule } from '@oxlint/plugins'
-import { optionsFirst, schemasTypeOperator } from '../../utils/index.ts'
+import { optionsFirst } from '../../utils/options.utils.ts'
+import { schemasTypeOperator } from '../../utils/schemas.utils.ts'
+import type { SchemasRederiveOptions } from '../../types/schemas.types.ts'
 
-interface NoRederiveSchemaOptions {
-  from: string[]
-  namespaces?: string[]
-  operators?: string[]
-}
-
-/**
- * Prevents deriving types from configured imported schemas when the package should export and consume a named type.
- *
- * Example: `z.infer<typeof importedSchema>` fails; deriving from a same-file schema passes.
- */
 export const schemasRederive = defineRule({
   meta: {
     type: 'problem',
@@ -36,7 +27,7 @@ export const schemasRederive = defineRule({
 
     return {
       Program(program) {
-        const { from } = optionsFirst<NoRederiveSchemaOptions>(context)
+        const { from } = optionsFirst<SchemasRederiveOptions>(context)
         imported = new Set(
           program.body.flatMap((statement) =>
             statement.type === 'ImportDeclaration' && from.includes(statement.source.value)
@@ -46,19 +37,17 @@ export const schemasRederive = defineRule({
         )
       },
       TSTypeReference(node) {
-        const { namespaces = ['z'], operators = ['infer', 'input'] } = optionsFirst<NoRederiveSchemaOptions>(context)
+        const { namespaces = ['z'], operators = ['infer', 'input'] } = optionsFirst<SchemasRederiveOptions>(context)
         const operator = schemasTypeOperator(node, new Set(namespaces), new Set(operators))
         const parameter = node.typeArguments?.params[0]
 
-        if (
-          !operator ||
-          parameter?.type !== 'TSTypeQuery' ||
-          parameter.exprName.type !== 'Identifier' ||
-          !imported.has(parameter.exprName.name)
-        ) {
+        if (!operator || parameter?.type !== 'TSTypeQuery' || parameter.exprName.type !== 'Identifier') {
           return
         }
 
+        if (!imported.has(parameter.exprName.name)) {
+          return
+        }
         context.report({
           node,
           messageId: 'rederive',

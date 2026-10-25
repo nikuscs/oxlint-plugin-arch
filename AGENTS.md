@@ -8,7 +8,14 @@
 - Use Oxlint's ESTree API; do not add another production parser.
 - Option changes to existing rules stay backward compatible: old shapes keep working and defaults keep today's behavior.
 - Autofixes change only whitespace or remove comments. When a fix cannot be proven safe (comments in range, computed or sparse syntax), report without a fix.
-- Reuse helpers in `src/utils/helpers/` before writing new ones (`astDottedName`, `comments*`, `layout*`). Every helper export starts with its helper module basename.
+- Reuse helpers in `src/utils/*.utils.ts` before writing new ones. Every export starts with its file's topic (`astDottedName`, `sourceIsWhy`).
+
+## Code
+
+- The repo follows its own preset: `bun run lint` must pass. Types live in `src/types/<topic>.types.ts`.
+- No comments. The only exception is an `oxlint-disable-next-line <rule> -- <reason>` directive where a rule truly cannot be satisfied.
+- A function used once is inlined. It stays named only when inlining would break a lint limit (complexity, file length, nesting).
+- No duplicate code: `bun run lint:dupes` and `bun run lint:dead` stay clean. Logic two files share goes into `src/utils/`; a helper only one file uses stays in that file.
 - `README.md` is a short landing page for plugin users: pitch, install, quick start and the rule index. Rule detail lives in `docs/rules/<plugin>/<rule>.md`, preset detail in `docs/preset/*.md`. Maintainer workflow lives here.
 
 ## Adding or changing a rule

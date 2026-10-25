@@ -1,61 +1,8 @@
 import { defineRule } from '@oxlint/plugins'
-import type { ESTree } from '@oxlint/plugins'
-import { layoutIndentSchema, layoutIndentUnit, layoutLineIndent, layoutNewline, optionsFirst } from '../../utils/index.ts'
-import type { LayoutIndent } from '../../utils/index.ts'
+import { optionsFirst } from '../../utils/options.utils.ts'
+import { sourceIndentSchema, sourceIndentUnit, sourceLineIndent, sourceNewline } from '../../utils/source.utils.ts'
+import type { LayoutJsxAttributesOptions } from '../../types/layout.types.ts'
 
-interface JsxAttributesMultilineOptions {
-  minAttributes?: number
-  indent?: LayoutIndent
-}
-
-interface JsxAttributesMultilineEdit {
-  range: [number, number]
-  text: string
-}
-
-function jsxAttributesMultilineEdits(
-  node: ESTree.JSXOpeningElement,
-  text: string,
-  attributeIndent: string,
-  baseIndent: string,
-  newline: string,
-): JsxAttributesMultilineEdit[] | null {
-  const first = node.attributes[0]
-  const last = node.attributes.at(-1)
-  if (!first || !last) return null
-
-  const prefix = node.typeArguments ?? node.name
-  const openingRange: [number, number] = [prefix.range[1], first.range[0]]
-  if (!/^\s*$/.test(text.slice(...openingRange))) return null
-
-  const edits: JsxAttributesMultilineEdit[] = [
-    {
-      range: openingRange,
-      text: `${newline}${attributeIndent}`,
-    },
-  ]
-
-  for (let index = 1; index < node.attributes.length; index++) {
-    const previous = node.attributes[index - 1]
-    const current = node.attributes[index]
-    const range: [number, number] = [previous.range[1], current.range[0]]
-    if (!/^\s*$/.test(text.slice(...range))) return null
-    edits.push({ range, text: `${newline}${attributeIndent}` })
-  }
-
-  const closing = node.range[1] - (node.selfClosing ? 2 : 1)
-  const closingRange: [number, number] = [last.range[1], closing]
-  if (!/^\s*$/.test(text.slice(...closingRange))) return null
-  edits.push({ range: closingRange, text: `${newline}${baseIndent}` })
-
-  return edits
-}
-
-/**
- * Splits large single-line JSX opening tags onto one attribute per line with a separate closing token.
- *
- * Example: `<Panel a={1} b={2} c={3} />` becomes a vertically aligned opening tag.
- */
 export const layoutJsxAttributes = defineRule({
   meta: {
     type: 'layout',
@@ -66,7 +13,7 @@ export const layoutJsxAttributes = defineRule({
         additionalProperties: false,
         properties: {
           minAttributes: { type: 'integer', minimum: 1 },
-          indent: layoutIndentSchema,
+          indent: sourceIndentSchema,
         },
       },
     ],
@@ -76,31 +23,49 @@ export const layoutJsxAttributes = defineRule({
   },
   createOnce(context) {
     let minAttributes = 3
-    let indentUnit = layoutIndentUnit()
+    let indentUnit = sourceIndentUnit()
     let newline = '\n'
 
     return {
       before() {
-        const options = optionsFirst<JsxAttributesMultilineOptions>(context, {})
+        const options = optionsFirst<LayoutJsxAttributesOptions>(context, {})
         minAttributes = options.minAttributes ?? 3
-        indentUnit = layoutIndentUnit(options.indent)
-        newline = layoutNewline(context.sourceCode.text)
+        indentUnit = sourceIndentUnit(options.indent)
+        newline = sourceNewline(context.sourceCode.text)
       },
       JSXOpeningElement(node) {
-        if (node.attributes.length < minAttributes || node.loc.start.line !== node.loc.end.line) return
+        if (node.attributes.length < minAttributes || node.loc.start.line !== node.loc.end.line) {
+          return
+        }
 
         const source = context.sourceCode
         const text = source.text
-        const baseIndent = layoutLineIndent(text, node.range[0])
-        const hasComments = source.getCommentsInside(node).length > 0
-        const edits = hasComments
-          ? null
-          : jsxAttributesMultilineEdits(node, text, baseIndent + indentUnit, baseIndent, newline)
+        const baseIndent = sourceLineIndent(text, node.range[0])
+        const attributeIndent = baseIndent + indentUnit
+        const attributes = node.attributes
 
         context.report({
           node,
           messageId: 'multiline',
-          fix: edits ? (fixer) => edits.map((edit) => fixer.replaceTextRange(edit.range, edit.text)) : undefined,
+          fix: (fixer) => {
+            const last = attributes.at(-1)
+
+            if (source.getCommentsInside(node).length > 0 || !last) {
+              return null
+            }
+
+            const ranges: [number, number][] = [
+              [(node.typeArguments ?? node.name).range[1], attributes[0].range[0]],
+              ...attributes.slice(1).map((attribute, index): [number, number] => [attributes[index].range[1], attribute.range[0]]),
+              [last.range[1], node.range[1] - (node.selfClosing ? 2 : 1)],
+            ]
+
+            if (ranges.some((range) => !/^\s*$/.test(text.slice(...range)))) {
+              return null
+            }
+
+            return ranges.map((range, index) => fixer.replaceTextRange(range, `${newline}${index === ranges.length - 1 ? baseIndent : attributeIndent}`))
+          },
         })
       },
     }

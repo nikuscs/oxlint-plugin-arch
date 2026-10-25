@@ -1,6 +1,7 @@
 import { defineRule } from '@oxlint/plugins'
 
-/** Require a rule name and a reason in lint disables, such as no-console -- CLI output. */
+const directive = /^\s*(?:oxlint|eslint)-disable(?:-next-line|-line)?\b(.*)$/s
+
 export const commentsDirectives = defineRule({
   meta: {
     type: 'problem',
@@ -13,11 +14,14 @@ export const commentsDirectives = defineRule({
     return {
       Program() {
         for (const comment of context.sourceCode.getAllComments()) {
-          const match = /^\s*(?:oxlint|eslint)-disable(?:-next-line|-line)?\b(.*)$/s.exec(comment.value)
+          const match = directive.exec(comment.value)
+
           if (!match) {
             continue
           }
+
           const [rules, ...reason] = match[1].split('--')
+
           if (rules.trim() && reason.join('--').trim()) {
             continue
           }

@@ -1,6 +1,6 @@
-import { syntaxRule } from '../../utils/helpers/syntax.ts'
+import { astSelectorRule } from '../../utils/ast.utils.ts'
 
-export const reactDynamicClasses = syntaxRule(
+export const reactDynamicClasses = astSelectorRule(
   ':matches(JSXAttribute[name.name="className"] TemplateLiteral[expressions.length>0], JSXAttribute[name.name="className"] BinaryExpression[operator="+"])',
-      'Write complete class names instead of constructing them dynamically.',
+  'Write complete class names instead of constructing them dynamically.',
 )

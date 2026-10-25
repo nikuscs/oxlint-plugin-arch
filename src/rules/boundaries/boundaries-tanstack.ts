@@ -1,19 +1,37 @@
 import { defineRule } from '@oxlint/plugins'
-import type { ESTree, Scope } from '@oxlint/plugins'
-import type { ModuleRuntimeOptions } from '../../types/module-policy.types.ts'
+import { astIsTypeOnlyImport, astMemberName, astVisit } from '../../utils/ast.utils.ts'
 import {
-  astVisit,
-  boundaryResolveTarget,
-  optionsFirst,
-  runtimeBrowserGlobals,
-  runtimeIsBackendImport,
-  runtimeIsServerPlatformImport,
-  runtimeMatchesImport,
-  runtimeMemberName,
-  runtimeServerGlobals,
-} from '../../utils/index.ts'
+  boundariesBrowserGlobals,
+  boundariesDeclaredVariable,
+  boundariesImportExpression,
+  boundariesIsBackendImport,
+  boundariesIsServerPlatformImport,
+  boundariesIsSharedFile,
+  boundariesIsTypeOnlyExport,
+  boundariesMatchesImport,
+  boundariesMemberName,
+  boundariesReport,
+  boundariesResolveTarget,
+  boundariesRuntimeMessages,
+  boundariesRuntimeProperties,
+  boundariesServerGlobals,
+} from '../../utils/boundaries.utils.ts'
+import { optionsFirst } from '../../utils/options.utils.ts'
+import type * as BoundariesTypes from '../../types/boundaries.types.ts'
+import type { ESTree } from '@oxlint/plugins'
 
-/** Check direct runtime dependencies and imported TanStack boundaries; compilation still owns graph isolation. */
+const boundariesRscPackages = ['@tanstack/react-start/rsc', '@tanstack/react-start-rsc']
+const boundariesRenderers = ['renderServerComponent', 'renderToReadableStream']
+const boundariesHookPackages = /^(?:react|@tanstack\/react-(?:query|router))$/
+const boundariesChainMethods = ['handler', 'server', 'client', 'middleware', 'validator', 'inputValidator']
+const boundariesSplitFactories = ['createIsomorphicFn', 'createMiddleware']
+const boundariesRuntimeTypeWrappers = ['TSAsExpression', 'TSSatisfiesExpression', 'TSNonNullExpression', 'TSInstantiationExpression']
+const boundariesClientHookReason = 'client hooks do not belong in server/RSC services'
+
+function boundariesIsClientHook(name: string): boolean {
+  return /^use[A-Z]/.test(name) && name !== 'useId'
+}
+
 export const boundariesTanstack = defineRule({
   meta: {
     type: 'problem',
@@ -21,336 +39,310 @@ export const boundariesTanstack = defineRule({
       {
         type: 'object',
         additionalProperties: false,
-        properties: {
-          web: { type: 'array', items: { type: 'string' } },
-          backend: { type: 'array', items: { type: 'string' } },
-          aliases: { type: 'object', additionalProperties: { type: 'string' } },
-          backendPackages: { type: 'array', items: { type: 'string' } },
-          rpcClients: { type: 'array', items: { type: 'string' } },
-          serverImports: { type: 'array', items: { type: 'string' } },
-          clientImports: { type: 'array', items: { type: 'string' } },
-          allowComputedImportsIn: { type: 'array', items: { type: 'string' } },
-        },
+        properties: { ...boundariesRuntimeProperties, rpcClients: { type: 'array', items: { type: 'string' } } },
         required: ['web', 'backend', 'aliases', 'backendPackages', 'rpcClients'],
       },
     ],
-    messages: {
-      runtime: '{{source}} is not valid here: {{reason}}.',
-      computed:
-        'Use a literal dynamic import so runtime ownership can be checked, or declare this exact file in allowComputedImportsIn after reviewing its targets.',
-    },
+    messages: boundariesRuntimeMessages,
   },
   createOnce(context) {
-    let options: ModuleRuntimeOptions
+    let options: BoundariesTypes.BoundariesTanstackOptions
     let file = ''
     let serverFile = false
     let rscFile = false
     let shared = false
     const runtimeIdentifiers = new Set<number>()
-    const imports = new Map<string, { node: Extract<ESTree.Node, { type: 'Identifier' }>; name: string }>()
-    const boundaries: { start: number; end: number; side: 'server' | 'client'; kind: string }[] = []
-    function imported(node: Extract<ESTree.Node, { type: 'Identifier' }>): string | undefined {
+    let imports = new Map<string, BoundariesTypes.BoundariesTanstackImport>()
+    const boundaries: BoundariesTypes.BoundariesTanstackBoundary[] = []
+
+    function imported(node: BoundariesTypes.BoundariesIdentifier): string | undefined {
       const entry = imports.get(node.name)
-      if (!entry) return undefined
-      let scope: Scope | null = context.sourceCode.getScope(node)
-      while (scope) {
-        const variable = scope.set.get(node.name)
-        if (variable)
-          return variable.defs.some((definition) => definition.name.range[0] === entry.node.start)
-            ? entry.name
-            : undefined
-        scope = scope.upper
-      }
-      return undefined
+      const variable = entry ? boundariesDeclaredVariable(context.sourceCode.getScope(node), node.name) : null
+      return entry && variable?.defs.some((definition) => definition.name.range[0] === entry.node.start) ? entry.name : undefined
     }
+
     function factory(node: ESTree.Node): string | undefined {
-      if (node.type === 'Identifier') return imported(node)
-      if (node.type === 'MemberExpression' && !node.computed && node.property.type === 'Identifier') {
-        if (node.object.type === 'Identifier' && imported(node.object) === '*') return node.property.name
-        if (['handler', 'server', 'client', 'middleware', 'validator', 'inputValidator'].includes(node.property.name))
-          return factory(node.object)
+      if (node.type === 'Identifier') {
+        return imported(node)
       }
-      if (node.type === 'CallExpression') return factory(node.callee)
-      return undefined
+
+      if (node.type === 'CallExpression') {
+        return factory(node.callee)
+      }
+
+      const property = node.type === 'MemberExpression' ? astMemberName(node) : undefined
+
+      if (node.type !== 'MemberExpression' || !property) {
+        return undefined
+      }
+
+      if (node.object.type === 'Identifier' && imported(node.object) === '*') {
+        return property
+      }
+
+      return boundariesChainMethods.includes(property) ? factory(node.object) : undefined
     }
-    function boundary(position: number) {
-      return boundaries
-        .filter((entry) => position >= entry.start && position < entry.end)
-        .sort((a, b) => b.start - a.start)[0]
+
+    function boundary(position: number): BoundariesTypes.BoundariesTanstackBoundary | undefined {
+      return boundaries.filter((entry) => position >= entry.start && position < entry.end).toSorted((a, b) => b.start - a.start)[0]
     }
+
+    function clientSide(position: number): boolean {
+      return boundary(position)?.side === 'client'
+    }
+
     function serverPosition(position: number, staticImport = false): boolean {
       const entry = boundary(position)
-      if (entry)
-        return (
-          entry.side === 'server' &&
-          (!staticImport || entry.kind !== 'createIsomorphicFn' || options.rpcClients.includes(file))
-        )
-      return serverFile
+
+      if (!entry) {
+        return serverFile
+      }
+
+      return entry.side === 'server' && (!staticImport || entry.kind !== 'createIsomorphicFn' || options.rpcClients.includes(file))
     }
-    function report(node: ESTree.Node, source: string, reason: string) {
-      context.report({ node, messageId: 'runtime', data: { source, reason } })
+
+    function runtimeReferences(node: ESTree.ImportDeclaration, localName?: string): number[] {
+      return context.sourceCode
+        .getDeclaredVariables(node)
+        .filter((variable) => localName === undefined || variable.name === localName)
+        .flatMap((variable) => variable.references.map((reference) => reference.identifier.range[0]))
+        .filter((position) => runtimeIdentifiers.has(position))
     }
-    function check(
-      node: ESTree.Node,
-      source: string,
-      typeOnly: boolean,
-      reExport = false,
-      renderer?: ESTree.ImportSpecifier,
-    ) {
-      if (typeOnly) return
-      const target = boundaryResolveTarget(options, file, source)
-      const server =
-        Boolean(renderer) ||
-        runtimeIsServerPlatformImport(source) ||
-        runtimeIsBackendImport(options, target, source) ||
-        /\.server(?:\.[cm]?[jt]sx?)?$/.test(target) ||
-        /^@tanstack\/(?:react|solid|vue)-start\/(?:server|server-only)(?:\/|$)/.test(source) ||
-        runtimeMatchesImport(options.serverImports, source)
-      const client =
+
+    function check(node: ESTree.Node, source: string, typeOnly: boolean, reExport = false, renderer?: ESTree.ImportSpecifier): void {
+      if (typeOnly) {
+        return
+      }
+
+      const target = boundariesResolveTarget(options, file, source)
+
+      const clientImport =
         /(?:\/hooks\/|\.client-only(?:\.|$))/.test(target) ||
         /^(?:react-dom\/client|@tanstack\/(?:react|solid|vue)-start\/client-only)(?:\/|$)/.test(source) ||
-        runtimeMatchesImport(options.clientImports, source)
-      if (client && (serverFile || rscFile || shared) && boundary(node.start)?.side !== 'client') {
-        const references =
-          node.type === 'ImportDeclaration'
-            ? context.sourceCode
-                .getDeclaredVariables(node)
-                .flatMap((variable) =>
-                  variable.references.filter((reference) => runtimeIdentifiers.has(reference.identifier.range[0])),
-                )
-            : []
-        if (
-          !shared &&
-          references.length &&
-          references.every((reference) => boundary(reference.identifier.range[0])?.side === 'client')
-        )
-          return
-        report(node, source, 'browser-only dependencies do not belong in server/RSC or shared modules')
+        boundariesMatchesImport(options.clientImports, source)
+
+      if (clientImport && (serverFile || rscFile || shared) && !clientSide(node.start)) {
+        const references = node.type === 'ImportDeclaration' ? runtimeReferences(node) : []
+
+        if (shared || references.length === 0 || !references.every(clientSide)) {
+          boundariesReport(context, node, source, 'browser-only dependencies do not belong in server/RSC or shared modules')
+        }
+
         return
       }
-      if (!server) return
+
+      const serverImport =
+        boundariesIsServerPlatformImport(source) ||
+        boundariesIsBackendImport(options, target, source) ||
+        /\.server(?:\.[cm]?[jt]sx?)?$/.test(target) ||
+        /^@tanstack\/(?:react|solid|vue)-start\/(?:server|server-only)(?:\/|$)/.test(source) ||
+        boundariesMatchesImport(options.serverImports, source)
+
+      if (!renderer && !serverImport) {
+        return
+      }
+
       if (shared) {
-        report(node, source, 'shared utilities/constants/lib cannot import runtime server dependencies')
+        boundariesReport(context, node, source, 'shared utilities/constants/lib cannot import runtime server dependencies')
         return
       }
+
       if (reExport && !serverFile) {
-        report(node, source, 'server dependencies must not be re-exported as a public runtime API')
+        boundariesReport(context, node, source, 'server dependencies must not be re-exported as a public runtime API')
         return
       }
+
       if (node.type === 'ImportDeclaration') {
-        if (serverFile) return
-        const references = context.sourceCode
-          .getDeclaredVariables(node)
-          .filter((variable) => !renderer || variable.name === renderer.local.name)
-          .flatMap((variable) =>
-            variable.references.filter((reference) => runtimeIdentifiers.has(reference.identifier.range[0])),
-          )
-        if (references.length && references.every((reference) => serverPosition(reference.identifier.range[0], true)))
+        if (serverFile) {
           return
-      } else if (serverPosition(node.start)) return
-      report(
+        }
+
+        const references = runtimeReferences(node, renderer?.local.name)
+
+        if (references.length > 0 && references.every((position) => serverPosition(position, true))) {
+          return
+        }
+      } else if (serverPosition(node.start)) {
+        return
+      }
+      boundariesReport(
+        context,
         node,
         source,
         'use an inline imported TanStack server boundary; static isomorphic server imports belong only to the configured RPC owner',
       )
     }
-    function global(node: Extract<ESTree.Node, { type: 'Identifier' }>) {
-      const member =
-        node.parent.type === 'MemberExpression' && node.parent.object === node && node.name === 'globalThis'
-          ? node.parent
-          : undefined
-      const name = runtimeMemberName(member) ?? node.name
-      if (!runtimeServerGlobals.includes(name) && !runtimeBrowserGlobals.includes(name)) return
-      let scope: Scope | null = context.sourceCode.getScope(node)
-      while (scope) {
-        const variable = scope.set.get(node.name)
-        if (variable?.defs.length) return
-        scope = scope.upper
-      }
-      const references = context.sourceCode.getScope(node).references
-      if (
-        !references.some(
-          (reference) =>
-            reference.identifier.range[0] === node.start && runtimeIdentifiers.has(reference.identifier.range[0]),
-        )
-      )
-        return
-      if (runtimeServerGlobals.includes(name) && (shared || !serverPosition(node.start)))
-        report(node, name, 'server globals require a server execution boundary')
-      if (runtimeBrowserGlobals.includes(name) && (serverFile || rscFile) && boundary(node.start)?.side !== 'client')
-        report(node, name, 'browser globals are unavailable during server execution')
-    }
+
     return {
       Program(program) {
-        options = optionsFirst<ModuleRuntimeOptions>(context)
+        options = optionsFirst<BoundariesTypes.BoundariesTanstackOptions>(context)
         file = context.filename.replaceAll('\\', '/')
         serverFile = /\.server\.[cm]?[jt]sx?$/.test(file)
         rscFile = /\.rsc\.[cm]?[jt]sx?$/.test(file)
-        shared =
-          /\.(?:utils|constants)\.[cm]?[jt]sx?$/.test(file) ||
-          options.web.some((path) => file.startsWith(path + '/lib/'))
+        shared = boundariesIsSharedFile(options, file)
         runtimeIdentifiers.clear()
-        imports.clear()
         boundaries.length = 0
-        for (const statement of program.body) {
-          if (statement.type !== 'ImportDeclaration' || statement.importKind === 'type') continue
-          if (/^(?:react|@tanstack\/react-(?:query|router))$/.test(statement.source.value)) {
-            for (const specifier of statement.specifiers) {
-              if (specifier.type === 'ImportNamespaceSpecifier' || specifier.type === 'ImportDefaultSpecifier')
-                imports.set(specifier.local.name, { node: specifier.local, name: 'client-hooks' })
+        imports = new Map(
+          program.body.flatMap((statement): [string, BoundariesTypes.BoundariesTanstackImport][] => {
+            if (statement.type !== 'ImportDeclaration' || statement.importKind === 'type') {
+              return []
             }
-          }
-          if (['@tanstack/react-start/rsc', '@tanstack/react-start-rsc'].includes(statement.source.value)) {
-            for (const specifier of statement.specifiers) {
-              if (specifier.type === 'ImportNamespaceSpecifier')
-                imports.set(specifier.local.name, { node: specifier.local, name: 'rsc-renderers' })
-            }
-          }
-          if (statement.source.value !== '@tanstack/react-start') continue
-          for (const specifier of statement.specifiers) {
-            if (specifier.type === 'ImportSpecifier' && specifier.importKind !== 'type')
-              imports.set(specifier.local.name, {
-                node: specifier.local,
-                name: specifier.imported.type === 'Identifier' ? specifier.imported.name : specifier.imported.value,
-              })
-            if (specifier.type === 'ImportNamespaceSpecifier')
-              imports.set(specifier.local.name, { node: specifier.local, name: '*' })
-          }
-        }
+
+            const source = statement.source.value
+            return statement.specifiers.flatMap((specifier): [string, BoundariesTypes.BoundariesTanstackImport][] => {
+              const entry = (name: string): [string, BoundariesTypes.BoundariesTanstackImport][] => [[specifier.local.name, { node: specifier.local, name }]]
+
+              if (boundariesHookPackages.test(source)) {
+                return specifier.type === 'ImportSpecifier' ? [] : entry('client-hooks')
+              }
+
+              if (boundariesRscPackages.includes(source)) {
+                return specifier.type === 'ImportNamespaceSpecifier' ? entry('rsc-renderers') : []
+              }
+
+              if (source !== '@tanstack/react-start') {
+                return []
+              }
+
+              if (specifier.type === 'ImportNamespaceSpecifier') {
+                return entry('*')
+              }
+
+              if (specifier.type !== 'ImportSpecifier' || specifier.importKind === 'type') {
+                return []
+              }
+
+              return entry(specifier.imported.type === 'Identifier' ? specifier.imported.name : specifier.imported.value)
+            })
+          }),
+        )
         astVisit(program, [], (node, ancestors) => {
           if (
             node.type === 'Identifier' &&
-            !ancestors.some(
-              (ancestor) =>
-                ancestor.type.startsWith('TS') &&
-                ![
-                  'TSAsExpression',
-                  'TSSatisfiesExpression',
-                  'TSNonNullExpression',
-                  'TSInstantiationExpression',
-                ].includes(ancestor.type),
-            )
-          )
+            !ancestors.some((ancestor) => ancestor.type.startsWith('TS') && !boundariesRuntimeTypeWrappers.includes(ancestor.type))
+          ) {
             runtimeIdentifiers.add(node.start)
-          if (node.type !== 'CallExpression') return
+          }
+
+          if (node.type !== 'CallExpression') {
+            return
+          }
+
           const kind = factory(node.callee)
-          const method =
-            node.callee.type === 'MemberExpression' &&
-            !node.callee.computed &&
-            node.callee.property.type === 'Identifier'
-              ? node.callee.property.name
-              : undefined
-          const side =
-            kind === 'createServerOnlyFn' ||
-            (kind === 'createServerFn' && method === 'handler') ||
-            (['createIsomorphicFn', 'createMiddleware'].includes(kind ?? '') && method === 'server')
-              ? 'server'
-              : kind === 'createClientOnlyFn' ||
-                  (['createIsomorphicFn', 'createMiddleware'].includes(kind ?? '') && method === 'client')
-                ? 'client'
-                : undefined
-          const callback = node.arguments[0]
-          if (
-            kind &&
-            side &&
-            callback &&
-            (callback.type === 'FunctionExpression' || callback.type === 'ArrowFunctionExpression')
-          )
-            boundaries.push({ start: callback.start, end: callback.end, side, kind })
+          const method = node.callee.type === 'MemberExpression' ? astMemberName(node.callee) : undefined
+          const split = kind !== undefined && boundariesSplitFactories.includes(kind)
+          const serverSide = kind === 'createServerOnlyFn' || (kind === 'createServerFn' && method === 'handler') || (split && method === 'server')
+          const clientSideCall = kind === 'createClientOnlyFn' || (split && method === 'client')
+          const callback = node.arguments.at(0)
+
+          if (kind && (serverSide || clientSideCall) && (callback?.type === 'FunctionExpression' || callback?.type === 'ArrowFunctionExpression')) {
+            boundaries.push({
+              start: callback.start,
+              end: callback.end,
+              side: serverSide ? 'server' : 'client',
+              kind,
+            })
+          }
         })
       },
       ImportDeclaration(node) {
-        const typeOnly =
-          node.importKind === 'type' ||
-          (node.specifiers.length > 0 &&
-            node.specifiers.every(
-              (specifier) => specifier.type === 'ImportSpecifier' && specifier.importKind === 'type',
-            ))
+        const typeOnly = astIsTypeOnlyImport(node)
         check(node, node.source.value, typeOnly)
-        if (!typeOnly && ['@tanstack/react-start/rsc', '@tanstack/react-start-rsc'].includes(node.source.value)) {
-          for (const specifier of node.specifiers) {
-            if (
-              specifier.type === 'ImportSpecifier' &&
-              specifier.importKind !== 'type' &&
-              specifier.imported.type === 'Identifier' &&
-              ['renderServerComponent', 'renderToReadableStream'].includes(specifier.imported.name)
-            )
-              check(node, node.source.value, false, false, specifier)
+        if (typeOnly) {
+          return
+        }
+
+        for (const specifier of node.specifiers) {
+          if (
+            boundariesRscPackages.includes(node.source.value) &&
+            specifier.type === 'ImportSpecifier' &&
+            specifier.importKind !== 'type' &&
+            specifier.imported.type === 'Identifier' &&
+            boundariesRenderers.includes(specifier.imported.name)
+          ) {
+            check(node, node.source.value, false, false, specifier)
           }
         }
-        if (
-          !typeOnly &&
-          (serverFile || rscFile) &&
-          /^(?:react|@tanstack\/react-(?:query|router))$/.test(node.source.value)
-        ) {
-          for (const specifier of node.specifiers) {
-            if (
-              specifier.type !== 'ImportSpecifier' ||
-              specifier.importKind === 'type' ||
-              specifier.imported.type !== 'Identifier'
-            )
-              continue
-            if (/^use[A-Z]/.test(specifier.imported.name) && specifier.imported.name !== 'useId') {
-              const references = context.sourceCode
-                .getDeclaredVariables(node)
-                .filter((variable) => variable.name === specifier.local.name)
-                .flatMap((variable) =>
-                  variable.references.filter((reference) => runtimeIdentifiers.has(reference.identifier.range[0])),
-                )
-              if (
-                !references.length ||
-                !references.every((reference) => boundary(reference.identifier.range[0])?.side === 'client')
-              )
-                report(specifier, specifier.imported.name, 'client hooks do not belong in server/RSC services')
-            }
+
+        if (!(serverFile || rscFile) || !boundariesHookPackages.test(node.source.value)) {
+          return
+        }
+
+        for (const specifier of node.specifiers) {
+          if (
+            specifier.type !== 'ImportSpecifier' ||
+            specifier.importKind === 'type' ||
+            specifier.imported.type !== 'Identifier' ||
+            !boundariesIsClientHook(specifier.imported.name)
+          ) {
+            continue
+          }
+
+          const references = runtimeReferences(node, specifier.local.name)
+
+          if (references.length === 0 || !references.every(clientSide)) {
+            boundariesReport(context, specifier, specifier.imported.name, boundariesClientHookReason)
           }
         }
       },
       ExportNamedDeclaration(node) {
-        if (node.source)
-          check(
-            node,
-            node.source.value,
-            node.exportKind === 'type' ||
-              (node.specifiers.length > 0 && node.specifiers.every((specifier) => specifier.exportKind === 'type')),
-            true,
-          )
+        if (node.source) {
+          check(node, node.source.value, boundariesIsTypeOnlyExport(node), true)
+        }
       },
       ExportAllDeclaration(node) {
         check(node, node.source.value, node.exportKind === 'type', true)
       },
       ImportExpression(node) {
-        if (node.source.type === 'Literal' && typeof node.source.value === 'string')
-          check(node, node.source.value, false)
-        else if (!options.allowComputedImportsIn?.includes(file)) context.report({ node, messageId: 'computed' })
+        boundariesImportExpression(context, node, Boolean(options.allowComputedImportsIn?.includes(file)), (source) => check(node, source, false))
       },
       MemberExpression(node) {
-        const name =
-          !node.computed && node.property.type === 'Identifier'
-            ? node.property.name
-            : node.computed && node.property.type === 'Literal' && typeof node.property.value === 'string'
-              ? node.property.value
-              : undefined
-        if (
-          name &&
-          ['renderServerComponent', 'renderToReadableStream'].includes(name) &&
-          node.object.type === 'Identifier' &&
-          imported(node.object) === 'rsc-renderers' &&
-          (shared || !serverPosition(node.start, true))
-        )
-          report(node, name, 'server renderers require a server execution boundary')
-        if (
-          (serverFile || rscFile) &&
-          name &&
-          /^use[A-Z]/.test(name) &&
-          name !== 'useId' &&
-          node.object.type === 'Identifier' &&
-          imported(node.object) === 'client-hooks' &&
-          boundary(node.start)?.side !== 'client'
-        )
-          report(node, name, 'client hooks do not belong in server/RSC services')
+        const name = boundariesMemberName(node)
+
+        if (!name || node.object.type !== 'Identifier') {
+          return
+        }
+
+        const kind = imported(node.object)
+
+        if (kind === 'rsc-renderers' && boundariesRenderers.includes(name) && (shared || !serverPosition(node.start, true))) {
+          boundariesReport(context, node, name, 'server renderers require a server execution boundary')
+        }
+
+        if ((serverFile || rscFile) && kind === 'client-hooks' && boundariesIsClientHook(name) && !clientSide(node.start)) {
+          boundariesReport(context, node, name, boundariesClientHookReason)
+        }
       },
-      Identifier: global,
+      Identifier(node) {
+        const member = node.parent.type === 'MemberExpression' && node.parent.object === node && node.name === 'globalThis' ? node.parent : undefined
+        const name = boundariesMemberName(member) ?? node.name
+        const serverGlobal = boundariesServerGlobals.includes(name)
+        const browserGlobal = boundariesBrowserGlobals.includes(name)
+
+        if (!serverGlobal && !browserGlobal) {
+          return
+        }
+
+        if (boundariesDeclaredVariable(context.sourceCode.getScope(node), node.name)) {
+          return
+        }
+
+        const referenced = context.sourceCode
+          .getScope(node)
+          .references.some((reference) => reference.identifier.range[0] === node.start && runtimeIdentifiers.has(node.start))
+
+        if (!referenced) {
+          return
+        }
+
+        if (serverGlobal && (shared || !serverPosition(node.start))) {
+          boundariesReport(context, node, name, 'server globals require a server execution boundary')
+        }
+
+        if (browserGlobal && (serverFile || rscFile) && !clientSide(node.start)) {
+          boundariesReport(context, node, name, 'browser globals are unavailable during server execution')
+        }
+      },
     }
   },
 })

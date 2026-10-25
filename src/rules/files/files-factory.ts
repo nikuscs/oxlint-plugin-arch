@@ -1,22 +1,10 @@
 import { defineRule } from '@oxlint/plugins'
-import {
-  declarationsCollectFunctions,
-  exportsCollectFunctions,
-  namingFileBasename,
-  namingPascalCase,
-  optionsFirst,
-} from '../../utils/index.ts'
+import { declarationsFunctions } from '../../utils/declarations.utils.ts'
+import { exportsFunctions } from '../../utils/exports.utils.ts'
+import { namingBasename, namingPascalCase } from '../../utils/naming.utils.ts'
+import { optionsFirst } from '../../utils/options.utils.ts'
+import type { FilesFactoryOptions } from '../../types/files.types.ts'
 
-interface RequireFileFactoryOptions {
-  factory: string
-  allDeclarations?: boolean
-}
-
-/**
- * Derives one expected factory name from the filename and requires that function to exist.
- *
- * Example: With `make{Stem}`, `email-renderer.ts` requires `makeEmailRenderer`.
- */
 export const filesFactory = defineRule({
   meta: {
     type: 'problem',
@@ -38,10 +26,10 @@ export const filesFactory = defineRule({
   createOnce(context) {
     return {
       Program(program) {
-        const { factory, allDeclarations = false } = optionsFirst<RequireFileFactoryOptions>(context)
-        const stem = namingFileBasename(context.filename).replace(/\.(tsx?|jsx?)$/, '')
+        const { factory, allDeclarations = false } = optionsFirst<FilesFactoryOptions>(context)
+        const stem = namingBasename(context.filename).replace(/\.(tsx?|jsx?)$/, '')
         const expected = factory.replaceAll('{Stem}', namingPascalCase(stem)).replaceAll('{stem}', stem)
-        const functions = allDeclarations ? declarationsCollectFunctions(program) : exportsCollectFunctions(program)
+        const functions = allDeclarations ? declarationsFunctions(program) : exportsFunctions(program)
 
         if (functions.length === 0) {
           context.report({
@@ -49,6 +37,7 @@ export const filesFactory = defineRule({
             messageId: 'factory',
             data: { actual: '<none>', expected },
           })
+
           return
         }
 

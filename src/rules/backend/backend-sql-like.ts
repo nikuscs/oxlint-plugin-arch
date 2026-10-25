@@ -1,23 +1,19 @@
 import { defineRule } from '@oxlint/plugins'
-import {
-  astStaticMemberName,
-  optionsFirst,
-  sanitizersCallsConfigured,
-  sanitizersConfiguredBindings,
-} from '../../utils/index.ts'
+import { astMemberName, astVisit } from '../../utils/ast.utils.ts'
+import { optionsFirst } from '../../utils/options.utils.ts'
+import type { BackendSqlLikeOptions } from '../../types/backend.types.ts'
 
-interface NoUnescapedLikeOptions {
-  methods: string[]
-  sanitizers: string[]
-  allowSanitizedBindings?: boolean
-  operatorMethods?: string[]
+function backendCallsSanitizer(node: unknown, sanitizers: string[]): boolean {
+  let found = false
+  astVisit(node, [], (candidate) => {
+    if (candidate.type === 'CallExpression' && candidate.callee.type === 'Identifier' && sanitizers.includes(candidate.callee.name)) {
+      found = true
+    }
+  })
+
+  return found
 }
 
-/**
- * Requires values passed to configured member methods to use a configured sanitizer call or sanitized binding.
- *
- * Example: `query.ilike(column, escape(term))` passes; passing `term` directly fails.
- */
 export const backendSqlLike = defineRule({
   meta: {
     type: 'problem',
@@ -40,32 +36,54 @@ export const backendSqlLike = defineRule({
     let sanitized = new Set<string>()
     return {
       Program(program) {
-        const { sanitizers, allowSanitizedBindings = true } = optionsFirst<NoUnescapedLikeOptions>(context)
-        sanitized = allowSanitizedBindings ? sanitizersConfiguredBindings(program, new Set(sanitizers)) : new Set()
+        const { sanitizers, allowSanitizedBindings = true } = optionsFirst<BackendSqlLikeOptions>(context)
+        sanitized = new Set()
+
+        for (const statement of allowSanitizedBindings ? program.body : []) {
+          const declaration = statement.type === 'ExportNamedDeclaration' ? statement.declaration : statement
+
+          if (declaration?.type !== 'VariableDeclaration') {
+            continue
+          }
+
+          for (const item of declaration.declarations) {
+            if (item.id.type === 'Identifier' && backendCallsSanitizer(item.init, sanitizers)) {
+              sanitized.add(item.id.name)
+            }
+          }
+        }
       },
       CallExpression(node) {
         if (node.callee.type !== 'MemberExpression') {
           return
         }
 
-        const { methods, sanitizers, operatorMethods = [] } = optionsFirst<NoUnescapedLikeOptions>(context)
-        const method = astStaticMemberName(node.callee)
-        const operator = node.arguments[1]
+        const { methods, sanitizers, operatorMethods = [] } = optionsFirst<BackendSqlLikeOptions>(context)
+        const method = astMemberName(node.callee)
+
+        if (!method) {
+          return
+        }
+
+        const operator = node.arguments.at(1)
+
         const operatorCall =
-          method &&
           operatorMethods.includes(method) &&
           operator?.type === 'Literal' &&
           typeof operator.value === 'string' &&
           methods.includes(operator.value)
 
-        if (!method || (!methods.includes(method) && !operatorCall)) {
+        if (!methods.includes(method) && !operatorCall) {
           return
         }
 
         const value = node.arguments.at(-1)
-        const allowedIdentifier = value?.type === 'Identifier' && sanitized.has(value.name)
 
-        if (!sanitizersCallsConfigured(value, new Set(sanitizers)) && !allowedIdentifier) {
+        if (value?.type === 'Identifier' && sanitized.has(value.name)) {
+          return
+        }
+
+        if (!backendCallsSanitizer(value, sanitizers)) {
           context.report({
             node: value ?? node,
             messageId: 'unescaped',

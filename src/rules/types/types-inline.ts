@@ -1,17 +1,11 @@
 import { defineRule } from '@oxlint/plugins'
-import { astVisit, optionsFirst } from '../../utils/index.ts'
+import { astVisit } from '../../utils/ast.utils.ts'
+import { optionsFirst } from '../../utils/options.utils.ts'
+import type { AstFunction } from '../../types/ast.types.ts'
+import type { TypesInlineOptions } from '../../types/types.types.ts'
 import type { ESTree } from '@oxlint/plugins'
 
-interface NoInlineTypesOptions {
-  parameters?: boolean
-  returns?: boolean
-  functionTypes?: boolean
-  minMembers?: number
-}
-
-function parameterAnnotation(
-  parameter: ESTree.ParamPattern | ESTree.BindingPattern,
-): ESTree.TSTypeAnnotation | null | undefined {
+function parameterAnnotation(parameter: ESTree.ParamPattern | ESTree.BindingPattern): ESTree.TSTypeAnnotation | null | undefined {
   if (parameter.type === 'TSParameterProperty') {
     return parameterAnnotation(parameter.parameter)
   }
@@ -23,12 +17,6 @@ function parameterAnnotation(
   return parameter.typeAnnotation
 }
 
-/**
- * Requires named types instead of inline object or function types in function signatures.
- * Checks nested annotations too, but leaves named type/interface definitions and inferred types alone.
- *
- * Example: `function save(input: SaveInput): SaveResult` passes; `function save(input: { id: string })` fails.
- */
 export const typesInline = defineRule({
   meta: {
     type: 'problem',
@@ -55,10 +43,10 @@ export const typesInline = defineRule({
     let minMembers = 1
 
     function isInline(node: ESTree.Node): boolean {
-      return (
-        (node.type === 'TSTypeLiteral' && (minMembers === 1 || node.members.length >= minMembers)) ||
-        (checkFunctionTypes && (node.type === 'TSFunctionType' || node.type === 'TSConstructorType'))
-      )
+      if (node.type === 'TSTypeLiteral') {
+        return minMembers === 1 || node.members.length >= minMembers
+      }
+      return checkFunctionTypes && (node.type === 'TSFunctionType' || node.type === 'TSConstructorType')
     }
 
     function check(annotation: ESTree.TSTypeAnnotation | null | undefined, position: string) {
@@ -66,7 +54,6 @@ export const typesInline = defineRule({
         if (!isInline(node) || ancestors.some(isInline)) {
           return
         }
-
         context.report({
           node,
           messageId: 'inlineType',
@@ -75,7 +62,7 @@ export const typesInline = defineRule({
       })
     }
 
-    function checkFunction(node: ESTree.Function | ESTree.ArrowFunctionExpression) {
+    function checkFunction(node: AstFunction) {
       if (checkParameters) {
         for (const parameter of node.params) {
           check(parameterAnnotation(parameter), 'parameter')
@@ -89,12 +76,11 @@ export const typesInline = defineRule({
 
     return {
       before() {
-        const options = optionsFirst<NoInlineTypesOptions>(context, {})
+        const options = optionsFirst<TypesInlineOptions>(context, {})
         checkParameters = options.parameters ?? true
         checkReturns = options.returns ?? true
         checkFunctionTypes = options.functionTypes ?? true
         minMembers = options.minMembers ?? 1
-
         if (!checkParameters && !checkReturns) {
           return false
         }

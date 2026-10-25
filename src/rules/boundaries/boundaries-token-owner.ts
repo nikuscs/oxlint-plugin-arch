@@ -1,55 +1,13 @@
 import { defineRule } from '@oxlint/plugins'
-import { astDottedName, astStaticMemberName, namingPosixPath, optionsFirst } from '../../utils/index.ts'
+import { astDottedName, astMemberName } from '../../utils/ast.utils.ts'
+import { optionsFirst } from '../../utils/options.utils.ts'
+import type {
+  BoundariesTokenOwnerOptions,
+  BoundariesTokenOwnerRestriction,
+  BoundariesTokenOwnerTarget,
+} from '../../types/boundaries.types.ts'
 import type { ESTree } from '@oxlint/plugins'
 
-interface NoRestrictedTokenRestriction {
-  token?: string
-  member?: string
-  allowIn?: string[]
-  allowPathPatterns?: string[]
-  message?: string
-}
-
-interface NoRestrictedTokenOptions extends NoRestrictedTokenRestriction {
-  restrictions?: NoRestrictedTokenRestriction[]
-}
-
-interface NormalizedRestriction {
-  kind: 'token' | 'member'
-  value: string
-  message?: string
-}
-
-function tokenIsTypeOnlyImport(node: ESTree.Node): boolean {
-  const parent = node.parent
-
-  if (parent?.type === 'ImportSpecifier') {
-    return (
-      parent.importKind === 'type' ||
-      (parent.parent.type === 'ImportDeclaration' && parent.parent.importKind === 'type')
-    )
-  }
-
-  return (
-    (parent?.type === 'ImportDefaultSpecifier' || parent?.type === 'ImportNamespaceSpecifier') &&
-    parent.parent.type === 'ImportDeclaration' &&
-    parent.parent.importKind === 'type'
-  )
-}
-
-// Why: a `*.` wildcard must match any receiver, including `this.db`, call results
-// in builder chains, and computed objects, so only the property name is compared.
-function memberMatches(node: ESTree.MemberExpression, restriction: string): boolean {
-  return restriction.startsWith('*.')
-    ? astStaticMemberName(node) === restriction.slice(2)
-    : astDottedName(node) === restriction
-}
-
-/**
- * Restricts identifiers or dotted member accesses to configured owner paths while leaving path selection to the consumer.
- *
- * Example: `RouterClient` can be allowed in `rpc.client.ts`, and `*.insertInto` in repository files, and rejected everywhere else.
- */
 export const boundariesTokenOwner = defineRule({
   meta: {
     type: 'problem',
@@ -89,34 +47,26 @@ export const boundariesTokenOwner = defineRule({
     },
   },
   createOnce(context) {
-    let restrictions: NormalizedRestriction[] = []
+    let targets: BoundariesTokenOwnerTarget[] = []
 
-    function report(node: ESTree.Node, restriction: NormalizedRestriction): void {
+    function report(node: ESTree.Node, target: BoundariesTokenOwnerTarget): void {
       context.report({
         node,
-        messageId: restriction.message === undefined ? 'restricted' : 'restrictedWithMessage',
-        data: { token: restriction.value, custom: restriction.message ?? '' },
+        messageId: target.message === undefined ? 'restricted' : 'restrictedWithMessage',
+        data: { token: target.value, custom: target.message ?? '' },
       })
     }
 
     return {
       before() {
-        const options = optionsFirst<NoRestrictedTokenOptions>(context)
-        const configured = [
-          ...(options.token
-            ? [
-                {
-                  token: options.token,
-                  allowIn: options.allowIn,
-                  allowPathPatterns: options.allowPathPatterns,
-                },
-              ]
-            : []),
-          ...(options.restrictions ?? []),
-        ]
-        const filename = namingPosixPath(context.filename)
+        const filename = context.filename.replaceAll('\\', '/')
+        const options = optionsFirst<BoundariesTokenOwnerOptions>(context)
 
-        restrictions = configured.flatMap((restriction): NormalizedRestriction[] => {
+        const single: BoundariesTokenOwnerRestriction[] = options.token
+          ? [{ token: options.token, allowIn: options.allowIn, allowPathPatterns: options.allowPathPatterns }]
+          : []
+
+        targets = [...single, ...(options.restrictions ?? [])].flatMap((restriction): BoundariesTokenOwnerTarget[] => {
           const allowed =
             (restriction.allowIn ?? []).some((suffix) => filename.endsWith(suffix)) ||
             (restriction.allowPathPatterns ?? []).some((pattern) => new RegExp(pattern).test(filename))
@@ -131,26 +81,38 @@ export const boundariesTokenOwner = defineRule({
 
           return restriction.member ? [{ kind: 'member', value: restriction.member, message: restriction.message }] : []
         })
-
-        if (restrictions.length === 0) {
+        if (targets.length === 0) {
           return false
         }
       },
       Identifier(node) {
-        if (tokenIsTypeOnlyImport(node)) {
+        const parent = node.parent
+        const declaration = parent.type === 'ImportSpecifier' || parent.type === 'ImportDefaultSpecifier' || parent.type === 'ImportNamespaceSpecifier' ? parent.parent : undefined
+
+        const typeImport =
+          (parent.type === 'ImportSpecifier' && parent.importKind === 'type') ||
+          (declaration?.type === 'ImportDeclaration' && declaration.importKind === 'type')
+
+        if (typeImport) {
           return
         }
 
-        for (const restriction of restrictions) {
-          if (restriction.kind === 'token' && node.name === restriction.value) {
-            report(node, restriction)
+        for (const target of targets) {
+          if (target.kind === 'token' && node.name === target.value) {
+            report(node, target)
           }
         }
       },
       MemberExpression(node) {
-        for (const restriction of restrictions) {
-          if (restriction.kind === 'member' && memberMatches(node, restriction.value)) {
-            report(node, restriction)
+        for (const target of targets) {
+          if (target.kind !== 'member') {
+            continue
+          }
+
+          const matches = target.value.startsWith('*.') ? astMemberName(node) === target.value.slice(2) : astDottedName(node) === target.value
+
+          if (matches) {
+            report(node, target)
           }
         }
       },

@@ -1,10 +1,98 @@
 import { defineRule } from '@oxlint/plugins'
+import { basename, resolve } from 'node:path'
+import { astIsTypeOnlyImport } from '../../utils/ast.utils.ts'
+import {
+  boundariesLiteralSource,
+  boundariesMatchesImport,
+  boundariesResolveTarget,
+} from '../../utils/boundaries.utils.ts'
+import { exportsCollect } from '../../utils/exports.utils.ts'
+import { optionsFirst } from '../../utils/options.utils.ts'
+import type { BoundariesImport, BoundariesOptions } from '../../types/boundaries.types.ts'
 import type { ESTree } from '@oxlint/plugins'
-import { resolve, basename } from 'node:path'
-import { optionsFirst, exportsCollect, boundaryResolveTarget } from '../../utils/index.ts'
-import type { ModuleBoundaryOptions } from '../../types/module-policy.types.ts'
 
-/** Reject imports across configured application boundaries, including type-only imports. */
+const boundariesPublicSurface = /\.(?:service|client|server|rsc|utils)$/
+const boundariesActionOrQuery = /\/(?:[^/]+)-(?:action|query)\./
+
+function boundariesContains(directory: string, candidate: string): boolean {
+  return candidate === directory || candidate.startsWith(`${directory}/`)
+}
+
+function boundariesStripExtension(path: string): string {
+  return path.replace(/\.[cm]?[jt]sx?$/, '')
+}
+
+function boundariesDomain(path: string, appRoot: string): string | undefined {
+  const relative = path.slice(appRoot.length + 1)
+
+  if (relative.startsWith('types/') && relative.endsWith('.types.ts')) {
+    return relative.slice('types/'.length).split('.')[0]
+  }
+
+  if (!relative.startsWith('services/')) {
+    return undefined
+  }
+
+  const parts = relative.slice('services/'.length).split('/')
+  return parts.length > 1 ? parts[0] : parts[0].split('.')[0].replace(/-(?:action|query|driver)$/, '')
+}
+
+function boundariesPrivateDomain({ options, file, target, reExport, roots, owner }: BoundariesImport): string | undefined {
+  const roles = options.fileRoles
+
+  if (!roles?.length) {
+    return undefined
+  }
+
+  const targetOwner = roots.find((path) => boundariesContains(path, target))
+  const fileDomain = owner ? boundariesDomain(file, owner) : undefined
+  const targetDomain = targetOwner ? boundariesDomain(target, targetOwner) : undefined
+  const sameDomain = owner && owner === targetOwner && fileDomain && fileDomain === targetDomain
+  const targetStem = boundariesStripExtension(target)
+  const publicSurface = boundariesPublicSurface.test(targetStem) && !boundariesActionOrQuery.test(targetStem)
+
+  const privateTarget =
+    roles.some((role) => targetStem.endsWith(`.${role}`)) ||
+    (targetDomain && !publicSurface && !/\.(?:types|constants)$/.test(targetStem))
+
+  if (!privateTarget) {
+    return undefined
+  }
+
+  if (reExport && /\.(?:service|client|server|rsc|utils)\.ts$/.test(file) && !boundariesActionOrQuery.test(file)) {
+    return 'public service and utility surfaces must not re-export private domain internals'
+  }
+
+  return sameDomain ? undefined : 'private domain files stay in the same domain and application; use its service API or shared utilities'
+}
+
+function boundariesPortableLib(check: BoundariesImport): string | undefined {
+  const { options, file, source, target, typeOnly, reExport, roots, web, backendImport } = check
+
+  if (!options.portableLib || !web || !boundariesContains(`${web}/lib`, file)) {
+    return undefined
+  }
+
+  const portableTarget = target.startsWith('/') ? resolve(target).replaceAll('\\', '/') : target
+  const appService = roots.some((path) => boundariesContains(`${path}/services`, portableTarget))
+  const backendTarget = options.backend.some((path) => boundariesContains(path, portableTarget))
+  const appPackage = boundariesMatchesImport(options.appPackages, source)
+
+  if (backendImport || backendTarget || appService || appPackage) {
+    return 'portable frontend lib does not import application services or application APIs'
+  }
+
+  const appType = roots.some((path) => boundariesContains(`${path}/types`, portableTarget))
+  const stem = boundariesStripExtension(basename(file)).replace(/\.utils$/, '')
+  const ownType = typeOnly && !reExport && boundariesStripExtension(portableTarget) === `${web}/types/${stem}.types`
+
+  if (appType && !ownType) {
+    return `portable frontend lib may only type-import its own contract '${web}/types/${stem}.types.ts'; app type re-exports are forbidden`
+  }
+
+  return undefined
+}
+
 export const boundariesImports = defineRule({
   meta: {
     type: 'problem',
@@ -31,99 +119,42 @@ export const boundariesImports = defineRule({
     },
   },
   createOnce(context) {
-    function check(node: ESTree.Node, source: string, typeOnly: boolean, reExport = false) {
-      const options = optionsFirst<ModuleBoundaryOptions>(context)
+    function check(node: ESTree.Node, source: string, typeOnly: boolean, reExport = false): void {
+      const options = optionsFirst<BoundariesOptions>(context)
       const file = context.filename.replaceAll('\\', '/')
-      const contains = (directory: string, candidate: string) =>
-        candidate === directory || candidate.startsWith(`${directory}/`)
       const roots = [...options.web, ...options.backend].sort((a, b) => b.length - a.length)
-      const owner = roots.find((path) => contains(path, file))
+      const owner = roots.find((path) => boundariesContains(path, file))
+      const target = boundariesResolveTarget(options, file, source)
       const web = owner && options.web.includes(owner) ? owner : undefined
-      const target = boundaryResolveTarget(options, file, source)
+
       const backendImport =
-        options.backend.some((path) => contains(path, target)) ||
-        options.backendPackages.some((name) => source === name || source.startsWith(`${name}/`))
-      let reason: string | undefined
-      if (web && backendImport && !options.publicEntrypoints.includes(source)) {
-        reason = 'frontend code uses only public backend entry points'
-      }
-      if (
-        (Array.isArray(options.packages) ? options.packages : [options.packages]).some(
-          (path) => path && contains(path, file),
-        ) &&
-        (backendImport ||
-          options.web.some((path) => contains(path, target)) ||
-          options.appPackages.some((name) => source === name || source.startsWith(`${name}/`)))
-      ) {
-        reason = 'shared packages do not import app internals'
-      }
-      if (file.includes('/services/') && /\/services\/service(?:\.ts)?$/.test(target) && !typeOnly) {
-        reason = 'service dependencies are injected rather than read from the registry'
-      }
-      if (
+        options.backend.some((path) => boundariesContains(path, target)) || boundariesMatchesImport(options.backendPackages, source)
+
+      const imported: BoundariesImport = { options, file, source, target, typeOnly, reExport, roots, owner, web, backendImport }
+      const inPackage = [options.packages].flat().some((path) => path && boundariesContains(path, file))
+
+      const appTarget =
+        backendImport || options.web.some((path) => boundariesContains(path, target)) || boundariesMatchesImport(options.appPackages, source)
+
+      const domainContract =
         /\.(?:types|constants)\.ts$/.test(file) &&
         !typeOnly &&
         /\/(?:core\/|services\/.*(?:\.(?:service|utils)|-(?:action|query)\.|\/(?:actions|queries)\/))/.test(target)
-      ) {
-        reason = 'domain types/constants use type-only imports from implementations'
-      }
-      if (file.endsWith('.client.ts') && !typeOnly && /^(react|react-dom)(\/|$)/.test(source)) {
-        reason = 'client services are React-free; use hooks for React behavior'
-      }
-      if (options.fileRoles?.length) {
-        const targetOwner = roots.find((path) => contains(path, target))
-        const domain = (path: string, appRoot: string) => {
-          const relative = path.slice(appRoot.length + 1)
-          if (relative.startsWith('types/') && relative.endsWith('.types.ts'))
-            return relative.slice('types/'.length).split('.')[0]
-          if (!relative.startsWith('services/')) return undefined
-          const parts = relative.slice('services/'.length).split('/')
-          return parts.length > 1 ? parts[0] : parts[0].split('.')[0].replace(/-(?:action|query|driver)$/, '')
-        }
-        const sameDomain =
-          owner &&
-          targetOwner &&
-          owner === targetOwner &&
-          domain(file, owner) &&
-          domain(file, owner) === domain(target, targetOwner)
-        const targetStem = target.replace(/\.[cm]?[jt]sx?$/, '')
-        const concept = options.fileRoles.some((role) => targetStem.endsWith(`.${role}`))
-        const publicSurface =
-          /\.(?:service|client|server|rsc|utils)$/.test(targetStem) &&
-          !/\/(?:[^/]+)-(?:action|query)\./.test(targetStem)
-        const privateTarget =
-          concept ||
-          (targetOwner && domain(target, targetOwner) && !publicSurface && !/\.(?:types|constants)$/.test(targetStem))
-        if (privateTarget && !sameDomain) {
-          reason =
-            'private domain files stay in the same domain and application; use its service API or shared utilities'
-        }
-        if (
-          privateTarget &&
-          reExport &&
-          /\.(?:service|client|server|rsc|utils)\.ts$/.test(file) &&
-          !/\/(?:[^/]+)-(?:action|query)\./.test(file)
-        ) {
-          reason = 'public service and utility surfaces must not re-export private domain internals'
-        }
-      }
-      if (options.portableLib && web && contains(`${web}/lib`, file)) {
-        const portableTarget = target.startsWith('/') ? resolve(target).replaceAll('\\', '/') : target
-        const appService = roots.some((path) => contains(`${path}/services`, portableTarget))
-        const backendTarget = options.backend.some((path) => contains(path, portableTarget))
-        const appPackage = options.appPackages.some((name) => source === name || source.startsWith(`${name}/`))
-        const appType = roots.some((path) => contains(`${path}/types`, portableTarget))
-        const stem = basename(file)
-          .replace(/\.[cm]?[jt]sx?$/, '')
-          .replace(/\.utils$/, '')
-        const ownType =
-          typeOnly && !reExport && portableTarget.replace(/\.[cm]?[jt]sx?$/, '') === `${web}/types/${stem}.types`
-        if (backendImport || backendTarget || appService || appPackage) {
-          reason = 'portable frontend lib does not import application services or application APIs'
-        } else if (appType && !ownType) {
-          reason = `portable frontend lib may only type-import its own contract '${web}/types/${stem}.types.ts'; app type re-exports are forbidden`
-        }
-      }
+
+      const reason = [
+        web && backendImport && !options.publicEntrypoints.includes(source) ? 'frontend code uses only public backend entry points' : undefined,
+        inPackage && appTarget ? 'shared packages do not import app internals' : undefined,
+        file.includes('/services/') && /\/services\/service(?:\.ts)?$/.test(target) && !typeOnly
+          ? 'service dependencies are injected rather than read from the registry'
+          : undefined,
+        domainContract ? 'domain types/constants use type-only imports from implementations' : undefined,
+        file.endsWith('.client.ts') && !typeOnly && /^(react|react-dom)(\/|$)/.test(source)
+          ? 'client services are React-free; use hooks for React behavior'
+          : undefined,
+        boundariesPrivateDomain(imported),
+        boundariesPortableLib(imported),
+      ].findLast((candidate) => candidate !== undefined)
+
       if (reason) {
         context.report({
           node,
@@ -132,6 +163,7 @@ export const boundariesImports = defineRule({
         })
       }
     }
+
     return {
       Program(program) {
         const exported = new Set(
@@ -139,28 +171,24 @@ export const boundariesImports = defineRule({
             .filter((binding) => !binding.reExport)
             .map((binding) => binding.localName),
         )
+
         for (const statement of program.body) {
-          if (statement.type !== 'ImportDeclaration') continue
+          if (statement.type !== 'ImportDeclaration') {
+            continue
+          }
+
           for (const specifier of statement.specifiers) {
-            if (exported.has(specifier.local.name))
-              check(
-                specifier,
-                statement.source.value,
-                statement.importKind === 'type' ||
-                  (specifier.type === 'ImportSpecifier' && specifier.importKind === 'type'),
-                true,
-              )
+            if (!exported.has(specifier.local.name)) {
+              continue
+            }
+
+            const typeOnly = statement.importKind === 'type' || (specifier.type === 'ImportSpecifier' && specifier.importKind === 'type')
+            check(specifier, statement.source.value, typeOnly, true)
           }
         }
       },
       ImportDeclaration(node) {
-        check(
-          node,
-          node.source.value,
-          node.importKind === 'type' ||
-            (node.specifiers.length > 0 &&
-              node.specifiers.every((item) => item.type === 'ImportSpecifier' && item.importKind === 'type')),
-        )
+        check(node, node.source.value, astIsTypeOnlyImport(node))
       },
       ExportNamedDeclaration(node) {
         if (node.source) {
@@ -171,14 +199,17 @@ export const boundariesImports = defineRule({
         check(node, node.source.value, node.exportKind === 'type', true)
       },
       ImportExpression(node) {
-        if (node.source.type === 'Literal' && typeof node.source.value === 'string') {
-          check(node, node.source.value, false)
+        const source = boundariesLiteralSource(node)
+
+        if (source !== undefined) {
+          check(node, source, false)
         }
       },
       TSImportType(node) {
-        const options = optionsFirst<ModuleBoundaryOptions>(context)
+        const { portableLib, web } = optionsFirst<BoundariesOptions>(context)
         const file = context.filename.replaceAll('\\', '/')
-        if (options.portableLib && options.web.some((path) => file.startsWith(`${path}/lib/`))) {
+
+        if (portableLib && web.some((path) => file.startsWith(`${path}/lib/`))) {
           check(node, node.source.value, true)
         }
       },

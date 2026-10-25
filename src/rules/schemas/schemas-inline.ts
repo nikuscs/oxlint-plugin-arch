@@ -1,54 +1,23 @@
 import { defineRule } from '@oxlint/plugins'
+import { astMemberName } from '../../utils/ast.utils.ts'
+import { optionsFirst } from '../../utils/options.utils.ts'
 import {
-  astStaticMemberName,
-  optionsFirst,
+  schemasElementDefaults,
+  schemasElementOptionsSchema,
   schemasElements,
   schemasIsAllowedElement,
   schemasIsCall,
-} from '../../utils/index.ts'
+} from '../../utils/schemas.utils.ts'
+import type { SchemasInlineOptions } from '../../types/schemas.types.ts'
 
-interface NoInlineSchemaElementsOptions {
-  namespaces: string[]
-  methods: string[]
-  structuralMethods: string[]
-  allowZodScalars: boolean
-}
-
-/**
- * Requires configured schema combinators to reference named schemas instead of defining structural schemas inline.
- *
- * Example: `z.array(userSchema)` passes; `z.array(z.object({ id: z.string() }))` fails.
- */
 export const schemasInline = defineRule({
   meta: {
     type: 'problem',
-    schema: [
-      {
-        type: 'object',
-        additionalProperties: false,
-        properties: {
-          namespaces: { type: 'array', items: { type: 'string' } },
-          methods: { type: 'array', items: { type: 'string' } },
-          structuralMethods: { type: 'array', items: { type: 'string' } },
-          allowZodScalars: { type: 'boolean' },
-        },
-      },
-    ],
+    schema: [schemasElementOptionsSchema],
     defaultOptions: [
       {
-        namespaces: ['z'],
-        methods: ['array', 'union', 'record', 'tuple'],
-        structuralMethods: [
-          'array',
-          'discriminatedUnion',
-          'intersection',
-          'lazy',
-          'object',
-          'record',
-          'tuple',
-          'union',
-        ],
-        allowZodScalars: true,
+        ...schemasElementDefaults,
+        structuralMethods: ['array', 'discriminatedUnion', 'intersection', 'lazy', 'object', 'record', 'tuple', 'union'],
       },
     ],
     messages: { inline: 'z.{{method}}() elements must use named schemas.' },
@@ -60,18 +29,18 @@ export const schemasInline = defineRule({
           return
         }
 
-        const options = optionsFirst<NoInlineSchemaElementsOptions>(context)
+        const options = optionsFirst<SchemasInlineOptions>(context)
         const namespaces = new Set(options.namespaces)
-        const method = astStaticMemberName(node.callee)
+        const method = astMemberName(node.callee)
 
         if (!schemasIsCall(node, namespaces) || !method || !options.methods.includes(method)) {
           return
         }
 
+        const structuralMethods = new Set(options.structuralMethods)
+
         for (const element of schemasElements(node)) {
-          if (
-            !schemasIsAllowedElement(element, options.allowZodScalars, namespaces, new Set(options.structuralMethods))
-          ) {
+          if (!schemasIsAllowedElement(element, options.allowZodScalars, namespaces, structuralMethods)) {
             context.report({
               node: element,
               messageId: 'inline',

@@ -1,6 +1,3 @@
-import { syntaxRule } from '../../utils/helpers/syntax.ts'
+import { astSelectorRule } from '../../utils/ast.utils.ts'
 
-export const namingTypes = syntaxRule(
-  'TSInterfaceDeclaration:not([id.name=/^[A-Z][a-zA-Z0-9]*$/])',
-      'Use PascalCase for interfaces.',
-)
+export const namingTypes = astSelectorRule('TSInterfaceDeclaration:not([id.name=/^[A-Z][a-zA-Z0-9]*$/])', 'Use PascalCase for interfaces.')

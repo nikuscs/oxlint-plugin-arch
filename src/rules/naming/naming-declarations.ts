@@ -1,39 +1,11 @@
 import { defineRule } from '@oxlint/plugins'
+import { declarationsKinds, declarationsNamedFromNode } from '../../utils/declarations.utils.ts'
+import { namingFilePrefixesFor, namingHasFilePrefix, namingStemSchemaProperties } from '../../utils/naming.utils.ts'
+import { optionsFirst, optionsPatternLabel, optionsPatterns, optionsPatternSchema, optionsPatternsTest } from '../../utils/options.utils.ts'
+import type { DeclarationsKind } from '../../types/declarations.types.ts'
+import type { NamingDeclarationsOptions } from '../../types/naming.types.ts'
 import type { ESTree } from '@oxlint/plugins'
-import {
-  type DeclarationsKind,
-  declarationsKinds,
-  declarationsNamedFromNode,
-  namingFileBasename,
-  namingFilePrefixes,
-  namingFileStem,
-  namingStemModes,
-  optionsFirst,
-  optionsOptionalPatterns,
-  type OptionsPattern,
-  optionsPatternLabel,
-  optionsPatternSchema,
-  optionsPatternsTest,
-} from '../../utils/index.ts'
 
-interface DeclarationNameOptions {
-  kinds?: DeclarationsKind[]
-  pattern?: OptionsPattern
-  flags?: string
-  stem?: 'before-first-dot' | 'full-basename'
-  trailingRoles?: string[]
-  roleSeparators?: string[]
-  normalize?: 'remove-separators' | 'none'
-  singularize?: 'none' | 'trailing-s'
-  allowPattern?: OptionsPattern
-}
-
-/**
- * Checks selected declarations in a file against a filename-derived prefix or a consumer pattern.
- *
- * Example: On `agent-setups.types.ts`, `kinds: ['type']` and `singularize: 'trailing-s'` accepts `AgentSetupTimeTrigger` and rejects `DraftStatus`.
- * Example: With `trailingRoles: ['utils']`, `onchain-utils.ts` accepts `OnchainClient` the same way `onchain.utils.ts` does.
- */
 export const namingDeclarations = defineRule({
   meta: {
     type: 'problem',
@@ -42,17 +14,10 @@ export const namingDeclarations = defineRule({
         type: 'object',
         additionalProperties: false,
         properties: {
-          kinds: {
-            type: 'array',
-            items: { type: 'string', enum: [...declarationsKinds] },
-          },
+          kinds: { type: 'array', items: { type: 'string', enum: [...declarationsKinds] } },
           pattern: optionsPatternSchema,
           flags: { type: 'string' },
-          stem: { type: 'string', enum: [...namingStemModes] },
-          trailingRoles: { type: 'array', items: { type: 'string' } },
-          roleSeparators: { type: 'array', items: { type: 'string' } },
-          normalize: { type: 'string', enum: ['remove-separators', 'none'] },
-          singularize: { type: 'string', enum: ['none', 'trailing-s'] },
+          ...namingStemSchemaProperties,
           allowPattern: optionsPatternSchema,
         },
       },
@@ -63,7 +28,7 @@ export const namingDeclarations = defineRule({
     },
   },
   createOnce(context) {
-    let options: DeclarationNameOptions = {}
+    let options: NamingDeclarationsOptions = {}
     let kinds: Set<DeclarationsKind> | null = null
     let allowed: RegExp[] = []
     let expected: RegExp[] = []
@@ -71,45 +36,43 @@ export const namingDeclarations = defineRule({
 
     function check(node: ESTree.Node) {
       const item = declarationsNamedFromNode(node)
+
       if (!item || (kinds && !kinds.has(item.kind)) || optionsPatternsTest(allowed, item.name)) {
         return
       }
 
-      const comparableName = options.normalize === 'none' ? item.name : item.name.replaceAll('_', '').toLowerCase()
-      const matches =
-        expected.length > 0
-          ? optionsPatternsTest(expected, item.name)
-          : prefixes.some((prefix) => comparableName.startsWith(prefix))
+      if (expected.length > 0) {
+        if (optionsPatternsTest(expected, item.name)) {
+          return
+        }
 
-      if (matches) {
+        const label = optionsPatternLabel([options.pattern ?? []].flat().filter((source) => source !== ''))
+        context.report({
+          node: item.node,
+          messageId: 'pattern',
+          data: { name: item.name, pattern: label },
+        })
+
         return
       }
 
+      if (namingHasFilePrefix(item.name, prefixes, options.normalize)) {
+        return
+      }
       context.report({
         node: item.node,
-        messageId: expected.length > 0 ? 'pattern' : 'prefix',
-        data:
-          expected.length > 0
-            ? {
-                name: item.name,
-                pattern: optionsPatternLabel([options.pattern ?? []].flat().filter((source) => source !== '')),
-              }
-            : { name: item.name, prefix: prefixes.join(' or ') },
+        messageId: 'prefix',
+        data: { name: item.name, prefix: prefixes.join(' or ') },
       })
     }
 
     return {
       before() {
-        options = optionsFirst<DeclarationNameOptions>(context, {
-          stem: 'before-first-dot',
-          normalize: 'remove-separators',
-        })
-        kinds = options.kinds && options.kinds.length > 0 ? new Set(options.kinds) : null
-        allowed = optionsOptionalPatterns(options.allowPattern)
-        expected = optionsOptionalPatterns(options.pattern, options.flags)
-        const basename = namingFileBasename(context.filename).replace(/\.(tsx?|jsx?)$/, '')
-        const stem = namingFileStem(basename, options.stem, options.trailingRoles, options.roleSeparators)
-        prefixes = namingFilePrefixes(stem, options.normalize ?? 'remove-separators', options.singularize ?? 'none')
+        options = optionsFirst<NamingDeclarationsOptions>(context, { stem: 'before-first-dot', normalize: 'remove-separators' })
+        kinds = options.kinds?.length ? new Set(options.kinds) : null
+        allowed = optionsPatterns(options.allowPattern)
+        expected = optionsPatterns(options.pattern, options.flags)
+        prefixes = namingFilePrefixesFor(context.filename, options)
       },
       FunctionDeclaration: check,
       ClassDeclaration: check,

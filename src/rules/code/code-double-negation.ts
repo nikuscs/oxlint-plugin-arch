@@ -1,6 +1,6 @@
-import { syntaxRule } from '../../utils/helpers/syntax.ts'
+import { astSelectorRule } from '../../utils/ast.utils.ts'
 
-export const codeDoubleNegation = syntaxRule(
+export const codeDoubleNegation = astSelectorRule(
   'UnaryExpression[operator="!"] > UnaryExpression[operator="!"]',
-      'Use Boolean(value) or an explicit comparison.',
+  'Use Boolean(value) or an explicit comparison.',
 )

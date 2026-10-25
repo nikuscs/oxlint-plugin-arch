@@ -1,23 +1,9 @@
 import { defineRule } from '@oxlint/plugins'
-import {
-  declarationsFunctionName,
-  optionsFirst,
-  optionsOptionalPatterns,
-  optionsPatternSchema,
-  optionsPatternsTest,
-} from '../../utils/index.ts'
-import type { OptionsPattern } from '../../utils/index.ts'
+import { declarationsFunctionName } from '../../utils/declarations.utils.ts'
+import { optionsFirst, optionsPatterns, optionsPatternSchema, optionsPatternsTest } from '../../utils/options.utils.ts'
+import type { FilesNoFunctionsOptions } from '../../types/files.types.ts'
+import type { ESTree } from '@oxlint/plugins'
 
-interface NoTopLevelFunctionsOptions {
-  banReExports: boolean
-  allowPattern?: OptionsPattern
-}
-
-/**
- * Rejects top-level functions and function-valued variables, and can also reject re-exports.
- *
- * Example: A data-only constants file passes; `export const load = () => 1` fails.
- */
 export const filesNoFunctions = defineRule({
   meta: {
     type: 'problem',
@@ -40,48 +26,40 @@ export const filesNoFunctions = defineRule({
   createOnce(context) {
     return {
       Program(program) {
-        const { banReExports, allowPattern } = optionsFirst<NoTopLevelFunctionsOptions>(context)
-        const allowed = optionsOptionalPatterns(allowPattern)
+        const { banReExports, allowPattern } = optionsFirst<FilesNoFunctionsOptions>(context)
+        const allowed = optionsPatterns(allowPattern)
 
         for (const statement of program.body) {
-          if (
-            banReExports &&
-            (statement.type === 'ExportAllDeclaration' ||
-              (statement.type === 'ExportNamedDeclaration' && statement.source))
-          ) {
+          const isReExport =
+            statement.type === 'ExportAllDeclaration' || (statement.type === 'ExportNamedDeclaration' && Boolean(statement.source))
+
+          if (banReExports && isReExport) {
             context.report({ node: statement, messageId: 'noReExport' })
+
             continue
           }
 
           const declaration =
-            statement.type === 'ExportNamedDeclaration' || statement.type === 'ExportDefaultDeclaration'
-              ? statement.declaration
-              : statement
+            statement.type === 'ExportNamedDeclaration' || statement.type === 'ExportDefaultDeclaration' ? statement.declaration : statement
+
+          let functions: (ESTree.Function | ESTree.VariableDeclarator)[] = []
 
           if (declaration?.type === 'FunctionDeclaration') {
-            if (!optionsPatternsTest(allowed, declarationsFunctionName(declaration))) {
-              context.report({
-                node: declaration,
-                messageId: 'noFunction',
-                data: { name: declarationsFunctionName(declaration) },
-              })
-            }
-            continue
+            functions = [declaration]
+          } else if (declaration?.type === 'VariableDeclaration') {
+            functions = declaration.declarations.filter(
+              (item) => item.init?.type === 'FunctionExpression' || item.init?.type === 'ArrowFunctionExpression',
+            )
           }
 
-          if (declaration?.type !== 'VariableDeclaration') {
-            continue
-          }
+          for (const node of functions) {
+            const name = declarationsFunctionName(node)
 
-          for (const item of declaration.declarations) {
-            if (
-              (item.init?.type === 'FunctionExpression' || item.init?.type === 'ArrowFunctionExpression') &&
-              !optionsPatternsTest(allowed, declarationsFunctionName(item))
-            ) {
+            if (!optionsPatternsTest(allowed, name)) {
               context.report({
-                node: item,
+                node,
                 messageId: 'noFunction',
-                data: { name: declarationsFunctionName(item) },
+                data: { name },
               })
             }
           }

@@ -1,44 +1,22 @@
-import { defineRule } from "@oxlint/plugins";
-
-import type { ESTree } from "@oxlint/plugins";
-
-type RuntimeFunction = ESTree.ArrowFunctionExpression | ESTree.Function;
-
-function isRuntimeFunction(node: ESTree.Node): node is RuntimeFunction {
-  return (
-    node.type === "ArrowFunctionExpression" ||
-    node.type === "FunctionDeclaration" ||
-    node.type === "FunctionExpression"
-  );
-}
-
-function isInsideTypeGuard(node: ESTree.Node): boolean {
-  let current: ESTree.Node | null = node.parent;
-  while (current !== null && current.type !== "Program") {
-    if (isRuntimeFunction(current)) {
-      return current.returnType?.typeAnnotation.type === "TSTypePredicate";
-    }
-    current = current.parent;
-  }
-  return false;
-}
+import { defineRule } from '@oxlint/plugins'
+import { optionsFirst } from '../../../utils/options.utils.ts'
+import type { DillonAntiSlopRuntimeTypeofOptions } from '../../../types/dillon-anti-slop.types.ts'
+import type { ESTree } from '@oxlint/plugins'
 
 export const noRuntimeTypeofRule = defineRule({
   meta: {
-    type: "problem",
+    type: 'problem',
     docs: {
-      description:
-        "Disallow runtime typeof checks; external values must be decoded into meaningful types at their I/O boundary.",
+      description: 'Disallow runtime typeof checks; external values must be decoded into meaningful types at their I/O boundary.',
     },
     messages: {
-      runtimeTypeof:
-        "A `typeof` check narrows a representation without establishing its contract. Parse input at its I/O boundary, then branch on the domain value.",
+      runtimeTypeof: 'A `typeof` check narrows a representation without establishing its contract. Parse input at its I/O boundary, then branch on the domain value.',
     },
     schema: [
       {
-        type: "object",
+        type: 'object',
         properties: {
-          allowInTypeGuards: { type: "boolean" },
+          allowInTypeGuards: { type: 'boolean' },
         },
         additionalProperties: false,
       },
@@ -48,19 +26,29 @@ export const noRuntimeTypeofRule = defineRule({
   createOnce(context) {
     return {
       UnaryExpression(node) {
-        const option = context.options?.[0];
-        const allowInTypeGuards =
-          typeof option === "object" &&
-          option !== null &&
-          !Array.isArray(option) &&
-          option.allowInTypeGuards === true;
-        if (
-          node.operator === "typeof" &&
-          (!allowInTypeGuards || !isInsideTypeGuard(node))
-        ) {
-          context.report({ node, messageId: "runtimeTypeof" });
+        if (node.operator !== 'typeof') {
+          return
         }
+
+        if (optionsFirst<DillonAntiSlopRuntimeTypeofOptions>(context, {}).allowInTypeGuards === true) {
+          let current: ESTree.Node = node.parent
+
+          while (current.type !== 'Program') {
+            if (
+              current.type === 'ArrowFunctionExpression' ||
+              current.type === 'FunctionDeclaration' ||
+              current.type === 'FunctionExpression'
+            ) {
+              if (current.returnType?.typeAnnotation.type === 'TSTypePredicate') {
+                return
+              }
+              break
+            }
+            current = current.parent
+          }
+        }
+        context.report({ node, messageId: 'runtimeTypeof' })
       },
-    };
+    }
   },
-});
+})

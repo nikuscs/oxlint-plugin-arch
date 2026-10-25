@@ -1,43 +1,51 @@
-import type { ESTree, Scope, SourceCode, Variable } from "@oxlint/plugins";
+import { defineRule } from '@oxlint/plugins'
+import { resolveVariable } from './resolve-variable.ts'
 
-function resolveVariable(
-  sourceCode: SourceCode,
-  identifier: ESTree.IdentifierReference,
-): Variable | null {
-  let scope: Scope | null = sourceCode.getScope(identifier);
-  while (scope !== null) {
-    const variable = scope.set.get(identifier.name);
-    if (variable !== undefined) return variable;
-    scope = scope.upper;
-  }
-  return null;
-}
+export function reflectMethodRule(methodName: string, messageId: string, description: string, message: string) {
+  return defineRule({
+    meta: {
+      type: 'problem',
+      docs: { description },
+      messages: { [messageId]: message },
+    },
+    createOnce(context) {
+      return {
+        CallExpression(node) {
+          const { callee } = node
 
-function isGlobalReflect(
-  sourceCode: SourceCode,
-  expression: ESTree.Expression,
-): boolean {
-  if (expression.type !== "Identifier" || expression.name !== "Reflect")
-    return false;
-  if (sourceCode.isGlobalReference(expression)) return true;
-  const variable = resolveVariable(sourceCode, expression);
-  return variable === null || variable.defs.length === 0;
-}
+          if (
+            callee.type === 'Super' ||
+            callee.type === 'V8IntrinsicExpression' ||
+            !('property' in callee) ||
+            !('object' in callee) ||
+            !('computed' in callee)
+          ) {
+            return
+          }
 
-export function isGlobalReflectMethodCall(
-  sourceCode: SourceCode,
-  callee: ESTree.Expression,
-  methodName: string,
-): boolean {
-  if (
-    !("property" in callee) ||
-    !("object" in callee) ||
-    !("computed" in callee)
-  )
-    return false;
-  if (!isGlobalReflect(sourceCode, callee.object)) return false;
-  const property = callee.property;
-  return callee.computed
-    ? property.type === "Literal" && property.value === methodName
-    : property.type === "Identifier" && property.name === methodName;
+          const { object, property } = callee
+
+          if (object.type !== 'Identifier' || object.name !== 'Reflect') {
+            return
+          }
+
+          if (!context.sourceCode.isGlobalReference(object)) {
+            const variable = resolveVariable(context.sourceCode, object)
+
+            if (variable !== null && variable.defs.length > 0) {
+              return
+            }
+          }
+
+          if (
+            callee.computed
+              ? property.type === 'Literal' && property.value === methodName
+              : property.type === 'Identifier' && property.name === methodName
+          ) {
+            context.report({ node, messageId })
+          }
+        },
+      }
+    },
+  })
 }

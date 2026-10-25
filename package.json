@@ -5,30 +5,17 @@
   "type": "module",
   "main": "./dist/index.js",
   "exports": {
-    ".": "./dist/index.js",
-    "./presets": {
-      "types": "./dist/presets/index.d.ts",
-      "default": "./dist/presets/index.js"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
     },
-    "./presets/react-modules-preset": {
-      "types": "./dist/presets/react-modules-preset.d.ts",
-      "default": "./dist/presets/react-modules-preset.js"
+    "./preset": {
+      "types": "./dist/preset/preset.d.ts",
+      "default": "./dist/preset/preset.js"
     },
-    "./presets/next-react-modules-preset": {
-      "types": "./dist/presets/next-react-modules-preset.d.ts",
-      "default": "./dist/presets/next-react-modules-preset.js"
-    },
-    "./presets/tanstack-start-react-modules-preset": {
-      "types": "./dist/presets/tanstack-start-react-modules-preset.d.ts",
-      "default": "./dist/presets/tanstack-start-react-modules-preset.js"
-    },
-    "./rules/dillon-anti-slop": {
+    "./dillon-anti-slop": {
       "types": "./dist/vendor/dillon-anti-slop/index.d.ts",
       "default": "./dist/vendor/dillon-anti-slop/index.js"
-    },
-    "./rules/module-policy": {
-      "types": "./dist/modules.d.ts",
-      "default": "./dist/modules.js"
     }
   },
   "files": [
@@ -38,14 +25,13 @@
     "dist"
   ],
   "scripts": {
-    "build": "bun build src/index.ts src/presets/index.ts src/presets/react-modules-preset.ts src/presets/next-react-modules-preset.ts src/presets/tanstack-start-react-modules-preset.ts src/vendor/dillon-anti-slop/index.ts src/modules.ts --root src --outdir dist --target node --format esm --packages external && tsc --project tsconfig.build.json",
-    "check": "bun run lint && bun run build && bun run typecheck && bun run check:examples",
-    "lint": "oxlint src examples scripts",
-    "lint:self": "bun run build && oxlint -c oxlint.self.config.ts --disable-nested-config src",
+    "build": "bun build src/index.ts src/preset/preset.ts src/vendor/dillon-anti-slop/index.ts --root src --outdir dist --target node --format esm --packages external && tsc --project tsconfig.build.json",
+    "check": "bun run build && bun run lint && bun run typecheck",
+    "lint": "oxlint -c oxlint.self.config.ts --disable-nested-config src",
     "lint:dead": "fallow dead-code",
+    "lint:dupes": "fallow dupes",
     "lint:slop": "scanr slop",
     "typecheck": "tsrs --noEmit",
-    "check:examples": "oxlint examples/minimal.oxlint.config.ts -c examples/minimal.oxlint.config.ts --disable-nested-config && oxlint examples/full.oxlint.config.ts -c examples/full.oxlint.config.ts --disable-nested-config && oxlint examples/dist.oxlint.config.ts -c examples/dist.oxlint.config.ts --disable-nested-config && oxlint examples/monorepo.oxlint.config.ts -c examples/monorepo.oxlint.config.ts --disable-nested-config && oxlint --print-config -c examples/preset.oxlint.config.ts > /dev/null && oxlint --print-config -c examples/mixed-frameworks.oxlint.config.ts > /dev/null",
     "prepublishOnly": "bun run check",
     "release": "bash scripts/release.sh",
     "release:patch": "bash scripts/release.sh patch --yes",

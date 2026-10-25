@@ -1,28 +1,10 @@
 import { defineRule } from '@oxlint/plugins'
-import {
-  namingFileBasename,
-  optionsFirst,
-  optionsOptionalPatterns,
-  optionsPatternSchema,
-  optionsPatternsTest,
-  reactComponentsExportCandidates,
-  reactComponentsIsLike,
-  reactComponentsPascalFromBasename,
-} from '../../utils/index.ts'
-import type { OptionsPattern } from '../../utils/index.ts'
+import { namingBasename, namingComponentName } from '../../utils/naming.utils.ts'
+import { optionsFirst, optionsPatterns, optionsPatternSchema, optionsPatternsTest } from '../../utils/options.utils.ts'
+import { reactExportCandidates, reactIsComponent } from '../../utils/react.utils.ts'
+import type { DeclarationsCandidate } from '../../types/declarations.types.ts'
+import type { FilesComponentsOnlyOptions } from '../../types/files.types.ts'
 
-interface OnlyExportComponentsOptions {
-  matchFileName?: boolean
-  trailingRoles?: string[]
-  allowTypeExports?: boolean
-  denyTypePattern?: OptionsPattern
-}
-
-/**
- * Allows only React components and, by default, type exports, with optional matching between component names and filenames.
- *
- * Example: `button.tsx` exporting `Button` passes; exporting a plain `buttonConfig` value fails. Set `allowTypeExports: false` to reject types.
- */
 export const filesComponentsOnly = defineRule({
   meta: {
     type: 'problem',
@@ -53,46 +35,42 @@ export const filesComponentsOnly = defineRule({
           trailingRoles = [],
           allowTypeExports = true,
           denyTypePattern,
-        } = optionsFirst<OnlyExportComponentsOptions>(context, {})
-        const basename = namingFileBasename(context.filename)
+        } = optionsFirst<FilesComponentsOnlyOptions>(context, {})
+
+        const basename = namingBasename(context.filename)
         const extension = basename.slice(basename.lastIndexOf('.'))
         const role = trailingRoles.find((candidate) => basename.endsWith(`.${candidate}${extension}`))
-        const expected = reactComponentsPascalFromBasename(role ? basename.replace(`.${role}${extension}`, extension) : basename)
-        // A trailing role is optional in the name: `hero.illustration.tsx` accepts `Hero*` and `HeroIllustration*`.
-        const expectedKeys = [expected, ...(role ? [reactComponentsPascalFromBasename(basename)] : [])].map((name) =>
-          name.toLowerCase(),
-        )
-        const denied = optionsOptionalPatterns(denyTypePattern)
-        const components = []
+        const expected = namingComponentName(role ? basename.replace(`.${role}${extension}`, extension) : basename)
+        const expectedKeys = [expected, ...(role ? [namingComponentName(basename)] : [])].map((name) => name.toLowerCase())
+        const denied = optionsPatterns(denyTypePattern)
+        const components: DeclarationsCandidate[] = []
 
-        for (const candidate of reactComponentsExportCandidates(program)) {
+        for (const candidate of reactExportCandidates(program)) {
+          const { name, node } = candidate
+
           if (candidate.typeOnly) {
             if (!allowTypeExports) {
               context.report({
-                node: candidate.node,
+                node,
                 messageId: 'typeExport',
-                data: { name: candidate.name, expected },
+                data: { name },
               })
-            } else if (optionsPatternsTest(denied, candidate.name)) {
+            } else if (optionsPatternsTest(denied, name)) {
               context.report({
-                node: candidate.node,
+                node,
                 messageId: 'deniedType',
-                data: { name: candidate.name, expected },
+                data: { name },
               })
             }
-            continue
-          }
-
-          if (!reactComponentsIsLike(program, candidate)) {
+          } else if (reactIsComponent(program, candidate)) {
+            components.push(candidate)
+          } else {
             context.report({
-              node: candidate.node,
+              node,
               messageId: 'nonComponent',
-              data: { name: candidate.name, expected },
+              data: { name },
             })
-            continue
           }
-
-          components.push(candidate)
         }
 
         if (components.length === 0 || !matchFileName) {
@@ -100,18 +78,17 @@ export const filesComponentsOnly = defineRule({
         }
 
         const names = components.map((candidate) => candidate.name.toLowerCase())
-        const matches = expectedKeys.some(
-          (expectedKey) => names.includes(expectedKey) || names.every((name) => name.startsWith(expectedKey)),
-        )
 
-        if (!matches) {
-          for (const candidate of components) {
-            context.report({
-              node: candidate.node,
-              messageId: 'nameMismatch',
-              data: { name: candidate.name, expected },
-            })
-          }
+        if (expectedKeys.some((key) => names.includes(key) || names.every((name) => name.startsWith(key)))) {
+          return
+        }
+
+        for (const { name, node } of components) {
+          context.report({
+            node,
+            messageId: 'nameMismatch',
+            data: { name, expected },
+          })
         }
       },
     }

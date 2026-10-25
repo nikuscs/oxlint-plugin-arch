@@ -1,50 +1,15 @@
 import { defineRule } from '@oxlint/plugins'
-import {
-  factoriesCollectTopLevel,
-  factoriesDirectlyReturnedObjects,
-  factoriesObjectPropertyName,
-  optionsFirst,
-  optionsPatterns,
-  optionsPatternSchema,
-  optionsPatternsTest,
-} from '../../utils/index.ts'
-import type { OptionsPattern } from '../../utils/index.ts'
+import { declarationsFactories, declarationsPropertyName, declarationsReturnedObjects } from '../../utils/declarations.utils.ts'
+import { optionsFirst, optionsPatternSchema, optionsPatternsTest, optionsPatternsWithEmpty } from '../../utils/options.utils.ts'
+import type { FilesFactoryKeysCompiled, FilesFactoryKeysOptions } from '../../types/files.types.ts'
+import type { OptionsPattern } from '../../types/options.types.ts'
 
-interface NoExtraFactoryKeySet {
-  factoryPattern: OptionsPattern
-  keys: string[]
-  requireKeys?: string[]
-}
-
-interface NoExtraFactoryKeysOptions {
-  keys?: string[]
-  factoryPattern?: OptionsPattern
-  requireKeys?: string[]
-  keySets?: NoExtraFactoryKeySet[]
-}
-
-interface CompiledFactoryKeys {
-  patterns: RegExp[]
-  allowed: Set<string>
-  allowedList: string[]
-  requireKeys: string[]
-}
-
-function compileFactoryKeys(pattern: OptionsPattern, keys: string[], requireKeys: string[]): CompiledFactoryKeys {
+function compileKeys(pattern: OptionsPattern, keys: string[], requireKeys: string[]): FilesFactoryKeysCompiled {
   const allowedList = keys.concat(requireKeys.filter((key) => !keys.includes(key)))
-  return {
-    patterns: optionsPatterns(pattern),
-    allowed: new Set(allowedList),
-    allowedList,
-    requireKeys,
-  }
+
+  return { patterns: optionsPatternsWithEmpty(pattern), allowed: new Set(allowedList), allowedList, requireKeys }
 }
 
-/**
- * Checks direct object returns from selected top-level factories and rejects keys outside the configured allow-list.
- *
- * Example: With `keys: [run]`, `return { run }` passes while `return { run, preview }` fails. `requireKeys` reports missing keys and empty objects.
- */
 export const filesFactoryKeys = defineRule({
   meta: {
     type: 'problem',
@@ -79,49 +44,32 @@ export const filesFactoryKeys = defineRule({
     },
   },
   createOnce(context) {
-    let keySets: CompiledFactoryKeys[] = []
-    let fallback: CompiledFactoryKeys | undefined
-
-    function resolveFactoryKeys(name: string): CompiledFactoryKeys | undefined {
-      const matched = keySets.find((item) => optionsPatternsTest(item.patterns, name))
-      if (matched) {
-        return matched
-      }
-
-      if (fallback && optionsPatternsTest(fallback.patterns, name)) {
-        return fallback
-      }
-    }
+    let keySets: FilesFactoryKeysCompiled[] = []
 
     return {
       before() {
-        const options = optionsFirst<NoExtraFactoryKeysOptions>(context, {})
-        const { keys, factoryPattern = '^make[A-Z]', requireKeys = [], keySets: configured } = options
+        const { keys, factoryPattern = '^make[A-Z]', requireKeys = [], keySets: configured } = optionsFirst<FilesFactoryKeysOptions>(context, {})
 
         if (!keys && !configured) {
           return false
         }
 
-        keySets = (configured ?? []).map((item) =>
-          compileFactoryKeys(item.factoryPattern, item.keys, item.requireKeys ?? []),
-        )
-        fallback = keys ? compileFactoryKeys(factoryPattern, keys, requireKeys) : undefined
+        keySets = (configured ?? []).map((item) => compileKeys(item.factoryPattern, item.keys, item.requireKeys ?? []))
+
+        if (keys) {
+          keySets.push(compileKeys(factoryPattern, keys, requireKeys))
+        }
       },
       Program(program) {
-        for (const factory of factoriesCollectTopLevel(program, /^/)) {
-          const resolved = resolveFactoryKeys(factory.name)
+        for (const factory of declarationsFactories(program, /^/)) {
+          const resolved = keySets.find((item) => optionsPatternsTest(item.patterns, factory.name))
 
           if (!resolved) {
             continue
           }
 
-          for (const object of factoriesDirectlyReturnedObjects(factory)) {
-            const present = new Set(
-              object.properties.flatMap((property) => {
-                const key = factoriesObjectPropertyName(property)
-                return key ? [key] : []
-              }),
-            )
+          for (const object of declarationsReturnedObjects(factory)) {
+            const present = new Set<string>()
 
             if (object.properties.length === 0 && resolved.requireKeys.length > 0) {
               context.report({
@@ -132,17 +80,17 @@ export const filesFactoryKeys = defineRule({
             }
 
             for (const property of object.properties) {
-              const key = factoriesObjectPropertyName(property)
+              const key = declarationsPropertyName(property)
+
+              if (key) {
+                present.add(key)
+              }
 
               if (!key || !resolved.allowed.has(key)) {
                 context.report({
                   node: property,
                   messageId: 'extraKey',
-                  data: {
-                    factory: factory.name,
-                    key: key ?? '<computed or spread>',
-                    allowed: resolved.allowedList.join(', '),
-                  },
+                  data: { factory: factory.name, key: key ?? '<computed or spread>', allowed: resolved.allowedList.join(', ') },
                 })
               }
             }

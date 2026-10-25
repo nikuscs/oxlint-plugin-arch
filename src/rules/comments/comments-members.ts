@@ -1,10 +1,8 @@
 import { defineRule } from '@oxlint/plugins'
+import { optionsFirst } from '../../utils/options.utils.ts'
+import { sourceCommentText, sourceIsDirective, sourceIsWhy } from '../../utils/source.utils.ts'
+import type { CommentsMemberNode, CommentsMembersOptions } from '../../types/comments.types.ts'
 import type { ESTree } from '@oxlint/plugins'
-import { commentsIsDirective, commentsIsWhy, commentsNormalizedValue, optionsFirst } from '../../utils/index.ts'
-
-interface NoMemberCommentsOptions {
-  allowWhy?: boolean
-}
 
 export const commentsMembers = defineRule({
   meta: {
@@ -26,86 +24,86 @@ export const commentsMembers = defineRule({
   createOnce(context) {
     const reported = new Set<number>()
 
-    type MemberNode =
-      | ESTree.TSPropertySignature
-      | ESTree.TSMethodSignature
-      | ESTree.TSIndexSignature
-      | ESTree.TSCallSignatureDeclaration
-      | ESTree.TSConstructSignatureDeclaration
-      | ESTree.ObjectProperty
-      | ESTree.BindingProperty
-      | ESTree.AssignmentTargetProperty
-      | ESTree.SpreadElement
-
-    function checkMember(node: MemberNode) {
+    function checkMember(node: CommentsMemberNode) {
       const parent = node.parent
-      if (parent.type !== 'TSInterfaceBody' && parent.type !== 'TSTypeLiteral' && parent.type !== 'ObjectExpression')
+
+      if (parent.type !== 'TSInterfaceBody' && parent.type !== 'TSTypeLiteral' && parent.type !== 'ObjectExpression') {
         return
+      }
 
       const source = context.sourceCode
-      const { allowWhy = true } = optionsFirst<NoMemberCommentsOptions>(context, {})
-      const previousToken = source.getTokenBefore(node)
-      const comments = [
-        ...source
-          .getCommentsBefore(node)
-          .filter(
-            (comment) =>
-              !previousToken ||
-              previousToken.range[0] === parent.range[0] ||
-              previousToken.loc.end.line !== comment.loc.start.line,
-          ),
-        ...source.getCommentsAfter(node).filter((comment) => comment.loc.start.line === node.loc.end.line),
-      ].filter((comment) => comment.range[0] > parent.range[0] && comment.range[1] < parent.range[1])
-
+      const { allowWhy = true } = optionsFirst<CommentsMembersOptions>(context, {})
       let whyContinuation = false
       let previousLine = -1
-      const removable: typeof comments = []
+      const removable: ESTree.Comment[] = []
+
+      const previousToken = source.getTokenBefore(node)
+
+      const before = source
+        .getCommentsBefore(node)
+        .filter(
+          (comment) =>
+            !previousToken || previousToken.range[0] === parent.range[0] || previousToken.loc.end.line !== comment.loc.start.line,
+        )
+
+      const after = source.getCommentsAfter(node).filter((comment) => comment.loc.start.line === node.loc.end.line)
+      const comments = [...before, ...after].filter((comment) => comment.range[0] > parent.range[0] && comment.range[1] < parent.range[1])
+
       for (const comment of comments) {
-        const value = commentsNormalizedValue(comment)
+        const text = sourceCommentText(comment)
+
         const isWhy: boolean =
-          commentsIsWhy(value) ||
-          (comment.type === 'Line' && whyContinuation && comment.loc.start.line === previousLine + 1)
+          sourceIsWhy(text) || (comment.type === 'Line' && whyContinuation && comment.loc.start.line === previousLine + 1)
+
         whyContinuation = comment.type === 'Line' && isWhy
         previousLine = comment.loc.end.line
-        if (reported.has(comment.range[0])) continue
+        if (reported.has(comment.range[0])) {
+          continue
+        }
         reported.add(comment.range[0])
-        if (allowWhy && isWhy) continue
-        if (commentsIsDirective(value)) continue
+        if ((allowWhy && isWhy) || sourceIsDirective(text)) {
+          continue
+        }
         removable.push(comment)
       }
 
-      // Why: oxlint applies one fix per overlapping range per pass, so a run of
-      // stacked comments must be deleted by a single fix or `--fix` silently
-      // leaves the tail behind and never converges.
-      for (let index = 0; index < removable.length; ) {
-        let last = index
-        while (last + 1 < removable.length && removable[last + 1].loc.start.line === removable[last].loc.end.line + 1)
-          last++
+      const runs: ESTree.Comment[][] = []
 
-        const first = removable[index]
-        const final = removable[last]
-        index = last + 1
+      for (const comment of removable) {
+        const run = runs.at(-1)
+        const previous = run?.at(-1)
 
+        if (run && previous && comment.loc.start.line === previous.loc.end.line + 1) {
+          run.push(comment)
+        } else {
+          runs.push([comment])
+        }
+      }
+
+      for (const run of runs) {
+        const [first] = run
+        const final = run.at(-1) ?? first
         context.report({
           loc: { start: first.loc.start, end: final.loc.end },
           messageId: 'memberComment',
-          fix(fixer) {
+          fix: (fixer) => {
             const text = source.text
             const lineStart = text.lastIndexOf('\n', first.range[0] - 1) + 1
-            const before = text.slice(lineStart, first.range[0])
-            // Why: a trailing comment sits behind the code's own spacing, so the
-            // fix must eat that run of spaces too or every stripped inline
-            // comment leaves trailing whitespace behind.
-            const start = first.range[0] - (/[\t ]*$/.exec(before)?.[0].length ?? 0)
-            const after = text.slice(final.range[1])
-            const trailingLines = after.match(/^[\t ]*\r?\n(?:[\t ]*\r?\n)*/)
-            if (trailingLines) {
-              const end = final.range[1] + trailingLines[0].length
-              if (/^[\t ]*$/.test(before)) return fixer.removeRange([lineStart, end])
-              const newline = trailingLines[0].includes('\r\n') ? '\r\n' : '\n'
-              return fixer.replaceTextRange([start, end], newline)
+            const beforeComment = text.slice(lineStart, first.range[0])
+            const start = first.range[0] - (/[\t ]*$/.exec(beforeComment)?.[0].length ?? 0)
+            const trailingLines = /^[\t ]*\r?\n(?:[\t ]*\r?\n)*/.exec(text.slice(final.range[1]))
+
+            if (!trailingLines) {
+              return fixer.removeRange([start, final.range[1]])
             }
-            return fixer.removeRange([start, final.range[1]])
+
+            const end = final.range[1] + trailingLines[0].length
+
+            if (/^[\t ]*$/.test(beforeComment)) {
+              return fixer.removeRange([lineStart, end])
+            }
+
+            return fixer.replaceTextRange([start, end], trailingLines[0].includes('\r\n') ? '\r\n' : '\n')
           },
         })
       }

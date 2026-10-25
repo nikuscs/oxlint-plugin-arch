@@ -1,85 +1,45 @@
 import { defineRule } from '@oxlint/plugins'
+import { optionsFirst, optionsPatterns, optionsPatternSchema, optionsPatternsTest } from '../../utils/options.utils.ts'
+import type { CodeMutableStateOptions } from '../../types/code.types.ts'
 import type { ESTree } from '@oxlint/plugins'
-import { optionsFirst, optionsOptionalPatterns, optionsPatternSchema, optionsPatternsTest } from '../../utils/index.ts'
-import type { OptionsPattern } from '../../utils/index.ts'
 
-type ModuleMutableKind = 'let' | 'var'
+const functionScopes = new Set([
+  'FunctionDeclaration',
+  'FunctionExpression',
+  'ArrowFunctionExpression',
+  'TSDeclareFunction',
+  'TSEmptyBodyFunctionExpression',
+  'StaticBlock',
+])
 
-interface NoModuleMutableStateOptions {
-  kinds?: ModuleMutableKind[]
-  allowNamePattern?: OptionsPattern
+function bindingIdentifiers(pattern: ESTree.BindingPattern | ESTree.BindingRestElement): ESTree.BindingIdentifier[] {
+  switch (pattern.type) {
+    case 'Identifier':
+      return [pattern]
+    case 'AssignmentPattern':
+      return bindingIdentifiers(pattern.left)
+    case 'RestElement':
+      return bindingIdentifiers(pattern.argument)
+    case 'ObjectPattern':
+      return pattern.properties.flatMap((property) =>
+        bindingIdentifiers(property.type === 'RestElement' ? property : property.value),
+      )
+    case 'ArrayPattern':
+      return pattern.elements.flatMap((element) => (element ? bindingIdentifiers(element) : []))
+    default:
+      return []
+  }
 }
 
-function moduleMutableStateBindings(
-  pattern: ESTree.BindingPattern | ESTree.BindingRestElement,
-): { name: string; node: ESTree.BindingIdentifier }[] {
-  if (pattern.type === 'Identifier') {
-    return [{ name: pattern.name, node: pattern }]
-  }
-
-  if (pattern.type === 'AssignmentPattern') {
-    return moduleMutableStateBindings(pattern.left)
-  }
-
-  if (pattern.type === 'RestElement') {
-    return moduleMutableStateBindings(pattern.argument)
-  }
-
-  if (pattern.type === 'ObjectPattern') {
-    return pattern.properties.flatMap((property) =>
-      property.type === 'RestElement'
-        ? moduleMutableStateBindings(property)
-        : moduleMutableStateBindings(property.value),
-    )
-  }
-
-  if (pattern.type === 'ArrayPattern') {
-    return pattern.elements.flatMap((element) => (element ? moduleMutableStateBindings(element) : []))
-  }
-
-  return []
-}
-
-function moduleMutableStateInsideFunction(node: ESTree.Node): boolean {
+function hasAncestor(node: ESTree.Node, test: (ancestor: ESTree.Node) => boolean): boolean {
   for (let current = node.parent; current; current = current.parent) {
-    if (
-      current.type === 'FunctionDeclaration' ||
-      current.type === 'FunctionExpression' ||
-      current.type === 'ArrowFunctionExpression' ||
-      current.type === 'TSDeclareFunction' ||
-      current.type === 'TSEmptyBodyFunctionExpression' ||
-      current.type === 'StaticBlock'
-    ) {
+    if (test(current)) {
       return true
     }
   }
-
   return false
 }
 
-function moduleMutableStateIsModuleLet(node: ESTree.VariableDeclaration): boolean {
-  const parent = node.parent
-  return parent?.type === 'Program' || (parent?.type === 'ExportNamedDeclaration' && parent.parent?.type === 'Program')
-}
-
-function moduleMutableStateInsideAmbient(node: ESTree.Node): boolean {
-  for (let current = node.parent; current; current = current.parent) {
-    if (
-      current.type === 'TSModuleDeclaration' &&
-      (current.declare || current.global || current.id.type === 'Literal')
-    ) {
-      return true
-    }
-  }
-
-  return false
-}
-
-/**
- * Rejects module-scope `let` and `var` bindings so mutable state cannot leak across requests or tests.
- *
- * Example: `const limit = 1` passes; `let count = 0` fails unless the name matches `allowNamePattern`.
- */
 export const codeMutableState = defineRule({
   meta: {
     type: 'problem',
@@ -101,35 +61,48 @@ export const codeMutableState = defineRule({
     },
   },
   createOnce(context) {
-    let kindSet = new Set<ModuleMutableKind>(['let', 'var'])
+    let kinds = new Set<string>(['let', 'var'])
     let allowed: RegExp[] = []
 
     return {
       before() {
-        const { kinds = ['let', 'var'], allowNamePattern } = optionsFirst<NoModuleMutableStateOptions>(context, {})
-        kindSet = new Set(kinds)
-        allowed = optionsOptionalPatterns(allowNamePattern)
+        const { kinds: configured = ['let', 'var'], allowNamePattern } = optionsFirst<CodeMutableStateOptions>(
+          context,
+          {},
+        )
+
+        kinds = new Set(configured)
+        allowed = optionsPatterns(allowNamePattern)
       },
       VariableDeclaration(node) {
-        if (node.declare || !kindSet.has(node.kind as ModuleMutableKind)) {
+        if (node.declare || !kinds.has(node.kind)) {
           return
         }
 
-        if (
-          (node.kind === 'let' && !moduleMutableStateIsModuleLet(node)) ||
-          (node.kind === 'var' && moduleMutableStateInsideFunction(node)) ||
-          moduleMutableStateInsideAmbient(node)
-        ) {
+        const parent = node.parent
+        const moduleLevel = parent.type === 'Program' || (parent.type === 'ExportNamedDeclaration' && parent.parent.type === 'Program')
+
+        if (node.kind === 'let' && !moduleLevel) {
+          return
+        }
+
+        if (node.kind === 'var' && hasAncestor(node, (ancestor) => functionScopes.has(ancestor.type))) {
+          return
+        }
+
+        const ambient = hasAncestor(
+          node,
+          (ancestor) => ancestor.type === 'TSModuleDeclaration' && (ancestor.declare || ancestor.global || ancestor.id.type === 'Literal'),
+        )
+
+        if (ambient) {
           return
         }
 
         for (const declarator of node.declarations) {
-          for (const binding of moduleMutableStateBindings(declarator.id)) {
-            if (!optionsPatternsTest(allowed, binding.name)) {
-              context.report({
-                node: binding.node,
-                messageId: 'moduleState',
-              })
+          for (const identifier of bindingIdentifiers(declarator.id)) {
+            if (!optionsPatternsTest(allowed, identifier.name)) {
+              context.report({ node: identifier, messageId: 'moduleState' })
             }
           }
         }

@@ -32,9 +32,7 @@ export type PresetFramework = 'tanstack-start' | 'next'
 export interface PresetArchitectureEntry {
   role: PresetRole
   layout?: Record<string, PresetFolderLayout>
-  /** Web roots only: selects the route and runtime-boundary policies. */
   framework?: PresetFramework
-  /** Web, server and runner roots only: the source folder inside the root; `src` when omitted, `.` for the root itself. */
   sourceDir?: string
 }
 export type PresetArchitecture = Record<string, PresetRole | PresetArchitectureEntry>
@@ -52,11 +50,9 @@ export interface PresetFolderScope {
 
 export interface PresetOptions {
   root?: string
-  /** Default framework for web roots that do not set their own; `tanstack-start` when omitted. */
   framework?: PresetFramework
   architecture?: PresetArchitecture
   severity?: 'error' | 'warn'
-  /** Per-rule levels applied after `severity`, for rules the preset enables. */
   ruleSeverities?: Record<string, 'error' | 'warn' | 'off'>
   formatting?: PresetFormattingOptions
   limits?: PresetLimitsOptions
@@ -77,7 +73,7 @@ export interface PresetOptions {
   shadcn?: false | PresetShadcnOptions
 }
 
-export interface PresetPolicyOptions extends Partial<Record<PresetPolicyName, PresetPolicy>> {}
+export type PresetPolicyOptions = Partial<Record<PresetPolicyName, PresetPolicy>>
 
 export interface PresetFormattingOptions {
   semi?: 'always' | 'never'
@@ -86,7 +82,6 @@ export interface PresetFormattingOptions {
 
 export interface PresetLimitsOptions {
   maxFileLines?: number
-  /** `max-lines` for `*.types.ts` files; defaults to 1000. */
   maxTypeFileLines?: number
   maxFunctionComplexity?: number
 }
@@ -94,7 +89,6 @@ export interface PresetLimitsOptions {
 export interface PresetModulesOptions {
   customFileRoles?: string[]
   migrationFiles?: string[]
-  /** Type files allowed outside `types/`; they follow the backend `types/` contract. */
   colocatedTypeFiles?: string[]
 }
 
@@ -102,7 +96,6 @@ export interface PresetTestsOptions {
   profile?: 'standard' | 'fixtures'
   additionalTestFunctions?: string[]
   additionalAssertionFunctions?: string[]
-  /** Test-double APIs banned in test files; `modules` (module mocking only) when omitted. */
   mocking?: PresetTestMockingPreset | PresetTestMockingOptions
 }
 
@@ -115,15 +108,12 @@ export interface PresetTestMockingApi {
 
 export interface PresetTestMockingException {
   files: string[]
-  /** API patterns allowed in these files; `*` allows every API. */
   apis: string[]
 }
 
 export interface PresetTestMockingOptions {
   preset?: PresetTestMockingPreset
-  /** API patterns added to the preset list, such as `vi.*` or `jest.spyOn`. */
-  deny?: Array<string | PresetTestMockingApi>
-  /** Per-file exceptions, added after the preset's own. */
+  deny?: (string | PresetTestMockingApi)[]
   allow?: PresetTestMockingException[]
 }
 
@@ -171,9 +161,7 @@ export interface PresetTailwindOptions {
 }
 
 export interface PresetShadcnOptions {
-  /** The components.json `ui` alias: a workspace package name or a tsconfig `paths` alias. It also sets the UI kit files. */
   ui?: string
-  /** Import sources treated as components, like the components.json `components` alias. */
   components?: string[]
 }
 
@@ -200,28 +188,21 @@ export interface PresetContext {
   css: Record<string, string>
   baseImports: PresetImportRestriction[]
   web: string[]
-  /** Web `src` roots per framework. */
   tanstackWeb: string[]
   nextWeb: string[]
   backend: string[]
-  /** Server and runner architecture roots, without their source folder. */
   backendRoots: string[]
-  /** Source folders of packages roots: `src` of a package, or of each package in a folder of packages. */
   packageSources: string[]
-  /** Backend and package source folders, whose services follow the backend contract. */
   serviceRoots: string[]
   app: string[]
   appFiles: string[]
   webFiles: string[]
-  /** Web files plus React code in packages: `.tsx` files and the `components` and `hooks` folders. */
   reactFiles: string[]
   backendFiles: string[]
   services: string[]
   utilities: string[]
   types: string[]
-  /** UI kit folders resolved from `shadcn.ui`. */
   uiRoots: string[]
-  /** UI kit folders inside a web source. */
   webUiRoots: string[]
   ui: string[]
   generated: string[]
@@ -231,6 +212,10 @@ export interface PresetContext {
   hooks: string[]
   publicEntrypoints: string[]
 }
+
+export type PresetRootEntry = readonly [string, PresetResolvedRoot]
+
+export type PresetConfiguredRoot = [string, PresetArchitecture[string] | null]
 
 export type PresetJsPlugins = NonNullable<OxlintConfig['jsPlugins']>
 export type PresetSettings = NonNullable<OxlintConfig['settings']>

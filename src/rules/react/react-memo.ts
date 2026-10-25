@@ -1,7 +1,8 @@
 import { defineRule } from '@oxlint/plugins'
-import { astDottedName } from '../../utils/index.ts'
+import { astDottedName } from '../../utils/ast.utils.ts'
 
-/** Reject React reactMemo imports and member calls while leaving unrelated cache.memo calls alone. */
+const reactMemoNames = ['memo', 'useMemo', 'useCallback']
+
 export const reactMemo = defineRule({
   meta: {
     type: 'problem',
@@ -20,20 +21,24 @@ export const reactMemo = defineRule({
         if (node.source.value !== 'react') {
           return
         }
-        for (const item of node.specifiers) {
-          if (item.type === 'ImportSpecifier') {
-            const name = item.imported.type === 'Identifier' ? item.imported.name : item.imported.value
-            if (['memo', 'useMemo', 'useCallback'].includes(name)) {
-              context.report({ node: item, messageId: 'memo' })
-            }
-          } else {
-            namespaces.add(item.local.name)
+
+        for (const specifier of node.specifiers) {
+          if (specifier.type !== 'ImportSpecifier') {
+            namespaces.add(specifier.local.name)
+            continue
+          }
+
+          const name = specifier.imported.type === 'Identifier' ? specifier.imported.name : specifier.imported.value
+
+          if (reactMemoNames.includes(name)) {
+            context.report({ node: specifier, messageId: 'memo' })
           }
         }
       },
       MemberExpression(node) {
-        const name = astDottedName(node)?.split('.')
-        if (name?.length === 2 && namespaces.has(name[0]) && ['memo', 'useMemo', 'useCallback'].includes(name[1])) {
+        const parts = astDottedName(node)?.split('.')
+
+        if (parts?.length === 2 && namespaces.has(parts[0]) && reactMemoNames.includes(parts[1])) {
           context.report({ node, messageId: 'memo' })
         }
       },

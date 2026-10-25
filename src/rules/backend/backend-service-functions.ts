@@ -1,15 +1,23 @@
 import { defineRule } from '@oxlint/plugins'
+import { declarationsPublicServiceMethods, declarationsTopLevelCandidates } from '../../utils/declarations.utils.ts'
+import { exportsCollect, exportsFunctions } from '../../utils/exports.utils.ts'
+import { optionsFirst } from '../../utils/options.utils.ts'
+import type { BackendServiceFunctionsOptions } from '../../types/backend.types.ts'
 import type { ESTree } from '@oxlint/plugins'
-import type { ModuleServiceFunctionsOptions } from '../../types/module-policy.types.ts'
-import {
-  declarationsFileLevelFunctionCandidates,
-  declarationsPublicServiceMethods,
-  exportsCollectFunctions,
-  exportsCollect,
-  optionsFirst,
-} from '../../utils/index.ts'
 
-/** Keep backend operations strict; frontend modules may expose several operations with helpers nested inside them. */
+function backendOwner(node: ESTree.Node): ESTree.Node | undefined {
+  for (let parent = node.parent; parent; parent = parent.parent) {
+    if (parent.type === 'FunctionDeclaration' || parent.type === 'FunctionExpression' || parent.type === 'ArrowFunctionExpression') {
+      return parent
+    }
+
+    if (parent.type === 'Program') {
+      return undefined
+    }
+  }
+  return undefined
+}
+
 export const backendServiceFunctions = defineRule({
   meta: {
     type: 'problem',
@@ -37,125 +45,119 @@ export const backendServiceFunctions = defineRule({
     let allowLocalHelpers = false
     let allowReturnedMethods = false
     let message = ''
-    function owner(node: ESTree.Node): ESTree.Node | undefined {
-      for (let parent = node.parent; parent; parent = parent.parent) {
-        if (
-          parent.type === 'FunctionDeclaration' ||
-          parent.type === 'FunctionExpression' ||
-          parent.type === 'ArrowFunctionExpression'
+
+    function allowedNested(node: ESTree.Function | ESTree.VariableDeclarator): boolean {
+      const returnedMethod =
+        allowReturnedMethods &&
+        operation !== undefined &&
+        backendOwner(node) === operation &&
+        context.sourceCode.getDeclaredVariables(node).some((variable) =>
+          variable.references.some(({ identifier }) => {
+            const property = identifier.parent
+
+            if (property.type !== 'Property' || property.value !== identifier || property.parent.type !== 'ObjectExpression') {
+              return false
+            }
+
+            const object = property.parent
+            return object.parent.type === 'ReturnStatement' && object.parent.argument === object && backendOwner(object) === operation
+          }),
         )
-          return parent
-        if (parent.type === 'Program') return undefined
+
+      if (returnedMethod) {
+        return true
       }
-      return undefined
-    }
-    function insideOperation(node: ESTree.Node): boolean {
-      for (let parent = node.parent; parent; parent = parent.parent) {
-        if (operations.has(parent)) return true
+
+      if (!allowLocalHelpers) {
+        return false
       }
+
+      for (let parent: ESTree.Node | null = node.parent; parent; parent = parent.parent) {
+        if (operations.has(parent)) {
+          return true
+        }
+      }
+
       return false
     }
-    function returnedMethod(node: ESTree.Function | ESTree.VariableDeclarator): boolean {
-      if (!allowReturnedMethods || !operation || owner(node) !== operation) return false
-      return context.sourceCode.getDeclaredVariables(node).some((variable) =>
-        variable.references.some((reference) => {
-          const property = reference.identifier.parent
-          if (
-            property.type !== 'Property' ||
-            property.value !== reference.identifier ||
-            property.parent.type !== 'ObjectExpression'
-          )
-            return false
-          const object = property.parent
-          if (object.parent.type !== 'ReturnStatement' || object.parent.argument !== object) return false
-          return owner(object) === operation
-        }),
-      )
+
+    function reportHelper(node: ESTree.Node, name: string): void {
+      context.report({
+        node,
+        messageId: 'helper',
+        data: { message, name },
+      })
     }
+
     return {
       Program(program) {
-        const options = optionsFirst<ModuleServiceFunctionsOptions>(context, {})
-        const candidates = declarationsFileLevelFunctionCandidates(program)
-        const exported = exportsCollectFunctions(program)
+        const options = optionsFirst<BackendServiceFunctionsOptions>(context, {})
+        const multiple = Boolean(options.frontend && !options.singleExport)
+        const candidates = declarationsTopLevelCandidates(program)
+        const exported = exportsFunctions(program)
         operation = exported.length === 1 ? exported[0].node : undefined
+        const single = operation ? [operation] : []
         operations = new Set(
-          options.frontend && !options.singleExport
-            ? exported.map((entry) => entry.node)
-            : operation
-              ? [operation]
-              : [],
+          multiple
+            ? [...exported.map((entry) => entry.node), ...declarationsPublicServiceMethods(program).map((method) => method.node)]
+            : single,
         )
-        if (options.frontend && !options.singleExport) {
-          for (const method of declarationsPublicServiceMethods(program)) operations.add(method.node)
-        }
-        allowLocalHelpers = options.frontend || (options.allowLocalHelpers ?? false)
+        allowLocalHelpers = options.frontend === true || options.allowLocalHelpers === true
         allowReturnedMethods = options.allowReturnedMethods ?? false
-        message =
-          options.message ??
-          (options.frontend
-            ? 'Frontend service modules expose public domain operations. Keep operation-only helpers inside their public operation and genuinely shared helpers in domain .utils.ts; file-level private functions are forbidden.'
-            : allowLocalHelpers
-              ? 'Keep this helper inside the one exported operation; domain .utils.ts is only for genuinely shared logic.'
-              : 'This service contract does not allow private helpers. Keep its existing factory/operation contract; domain .utils.ts is only for genuinely shared logic. Do not add a fake factory or public helper export.')
+        message = allowLocalHelpers
+          ? 'Keep this helper inside the one exported operation; domain .utils.ts is only for genuinely shared logic.'
+          : 'This service contract does not allow private helpers. Keep its existing factory/operation contract; domain .utils.ts is only for genuinely shared logic. Do not add a fake factory or public helper export.'
+
+        if (options.frontend) {
+          message =
+            'Frontend service modules expose public domain operations. Keep operation-only helpers inside their public operation and genuinely shared helpers in domain .utils.ts; file-level private functions are forbidden.'
+        }
+
+        if (options.message !== undefined) {
+          message = options.message
+        }
+
         if (options.singleExport) {
           const bindings = exportsCollect(program)
-          if (
-            bindings.length !== 1 ||
-            !operation ||
-            bindings[0].default ||
-            bindings[0].reExport ||
-            bindings[0].typeOnly
-          ) {
+          const [only] = bindings
+
+          if (bindings.length !== 1 || !operation || only.default || only.reExport || only.typeOnly) {
             context.report({
               node: program,
               messageId: 'exports',
               data: {
-                message:
-                  options.message ??
-                  'Export exactly one named operation. Do not export helpers, types, constants or re-exports.',
+                message: options.message ?? 'Export exactly one named operation. Do not export helpers, types, constants or re-exports.',
               },
             })
           }
         }
+
+        const exportedAllowed = multiple || candidates.length === 1
+
         for (const candidate of candidates) {
-          if (
-            ((options.frontend && !options.singleExport) || candidates.length === 1) &&
-            exported.some((entry) => entry.name === candidate.name)
-          ) {
+          if (exportedAllowed && exported.some((entry) => entry.name === candidate.name)) {
             continue
           }
-          context.report({ node: candidate.node, messageId: 'helper', data: { message, name: candidate.name } })
+          reportHelper(candidate.node, candidate.name)
         }
       },
       FunctionDeclaration(node) {
-        if (node.parent.type === 'Program' || node.parent.type === 'ExportNamedDeclaration') {
+        if (node.parent.type === 'Program' || node.parent.type === 'ExportNamedDeclaration' || allowedNested(node)) {
           return
         }
-        if (returnedMethod(node) || (allowLocalHelpers && insideOperation(node))) {
-          return
-        }
-        context.report({
-          node,
-          messageId: 'helper',
-          data: { message, name: node.id?.type === 'Identifier' ? node.id.name : '<anonymous>' },
-        })
+        reportHelper(node, node.id?.type === 'Identifier' ? node.id.name : '<anonymous>')
       },
       VariableDeclarator(node) {
         if (node.init?.type !== 'ArrowFunctionExpression' && node.init?.type !== 'FunctionExpression') {
           return
         }
-        if (node.parent.parent?.type === 'Program' || node.parent.parent?.type === 'ExportNamedDeclaration') {
+
+        const statementParent = node.parent.parent?.type
+
+        if (statementParent === 'Program' || statementParent === 'ExportNamedDeclaration' || allowedNested(node)) {
           return
         }
-        if (returnedMethod(node)) return
-        if (allowLocalHelpers && insideOperation(node)) {
-          return
-        }
-        context.report({
-          node,
-          messageId: 'helper',
-          data: { message, name: node.id.type === 'Identifier' ? node.id.name : '<anonymous>' },
-        })
+        reportHelper(node, node.id.type === 'Identifier' ? node.id.name : '<anonymous>')
       },
     }
   },

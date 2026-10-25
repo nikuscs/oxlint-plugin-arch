@@ -1,64 +1,12 @@
 import { defineRule } from '@oxlint/plugins'
-import { layoutIndentSchema, layoutIndentUnit, layoutLineIndent, layoutNewline, optionsFirst } from '../../utils/index.ts'
-import type { LayoutIndent } from '../../utils/index.ts'
-import type { ESTree } from '@oxlint/plugins'
+import { optionsFirst } from '../../utils/options.utils.ts'
+import { sourceIndentSchema, sourceIndentUnit, sourceLineIndent, sourceNewline } from '../../utils/source.utils.ts'
+import type { LayoutObjectOptions, LayoutObjectScope } from '../../types/layout.types.ts'
 
-interface ObjectMultilineOptions {
-  minProperties?: number
-  scope?: 'call-args' | 'all'
-  indent?: LayoutIndent
-}
-
-function objectMultilineIsCallArg(node: ESTree.ObjectExpression): boolean {
-  const parent = node.parent
-  return (parent.type === 'CallExpression' || parent.type === 'NewExpression') && parent.arguments.includes(node)
-}
-
-function objectMultilineIsWhitespace(text: string): boolean {
+function layoutObjectIsWhitespace(text: string): boolean {
   return /^[\t\n\r\f ]*$/.test(text)
 }
 
-function objectMultilineGaps(text: string, node: ESTree.ObjectExpression): Array<[number, number]> | null {
-  const gaps: Array<[number, number]> = []
-  const close = node.range[1] - 1
-  const first = node.properties[0]
-  if (!objectMultilineIsWhitespace(text.slice(node.range[0] + 1, first.range[0]))) {
-    return null
-  }
-  gaps.push([node.range[0] + 1, first.range[0]])
-
-  for (let index = 0; index < node.properties.length; index++) {
-    const property = node.properties[index]
-    const next = node.properties[index + 1]
-    const after = property.range[1]
-    const limit = next ? next.range[0] : close
-    const between = text.slice(after, limit)
-    const comma = between.indexOf(',')
-    if (comma === -1) {
-      if (next || !objectMultilineIsWhitespace(between)) {
-        return null
-      }
-      gaps.push([after, close])
-      continue
-    }
-
-    if (
-      !objectMultilineIsWhitespace(between.slice(0, comma)) ||
-      !objectMultilineIsWhitespace(between.slice(comma + 1))
-    ) {
-      return null
-    }
-    gaps.push([next ? after + comma + 1 : after, limit])
-  }
-
-  return gaps
-}
-
-/**
- * Splits a single-line object literal with enough properties onto one property per line, with a trailing comma.
- *
- * Example: `save({ id, name, email })` becomes a multiline object; two-property objects stay put.
- */
 export const layoutObject = defineRule({
   meta: {
     type: 'layout',
@@ -70,7 +18,7 @@ export const layoutObject = defineRule({
         properties: {
           minProperties: { type: 'integer', minimum: 1, default: 3 },
           scope: { type: 'string', enum: ['call-args', 'all'], default: 'call-args' },
-          indent: { ...layoutIndentSchema, default: 2 },
+          indent: { ...sourceIndentSchema, default: 2 },
         },
       },
     ],
@@ -81,44 +29,70 @@ export const layoutObject = defineRule({
   },
   createOnce(context) {
     let minProperties = 3
-    let scope: NonNullable<ObjectMultilineOptions['scope']> = 'call-args'
-    let indentUnit = layoutIndentUnit()
+    let scope: LayoutObjectScope = 'call-args'
+    let indentUnit = sourceIndentUnit()
     let newline = '\n'
 
     return {
       before() {
-        const options = optionsFirst<ObjectMultilineOptions>(context, {})
+        const options = optionsFirst<LayoutObjectOptions>(context, {})
         minProperties = options.minProperties ?? 3
         scope = options.scope ?? 'call-args'
-        indentUnit = layoutIndentUnit(options.indent)
-        newline = layoutNewline(context.sourceCode.text)
+        indentUnit = sourceIndentUnit(options.indent)
+        newline = sourceNewline(context.sourceCode.text)
       },
       ObjectExpression(node) {
         if (node.properties.length < minProperties || node.loc.start.line !== node.loc.end.line) {
           return
         }
-        if (scope === 'call-args' && !objectMultilineIsCallArg(node)) {
+
+        const parent = node.parent
+
+        if (scope === 'call-args' && !((parent.type === 'CallExpression' || parent.type === 'NewExpression') && parent.arguments.includes(node))) {
           return
         }
 
         const source = context.sourceCode
-        const gaps = source.getCommentsInside(node).length > 0 ? null : objectMultilineGaps(source.text, node)
-        const baseIndent = layoutLineIndent(source.text, node.range[0])
-        const propIndent = `${baseIndent}${indentUnit}`
+        const text = source.text
+        const baseIndent = sourceLineIndent(text, node.range[0])
+        const propertyIndent = `${baseIndent}${indentUnit}`
+        const close = node.range[1] - 1
+        const properties = node.properties
 
         context.report({
           node,
           messageId: scope === 'all' ? 'always' : 'callArgs',
           data: { min: String(minProperties) },
-          fix(fixer) {
-            if (!gaps) {
+          fix: (fixer) => {
+            if (source.getCommentsInside(node).length > 0 || !layoutObjectIsWhitespace(text.slice(node.range[0] + 1, properties[0].range[0]))) {
               return null
             }
+
+            const gaps: [number, number][] = [[node.range[0] + 1, properties[0].range[0]]]
+
+            for (const [index, property] of properties.entries()) {
+              const next = properties.at(index + 1)
+              const after = property.range[1]
+              const limit = next ? next.range[0] : close
+              const between = text.slice(after, limit)
+              const comma = between.indexOf(',')
+
+              if (comma === -1) {
+                if (next || !layoutObjectIsWhitespace(between)) {
+                  return null
+                }
+                gaps.push([after, close])
+                continue
+              }
+
+              if (!layoutObjectIsWhitespace(between.slice(0, comma)) || !layoutObjectIsWhitespace(between.slice(comma + 1))) {
+                return null
+              }
+              gaps.push([next ? after + comma + 1 : after, limit])
+            }
+
             return gaps.map((gap, index) =>
-              fixer.replaceTextRange(
-                gap,
-                index === gaps.length - 1 ? `,${newline}${baseIndent}` : `${newline}${propIndent}`,
-              ),
+              fixer.replaceTextRange(gap, index === gaps.length - 1 ? `,${newline}${baseIndent}` : `${newline}${propertyIndent}`),
             )
           },
         })

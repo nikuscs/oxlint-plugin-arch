@@ -1,27 +1,10 @@
 import { defineRule } from '@oxlint/plugins'
-import {
-  declarationsCollectFunctions,
-  exportsCollectFunctions,
-  factoriesExpandTemplate,
-  namingFileBasename,
-  namingMatchTemplate,
-  optionsFirst,
-} from '../../utils/index.ts'
+import { declarationsFunctions } from '../../utils/declarations.utils.ts'
+import { exportsFunctions } from '../../utils/exports.utils.ts'
+import { namingBasename, namingExpandTemplate, namingMatchTemplate } from '../../utils/naming.utils.ts'
+import { optionsFirst } from '../../utils/options.utils.ts'
+import type { NamingExportTemplateOptions } from '../../types/naming.types.ts'
 
-interface FilenameExportNameOptions {
-  file: string
-  export: string
-  mode?: 'all' | 'some'
-  placeholderPattern?: string
-  camelCase?: boolean
-  allDeclarations?: boolean
-}
-
-/**
- * Builds an expected function name from filename placeholders, then checks exported or all functions against it.
- *
- * Example: `user-action.create.ts` can require `makeUserActionCreate`; `mode: some` allows additional exports.
- */
 export const namingExportTemplate = defineRule({
   meta: {
     type: 'problem',
@@ -47,32 +30,31 @@ export const namingExportTemplate = defineRule({
   createOnce(context) {
     return {
       Program(program) {
-        const {
-          file,
-          export: exportTemplate,
-          mode = 'all',
-          placeholderPattern,
-          allDeclarations = false,
-          camelCase = false,
-        } = optionsFirst<FilenameExportNameOptions>(context)
-        const groups = namingMatchTemplate(namingFileBasename(context.filename), file, placeholderPattern)
+        const { file: template, export: exportTemplate, mode = 'all', placeholderPattern, allDeclarations = false, camelCase = false } =
+          optionsFirst<NamingExportTemplateOptions>(context)
+
+        const file = namingBasename(context.filename)
+        const groups = namingMatchTemplate(file, template, placeholderPattern)
 
         if (!groups) {
           return
         }
 
-        const expected = factoriesExpandTemplate(exportTemplate, groups, camelCase)
-        const functions = allDeclarations ? declarationsCollectFunctions(program) : exportsCollectFunctions(program)
+        const expected = namingExpandTemplate(exportTemplate, groups, camelCase)
+        const functions = allDeclarations ? declarationsFunctions(program) : exportsFunctions(program)
 
         if (mode === 'some') {
-          if (!functions.some((item) => item.name === expected)) {
-            const first = functions.at(0)
-            context.report({
-              node: first?.node ?? program,
-              messageId: 'mismatch',
-              data: { actual: first?.name ?? '<none>', expected, file: namingFileBasename(context.filename) },
-            })
+          if (functions.some((item) => item.name === expected)) {
+            return
           }
+
+          const first = functions.at(0)
+          context.report({
+            node: first?.node ?? program,
+            messageId: 'mismatch',
+            data: { actual: first?.name ?? '<none>', expected, file },
+          })
+
           return
         }
 
@@ -81,7 +63,7 @@ export const namingExportTemplate = defineRule({
             context.report({
               node: item.node,
               messageId: 'mismatch',
-              data: { actual: item.name, expected, file: namingFileBasename(context.filename) },
+              data: { actual: item.name, expected, file },
             })
           }
         }

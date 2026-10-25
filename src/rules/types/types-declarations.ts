@@ -1,19 +1,11 @@
 import { defineRule } from '@oxlint/plugins'
-import type { ESTree } from '@oxlint/plugins'
-import { optionsFirst, optionsOptionalPatterns, optionsPatternSchema, optionsPatternsTest } from '../../utils/index.ts'
-import type { OptionsPattern } from '../../utils/index.ts'
+import { optionsFirst, optionsPatterns, optionsPatternSchema, optionsPatternsTest } from '../../utils/options.utils.ts'
+import type { TypesDeclarationNode, TypesDeclarationsOptions } from '../../types/types.types.ts'
 
-interface NoTypeDeclarationsOptions {
-  allowPattern?: OptionsPattern
+function isValuePattern(source: string): boolean {
+  return /^\^?=/.test(source)
 }
 
-/**
- * Rejects type aliases and interfaces in matched files. `allowPattern` exempts a declaration when any
- * pattern matches its name; a pattern starting with `=` or `^=` matches a type alias's `= value` text instead.
- *
- * Example: `interface User {}` fails in an API module; `type AccessRequestErrorKind = 'x'` can pass with
- * `allowPattern: 'ErrorKind$'`, and `type Retry = ReturnType<typeof makeRetry>` with `'^= ReturnType<typeof '`.
- */
 export const typesDeclarations = defineRule({
   meta: {
     type: 'problem',
@@ -34,15 +26,15 @@ export const typesDeclarations = defineRule({
     let allowedNames: RegExp[] = []
     let allowedValues: RegExp[] = []
 
-    function check(node: ESTree.TSTypeAliasDeclaration | ESTree.TSInterfaceDeclaration) {
-      if (optionsPatternsTest(allowedNames, node.id.name)) return
-      if (
+    function check(node: TypesDeclarationNode) {
+      const allowedValue =
         node.type === 'TSTypeAliasDeclaration' &&
         allowedValues.length > 0 &&
         optionsPatternsTest(allowedValues, `= ${context.sourceCode.getText(node.typeAnnotation)}`)
-      )
-        return
 
+      if (optionsPatternsTest(allowedNames, node.id.name) || allowedValue) {
+        return
+      }
       context.report({
         node,
         messageId: 'typeDeclaration',
@@ -52,11 +44,10 @@ export const typesDeclarations = defineRule({
 
     return {
       before() {
-        const { allowPattern } = optionsFirst<NoTypeDeclarationsOptions>(context, {})
+        const { allowPattern } = optionsFirst<TypesDeclarationsOptions>(context, {})
         const sources = allowPattern === undefined ? [] : [allowPattern].flat()
-        const isValuePattern = (source: string) => /^\^?=/.test(source)
-        allowedNames = optionsOptionalPatterns(sources.filter((source) => !isValuePattern(source)))
-        allowedValues = optionsOptionalPatterns(sources.filter(isValuePattern))
+        allowedNames = optionsPatterns(sources.filter((source) => !isValuePattern(source)))
+        allowedValues = optionsPatterns(sources.filter(isValuePattern))
       },
       TSTypeAliasDeclaration: check,
       TSInterfaceDeclaration: check,

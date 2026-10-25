@@ -1,6 +1,5 @@
 import { defineRule } from '@oxlint/plugins'
 
-/** Only the matching factory-derived Service alias stays local; ChatDeps belongs in domain types. */
 export const typesService = defineRule({
   meta: {
     type: 'problem',
@@ -16,22 +15,20 @@ export const typesService = defineRule({
       },
       TSTypeAliasDeclaration(node) {
         const type = node.typeAnnotation
-        const argument = type.type === 'TSTypeReference' ? type.typeArguments?.params[0] : undefined
-        const factory =
-          argument?.type === 'TSTypeQuery' && argument.exprName.type === 'Identifier'
-            ? argument.exprName.name
-            : undefined
-        if (
+        const argument = type.type === 'TSTypeReference' && type.typeArguments?.params.length === 1 ? type.typeArguments.params[0] : undefined
+
+        const isFactoryService =
           node.id.name.endsWith('Service') &&
           type.type === 'TSTypeReference' &&
           type.typeName.type === 'Identifier' &&
           type.typeName.name === 'ReturnType' &&
-          type.typeArguments?.params.length === 1 &&
-          factory === `make${node.id.name}`
-        ) {
-          return
+          argument?.type === 'TSTypeQuery' &&
+          argument.exprName.type === 'Identifier' &&
+          argument.exprName.name === `make${node.id.name}`
+
+        if (!isFactoryService) {
+          context.report({ node, messageId: 'domain' })
         }
-        context.report({ node, messageId: 'domain' })
       },
     }
   },

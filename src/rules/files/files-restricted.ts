@@ -1,15 +1,7 @@
 import { defineRule } from '@oxlint/plugins'
-import { optionsFirst } from '../../utils/index.ts'
+import { optionsFirst } from '../../utils/options.utils.ts'
+import type { FilesRestrictedOptions } from '../../types/files.types.ts'
 
-interface NoRestrictedFilesOptions {
-  message: string
-}
-
-/**
- * Reports every file matched by the consumer glob, making forbidden file locations or extensions lintable.
- *
- * Example: Enable it for hook TSX files to require hooks to use `.ts` files.
- */
 export const filesRestricted = defineRule({
   meta: {
     type: 'problem',
@@ -30,7 +22,8 @@ export const filesRestricted = defineRule({
   createOnce(context) {
     return {
       Program(program) {
-        const { message } = optionsFirst<NoRestrictedFilesOptions>(context)
+        const { message } = optionsFirst<FilesRestrictedOptions>(context)
+
         context.report({
           node: program,
           messageId: 'restricted',
