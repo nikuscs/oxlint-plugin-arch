@@ -1,17 +1,17 @@
-export interface SchemasInlineOptions {
+export interface SchemasElementOptions {
   namespaces: string[]
   methods: string[]
-  structuralMethods: string[]
-  allowZodScalars: boolean
+  structural: string[]
+  scalars: boolean
 }
 
 export interface SchemasLocalOptions {
-  packages?: string[]
-  namespaces?: string[]
-  allowIn?: string[]
-  allowPathPatterns?: string[]
+  packages: string[]
+  namespaces: string[]
+  allow?: string[]
+  patterns?: string[]
   message?: string
-  runtimeImportMessage?: string
+  importMessage?: string
   constructionMessage?: string
 }
 
@@ -19,11 +19,4 @@ export interface SchemasRederiveOptions {
   from: string[]
   namespaces?: string[]
   operators?: string[]
-}
-
-export interface SchemasSingleUseOptions {
-  namespaces: string[]
-  methods: string[]
-  structuralMethods: string[]
-  allowZodScalars: boolean
 }

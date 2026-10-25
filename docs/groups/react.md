@@ -2,6 +2,8 @@
 
 React components, hooks and effects. Opt-in.
 
+Needs `bun add -d eslint-plugin-react eslint-plugin-react-you-might-not-need-an-effect eslint-plugin-svg-jsx`.
+
 ```ts
 folders: {
   'apps/web': { react: { a11y: false } },

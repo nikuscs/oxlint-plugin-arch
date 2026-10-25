@@ -1,9 +1,14 @@
 import { defineRule } from '@oxlint/plugins'
-import { namingBasename, namingComponentName } from '../../utils/naming.utils.ts'
+import { exportsCollect } from '../../utils/exports.utils.ts'
+import { namingBasename } from '../../utils/naming.utils.ts'
 import { optionsFirst, optionsPatterns, optionsPatternSchema, optionsPatternsTest } from '../../utils/options.utils.ts'
-import { reactExportCandidates, reactIsComponent } from '../../utils/react.utils.ts'
+import { reactIsComponent } from '../../utils/react.utils.ts'
 import type { DeclarationsCandidate } from '../../types/declarations.types.ts'
 import type { FilesComponentsOnlyOptions } from '../../types/files.types.ts'
+
+function componentName(basename: string): string {
+  return basename.replace(/\.(tsx?|jsx?)$/, '').replaceAll(/(?:^[-.]*|[-.]+)(.?)/g, (_, char: string) => char.toUpperCase())
+}
 
 export const filesComponentsOnly = defineRule({
   meta: {
@@ -13,10 +18,10 @@ export const filesComponentsOnly = defineRule({
         type: 'object',
         additionalProperties: false,
         properties: {
-          matchFileName: { type: 'boolean' },
-          trailingRoles: { type: 'array', items: { type: 'string' } },
-          allowTypeExports: { type: 'boolean' },
-          denyTypePattern: optionsPatternSchema,
+          filename: { type: 'boolean' },
+          roles: { type: 'array', items: { type: 'string' } },
+          types: { type: 'boolean' },
+          deny: optionsPatternSchema,
         },
       },
     ],
@@ -24,28 +29,29 @@ export const filesComponentsOnly = defineRule({
       nonComponent: "Export '{{name}}' must be a React component or type.",
       nameMismatch: "Component export '{{name}}' must match '{{expected}}' or its prefix.",
       typeExport: "Type export '{{name}}' is not allowed.",
-      deniedType: "Type export '{{name}}' is denied by denyTypePattern.",
+      deniedType: "Type export '{{name}}' is denied by the deny option.",
     },
   },
   createOnce(context) {
     return {
       Program(program) {
         const {
-          matchFileName = true,
-          trailingRoles = [],
-          allowTypeExports = true,
-          denyTypePattern,
+          filename: matchFileName = true,
+          roles: trailingRoles = [],
+          types: allowTypeExports = true,
+          deny: denyTypePattern,
         } = optionsFirst<FilesComponentsOnlyOptions>(context, {})
 
         const basename = namingBasename(context.filename)
         const extension = basename.slice(basename.lastIndexOf('.'))
         const role = trailingRoles.find((candidate) => basename.endsWith(`.${candidate}${extension}`))
-        const expected = namingComponentName(role ? basename.replace(`.${role}${extension}`, extension) : basename)
-        const expectedKeys = [expected, ...(role ? [namingComponentName(basename)] : [])].map((name) => name.toLowerCase())
+        const expected = componentName(role ? basename.replace(`.${role}${extension}`, extension) : basename)
+        const expectedKeys = [expected, ...(role ? [componentName(basename)] : [])].map((name) => name.toLowerCase())
         const denied = optionsPatterns(denyTypePattern)
         const components: DeclarationsCandidate[] = []
 
-        for (const candidate of reactExportCandidates(program)) {
+        for (const binding of exportsCollect(program)) {
+          const candidate: DeclarationsCandidate = { ...binding, name: binding.localName ?? binding.exportedName }
           const { name, node } = candidate
 
           if (candidate.typeOnly) {

@@ -2,6 +2,8 @@
 
 Tailwind class checks against your stylesheet. Opt-in.
 
+Needs `bun add -d oxlint-tailwindcss`.
+
 ```ts
 folders: {
   'apps/web': { tailwind: { css: 'apps/web/src/styles.css' } },

@@ -18,11 +18,11 @@ export type UserCardProps = { name: string }
 
 | Option | Type | Default | |
 | --- | --- | --- | --- |
-| `matchFileName` | `boolean` | `true` | Component name must match the file name |
-| `trailingRoles` | `string[]` | `[]` | Role suffixes dropped from the name, like `view` in `user.view.tsx` |
-| `allowTypeExports` | `boolean` | `true` | Allow type exports |
-| `denyTypePattern` | `string \| string[]` | none | Type export names to reject |
+| `filename` | `boolean` | `true` | Component name must match the file name in PascalCase, split on `-` and `.` |
+| `roles` | `string[]` | `[]` | Role suffixes dropped from the name, like `view` in `user.view.tsx` |
+| `types` | `boolean` | `true` | Allow type exports |
+| `deny` | `string \| string[]` | none | Type export names to reject |
 
 ```ts
-'arch/files-components-only': ['error', { trailingRoles: ['view', 'page'] }]
+'arch/files-components-only': ['error', { roles: ['view', 'page'] }]
 ```

@@ -17,7 +17,7 @@ export const layoutTernary = defineRule({
         type: 'object',
         additionalProperties: false,
         properties: {
-          maxLength: {
+          max: {
             type: 'integer',
             minimum: 1,
             default: 160,
@@ -42,7 +42,7 @@ export const layoutTernary = defineRule({
     return {
       before() {
         const options = optionsFirst<LayoutTernaryOptions>(context, {})
-        maxLength = options.maxLength ?? 160
+        maxLength = options.max ?? 160
         indent = options.indent ?? 2
       },
       ConditionalExpression(node) {

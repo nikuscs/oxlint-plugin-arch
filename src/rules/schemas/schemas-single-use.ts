@@ -1,5 +1,5 @@
 import { defineRule } from '@oxlint/plugins'
-import { astMemberName } from '../../utils/ast.utils.ts'
+import { astCallName, astMemberName } from '../../utils/ast.utils.ts'
 import { exportsCollect } from '../../utils/exports.utils.ts'
 import { optionsFirst } from '../../utils/options.utils.ts'
 import {
@@ -9,12 +9,8 @@ import {
   schemasIsAllowedElement,
   schemasIsCall,
 } from '../../utils/schemas.utils.ts'
-import type { SchemasSingleUseOptions } from '../../types/schemas.types.ts'
+import type { SchemasElementOptions } from '../../types/schemas.types.ts'
 import type { ESTree } from '@oxlint/plugins'
-
-function calledMethod(node: ESTree.Node): string | undefined {
-  return node.type === 'CallExpression' && node.callee.type === 'MemberExpression' ? astMemberName(node.callee) : undefined
-}
 
 function isScalarSchema(node: ESTree.Expression, namespaces: ReadonlySet<string>, structuralMethods: ReadonlySet<string>): node is ESTree.CallExpression {
   if (node.type !== 'CallExpression' || node.callee.type !== 'MemberExpression') {
@@ -41,7 +37,7 @@ export const schemasSingleUse = defineRule({
     defaultOptions: [
       {
         ...schemasElementDefaults,
-        structuralMethods: [
+        structural: [
           'and',
           'array',
           'discriminatedUnion',
@@ -75,9 +71,9 @@ export const schemasSingleUse = defineRule({
         }
       },
       'Program:exit'(program) {
-        const options = optionsFirst<SchemasSingleUseOptions>(context)
+        const options = optionsFirst<SchemasElementOptions>(context)
         const namespaces = new Set(options.namespaces)
-        const structuralMethods = new Set(options.structuralMethods)
+        const structuralMethods = new Set(options.structural)
         const exported = new Set(exportsCollect(program).flatMap((binding) => (binding.localName ? [binding.localName] : [])))
 
         for (const declarator of candidates) {
@@ -100,7 +96,7 @@ export const schemasSingleUse = defineRule({
           const object = parent.parent
           const objectCall = object?.parent
           const elementCall = parent.type === 'ArrayExpression' ? parent.parent : parent
-          const elementMethod = calledMethod(elementCall)
+          const elementMethod = elementCall.type === 'CallExpression' ? astCallName(elementCall) : undefined
 
           const isObjectField =
             parent.type === 'Property' &&
@@ -108,12 +104,12 @@ export const schemasSingleUse = defineRule({
             object?.type === 'ObjectExpression' &&
             objectCall?.type === 'CallExpression' &&
             schemasIsCall(objectCall, namespaces) &&
-            calledMethod(objectCall) === 'object' &&
+            astCallName(objectCall) === 'object' &&
             structuralMethods.has('object') &&
             objectCall.arguments.includes(object)
 
           const isStructuralElement =
-            options.allowZodScalars &&
+            options.scalars &&
             schemasIsAllowedElement(initializer, true, namespaces, structuralMethods) &&
             elementCall.type === 'CallExpression' &&
             schemasIsCall(elementCall, namespaces) &&

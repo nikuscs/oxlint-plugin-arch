@@ -18,9 +18,13 @@ export const session = async () => (await cookies()).get('session')
 | `backend` | `string[]` | required | Backend root directories |
 | `aliases` | `Record<string, string>` | required | Import prefix to directory |
 | `backendPackages` | `string[]` | required | Package names that count as server imports |
-| `serverImports` | `string[]` | none | Extra server-only import prefixes |
-| `clientImports` | `string[]` | none | Extra browser-only import prefixes |
-| `allowComputedImportsIn` | `string[]` | none | Files allowed to use non-literal `import()` |
+| `server` | `string[]` | none | Extra server-only import prefixes |
+| `client` | `string[]` | none | Extra browser-only import prefixes |
+| `dynamic` | `string[]` | none | Files allowed to use non-literal `import()` |
+| `serverPackages` | `string[]` | `['@orpc/server', 'react-dom/server', 'server-only', 'next/headers', 'next/cache', 'next/server']` | Server-only packages; a subpath or `.` suffix matches too. Replaces the default |
+| `clientPackages` | `string[]` | `['client-only', 'react-dom/client']` | Browser-only packages and their subpaths. Replaces the default |
+| `hookPackages` | `string[]` | `['react']` | Packages whose `use*` exports are client hooks |
+| `publicEnv` | `string` | `'NEXT_PUBLIC_'` | `process.env` prefix that browser modules may read |
 
 ```ts
 'arch/boundaries-next': ['error', {
@@ -28,6 +32,6 @@ export const session = async () => (await cookies()).get('session')
   backend: [resolve('apps/server/src')],
   aliases: {},
   backendPackages: ['@app/server'],
-  serverImports: ['@app/db'],
+  server: ['@app/db'],
 }]
 ```

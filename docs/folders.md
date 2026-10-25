@@ -28,8 +28,8 @@ export default preset({
 | `'.'` | The whole project. Every other folder inherits from its parent and changes only what it sets. |
 | Deepest wins | A file follows the deepest matching folder. An exact key beats a `*` glob at the same depth (`packages/ui` over `packages/*`). |
 | Folder value | `true` inherits, `false` skips the folder, an object inherits and changes. |
-| Group value | `true` defaults, `false` off, `'warn'` on as warnings, an object = defaults plus changes. |
-| Paths | Every path, inside settings too, is relative to `root`. |
+| Group value | `true` on with the inherited settings (defaults when nothing is inherited), `false` off, `'warn'` the same as warnings, an object = inherited settings plus changes. |
+| Paths | Paths inside settings are relative to `root`; `source` is relative to its folder. |
 | Units | Top-level keys are units (app, backend, library, CLI). A key inside another key only refines it. |
 | Errors | Unknown keys, unknown options and missing folders throw. |
 
@@ -38,13 +38,22 @@ export default preset({
 | Key | | |
 | --- | --- | --- |
 | `severity` | `'error' \| 'warn'` | Level for every rule in the folder |
-| `source` | `string` | Source folder, default `src` |
-| `rules` | `Record<rule, 'error' \| 'warn' \| 'off'>` | Last-word overrides for single rules |
+| `source` | `string` | Source folder inside this folder: default `src`, or `.` for CLIs and for a root without `src` |
+| `rules` | `Record<rule, level \| [level, options]>` | Last-word overrides for single rules; options replace the rule's options in the folder |
 | any [group](#-groups) | `true \| false \| 'warn' \| options` | |
+
+```ts
+'apps/web/src': {
+  rules: {
+    'react/jsx-no-useless-fragment': 'off',
+    'eslint-js/no-restricted-syntax': ['error', { selector: "JSXAttribute[name.name='data-testid']", message: 'Select by role or label.' }],
+  },
+},
+```
 
 ## 📚 Groups
 
-On by default: [`layout`](groups/layout.md), [`limits`](groups/limits.md), [`style`](groups/style.md), [`basics`](groups/basics.md), [`naming`](groups/naming.md), [`comments`](groups/comments.md), [`types`](groups/types.md), [`imports`](groups/imports.md), [`tests`](groups/tests.md).
+On by default: [`layout`](groups/layout.md), [`limits`](groups/limits.md), [`style`](groups/style.md), [`basics`](groups/basics.md), [`naming`](groups/naming.md), [`comments`](groups/comments.md), [`types`](groups/types.md), [`imports`](groups/imports.md), [`tests`](groups/tests.md), [`deny`](groups/deny.md), [`externals`](groups/externals.md).
 
 Opt-in: [`react`](groups/react.md), [`tanstack`](groups/tanstack.md), [`next`](groups/next.md), [`expo`](groups/expo.md), [`tailwind`](groups/tailwind.md), [`shadcn`](groups/shadcn.md), [`kit`](groups/kit.md), [`backend`](groups/backend.md), [`orpc`](groups/orpc.md), [`schemas`](groups/schemas.md), [`forms`](groups/forms.md), [`sql`](groups/sql.md), [`console`](groups/console.md).
 

@@ -14,4 +14,6 @@ Takes `true`, `false`, `'warn'` or an object:
 | --- | --- | --- | --- |
 | `server` | `string[]` | `[]` | Imports banned in the app |
 
-Rules: [`arch/files-route`](../rules/files-route.md).
+Route files under `app/` are kebab-case, `_layout`, `index`, `[param]`, `[...rest]` or `+special`, and hold only screens, their components and `makeStyles`.
+
+Rules: [`arch/files-helpers`](../rules/files-helpers.md), [`arch/files-route`](../rules/files-route.md), [`arch/naming-file`](../rules/naming-file.md).

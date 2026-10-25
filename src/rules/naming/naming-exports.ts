@@ -1,6 +1,7 @@
 import { defineRule } from '@oxlint/plugins'
 import {
   declarationsFunctions,
+  declarationsIsFunctionValue,
   declarationsNamed,
   declarationsPublicServiceMethods,
   declarationsUnique,
@@ -8,22 +9,58 @@ import {
 import { exportsCollect, exportsFunctions } from '../../utils/exports.utils.ts'
 import {
   namingBasename,
-  namingExpandTemplate,
+  namingCamelCase,
   namingFilePrefixesFor,
   namingHasFilePrefix,
-  namingMatchTemplate,
+  namingPascalCase,
   namingStemSchemaProperties,
 } from '../../utils/naming.utils.ts'
-import { optionsPatternLabel, optionsPatterns, optionsPatternSchema, optionsPatternsTest } from '../../utils/options.utils.ts'
+import {
+  optionsAll,
+  optionsPatternLabel,
+  optionsPatterns,
+  optionsPatternSchema,
+  optionsPatternsTest,
+  optionsPatternsWithEmpty,
+} from '../../utils/options.utils.ts'
 import type { DeclarationsNamed } from '../../types/declarations.types.ts'
+import type { ExportsBinding } from '../../types/exports.types.ts'
 import type { NamingExportsOptions } from '../../types/naming.types.ts'
 import type { OptionsSchemaProperties } from '../../types/options.types.ts'
 
 const namingExportsScopeProperties: OptionsSchemaProperties = {
   scope: { type: 'string', enum: ['exports', 'functions', 'declarations'] },
-  ignoreTypeExports: { type: 'boolean' },
-  serviceMethods: { type: 'boolean' },
-  allowPattern: optionsPatternSchema,
+  types: { type: 'boolean' },
+  services: { type: 'boolean' },
+  allow: optionsPatternSchema,
+}
+
+function matchTemplate(
+  basename: string,
+  template: string,
+  placeholder = '[a-z0-9-]+',
+): Record<string, string> | null {
+  let pattern = ''
+  let index = 0
+
+  while (index < template.length) {
+    const char = template[index]
+
+    if (char === '{') {
+      const end = template.indexOf('}', index)
+
+      if (end === -1) {
+        return null
+      }
+      pattern += `(?<${template.slice(index + 1, end)}>${placeholder})`
+      index = end + 1
+      continue
+    }
+    pattern += /[.+^${}()|[\]\\]/.test(char) ? `\\${char}` : char
+    index += 1
+  }
+
+  return new RegExp(`^${pattern}$`).exec(basename)?.groups ?? null
 }
 
 export const namingExports = defineRule({
@@ -58,7 +95,7 @@ export const namingExports = defineRule({
               file: { type: 'string' },
               export: { type: 'string' },
               match: { type: 'string', enum: ['all', 'some'] },
-              placeholderPattern: { type: 'string' },
+              placeholder: { type: 'string' },
               camelCase: { type: 'boolean' },
             },
             required: ['mode', 'file', 'export'],
@@ -75,22 +112,35 @@ export const namingExports = defineRule({
   createOnce(context) {
     return {
       Program(program) {
-        // oxlint-disable-next-line dillon-anti-slop/require-safety-comment-for-type-assertion -- Oxlint validates options against meta.schema before create runs
-        const checks = (context.options.length > 0 ? context.options : [{}]) as NamingExportsOptions[]
+        const checks = optionsAll<NamingExportsOptions>(context)
+        let bindings: ExportsBinding[] | undefined
+        let declarations: DeclarationsNamed[] | undefined
 
-        for (const options of checks) {
+        for (const options of checks.length > 0 ? checks : [{}]) {
           const scope = options.scope ?? 'exports'
-          const allowed = optionsPatterns(options.allowPattern)
+          const allowed = optionsPatterns(options.allow)
 
           if (options.mode === 'template') {
             const file = namingBasename(context.filename)
-            const groups = namingMatchTemplate(file, options.file, options.placeholderPattern)
+            const groups = matchTemplate(file, options.file, options.placeholder)
 
             if (!groups) {
               continue
             }
 
-            const expected = namingExpandTemplate(options.export, groups, options.camelCase)
+            const expected = options.export.replaceAll(/\{([^}]+)\}/g, (placeholder, key: string) => {
+              const group = groups[key.toLowerCase()]
+
+              if (!group) {
+                return placeholder
+              }
+
+              if (/^[A-Z]/.test(key)) {
+                return namingPascalCase(group)
+              }
+
+              return options.camelCase ? namingCamelCase(group) : group
+            })
 
             const functions = (scope === 'exports' ? exportsFunctions(program) : declarationsFunctions(program)).filter(
               ({ name }) => !optionsPatternsTest(allowed, name),
@@ -125,29 +175,28 @@ export const namingExports = defineRule({
           }
 
           const names: Pick<DeclarationsNamed, 'name' | 'node'>[] = scope === 'declarations'
-            ? declarationsNamed(program)
-            : exportsCollect(program).flatMap((binding) =>
-              options.ignoreTypeExports && binding.typeOnly ? [] : [{ name: binding.localName ?? binding.exportedName, node: binding.node }],
+            ? [...(declarations ??= declarationsNamed(program))]
+            : (bindings ??= exportsCollect(program)).flatMap((binding) =>
+              options.types && binding.typeOnly ? [] : [{ name: binding.localName ?? binding.exportedName, node: binding.node }],
             )
 
           if (scope === 'functions') {
             const exported = new Set(names.map((item) => item.name))
             names.push(
-              ...declarationsNamed(program).filter(
+              ...(declarations ??= declarationsNamed(program)).filter(
                 ({ name, node }) =>
                   !exported.has(name) &&
-                  (node.type === 'FunctionDeclaration' ||
-                    (node.type === 'VariableDeclarator' && (node.init?.type === 'ArrowFunctionExpression' || node.init?.type === 'FunctionExpression'))),
+                  (node.type === 'FunctionDeclaration' || (node.type === 'VariableDeclarator' && declarationsIsFunctionValue(node.init))),
               ),
             )
           }
 
-          if (options.serviceMethods) {
+          if (options.services) {
             names.push(...declarationsPublicServiceMethods(program))
           }
 
           const prefixes = options.mode === 'pattern' ? [] : namingFilePrefixesFor(context.filename, options)
-          const expected = options.mode === 'pattern' ? optionsPatterns(options.pattern, options.flags) : []
+          const expected = options.mode === 'pattern' ? optionsPatternsWithEmpty(options.pattern, options.flags) : []
 
           for (const item of declarationsUnique(names)) {
             if (optionsPatternsTest(allowed, item.name)) {
@@ -159,7 +208,7 @@ export const namingExports = defineRule({
                 context.report({
                   node: item.node,
                   messageId: 'pattern',
-                  data: { name: item.name, pattern: optionsPatternLabel([options.pattern].flat().filter((source) => source !== '')) },
+                  data: { name: item.name, pattern: optionsPatternLabel(options.pattern) },
                 })
               }
 

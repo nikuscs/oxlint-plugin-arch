@@ -8,21 +8,21 @@ export interface LayoutEdit {
 }
 
 export interface LayoutCallArgumentsOptions {
-  minArguments?: number
+  min?: number
   indent?: number
 }
 
 export interface LayoutCallArrayOptions {
   callees?: string[]
-  minElements?: number
+  min?: number
   indent?: SourceIndent
 }
 
 export interface LayoutChainGroup {
-  minDepth: number
+  min: number
   methods?: string[]
-  onlyMethods?: string[]
-  rootPattern?: OptionsPattern
+  only?: string[]
+  root?: OptionsPattern
 }
 
 export interface LayoutChainOptions {
@@ -31,25 +31,24 @@ export interface LayoutChainOptions {
 }
 
 export interface LayoutChainCompiledGroup {
-  minDepth: number
+  min: number
   methods?: Set<string>
-  onlyMethods?: Set<string>
+  only?: Set<string>
   rootPatterns: RegExp[]
 }
 
 export interface LayoutChainLink {
-  call: ESTree.CallExpression
   member: ESTree.MemberExpression
   methodName: string | undefined
 }
 
 export interface LayoutJsxAttributesOptions {
-  minAttributes?: number
+  min?: number
   indent?: SourceIndent
 }
 
 export interface LayoutObjectOptions {
-  minProperties?: number
+  min?: number
   scope?: LayoutObjectScope
   indent?: SourceIndent
 }
@@ -57,13 +56,13 @@ export interface LayoutObjectOptions {
 export type LayoutObjectScope = 'call-args' | 'all'
 
 export interface LayoutPaddingOptions {
-  returnMinStatements?: number
-  multilineVariables?: boolean
+  min?: number
+  multiline?: boolean
 }
 
 export type LayoutPaddingKind = 'variable' | 'block' | 'control' | 'return' | 'other'
 
 export interface LayoutTernaryOptions {
-  maxLength?: number
+  max?: number
   indent?: number
 }

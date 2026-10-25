@@ -1,6 +1,6 @@
 # arch/files-no-functions
 
-Reports top-level functions and value re-exports.
+Reports top-level functions, including `export default` function expressions, and value re-exports.
 
 ```ts
 // ❌ money.ts
@@ -15,9 +15,9 @@ export const CENTS_PER_UNIT = 100
 
 | Option | Type | Default | |
 | --- | --- | --- | --- |
-| `banReExports` | `boolean` | `true` | Also report `export ... from` |
-| `allowPattern` | `string \| string[]` | none | Function names to allow |
+| `reexports` | `boolean` | `true` | Also report `export ... from` |
+| `allow` | `string \| string[]` | none | Function names to allow |
 
 ```ts
-'arch/files-no-functions': ['error', { allowPattern: '^is[A-Z]' }]
+'arch/files-no-functions': ['error', { allow: '^is[A-Z]' }]
 ```

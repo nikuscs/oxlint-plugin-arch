@@ -1,20 +1,10 @@
 import { defineRule } from '@oxlint/plugins'
 import { optionsFirst } from '../../utils/options.utils.ts'
-import {
-  schemasIsConstruction,
-  schemasIsRuntimeImport,
-  schemasIsRuntimeReexport,
-  schemasRuntimeImportLocals,
-} from '../../utils/schemas.utils.ts'
 import type { SchemasLocalOptions } from '../../types/schemas.types.ts'
 import type { ESTree } from '@oxlint/plugins'
 
-const defaultRuntimeImportMessage = 'Do not import runtime schema constructors from {{source}}; import a named schema instead.'
-const defaultConstructionMessage = 'Do not construct schemas locally; import a named schema instead.'
-
-function formatMessage(template: string, data: Record<string, string>): string {
-  return Object.entries(data).reduce((result, [key, value]) => result.replaceAll(`{{${key}}}`, value), template)
-}
+const schemasLocalImportMessage = 'Do not import runtime schema constructors from {{source}}; import a named schema instead.'
+const schemasLocalConstructionMessage = 'Do not construct schemas locally; import a named schema instead.'
 
 export const schemasLocal = defineRule({
   meta: {
@@ -26,10 +16,10 @@ export const schemasLocal = defineRule({
         properties: {
           packages: { type: 'array', items: { type: 'string' } },
           namespaces: { type: 'array', items: { type: 'string' } },
-          allowIn: { type: 'array', items: { type: 'string' } },
-          allowPathPatterns: { type: 'array', items: { type: 'string' } },
+          allow: { type: 'array', items: { type: 'string' } },
+          patterns: { type: 'array', items: { type: 'string' } },
           message: { type: 'string' },
-          runtimeImportMessage: { type: 'string' },
+          importMessage: { type: 'string' },
           constructionMessage: { type: 'string' },
         },
       },
@@ -42,61 +32,81 @@ export const schemasLocal = defineRule({
   },
   createOnce(context) {
     let constructors = new Set<string>()
+    let packages = new Set<string>()
+    let importMessage = schemasLocalImportMessage
+    let constructionMessage = schemasLocalConstructionMessage
 
-    function packages(): Set<string> {
-      return new Set(optionsFirst<SchemasLocalOptions>(context, {}).packages ?? ['zod'])
+    function isPackage(source: string): boolean {
+      return packages.has(source) || [...packages].some((name) => source.startsWith(`${name}/`))
     }
 
     function reportRuntimeImport(node: ESTree.Node, source: string) {
-      const { message, runtimeImportMessage } = optionsFirst<SchemasLocalOptions>(context, {})
-      const text = formatMessage(runtimeImportMessage ?? message ?? defaultRuntimeImportMessage, { source })
       context.report({
         node,
         messageId: 'runtimeImport',
-        data: { message: text },
+        data: { message: importMessage.replaceAll('{{source}}', source) },
       })
+    }
+
+    function checkReexport(node: ESTree.ExportNamedDeclaration | ESTree.ExportAllDeclaration) {
+      if (!node.source || !isPackage(node.source.value) || node.exportKind === 'type') {
+        return
+      }
+
+      if (node.type === 'ExportAllDeclaration' || node.specifiers.length === 0 || node.specifiers.some((specifier) => specifier.exportKind !== 'type')) {
+        reportRuntimeImport(node, node.source.value)
+      }
     }
 
     return {
       before() {
-        const { namespaces = ['z'], allowIn = [], allowPathPatterns = [] } = optionsFirst<SchemasLocalOptions>(context, {})
+        const options = optionsFirst<SchemasLocalOptions>(context)
         const filename = context.filename.replaceAll('\\', '/')
-        constructors = new Set(namespaces)
-        if (allowIn.some((suffix) => filename.endsWith(suffix)) || allowPathPatterns.some((pattern) => new RegExp(pattern).test(filename))) {
+        constructors = new Set(options.namespaces)
+        packages = new Set(options.packages)
+        importMessage = options.importMessage ?? options.message ?? schemasLocalImportMessage
+        constructionMessage = options.constructionMessage ?? options.message ?? schemasLocalConstructionMessage
+        if (
+          (options.allow ?? []).some((suffix) => filename.endsWith(suffix)) ||
+          (options.patterns ?? []).some((pattern) => new RegExp(pattern).test(filename))
+        ) {
           return false
         }
       },
       ImportDeclaration(node) {
-        if (!schemasIsRuntimeImport(node, packages())) {
+        if (!isPackage(node.source.value)) {
           return
         }
 
-        for (const name of schemasRuntimeImportLocals(node)) {
+        const locals = node.importKind === 'type'
+          ? []
+          : node.specifiers.flatMap((specifier) => (specifier.type !== 'ImportSpecifier' || specifier.importKind !== 'type' ? [specifier.local.name] : []))
+
+        if (node.specifiers.length === 0 ? node.importKind === 'type' : locals.length === 0) {
+          return
+        }
+
+        for (const name of locals) {
           constructors.add(name)
         }
         reportRuntimeImport(node, node.source.value)
       },
-      ExportNamedDeclaration(node) {
-        if (node.source && schemasIsRuntimeReexport(node, packages())) {
-          reportRuntimeImport(node, node.source.value)
-        }
-      },
-      ExportAllDeclaration(node) {
-        if (schemasIsRuntimeReexport(node, packages())) {
-          reportRuntimeImport(node, node.source.value)
-        }
-      },
+      ExportNamedDeclaration: checkReexport,
+      ExportAllDeclaration: checkReexport,
       CallExpression(node) {
-        if (!schemasIsConstruction(node, constructors)) {
-          return
+        let root: ESTree.Node = node.callee
+
+        while (root.type === 'MemberExpression') {
+          root = root.object
         }
 
-        const { message, constructionMessage } = optionsFirst<SchemasLocalOptions>(context, {})
-        const text = formatMessage(constructionMessage ?? message ?? defaultConstructionMessage, {})
+        if (root.type !== 'Identifier' || !constructors.has(root.name)) {
+          return
+        }
         context.report({
           node,
           messageId: 'construction',
-          data: { message: text },
+          data: { message: constructionMessage },
         })
       },
     }

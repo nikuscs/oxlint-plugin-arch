@@ -3,11 +3,11 @@ import { astDottedName, astModuleName } from '../../utils/ast.utils.ts'
 import { optionsFirst } from '../../utils/options.utils.ts'
 import type { TestsModifiersOptions } from '../../types/tests.types.ts'
 
-const testNames = ['test', 'it', 'describe', 'suite']
+const testsModifiersNames = ['test', 'it', 'describe', 'suite']
 
-const testPackages = new Set(['vitest', 'bun:test', '@playwright/test', '@jest/globals'])
+const testsModifiersPackages = new Set(['vitest', 'bun:test', '@playwright/test', '@jest/globals'])
 
-const modifiers = new Set(['only', 'skip', 'todo'])
+const testsModifiersBanned = new Set(['only', 'skip', 'todo'])
 
 export const testsModifiers = defineRule({
   meta: {
@@ -16,7 +16,7 @@ export const testsModifiers = defineRule({
       {
         type: 'object',
         additionalProperties: false,
-        properties: { additionalTestFunctions: { type: 'array', items: { type: 'string' } } },
+        properties: { functions: { type: 'array', items: { type: 'string' } } },
       },
     ],
     messages: {
@@ -29,12 +29,12 @@ export const testsModifiers = defineRule({
     return {
       before() {
         names = new Set([
-          ...testNames,
-          ...(optionsFirst<TestsModifiersOptions>(context, {}).additionalTestFunctions ?? []),
+          ...testsModifiersNames,
+          ...(optionsFirst<TestsModifiersOptions>(context, {}).functions ?? []),
         ])
       },
       ImportDeclaration(node) {
-        if (!testPackages.has(node.source.value)) {
+        if (!testsModifiersPackages.has(node.source.value)) {
           return
         }
 
@@ -45,7 +45,7 @@ export const testsModifiers = defineRule({
 
           const imported = astModuleName(specifier.imported)
 
-          if (testNames.includes(imported)) {
+          if (testsModifiersNames.includes(imported)) {
             names.add(specifier.local.name)
           }
         }
@@ -53,7 +53,7 @@ export const testsModifiers = defineRule({
       MemberExpression(node) {
         const name = astDottedName(node)
 
-        if (!name || !modifiers.has(name.split('.').at(-1) ?? '')) {
+        if (!name || !testsModifiersBanned.has(name.split('.').at(-1) ?? '')) {
           return
         }
 

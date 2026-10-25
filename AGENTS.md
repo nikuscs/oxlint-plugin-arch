@@ -28,3 +28,5 @@ Architecture rules for Oxlint (`arch/*`), a vendored anti-slop plugin (`dillon-a
 ## Validation
 
 Run `bun run check`. After changing agent guidance, run `bun run agents:sync`.
+
+Performance: `bun run bench <repo> [--config=oxlint.config.ts] [--top=25]` lints a real repo with every JS rule timed and prints the slowest rules. Run it before and after touching a rule's visitors.

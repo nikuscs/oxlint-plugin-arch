@@ -29,7 +29,7 @@ export const codeConstructor = defineRule({
               ],
             },
           },
-          checkCalls: { type: 'boolean', default: false },
+          calls: { type: 'boolean', default: false },
           message: { type: 'string' },
         },
         required: ['constructors'],
@@ -73,7 +73,7 @@ export const codeConstructor = defineRule({
           }
         }
 
-        checkCalls = options.checkCalls === true
+        checkCalls = options.calls === true
         fallbackMessage = options.message
         if (entries.size === 0) {
           return false

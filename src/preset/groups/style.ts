@@ -7,13 +7,17 @@ export const styleGroup: PresetBuilder<'style'> = (_project, settings) => {
   const layout: PresetRules = {}
 
   if (settings.padding) {
-    layout['arch/layout-padding'] = ['error', { multilineVariables: true }]
+    layout['arch/layout-padding'] = ['error', { multiline: true }]
   }
 
   if (settings.multiline) {
-    layout['arch/layout-object'] = ['error', { minProperties: 3, scope: 'call-args' }]
-    layout['arch/layout-call-array'] = ['error', { callees: ['Promise.all'], minElements: 2 }]
+    layout['arch/layout-object'] = ['error', { min: 3, scope: 'call-args' }]
+    layout['arch/layout-call-array'] = ['error', { callees: ['Promise.all'], min: 2 }]
     layout['arch/layout-key-value'] = 'error'
+  }
+
+  if (settings.dashes) {
+    layout['arch/copy-dashes'] = 'error'
   }
 
   return [

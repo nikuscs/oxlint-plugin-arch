@@ -4,12 +4,13 @@ export interface BoundariesOptions {
   web: string[]
   backend: string[]
   packages: string | string[]
-  fileRoles?: string[]
-  portableLib?: boolean
+  roles?: string[]
+  portable?: boolean
   backendPackages: string[]
   appPackages: string[]
   aliases: Record<string, string>
-  publicEntrypoints: string[]
+  entrypoints: string[]
+  uiPackages?: string[]
 }
 
 export interface BoundariesImport {
@@ -26,13 +27,19 @@ export interface BoundariesImport {
 }
 
 export interface BoundariesNextOptions extends Pick<BoundariesOptions, 'web' | 'backend' | 'aliases' | 'backendPackages'> {
-  serverImports?: string[]
-  clientImports?: string[]
-  allowComputedImportsIn?: string[]
+  server?: string[]
+  client?: string[]
+  dynamic?: string[]
+  serverPackages?: string[]
+  clientPackages?: string[]
+  hookPackages?: string[]
+  publicEnv?: string
 }
 
 export interface BoundariesTanstackOptions extends BoundariesNextOptions {
-  rpcClients: string[]
+  rpc: string[]
+  startPackages?: string[]
+  rscPackages?: string[]
 }
 
 export type BoundariesIdentifier = Extract<ESTree.Node, { type: 'Identifier' }>
@@ -54,8 +61,8 @@ export interface BoundariesTanstackBoundary {
 export interface BoundariesTokenOwnerRestriction {
   token?: string
   member?: string
-  allowIn?: string[]
-  allowPathPatterns?: string[]
+  allow?: string[]
+  patterns?: string[]
   message?: string
 }
 
@@ -67,4 +74,9 @@ export interface BoundariesTokenOwnerTarget {
   kind: 'token' | 'member'
   value: string
   message?: string
+}
+
+export interface BoundariesDenyOptions {
+  imports?: Record<string, string>
+  calls?: Record<string, string>
 }

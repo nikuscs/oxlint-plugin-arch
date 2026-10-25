@@ -19,9 +19,9 @@ if (!user) {
 
 | Option | Type | Default | |
 | --- | --- | --- | --- |
-| `returnMinStatements` | `number` | `3` | Block size before `return` needs a blank line |
-| `multilineVariables` | `boolean` | `false` | Also pad multiline variable declarations |
+| `min` | `number` | `3` | Block size before `return` needs a blank line |
+| `multiline` | `boolean` | `false` | Also pad multiline variable declarations |
 
 ```ts
-'arch/layout-padding': ['error', { returnMinStatements: 3, multilineVariables: true }]
+'arch/layout-padding': ['error', { min: 3, multiline: true }]
 ```

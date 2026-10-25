@@ -3,7 +3,7 @@ import type { DeclarationsCandidate } from './declarations.types.ts'
 import type { ESTree } from '@oxlint/plugins'
 
 export interface ReactPropsOptions {
-  filePrefix?: boolean
+  prefix?: boolean
 }
 
 export interface ReactPropsComponent {

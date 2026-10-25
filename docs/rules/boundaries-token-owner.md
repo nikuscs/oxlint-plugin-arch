@@ -18,16 +18,16 @@ export const useChat = () => useContext(ChatContext)
 | Option | Type | Default | |
 | --- | --- | --- | --- |
 | `token` | `string` | none | Identifier to restrict |
-| `allowIn` | `string[]` | `[]` | File path suffixes that may use it |
-| `allowPathPatterns` | `string[]` | `[]` | Path regexes that may use it |
-| `restrictions` | `object[]` | none | Several rules of `{ token \| member, allowIn?, allowPathPatterns?, message? }` |
+| `allow` | `string[]` | `[]` | File path suffixes that may use it |
+| `patterns` | `string[]` | `[]` | Path regexes that may use it |
+| `restrictions` | `object[]` | none | Several rules of `{ token \| member, allow?, patterns?, message? }` |
 | `restrictions[].member` | `string` | none | Dotted member like `process.env`, or `*.name` for any object |
 
 ```ts
 'arch/boundaries-token-owner': ['error', {
   restrictions: [
-    { token: 'createContext', allowPathPatterns: ['/context/'] },
-    { member: 'process.env', allowIn: ['/env.ts'], message: 'Read config from env.ts.' },
+    { token: 'createContext', patterns: ['/context/'] },
+    { member: 'process.env', allow: ['/env.ts'], message: 'Read config from env.ts.' },
   ],
 }]
 ```

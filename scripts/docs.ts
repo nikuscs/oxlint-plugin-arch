@@ -3,11 +3,13 @@ import plugin from '../src/index.ts'
 import { presetDefaultGroups } from '../src/preset/preset.constants.ts'
 
 const readme = new URL('../README.md', import.meta.url)
+
 const families: Record<string, string> = {
   backend: 'Service and RPC structure',
   boundaries: 'Import and runtime boundaries',
   code: 'Code shapes to avoid',
   comments: 'Comments and directives',
+  copy: 'User-facing text',
   files: 'What a file may contain or export',
   layout: 'Layout a formatter leaves alone',
   naming: 'File, folder and export names',

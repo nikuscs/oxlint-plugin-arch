@@ -12,8 +12,8 @@ test('saves the user', () => {})
 
 | Option | Type | Default | |
 | --- | --- | --- | --- |
-| `additionalTestFunctions` | `string[]` | `[]` | Extra test function names |
+| `functions` | `string[]` | `[]` | Extra test function names |
 
 ```ts
-'arch/tests-modifiers': ['error', { additionalTestFunctions: ['bench'] }]
+'arch/tests-modifiers': ['error', { functions: ['bench'] }]
 ```

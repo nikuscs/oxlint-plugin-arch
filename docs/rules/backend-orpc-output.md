@@ -14,8 +14,8 @@ export const listChats = os.output(paged(Chat)).handler(() => chats.list())
 | Option | Type | Default | |
 | --- | --- | --- | --- |
 | `composers` | `string[]` | required | Functions that wrap a named schema, like `paged` |
-| `handlerMethod` | `string` | `'handler'` | Method that ends a procedure |
-| `outputMethod` | `string` | `'output'` | Method that declares the output |
+| `handler` | `string` | `'handler'` | Method that ends a procedure |
+| `output` | `string` | `'output'` | Method that declares the output |
 
 ```ts
 'arch/backend-orpc-output': ['error', { composers: ['paged'] }]

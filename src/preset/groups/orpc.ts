@@ -5,7 +5,7 @@ export const orpcGroup: PresetBuilder<'orpc'> = (project) =>
   project.orpc.public.length > 0
     ? [
       presetOverride(project.orpc.public, {
-        'arch/backend-orpc-output': ['error', { handlerMethod: 'handler', outputMethod: 'output', composers: project.orpc.composers }],
+        'arch/backend-orpc-output': ['error', { handler: 'handler', output: 'output', composers: project.orpc.composers }],
       }),
     ]
     : []

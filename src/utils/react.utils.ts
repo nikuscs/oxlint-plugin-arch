@@ -1,15 +1,7 @@
-import { astCallName, astContainsJsx, astNearestFunction, astReturnExpressions, astVisit } from './ast.utils.ts'
-import { exportsCollect } from './exports.utils.ts'
+import { astCallName, astContainsJsx, astModuleName, astNearestFunction, astReturnExpressions, astVisit } from './ast.utils.ts'
 import type { AstFunction } from '../types/ast.types.ts'
 import type { DeclarationsCandidate } from '../types/declarations.types.ts'
 import type { ESTree } from '@oxlint/plugins'
-
-export function reactExportCandidates(program: ESTree.Program): DeclarationsCandidate[] {
-  return exportsCollect(program).map((binding) => ({
-    ...binding,
-    name: binding.localName ?? binding.exportedName,
-  }))
-}
 
 function reactReturnsOutput(program: ESTree.Program, node: AstFunction): boolean {
   const expressions = astReturnExpressions(node)
@@ -24,9 +16,7 @@ function reactReturnsOutput(program: ESTree.Program, node: AstFunction): boolean
     program.body.flatMap((statement) =>
       statement.type === 'ImportDeclaration' && statement.source.value === 'react'
         ? statement.specifiers.flatMap((specifier) =>
-          specifier.type === 'ImportSpecifier' &&
-            specifier.imported.type === 'Identifier' &&
-            specifier.imported.name === 'PropsWithChildren'
+          specifier.type === 'ImportSpecifier' && astModuleName(specifier.imported) === 'PropsWithChildren'
             ? [specifier.local.name]
             : [],
         )

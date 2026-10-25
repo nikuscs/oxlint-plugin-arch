@@ -41,7 +41,7 @@ export const filesDomainConstants = defineRule({
       {
         type: 'object',
         additionalProperties: false,
-        properties: { includeData: { type: 'boolean' }, allowServiceMethods: { type: 'boolean' } },
+        properties: { data: { type: 'boolean' }, services: { type: 'boolean' } },
       },
     ],
     messages: {
@@ -56,9 +56,9 @@ export const filesDomainConstants = defineRule({
       Program(program) {
         const options = optionsFirst<FilesDomainConstantsOptions>(context, {})
 
-        includeData = Boolean(options.includeData)
+        includeData = Boolean(options.data)
         serviceObjects = new Set(
-          options.allowServiceMethods ? declarationsPublicServiceMethods(program).map((method) => method.binding) : [],
+          options.services ? declarationsPublicServiceMethods(program).map((method) => method.binding) : [],
         )
       },
       VariableDeclarator(node) {

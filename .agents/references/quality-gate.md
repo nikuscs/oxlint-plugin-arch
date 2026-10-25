@@ -10,6 +10,8 @@ bun run check
 
 `check` builds, self-lints with the repo's own preset, typechecks (examples and scripts too), runs fallow dead-code and dupes, and checks the generated README tables. It must exit 0 with no diagnostics.
 
+A new or changed rule must not show up near the top of `bun run bench <consumer repo>` without a reason.
+
 Tests are paused during the refactor. For a behavior change, prove it: lint a small snippet with the built rule and show the diagnostics before and after.
 
 ## Review
@@ -23,5 +25,18 @@ Tests are paused during the refactor. For a behavior change, prove it: lint a sm
 ## Protected enforcement
 
 `architecture.md`, this file, `oxlint.config.ts`, `.fallowrc.json`, `tsconfig*.json`, `.github/workflows/**` and the package `check`, `lint` and `typecheck` scripts change only on an explicit user request. New suppressions and downgraded severities are findings.
+
+## Self-lint exceptions
+
+`oxlint.config.ts` turns off five rules for this repository, approved by the owner. Rules and the preset read untyped input (ESTree nodes, rule options, user configs), so runtime checks are their parsing step:
+
+| Rule | Why it is off here |
+| --- | --- |
+| `dillon-anti-slop/no-runtime-typeof` | `typeof node.value === 'string'` is how a literal is read |
+| `dillon-anti-slop/no-reflect-get` | the vendored rules inspect `Reflect` calls by shape |
+| `dillon-anti-slop/no-unknown-parameters`, `arch/types-unknown` | parsers take `unknown` before narrowing it |
+| `arch/code-literal-in` | `'key' in node` checks optional ESTree fields |
+
+Any other suppression is a finding.
 
 Use `FAIL` for proven defects and convention violations, `WARN` for optional improvements. Include the file, line, effect and fix direction.

@@ -6,9 +6,8 @@ import {
   schemasElementOptionsSchema,
   schemasElements,
   schemasIsAllowedElement,
-  schemasIsCall,
 } from '../../utils/schemas.utils.ts'
-import type { SchemasInlineOptions } from '../../types/schemas.types.ts'
+import type { SchemasElementOptions } from '../../types/schemas.types.ts'
 
 export const schemasInline = defineRule({
   meta: {
@@ -17,34 +16,44 @@ export const schemasInline = defineRule({
     defaultOptions: [
       {
         ...schemasElementDefaults,
-        structuralMethods: ['array', 'discriminatedUnion', 'intersection', 'lazy', 'object', 'record', 'tuple', 'union'],
+        structural: ['array', 'discriminatedUnion', 'intersection', 'lazy', 'object', 'record', 'tuple', 'union'],
       },
     ],
-    messages: { inline: 'z.{{method}}() elements must use named schemas.' },
+    messages: { inline: '{{namespace}}.{{method}}() elements must use named schemas.' },
   },
   createOnce(context) {
+    let methods: string[] = []
+    let scalars = true
+    let namespaces = new Set<string>()
+    let structuralMethods = new Set<string>()
+
     return {
+      before() {
+        const options = optionsFirst<SchemasElementOptions>(context)
+        methods = options.methods
+        scalars = options.scalars
+        namespaces = new Set(options.namespaces)
+        structuralMethods = new Set(options.structural)
+      },
       CallExpression(node) {
-        if (node.callee.type !== 'MemberExpression') {
+        const callee = node.callee
+
+        if (callee.type !== 'MemberExpression' || callee.object.type !== 'Identifier' || !namespaces.has(callee.object.name)) {
           return
         }
 
-        const options = optionsFirst<SchemasInlineOptions>(context)
-        const namespaces = new Set(options.namespaces)
-        const method = astMemberName(node.callee)
+        const method = astMemberName(callee)
 
-        if (!schemasIsCall(node, namespaces) || !method || !options.methods.includes(method)) {
+        if (!method || !methods.includes(method)) {
           return
         }
-
-        const structuralMethods = new Set(options.structuralMethods)
 
         for (const element of schemasElements(node)) {
-          if (!schemasIsAllowedElement(element, options.allowZodScalars, namespaces, structuralMethods)) {
+          if (!schemasIsAllowedElement(element, scalars, namespaces, structuralMethods)) {
             context.report({
               node: element,
               messageId: 'inline',
-              data: { method },
+              data: { namespace: callee.object.name, method },
             })
           }
         }

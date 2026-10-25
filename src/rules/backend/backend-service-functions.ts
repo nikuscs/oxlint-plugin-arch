@@ -27,9 +27,9 @@ export const backendServiceFunctions = defineRule({
         additionalProperties: false,
         properties: {
           frontend: { type: 'boolean' },
-          allowLocalHelpers: { type: 'boolean' },
-          allowReturnedMethods: { type: 'boolean' },
-          singleExport: { type: 'boolean' },
+          helpers: { type: 'boolean' },
+          methods: { type: 'boolean' },
+          single: { type: 'boolean' },
           message: { type: 'string' },
         },
       },
@@ -92,7 +92,7 @@ export const backendServiceFunctions = defineRule({
     return {
       Program(program) {
         const options = optionsFirst<BackendServiceFunctionsOptions>(context, {})
-        const multiple = Boolean(options.frontend && !options.singleExport)
+        const multiple = Boolean(options.frontend && !options.single)
         const candidates = declarationsTopLevelCandidates(program)
         const exported = exportsFunctions(program)
         operation = exported.length === 1 ? exported[0].node : undefined
@@ -102,8 +102,8 @@ export const backendServiceFunctions = defineRule({
             ? [...exported.map((entry) => entry.node), ...declarationsPublicServiceMethods(program).map((method) => method.node)]
             : single,
         )
-        allowLocalHelpers = options.frontend === true || options.allowLocalHelpers === true
-        allowReturnedMethods = options.allowReturnedMethods ?? false
+        allowLocalHelpers = options.frontend === true || options.helpers === true
+        allowReturnedMethods = options.methods ?? false
         message = allowLocalHelpers
           ? 'Keep this helper inside the one exported operation; domain .utils.ts is only for genuinely shared logic.'
           : 'This service contract does not allow private helpers. Keep its existing factory/operation contract; domain .utils.ts is only for genuinely shared logic. Do not add a fake factory or public helper export.'
@@ -117,7 +117,7 @@ export const backendServiceFunctions = defineRule({
           message = options.message
         }
 
-        if (options.singleExport) {
+        if (options.single) {
           const bindings = exportsCollect(program)
           const [only] = bindings
 

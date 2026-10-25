@@ -7,7 +7,7 @@ export const reactGroup: PresetBuilder<'react'> = (project, settings) => {
   const { reactFiles, web, ui, testFiles, components } = project
   const memo = settings.memo ?? settings.compiler
   const perf = settings.perf ?? !settings.compiler
-  const rules: PresetRules = { ...presetReactRules, 'arch/layout-jsx-attributes': ['error', { minAttributes: 3 }] }
+  const rules: PresetRules = { ...presetReactRules, 'arch/layout-jsx-attributes': ['error', { min: 3 }] }
 
   if (perf) {
     for (const rule of ['new-object', 'new-array', 'new-function', 'jsx']) {
@@ -17,7 +17,7 @@ export const reactGroup: PresetBuilder<'react'> = (project, settings) => {
 
   const overrides: OxlintOverride[] = [
     presetOverride(reactFiles, rules, ui),
-    presetOverride(components, { 'arch/files-helpers': ['error', { detectComponents: true, hookPattern: '^use[A-Z]' }] }, [...ui, ...testFiles]),
+    presetOverride(components, { 'arch/files-helpers': ['error', { components: true, hooks: '^use[A-Z]' }] }, [...ui, ...testFiles]),
   ]
 
   if (settings.effects) {
@@ -35,8 +35,8 @@ export const reactGroup: PresetBuilder<'react'> = (project, settings) => {
           'error',
           {
             restrictions: [
-              { token: 'RouterClient', allowIn: [...project.rpcClients] },
-              { token: 'createContext', allowPathPatterns: [...presetScopes(web, 'context/'), ...project.webUiRoots.map((path) => `${path}/`)] },
+              { token: 'RouterClient', allow: [...project.rpcClients] },
+              { token: 'createContext', patterns: [...presetScopes(web, 'context/'), ...project.webUiRoots.map((path) => `${path}/`)] },
             ],
           },
         ],
@@ -45,7 +45,7 @@ export const reactGroup: PresetBuilder<'react'> = (project, settings) => {
   }
 
   if (settings.props) {
-    overrides.push(presetOverride(components, { 'arch/react-props': ['error', { filePrefix: true }] }, [...ui, ...testFiles]))
+    overrides.push(presetOverride(components, { 'arch/react-props': ['error', { prefix: true }] }, [...ui, ...testFiles]))
   }
 
   if (!settings.a11y) {

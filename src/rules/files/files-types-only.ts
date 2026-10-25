@@ -1,8 +1,9 @@
 import { defineRule } from '@oxlint/plugins'
 import { astDeclaration, astIsTypeOnlyImport, astModuleName } from '../../utils/ast.utils.ts'
-import { declarationsIsRuntime, declarationsRuntimeKind, declarationsRuntimeName } from '../../utils/declarations.utils.ts'
+import { declarationsIsRuntime } from '../../utils/declarations.utils.ts'
 import { optionsFirst, optionsPatternsTest } from '../../utils/options.utils.ts'
-import type { FilesTypesOnlyImport, FilesTypesOnlyOptions } from '../../types/files.types.ts'
+import type { DeclarationsRuntime } from '../../types/declarations.types.ts'
+import type { FilesTypesOnlyAllow, FilesTypesOnlyImport, FilesTypesOnlyOptions } from '../../types/files.types.ts'
 import type { ESTree } from '@oxlint/plugins'
 
 function runtimeImportLocalNames(statement: ESTree.ImportDeclaration): string[] {
@@ -37,18 +38,6 @@ function entityRootName(node: ESTree.Node): string | undefined {
 
 function moduleBindingName(node: ESTree.Node): string | undefined {
   return node.type === 'TSModuleDeclaration' ? entityRootName(node.id) : undefined
-}
-
-function moduleName(node: ESTree.Node): string {
-  if (node.type !== 'TSModuleDeclaration') {
-    return 'namespace'
-  }
-
-  if (node.id.type === 'Identifier') {
-    return node.id.name
-  }
-
-  return node.id.type === 'Literal' ? String(node.id.value) : 'namespace'
 }
 
 function isInternalValueAlias(declaration: ESTree.TSImportEqualsDeclaration, valueNames: ReadonlySet<string>): boolean {
@@ -240,17 +229,23 @@ function isRuntimeReExport(
   return statement.specifiers.some((specifier) => specifier.exportKind !== 'type' && runtimeImportLocals.has(astModuleName(specifier.local)))
 }
 
-function runtimeImports(statements: readonly ESTree.Statement[]): FilesTypesOnlyImport[] {
-  return statements.flatMap((statement): FilesTypesOnlyImport[] => {
-    if (statement.type === 'ImportDeclaration') {
-      return astIsTypeOnlyImport(statement) ? [] : [{ node: statement, source: statement.source.value, locals: runtimeImportLocalNames(statement) }]
-    }
+function runtimeName(node: DeclarationsRuntime): string {
+  if (node.type === 'VariableDeclaration') {
+    return node.declarations.map((item) => (item.id.type === 'Identifier' ? item.id.name : '<anonymous>')).join(', ')
+  }
+  return node.id?.name ?? '<anonymous>'
+}
 
-    const declaration = importEqualsOf(statement)
-    const source = declaration && declaration.importKind !== 'type' ? importEqualsSource(declaration) : undefined
+function runtimeKind(node: DeclarationsRuntime): FilesTypesOnlyAllow {
+  if (node.type === 'ClassDeclaration') {
+    return 'class'
+  }
 
-    return declaration && source !== undefined ? [{ node: declaration, source, locals: [declaration.id.name] }] : []
-  })
+  if (node.type === 'TSEnumDeclaration') {
+    return 'enum'
+  }
+
+  return node.type === 'FunctionDeclaration' ? 'function' : 'variable'
 }
 
 export const filesTypesOnly = defineRule({
@@ -265,9 +260,9 @@ export const filesTypesOnly = defineRule({
             type: 'array',
             items: { type: 'string', enum: ['class', 'default', 'enum', 'function', 'variable'] },
           },
-          runtimeImports: { type: 'string', enum: ['allow', 'ban'] },
-          allowImportSources: { type: 'array', items: { type: 'string' } },
-          banReExports: { type: 'boolean' },
+          imports: { type: 'string', enum: ['allow', 'ban'] },
+          sources: { type: 'array', items: { type: 'string' } },
+          reexports: { type: 'boolean' },
         },
       },
     ],
@@ -282,8 +277,8 @@ export const filesTypesOnly = defineRule({
       Program(program) {
         const options = optionsFirst<FilesTypesOnlyOptions>(context, {})
         const allow = options.allow ?? []
-        const banImports = options.runtimeImports === 'ban'
-        const allowedSources = (options.allowImportSources ?? []).map((pattern) => new RegExp(pattern))
+        const banImports = options.imports === 'ban'
+        const allowedSources = (options.sources ?? []).map((pattern) => new RegExp(pattern))
         const ambient = /\.d\.[cm]?ts$/.test(context.filename)
         const runtimeImportLocals = new Set<string>()
         const valueNames = collectValueNames(program.body)
@@ -296,7 +291,18 @@ export const filesTypesOnly = defineRule({
           })
         }
 
-        for (const { node, source, locals } of runtimeImports(program.body)) {
+        const imports = program.body.flatMap((statement): FilesTypesOnlyImport[] => {
+          if (statement.type === 'ImportDeclaration') {
+            return astIsTypeOnlyImport(statement) ? [] : [{ node: statement, source: statement.source.value, locals: runtimeImportLocalNames(statement) }]
+          }
+
+          const declaration = importEqualsOf(statement)
+          const source = declaration && declaration.importKind !== 'type' ? importEqualsSource(declaration) : undefined
+
+          return declaration && source !== undefined ? [{ node: declaration, source, locals: [declaration.id.name] }] : []
+        })
+
+        for (const { node, source, locals } of imports) {
           for (const name of locals) {
             runtimeImportLocals.add(name)
           }
@@ -312,7 +318,7 @@ export const filesTypesOnly = defineRule({
 
         for (const statement of program.body) {
           if (
-            options.banReExports === true &&
+            options.reexports === true &&
             (statement.type === 'ExportNamedDeclaration' || statement.type === 'ExportAllDeclaration') &&
             isRuntimeReExport(statement, runtimeImportLocals, valueNames, ambient)
           ) {
@@ -326,8 +332,8 @@ export const filesTypesOnly = defineRule({
           }
 
           if (declarationsIsRuntime(declaration)) {
-            if (!declaration.declare && !allow.includes(declarationsRuntimeKind(declaration))) {
-              reportValue(declaration, declarationsRuntimeName(declaration))
+            if (!declaration.declare && !allow.includes(runtimeKind(declaration))) {
+              reportValue(declaration, runtimeName(declaration))
             }
 
             continue
@@ -335,7 +341,7 @@ export const filesTypesOnly = defineRule({
 
           if (declaration.type === 'TSModuleDeclaration') {
             if (!ambient && namespaceIsRuntime(declaration, valueNames)) {
-              reportValue(declaration, moduleName(declaration))
+              reportValue(declaration, declaration.id.type === 'Identifier' ? declaration.id.name : 'namespace')
             }
 
             continue

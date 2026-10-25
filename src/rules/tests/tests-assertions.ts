@@ -5,9 +5,9 @@ import type { AstFunction } from '../../types/ast.types.ts'
 import type * as TestsTypes from '../../types/tests.types.ts'
 import type { ESTree, SourceCode, Variable } from '@oxlint/plugins'
 
-const registrationModifiers = new Set(['for', 'each', 'concurrent', 'sequential', 'only', 'skip'])
+const testsAssertionsModifiers = new Set(['for', 'each', 'concurrent', 'sequential', 'only', 'skip'])
 
-const assertionFunctions = [
+const testsAssertionsFunctions = [
   'expect',
   'expect.poll',
   'expect.soft',
@@ -19,9 +19,9 @@ const assertionFunctions = [
   'assertType',
 ]
 
-const nativePackages = ['vitest', '@jest/globals', '@playwright/test']
+const testsAssertionsPackages = ['vitest', '@jest/globals', '@playwright/test']
 
-const declarationTypes = new Set([
+const testsAssertionsDeclarations = new Set([
   'VariableDeclarator',
   'FunctionDeclaration',
   'FunctionExpression',
@@ -101,13 +101,15 @@ function hasAssertion(
   seen.add(fn)
   let found = false
   astVisit(fn.body, [], (node, ancestors) => {
-    const detached = ancestors.some(
-      (ancestor) =>
-        ancestor.type === 'FunctionDeclaration' ||
-        ((ancestor.type === 'FunctionExpression' || ancestor.type === 'ArrowFunctionExpression') && ancestor.parent.type !== 'CallExpression'),
-    )
-
-    if (found || node.type !== 'CallExpression' || detached) {
+    if (
+      found ||
+      node.type !== 'CallExpression' ||
+      ancestors.some(
+        (ancestor) =>
+          ancestor.type === 'FunctionDeclaration' ||
+          ((ancestor.type === 'FunctionExpression' || ancestor.type === 'ArrowFunctionExpression') && ancestor.parent.type !== 'CallExpression'),
+      )
+    ) {
       return
     }
 
@@ -158,7 +160,7 @@ function testRegistration(
 
   const name = astDottedName(callee)
 
-  if (!astMatchesCallee(name, state.tests, registrationModifiers)) {
+  if (!astMatchesCallee(name, state.tests, testsAssertionsModifiers)) {
     return undefined
   }
 
@@ -284,8 +286,8 @@ export const testsAssertions = defineRule({
         type: 'object',
         additionalProperties: false,
         properties: {
-          additionalTestFunctions: { type: 'array', items: { type: 'string' } },
-          additionalAssertionFunctions: { type: 'array', items: { type: 'string' } },
+          functions: { type: 'array', items: { type: 'string' } },
+          assertions: { type: 'array', items: { type: 'string' } },
         },
       },
     ],
@@ -300,11 +302,11 @@ export const testsAssertions = defineRule({
         const { sourceCode } = context
 
         const options = optionsFirst<TestsTypes.TestsAssertionsOptions>(context, {})
-        const additional = options.additionalAssertionFunctions ?? []
+        const additional = options.assertions ?? []
 
         const state: TestsTypes.TestsAssertionsState = {
-          tests: ['test', 'it', ...(options.additionalTestFunctions ?? [])],
-          patterns: [...assertionFunctions, 'assert.*', ...additional].map((name) => {
+          tests: ['test', 'it', ...(options.functions ?? [])],
+          patterns: [...testsAssertionsFunctions, 'assert.*', ...additional].map((name) => {
             const pattern = name
               .split('.')
               .map((part, index) => {
@@ -317,7 +319,7 @@ export const testsAssertions = defineRule({
 
             return new RegExp(`^${pattern}$`)
           }),
-          assertionRoots: new Set([...assertionFunctions, ...additional].map((name) => name.split('.')[0])),
+          assertionRoots: new Set([...testsAssertionsFunctions, ...additional].map((name) => name.split('.')[0])),
           functions: new Map(),
           values: new Map(),
           aliases: new Map(),
@@ -331,7 +333,7 @@ export const testsAssertions = defineRule({
             state.calls.push(node)
           }
 
-          if (!declarationTypes.has(node.type)) {
+          if (!testsAssertionsDeclarations.has(node.type)) {
             return
           }
 
@@ -339,7 +341,7 @@ export const testsAssertions = defineRule({
             if (node.type === 'ImportDeclaration') {
               const specifier = node.specifiers.find((entry) => entry.local.name === variable.name)
 
-              if (!nativePackages.includes(node.source.value) || specifier?.type !== 'ImportSpecifier') {
+              if (!testsAssertionsPackages.includes(node.source.value) || specifier?.type !== 'ImportSpecifier') {
                 continue
               }
 
@@ -414,7 +416,7 @@ export const testsAssertions = defineRule({
         for (const call of state.calls) {
           const name = assertionName(call, state)
 
-          if (!name || !assertionFunctions.includes(name) || !name.startsWith('expect')) {
+          if (!name || !testsAssertionsFunctions.includes(name) || !name.startsWith('expect')) {
             continue
           }
 

@@ -14,9 +14,9 @@ function save(user: User): SaveResult {}
 | --- | --- | --- | --- |
 | `parameters` | `boolean` | `true` | Check parameter annotations |
 | `returns` | `boolean` | `true` | Check return annotations |
-| `functionTypes` | `boolean` | `true` | Also report inline function types |
-| `minMembers` | `number` | `1` | Smallest object literal type to report |
+| `functions` | `boolean` | `true` | Also report inline function types |
+| `min` | `number` | `1` | Smallest object literal type to report |
 
 ```ts
-'arch/types-inline': ['error', { minMembers: 2, functionTypes: false }]
+'arch/types-inline': ['error', { min: 2, functions: false }]
 ```

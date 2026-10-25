@@ -14,4 +14,4 @@ Takes `true`, `false`, `'warn'` or an object:
 | --- | --- | --- | --- |
 | `directives` | `boolean` | `true` | Disable directives need a reason |
 
-Rules: [`arch/comments`](../rules/comments.md), [`arch/comments-directives`](../rules/comments-directives.md).
+Rules: [`arch/comments-code`](../rules/comments-code.md), [`arch/comments-directives`](../rules/comments-directives.md).

@@ -5,8 +5,8 @@ export type NamingStemMode = 'before-first-dot' | 'full-basename'
 
 export interface NamingExportsStem {
   stem?: NamingStemMode
-  trailingRoles?: string[]
-  roleSeparators?: string[]
+  roles?: string[]
+  separators?: string[]
   normalize?: 'remove-separators' | 'none'
   singularize?: 'none' | 'trailing-s'
 }
@@ -15,14 +15,14 @@ export interface NamingDeclarationsOptions extends NamingExportsStem {
   kinds?: DeclarationsKind[]
   pattern?: OptionsPattern
   flags?: string
-  allowPattern?: OptionsPattern
+  allow?: OptionsPattern
 }
 
 interface NamingExportsBase {
   scope?: 'exports' | 'functions' | 'declarations'
-  ignoreTypeExports?: boolean
-  serviceMethods?: boolean
-  allowPattern?: OptionsPattern
+  types?: boolean
+  services?: boolean
+  allow?: OptionsPattern
 }
 
 export interface NamingExportsPrefixOptions extends NamingExportsBase, NamingExportsStem {
@@ -40,7 +40,7 @@ export interface NamingExportsTemplateOptions extends NamingExportsBase {
   file: string
   export: string
   match?: 'all' | 'some'
-  placeholderPattern?: string
+  placeholder?: string
   camelCase?: boolean
 }
 
@@ -50,11 +50,12 @@ export interface NamingFileOptions {
   pattern: OptionsPattern
   message: string
   flags?: string
+  unique?: string
 }
 
 export interface NamingFolderOptions {
   singularize?: 'none' | 'trailing-s'
   separators?: string[]
-  stripPrefixes?: string[]
+  prefixes?: string[]
   after?: string
 }

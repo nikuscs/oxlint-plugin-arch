@@ -241,38 +241,6 @@ export function astCallName(node: ESTree.CallExpression): string | undefined {
   return node.callee.type === 'MemberExpression' ? astMemberName(node.callee) : undefined
 }
 
-export function astImportAliases(program: ESTree.Program): Map<string, string> {
-  const aliases = new Map<string, string>()
-
-  for (const statement of program.body) {
-    if (statement.type !== 'ImportDeclaration') {
-      continue
-    }
-
-    for (const specifier of statement.specifiers) {
-      if (specifier.type !== 'ImportSpecifier') {
-        continue
-      }
-
-      const imported = astModuleName(specifier.imported)
-
-      if (imported !== specifier.local.name) {
-        aliases.set(specifier.local.name, imported)
-      }
-    }
-  }
-
-  return aliases
-}
-
-export function astResolvedCallName(
-  node: ESTree.CallExpression,
-  aliases: ReadonlyMap<string, string>,
-): string | undefined {
-  const name = astCallName(node)
-  return name ? (aliases.get(name) ?? name) : undefined
-}
-
 export function astSelectorRule(selector: string, message: string) {
   return defineRule({
     meta: {

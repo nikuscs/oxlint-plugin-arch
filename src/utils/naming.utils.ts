@@ -6,57 +6,14 @@ export const namingStemModes: readonly NamingStemMode[] = ['before-first-dot', '
 
 export const namingStemSchemaProperties: OptionsSchemaProperties = {
   stem: { type: 'string', enum: [...namingStemModes] },
-  trailingRoles: { type: 'array', items: { type: 'string' } },
-  roleSeparators: { type: 'array', items: { type: 'string' } },
+  roles: { type: 'array', items: { type: 'string' } },
+  separators: { type: 'array', items: { type: 'string' } },
   normalize: { type: 'string', enum: ['remove-separators', 'none'] },
   singularize: { type: 'string', enum: ['none', 'trailing-s'] },
 }
 
-function namingPosix(filePath: string): string {
-  return filePath.replaceAll('\\', '/')
-}
-
 export function namingBasename(filePath: string): string {
-  return posix.basename(namingPosix(filePath))
-}
-
-export function namingFolders(filePath: string): string[] {
-  return posix
-    .dirname(namingPosix(filePath))
-    .split('/')
-    .filter((part) => part && part !== '.')
-}
-
-export function namingFoldersAfter(filePath: string, after: string): string[] | undefined {
-  const folders = namingFolders(filePath)
-  const marker = after.split('/').filter(Boolean)
-
-  if (marker.length === 0) {
-    return undefined
-  }
-
-  for (let index = folders.length - marker.length; index >= 0; index -= 1) {
-    if (marker.every((part, offset) => folders[index + offset] === part)) {
-      return folders.slice(index + marker.length)
-    }
-  }
-
-  return undefined
-}
-
-export function namingFolderPrefixes(
-  folders: string[],
-  separator: string,
-  singularize: 'none' | 'trailing-s',
-): string[] {
-  const last = folders.at(-1) ?? ''
-  const prefixes = [folders.join(separator)]
-
-  if (singularize === 'trailing-s' && last.endsWith('s') && last.length > 1) {
-    prefixes.push([...folders.slice(0, -1), last.slice(0, -1)].join(separator))
-  }
-
-  return prefixes.filter(Boolean)
+  return posix.basename(filePath.replaceAll('\\', '/'))
 }
 
 export function namingPascalCase(value: string): string {
@@ -70,54 +27,6 @@ export function namingPascalCase(value: string): string {
 export function namingCamelCase(value: string): string {
   const pascal = namingPascalCase(value)
   return `${pascal.charAt(0).toLowerCase()}${pascal.slice(1)}`
-}
-
-export function namingComponentName(basename: string): string {
-  return namingPascalCase(basename.replace(/\.(tsx?|jsx?)$/, ''))
-}
-
-export function namingMatchTemplate(
-  basename: string,
-  template: string,
-  placeholder = '[a-z0-9-]+',
-): Record<string, string> | null {
-  let pattern = ''
-  let index = 0
-
-  while (index < template.length) {
-    const char = template[index]
-
-    if (char === '{') {
-      const end = template.indexOf('}', index)
-
-      if (end === -1) {
-        return null
-      }
-      pattern += `(?<${template.slice(index + 1, end)}>${placeholder})`
-      index = end + 1
-      continue
-    }
-    pattern += /[.+^${}()|[\]\\]/.test(char) ? `\\${char}` : char
-    index += 1
-  }
-
-  return new RegExp(`^${pattern}$`).exec(basename)?.groups ?? null
-}
-
-export function namingExpandTemplate(template: string, groups: Record<string, string>, camelCase = false): string {
-  return template.replaceAll(/\{([^}]+)\}/g, (placeholder, key: string) => {
-    const group = groups[key.toLowerCase()]
-
-    if (!group) {
-      return placeholder
-    }
-
-    if (/^[A-Z]/.test(key)) {
-      return namingPascalCase(group)
-    }
-
-    return camelCase ? namingCamelCase(group) : group
-  })
 }
 
 export function namingNormalized(value: string, normalize: 'remove-separators' | 'none'): string {
@@ -150,7 +59,7 @@ export function namingFileStem(
 
 export function namingFilePrefixesFor(filename: string, options: NamingExportsStem): string[] {
   const basename = namingBasename(filename).replace(/\.(tsx?|jsx?)$/, '')
-  const stem = namingFileStem(basename, options.stem, options.trailingRoles, options.roleSeparators)
+  const stem = namingFileStem(basename, options.stem, options.roles, options.separators)
   const normalize = options.normalize ?? 'remove-separators'
   const prefixes = [namingNormalized(stem, normalize)]
   const parts = stem.split(/[-_]+/).filter(Boolean)

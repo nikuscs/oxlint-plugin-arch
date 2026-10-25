@@ -1,16 +1,15 @@
 import { defineRule } from '@oxlint/plugins'
 import { astDottedName, astMatchesCallee, astStaticString } from '../../utils/ast.utils.ts'
-import { optionsFirst, optionsPatternLabel, optionsPatternSchema, optionsPatternsTest } from '../../utils/options.utils.ts'
-import type { OptionsPattern } from '../../types/options.types.ts'
+import {
+  optionsFirst,
+  optionsPatternLabel,
+  optionsPatternSchema,
+  optionsPatternsTest,
+  optionsPatternsWithEmpty,
+} from '../../utils/options.utils.ts'
 import type { TestsTitlesOptions, TestsTitlesPattern } from '../../types/tests.types.ts'
 
-const testModifiers = new Set(['only', 'skip', 'concurrent', 'sequential', 'todo', 'each', 'for'])
-
-function titlePatterns(pattern: OptionsPattern | undefined, flags: string): TestsTitlesPattern[] {
-  return pattern === undefined
-    ? []
-    : [pattern].flat().map((source) => ({ regex: new RegExp(source, flags), pattern: source }))
-}
+const testsTitlesModifiers = new Set(['only', 'skip', 'concurrent', 'sequential', 'todo', 'each', 'for'])
 
 export const testsTitles = defineRule({
   meta: {
@@ -21,7 +20,7 @@ export const testsTitles = defineRule({
         additionalProperties: false,
         properties: {
           callees: { type: 'array', items: { type: 'string' } },
-          forbid: optionsPatternSchema,
+          deny: optionsPatternSchema,
           require: optionsPatternSchema,
           flags: { type: 'string', pattern: '^[dgimsuvy]*$' },
         },
@@ -41,7 +40,7 @@ export const testsTitles = defineRule({
   createOnce(context) {
     let callees: string[] = []
     let forbid: TestsTitlesPattern[] = []
-    let required: TestsTitlesPattern[] = []
+    let required: RegExp[] = []
     let requiredLabel = ''
 
     return {
@@ -49,8 +48,8 @@ export const testsTitles = defineRule({
         const options = optionsFirst<TestsTitlesOptions>(context)
         const flags = options.flags ?? ''
         callees = options.callees
-        forbid = titlePatterns(options.forbid, flags)
-        required = titlePatterns(options.require, flags)
+        forbid = options.deny === undefined ? [] : [options.deny].flat().map((source) => ({ regex: new RegExp(source, flags), pattern: source }))
+        required = optionsPatternsWithEmpty(options.require, flags)
         requiredLabel = optionsPatternLabel(options.require)
         if (forbid.length === 0 && required.length === 0) {
           return false
@@ -62,9 +61,9 @@ export const testsTitles = defineRule({
         const callee = node.callee
 
         const configured =
-          astMatchesCallee(astDottedName(callee), callees, testModifiers) ||
-          (callee.type === 'CallExpression' && astMatchesCallee(astDottedName(callee.callee), callees, testModifiers)) ||
-          (callee.type === 'TaggedTemplateExpression' && astMatchesCallee(astDottedName(callee.tag), callees, testModifiers))
+          astMatchesCallee(astDottedName(callee), callees, testsTitlesModifiers) ||
+          (callee.type === 'CallExpression' && astMatchesCallee(astDottedName(callee.callee), callees, testsTitlesModifiers)) ||
+          (callee.type === 'TaggedTemplateExpression' && astMatchesCallee(astDottedName(callee.tag), callees, testsTitlesModifiers))
 
         if (!title || !configured) {
           return
@@ -86,7 +85,7 @@ export const testsTitles = defineRule({
           })
         }
 
-        if (required.length > 0 && !optionsPatternsTest(required.map(({ regex }) => regex), text)) {
+        if (required.length > 0 && !optionsPatternsTest(required, text)) {
           context.report({
             node: title,
             messageId: 'required',

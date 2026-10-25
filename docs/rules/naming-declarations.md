@@ -16,11 +16,11 @@ export function invoiceFormatTotal() {}
 | `pattern` | `string \| string[]` | none | Regex to match instead of the file prefix |
 | `flags` | `string` | none | Flags for `pattern` |
 | `stem` | `'before-first-dot' \| 'full-basename'` | `'before-first-dot'` | How the prefix is read from the file name |
-| `trailingRoles` | `string[]` | `[]` | Role suffixes stripped from the prefix |
-| `roleSeparators` | `string[]` | `['.', '-']` | Separators before a trailing role |
+| `roles` | `string[]` | `[]` | Role suffixes stripped from the prefix |
+| `separators` | `string[]` | `['.', '-']` | Separators before a trailing role |
 | `normalize` | `'remove-separators' \| 'none'` | `'remove-separators'` | Compare case-insensitively without `-`, `_`, `.` |
 | `singularize` | `'none' \| 'trailing-s'` | `'none'` | Also accept the prefix without a trailing `s` |
-| `allowPattern` | `string \| string[]` | none | Names to skip |
+| `allow` | `string \| string[]` | none | Names to skip |
 
 ```ts
 'arch/naming-declarations': ['error', { kinds: ['function', 'class'], singularize: 'trailing-s' }]

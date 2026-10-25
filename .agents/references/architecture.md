@@ -30,7 +30,7 @@ scripts/docs.ts                      generates the README group and rule tables
 oxlint.config.ts                     self-lint with the repo's own preset (imports dist)
 ```
 
-Families: `backend`, `boundaries`, `code`, `comments`, `files`, `layout`, `naming`, `react`, `schemas`, `tests`, `types`.
+Families: `backend`, `boundaries`, `code`, `comments`, `copy`, `files`, `layout`, `naming`, `react`, `schemas`, `tests`, `types`.
 
 ## Naming
 

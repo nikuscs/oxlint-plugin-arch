@@ -1,10 +1,12 @@
 import { defineRule } from '@oxlint/plugins'
-import { declarationsKinds, declarationsNamedFromNode } from '../../utils/declarations.utils.ts'
+import { declarationsIdName, declarationsKindOf } from '../../utils/declarations.utils.ts'
 import { namingFilePrefixesFor, namingHasFilePrefix, namingStemSchemaProperties } from '../../utils/naming.utils.ts'
 import { optionsFirst, optionsPatternLabel, optionsPatterns, optionsPatternSchema, optionsPatternsTest } from '../../utils/options.utils.ts'
 import type { DeclarationsKind } from '../../types/declarations.types.ts'
 import type { NamingDeclarationsOptions } from '../../types/naming.types.ts'
 import type { ESTree } from '@oxlint/plugins'
+
+const namingDeclarationsKinds: readonly DeclarationsKind[] = ['function', 'const', 'let', 'var', 'class', 'type', 'interface', 'enum']
 
 export const namingDeclarations = defineRule({
   meta: {
@@ -14,11 +16,11 @@ export const namingDeclarations = defineRule({
         type: 'object',
         additionalProperties: false,
         properties: {
-          kinds: { type: 'array', items: { type: 'string', enum: [...declarationsKinds] } },
+          kinds: { type: 'array', items: { type: 'string', enum: [...namingDeclarationsKinds] } },
           pattern: optionsPatternSchema,
           flags: { type: 'string' },
           ...namingStemSchemaProperties,
-          allowPattern: optionsPatternSchema,
+          allow: optionsPatternSchema,
         },
       },
     ],
@@ -33,36 +35,42 @@ export const namingDeclarations = defineRule({
     let allowed: RegExp[] = []
     let expected: RegExp[] = []
     let prefixes: string[] = []
+    let label = ''
 
     function check(node: ESTree.Node) {
-      const item = declarationsNamedFromNode(node)
+      const declarator = node.type === 'VariableDeclarator'
+      const kind = declarationsKindOf(node, declarator ? [node.parent] : [])
+      const name = declarationsIdName(node)
+      let insideLoop = false
 
-      if (!item || (kinds && !kinds.has(item.kind)) || optionsPatternsTest(allowed, item.name)) {
+      for (let current: ESTree.Node | null = declarator ? node.parent : null; current && !insideLoop; current = current.parent) {
+        insideLoop = current.type === 'ForStatement' || current.type === 'ForInStatement' || current.type === 'ForOfStatement'
+      }
+
+      if (!kind || !name || insideLoop || (kinds && !kinds.has(kind)) || optionsPatternsTest(allowed, name)) {
         return
       }
 
       if (expected.length > 0) {
-        if (optionsPatternsTest(expected, item.name)) {
+        if (optionsPatternsTest(expected, name)) {
           return
         }
-
-        const label = optionsPatternLabel([options.pattern ?? []].flat().filter((source) => source !== ''))
         context.report({
-          node: item.node,
+          node,
           messageId: 'pattern',
-          data: { name: item.name, pattern: label },
+          data: { name, pattern: label },
         })
 
         return
       }
 
-      if (namingHasFilePrefix(item.name, prefixes, options.normalize)) {
+      if (namingHasFilePrefix(name, prefixes, options.normalize)) {
         return
       }
       context.report({
-        node: item.node,
+        node,
         messageId: 'prefix',
-        data: { name: item.name, prefix: prefixes.join(' or ') },
+        data: { name, prefix: prefixes.join(' or ') },
       })
     }
 
@@ -70,8 +78,9 @@ export const namingDeclarations = defineRule({
       before() {
         options = optionsFirst<NamingDeclarationsOptions>(context, { stem: 'before-first-dot', normalize: 'remove-separators' })
         kinds = options.kinds?.length ? new Set(options.kinds) : null
-        allowed = optionsPatterns(options.allowPattern)
+        allowed = optionsPatterns(options.allow)
         expected = optionsPatterns(options.pattern, options.flags)
+        label = optionsPatternLabel(options.pattern)
         prefixes = namingFilePrefixesFor(context.filename, options)
       },
       FunctionDeclaration: check,

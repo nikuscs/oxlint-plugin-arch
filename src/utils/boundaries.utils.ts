@@ -35,18 +35,38 @@ export const boundariesRuntimeProperties = {
   backend: { type: 'array', items: { type: 'string' } },
   aliases: { type: 'object', additionalProperties: { type: 'string' } },
   backendPackages: { type: 'array', items: { type: 'string' } },
-  serverImports: { type: 'array', items: { type: 'string' } },
-  clientImports: { type: 'array', items: { type: 'string' } },
-  allowComputedImportsIn: { type: 'array', items: { type: 'string' } },
+  server: { type: 'array', items: { type: 'string' } },
+  client: { type: 'array', items: { type: 'string' } },
+  dynamic: { type: 'array', items: { type: 'string' } },
+  serverPackages: { type: 'array', items: { type: 'string' } },
+  clientPackages: { type: 'array', items: { type: 'string' } },
+  hookPackages: { type: 'array', items: { type: 'string' } },
 }
+
+export const boundariesServerPackages = ['@orpc/server', 'react-dom/server']
 
 export const boundariesRuntimeMessages = {
   runtime: '{{source}} is not valid here: {{reason}}.',
-  computed: 'Use a literal dynamic import so runtime ownership can be checked, or declare this exact file in allowComputedImportsIn after reviewing its targets.',
+  computed: 'Use a literal dynamic import so runtime ownership can be checked, or list this exact file in the dynamic option after reviewing its targets.',
 }
 
-export function boundariesIsTypeOnlyExport(node: PluginsTypes.ESTree.ExportNamedDeclaration): boolean {
-  return node.exportKind === 'type' || (node.specifiers.length > 0 && node.specifiers.every((specifier) => specifier.exportKind === 'type'))
+export function boundariesExportVisitors(
+  check: (node: PluginsTypes.ESTree.Node, source: string, typeOnly: boolean, reExport: boolean) => void,
+) {
+  return {
+    ExportNamedDeclaration(node: PluginsTypes.ESTree.ExportNamedDeclaration) {
+      if (!node.source) {
+        return
+      }
+
+      const typeOnly = node.exportKind === 'type' || (node.specifiers.length > 0 && node.specifiers.every((specifier) => specifier.exportKind === 'type'))
+
+      check(node, node.source.value, typeOnly, true)
+    },
+    ExportAllDeclaration(node: PluginsTypes.ESTree.ExportAllDeclaration) {
+      check(node, node.source.value, node.exportKind === 'type', true)
+    },
+  }
 }
 
 export function boundariesLiteralSource(node: PluginsTypes.ESTree.ImportExpression): string | undefined {
@@ -111,12 +131,11 @@ export function boundariesIsBackendImport(
   )
 }
 
-export function boundariesIsServerPlatformImport(source: string): boolean {
+export function boundariesIsServerPlatformImport(source: string, packages: readonly string[]): boolean {
   return (
     builtinModules.includes(source) ||
-    source === '@orpc/server' ||
     /^(?:node:|bun(?::|$)|cloudflare:)/.test(source) ||
-    /^react-dom\/server(?:\.|\/|$)/.test(source)
+    packages.some((name) => source === name || source.startsWith(`${name}/`) || source.startsWith(`${name}.`))
   )
 }
 

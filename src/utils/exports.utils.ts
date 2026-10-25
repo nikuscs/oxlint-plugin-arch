@@ -1,5 +1,6 @@
 import { astModuleName } from './ast.utils.ts'
 import {
+  declarationsIsFunctionValue,
   declarationsIsRuntime,
   declarationsPublicServiceMethods,
   declarationsTopLevelUnexportedFunctions,
@@ -148,8 +149,7 @@ export function exportsFunctions(program: ESTree.Program): DeclarationsTypes.Dec
       return [{ name, node: binding.declaration }]
     }
 
-    const initializer = binding.initializer
-    return initializer?.type === 'FunctionExpression' || initializer?.type === 'ArrowFunctionExpression' ? [{ name, node: initializer }] : []
+    return declarationsIsFunctionValue(binding.initializer) ? [{ name, node: binding.initializer }] : []
   })
 }
 
@@ -161,6 +161,11 @@ export function exportsCheckedFunctions(
 ): DeclarationsTypes.DeclarationsFunction[] {
   const functions = [
     ...exportsFunctions(program),
+    ...program.body.flatMap((statement) =>
+      statement.type === 'ExportDefaultDeclaration' && declarationsIsFunctionValue(statement.declaration)
+        ? [{ name: 'default', node: statement.declaration }]
+        : [],
+    ),
     ...(unexported ? declarationsTopLevelUnexportedFunctions(program) : []),
     ...(serviceMethods ? declarationsPublicServiceMethods(program) : []),
   ]

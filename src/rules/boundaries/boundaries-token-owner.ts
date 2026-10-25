@@ -17,8 +17,8 @@ export const boundariesTokenOwner = defineRule({
         additionalProperties: false,
         properties: {
           token: { type: 'string' },
-          allowIn: { type: 'array', items: { type: 'string' } },
-          allowPathPatterns: { type: 'array', items: { type: 'string' } },
+          allow: { type: 'array', items: { type: 'string' } },
+          patterns: { type: 'array', items: { type: 'string' } },
           restrictions: {
             type: 'array',
             items: {
@@ -27,8 +27,8 @@ export const boundariesTokenOwner = defineRule({
               properties: {
                 token: { type: 'string' },
                 member: { type: 'string' },
-                allowIn: { type: 'array', items: { type: 'string' } },
-                allowPathPatterns: { type: 'array', items: { type: 'string' } },
+                allow: { type: 'array', items: { type: 'string' } },
+                patterns: { type: 'array', items: { type: 'string' } },
                 message: { type: 'string' },
               },
               oneOf: [
@@ -63,13 +63,13 @@ export const boundariesTokenOwner = defineRule({
         const options = optionsFirst<BoundariesTokenOwnerOptions>(context)
 
         const single: BoundariesTokenOwnerRestriction[] = options.token
-          ? [{ token: options.token, allowIn: options.allowIn, allowPathPatterns: options.allowPathPatterns }]
+          ? [{ token: options.token, allow: options.allow, patterns: options.patterns }]
           : []
 
         targets = [...single, ...(options.restrictions ?? [])].flatMap((restriction): BoundariesTokenOwnerTarget[] => {
           const allowed =
-            (restriction.allowIn ?? []).some((suffix) => filename.endsWith(suffix)) ||
-            (restriction.allowPathPatterns ?? []).some((pattern) => new RegExp(pattern).test(filename))
+            (restriction.allow ?? []).some((suffix) => filename.endsWith(suffix)) ||
+            (restriction.patterns ?? []).some((pattern) => new RegExp(pattern).test(filename))
 
           if (allowed) {
             return []

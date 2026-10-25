@@ -12,7 +12,7 @@ export const layoutJsxAttributes = defineRule({
         type: 'object',
         additionalProperties: false,
         properties: {
-          minAttributes: { type: 'integer', minimum: 1 },
+          min: { type: 'integer', minimum: 1 },
           indent: sourceIndentSchema,
         },
       },
@@ -29,7 +29,7 @@ export const layoutJsxAttributes = defineRule({
     return {
       before() {
         const options = optionsFirst<LayoutJsxAttributesOptions>(context, {})
-        minAttributes = options.minAttributes ?? 3
+        minAttributes = options.min ?? 3
         indentUnit = sourceIndentUnit(options.indent)
         newline = sourceNewline(context.sourceCode.text)
       },

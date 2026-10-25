@@ -3,11 +3,11 @@ import type { OptionsPattern } from './options.types.ts'
 import type { ESTree } from '@oxlint/plugins'
 
 export interface TestsModifiersOptions {
-  additionalTestFunctions?: string[]
+  functions?: string[]
 }
 
 export interface TestsAssertionsOptions extends TestsModifiersOptions {
-  additionalAssertionFunctions?: string[]
+  assertions?: string[]
 }
 
 export interface TestsAssertionsRegistration {
@@ -35,7 +35,7 @@ export interface TestsAssertionsState {
 
 export interface TestsTitlesOptions {
   callees: string[]
-  forbid?: OptionsPattern
+  deny?: OptionsPattern
   require?: OptionsPattern
   flags?: string
 }

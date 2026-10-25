@@ -57,8 +57,7 @@ function collectBindings(program: ESTree.Program): Map<string, FilesConstantsOnl
       continue
     }
 
-    const declaration =
-      astDeclaration(statement)
+    const declaration = astDeclaration(statement)
 
     if (declaration?.type === 'TSImportEqualsDeclaration') {
       bindings.set(declaration.id.name, { kind: declaration.importKind === 'type' ? 'type' : 'import' })
@@ -106,9 +105,9 @@ export const filesConstantsOnly = defineRule({
         type: 'object',
         additionalProperties: false,
         properties: {
-          allowFunctionValues: { type: 'boolean' },
-          allowTypeExports: { type: 'boolean' },
-          allowReExports: { type: 'boolean' },
+          functions: { type: 'boolean' },
+          types: { type: 'boolean' },
+          reexports: { type: 'boolean' },
         },
       },
     ],
@@ -120,9 +119,9 @@ export const filesConstantsOnly = defineRule({
     return {
       Program(program) {
         const {
-          allowFunctionValues = false,
-          allowTypeExports = false,
-          allowReExports = false,
+          functions: allowFunctionValues = false,
+          types: allowTypeExports = false,
+          reexports: allowReExports = false,
         } = optionsFirst<FilesConstantsOnlyOptions>(context, {})
 
         const bindings = collectBindings(program)

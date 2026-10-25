@@ -61,7 +61,7 @@ export const codePromiseMutation = defineRule({
         properties: {
           combinators: { type: 'array', items: { type: 'string' } },
           methods: { type: 'array', items: { type: 'string' } },
-          checkAssignments: { type: 'boolean' },
+          assignments: { type: 'boolean' },
         },
       },
     ],
@@ -69,7 +69,7 @@ export const codePromiseMutation = defineRule({
       {
         combinators: ['Promise.all', 'Promise.allSettled', 'Promise.any', 'Promise.race'],
         methods: ['push', 'unshift', 'splice', 'set', 'add'],
-        checkAssignments: true,
+        assignments: true,
       },
     ],
     messages: {
@@ -113,7 +113,7 @@ export const codePromiseMutation = defineRule({
         const options = optionsFirst<CodePromiseMutationOptions>(context)
         combinators = new Set(options.combinators)
         methods = new Set(options.methods)
-        checkAssignments = options.checkAssignments
+        checkAssignments = options.assignments
         references.clear()
         reported.clear()
       },

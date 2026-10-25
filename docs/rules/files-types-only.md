@@ -15,10 +15,10 @@ export type Role = 'member' | 'admin'
 | Option | Type | Default | |
 | --- | --- | --- | --- |
 | `allow` | `('class' \| 'default' \| 'enum' \| 'function' \| 'variable')[]` | `[]` | Runtime kinds to allow |
-| `runtimeImports` | `'allow' \| 'ban'` | `'allow'` | Report value imports |
-| `allowImportSources` | `string[]` | `[]` | Import source regexes allowed when banning |
-| `banReExports` | `boolean` | `false` | Report value re-exports |
+| `imports` | `'allow' \| 'ban'` | `'allow'` | Report value imports |
+| `sources` | `string[]` | `[]` | Import source regexes allowed when banning |
+| `reexports` | `boolean` | `false` | Report value re-exports |
 
 ```ts
-'arch/files-types-only': ['error', { allow: ['enum'], runtimeImports: 'ban' }]
+'arch/files-types-only': ['error', { allow: ['enum'], imports: 'ban' }]
 ```

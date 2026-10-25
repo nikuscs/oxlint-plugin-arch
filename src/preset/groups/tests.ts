@@ -47,12 +47,12 @@ export const testsGroup: PresetBuilder<'tests'> = (project, settings) => {
   const rules: PresetRules = {
     ...presetTestRules,
     'dillon-anti-slop/no-module-mocking': customized ? mockingRule([]) : 'error',
-    'arch/tests-modifiers': ['error', { additionalTestFunctions: functions }],
-    'arch/tests-assertions': ['error', { additionalTestFunctions: functions, additionalAssertionFunctions: assertions }],
+    'arch/tests-modifiers': ['error', { functions }],
+    'arch/tests-assertions': ['error', { functions, assertions }],
   }
 
   if (settings.titles) {
-    rules['arch/tests-titles'] = ['error', { callees: ['describe', ...testFunctions], forbid: '^should\\b', flags: 'i' }]
+    rules['arch/tests-titles'] = ['error', { callees: ['describe', ...testFunctions], deny: '^should\\b', flags: 'i' }]
   }
 
   return [

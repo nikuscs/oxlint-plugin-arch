@@ -1,13 +1,12 @@
 import { defineRule } from '@oxlint/plugins'
 import { astDottedName, astIsForwarder, astSingleExpression, astUnwrap } from '../../utils/ast.utils.ts'
-import { declarationsIsTrivialFunction } from '../../utils/declarations.utils.ts'
 import { exportsCheckedFunctions } from '../../utils/exports.utils.ts'
 import { optionsFirst, optionsPatterns, optionsPatternSchema, optionsPatternsTest } from '../../utils/options.utils.ts'
 import type { AstFunction } from '../../types/ast.types.ts'
 import type { CodeTrivialFunctionsGuardState, CodeTrivialFunctionsOptions } from '../../types/code.types.ts'
 import type { ESTree, Scope } from '@oxlint/plugins'
 
-const bannedNamesDefault = [
+const codeTrivialFunctionsBanned = [
   'isRecord',
   'isPlainObject',
   'isObject',
@@ -19,7 +18,61 @@ const bannedNamesDefault = [
   'asArray',
 ]
 
-const primitiveNames = new Set(['string', 'number', 'boolean', 'object', 'undefined', 'bigint', 'symbol', 'function'])
+const codeTrivialFunctionsPrimitives = new Set(['string', 'number', 'boolean', 'object', 'undefined', 'bigint', 'symbol', 'function'])
+
+function isTrivialExpression(node: ESTree.Expression): boolean {
+  const value = astUnwrap(node)
+
+  if (
+    value.type === 'Identifier' ||
+    value.type === 'ThisExpression' ||
+    value.type === 'MetaProperty' ||
+    value.type.endsWith('Literal') ||
+    value.type === 'MemberExpression' ||
+    value.type === 'CallExpression' ||
+    value.type === 'NewExpression' ||
+    value.type === 'TaggedTemplateExpression'
+  ) {
+    return true
+  }
+
+  return (
+    value.type === 'LogicalExpression' &&
+    isTrivialExpression(value.left) &&
+    isTrivialExpression(value.right)
+  )
+}
+
+function isTrivialFunction(node: AstFunction): boolean {
+  if (node.type === 'ArrowFunctionExpression' && node.body.type !== 'BlockStatement') {
+    return isTrivialExpression(node.body)
+  }
+
+  if (node.body?.type !== 'BlockStatement') {
+    return false
+  }
+
+  const statements = node.body.body.filter(
+    (statement) =>
+      statement.type !== 'EmptyStatement' && !(statement.type === 'ExpressionStatement' && statement.directive),
+  )
+
+  if (statements.length === 0) {
+    return true
+  }
+
+  if (statements.length > 1) {
+    return false
+  }
+
+  const [statement] = statements
+
+  if (statement.type === 'ReturnStatement') {
+    return !statement.argument || isTrivialExpression(statement.argument)
+  }
+
+  return statement.type === 'ExpressionStatement' && isTrivialExpression(statement.expression)
+}
 
 function guardValue(node: ESTree.Expression, state: CodeTrivialFunctionsGuardState): boolean {
   const value = astUnwrap(node)
@@ -61,7 +114,7 @@ function guardComparison(node: ESTree.BinaryExpression, state: CodeTrivialFuncti
       left.operator === 'typeof' &&
       right.type === 'Literal' &&
       typeof right.value === 'string' &&
-      primitiveNames.has(right.value) &&
+      codeTrivialFunctionsPrimitives.has(right.value) &&
       guardValue(left.argument, state)
     ) {
       state.primitive = true
@@ -195,13 +248,13 @@ export const codeTrivialFunctions = defineRule({
         type: 'object',
         additionalProperties: false,
         properties: {
-          allowPattern: optionsPatternSchema,
-          allowCallees: { type: 'array', items: { type: 'string' } },
-          allowAsync: { type: 'boolean' },
-          checkServiceMethods: { type: 'boolean' },
+          allow: optionsPatternSchema,
+          callees: { type: 'array', items: { type: 'string' } },
+          async: { type: 'boolean' },
+          services: { type: 'boolean' },
           mode: { type: 'string', enum: ['legacy', 'precise'] },
-          bannedNames: { type: 'array', items: { type: 'string' }, uniqueItems: true },
-          checkGenericGuards: { type: 'boolean' },
+          deny: { type: 'array', items: { type: 'string' }, uniqueItems: true },
+          guards: { type: 'boolean' },
         },
       },
     ],
@@ -293,12 +346,12 @@ export const codeTrivialFunctions = defineRule({
       before() {
         const options = optionsFirst<CodeTrivialFunctionsOptions>(context, {})
         precise = options.mode === 'precise'
-        checkServiceMethods = options.checkServiceMethods ?? false
-        bannedNames = new Set(options.bannedNames ?? (precise ? bannedNamesDefault : []))
-        checkGenericGuards = options.checkGenericGuards ?? precise
-        allowed = optionsPatterns(options.allowPattern)
-        allowedCallees = (options.allowCallees ?? []).map((pattern) => new RegExp(pattern))
-        allowAsync = options.allowAsync ?? false
+        checkServiceMethods = options.services ?? false
+        bannedNames = new Set(options.deny ?? (precise ? codeTrivialFunctionsBanned : []))
+        checkGenericGuards = options.guards ?? precise
+        allowed = optionsPatterns(options.allow)
+        allowedCallees = (options.callees ?? []).map((pattern) => new RegExp(pattern))
+        allowAsync = options.async ?? false
         reported.clear()
         checked.clear()
       },
@@ -313,7 +366,7 @@ export const codeTrivialFunctions = defineRule({
           }
 
           const expression = astSingleExpression(node)
-          const trivial = precise && expression ? astIsForwarder(node, expression) : declarationsIsTrivialFunction(node)
+          const trivial = precise && expression ? astIsForwarder(node, expression) : isTrivialFunction(node)
           const value = expression && astUnwrap(expression)
           const path = value?.type === 'CallExpression' ? astDottedName(value.callee) : undefined
 

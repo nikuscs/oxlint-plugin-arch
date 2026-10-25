@@ -12,10 +12,10 @@ export const MAX_ITEMS = 50
 
 | Option | Type | Default | |
 | --- | --- | --- | --- |
-| `allowFunctionValues` | `boolean` | `false` | Allow `const` bindings holding functions |
-| `allowTypeExports` | `boolean` | `false` | Allow type and interface exports |
-| `allowReExports` | `boolean` | `false` | Allow `export ... from` and imported bindings |
+| `functions` | `boolean` | `false` | Allow `const` bindings holding functions |
+| `types` | `boolean` | `false` | Allow type and interface exports |
+| `reexports` | `boolean` | `false` | Allow `export ... from` and imported bindings |
 
 ```ts
-'arch/files-constants-only': ['error', { allowTypeExports: true }]
+'arch/files-constants-only': ['error', { types: true }]
 ```

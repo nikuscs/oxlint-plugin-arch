@@ -1,6 +1,6 @@
 # arch/boundaries-rpc-database
 
-Reports query-builder calls (`selectFrom`, `insertInto`, `updateTable`, `deleteFrom`, `mergeInto`, `executeQuery`) in the files it is enabled for.
+Reports query-builder calls (`selectFrom`, `insertInto`, `updateTable`, `deleteFrom`, `mergeInto`, `executeQuery`), by name or literal computed key like `db['selectFrom']()`, in the files it is enabled for.
 
 ```ts
 // ❌ rpc/chats.ts

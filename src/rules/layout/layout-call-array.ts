@@ -21,7 +21,7 @@ export const layoutCallArray = defineRule({
         additionalProperties: false,
         properties: {
           callees: { type: 'array', items: { type: 'string' } },
-          minElements: { type: 'integer', minimum: 1 },
+          min: { type: 'integer', minimum: 1 },
           indent: sourceIndentSchema,
         },
       },
@@ -40,7 +40,7 @@ export const layoutCallArray = defineRule({
       before() {
         const options = optionsFirst<LayoutCallArrayOptions>(context, {})
         callees = new Set(options.callees ?? layoutCallArrayDefaultCallees)
-        minElements = options.minElements ?? 2
+        minElements = options.min ?? 2
         indentUnit = sourceIndentUnit(options.indent)
         newline = sourceNewline(context.sourceCode.text)
         if (callees.size === 0) {

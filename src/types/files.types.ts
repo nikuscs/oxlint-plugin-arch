@@ -1,17 +1,18 @@
+import type { NamingExportsStem } from './naming.types.ts'
 import type { OptionsPattern } from './options.types.ts'
 import type { ESTree } from '@oxlint/plugins'
 
 export interface FilesComponentsOnlyOptions {
-  matchFileName?: boolean
-  trailingRoles?: string[]
-  allowTypeExports?: boolean
-  denyTypePattern?: OptionsPattern
+  filename?: boolean
+  roles?: string[]
+  types?: boolean
+  deny?: OptionsPattern
 }
 
 export interface FilesConstantsOnlyOptions {
-  allowFunctionValues?: boolean
-  allowTypeExports?: boolean
-  allowReExports?: boolean
+  functions?: boolean
+  types?: boolean
+  reexports?: boolean
 }
 
 export interface FilesConstantsOnlyBinding {
@@ -20,51 +21,48 @@ export interface FilesConstantsOnlyBinding {
 }
 
 export interface FilesDomainConstantsOptions {
-  allowServiceMethods?: boolean
-  includeData?: boolean
+  services?: boolean
+  data?: boolean
 }
 
-export interface FilesExportsOptions {
+export interface FilesExportsOptions extends Pick<NamingExportsStem, 'stem' | 'roles' | 'separators'> {
   names?: string[]
   patterns?: string[]
-  domainStem?: 'before-first-dot' | 'full-basename'
-  trailingRoles?: string[]
-  roleSeparators?: string[]
-  allowTypeExports?: boolean
+  types?: boolean
   factory?: string
-  factoryScope?: 'exports' | 'declarations'
+  scope?: 'exports' | 'declarations'
 }
 
 export interface FilesFactoryKeySet {
-  factoryPattern: OptionsPattern
+  factory: OptionsPattern
   keys: string[]
-  requireKeys?: string[]
+  required?: string[]
 }
 
 export interface FilesFactoryKeysOptions {
   keys?: string[]
-  factoryPattern?: OptionsPattern
-  requireKeys?: string[]
-  keySets?: FilesFactoryKeySet[]
+  factory?: OptionsPattern
+  required?: string[]
+  sets?: FilesFactoryKeySet[]
 }
 
 export interface FilesFactoryKeysCompiled {
   patterns: RegExp[]
   allowed: Set<string>
   allowedList: string[]
-  requireKeys: string[]
+  required: string[]
 }
 
 export interface FilesHelpersOptions {
-  allowPattern?: OptionsPattern
-  detectComponents?: boolean
+  allow?: OptionsPattern
+  components?: boolean
   message?: string
-  hookPattern?: OptionsPattern
+  hooks?: OptionsPattern
 }
 
 export interface FilesNoFunctionsOptions {
-  banReExports: boolean
-  allowPattern?: OptionsPattern
+  reexports: boolean
+  allow?: OptionsPattern
 }
 
 export interface FilesRestrictedOptions {
@@ -72,24 +70,33 @@ export interface FilesRestrictedOptions {
 }
 
 export interface FilesRouteOptions {
-  exportName: string
-  allowedExports?: string[]
-  inspectExports?: boolean
-  bannedHooks: string[]
-  banIntrinsicJsx: boolean
+  export: string
+  exports: string[]
+  inspect: boolean
+  hooks: string[]
+  intrinsic: boolean
 }
 
 export type FilesTypesOnlyAllow = 'class' | 'default' | 'enum' | 'function' | 'variable'
 
 export interface FilesTypesOnlyOptions {
   allow?: FilesTypesOnlyAllow[]
-  runtimeImports?: 'allow' | 'ban'
-  allowImportSources?: string[]
-  banReExports?: boolean
+  imports?: 'allow' | 'ban'
+  sources?: string[]
+  reexports?: boolean
 }
 
 export interface FilesTypesOnlyImport {
   node: ESTree.Node
   source: string
   locals: string[]
+}
+
+export interface FilesExternalsOptions {
+  packages?: string[]
+}
+
+export interface FilesExternalsManifest {
+  dependencies?: Record<string, string>
+  optionalDependencies?: Record<string, string>
 }

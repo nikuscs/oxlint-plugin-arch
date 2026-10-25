@@ -3,11 +3,11 @@ import { astIsTypeOnlyImport, astMemberName, astModuleName, astVisit } from '../
 import {
   boundariesBrowserGlobals,
   boundariesDeclaredVariable,
+  boundariesExportVisitors,
   boundariesImportExpression,
   boundariesIsBackendImport,
   boundariesIsServerPlatformImport,
   boundariesIsSharedFile,
-  boundariesIsTypeOnlyExport,
   boundariesMatchesImport,
   boundariesMemberName,
   boundariesReport,
@@ -15,18 +15,48 @@ import {
   boundariesRuntimeMessages,
   boundariesRuntimeProperties,
   boundariesServerGlobals,
+  boundariesServerPackages,
 } from '../../utils/boundaries.utils.ts'
 import { optionsFirst } from '../../utils/options.utils.ts'
 import type * as BoundariesTypes from '../../types/boundaries.types.ts'
 import type { ESTree } from '@oxlint/plugins'
 
-const boundariesRscPackages = ['@tanstack/react-start/rsc', '@tanstack/react-start-rsc']
 const boundariesRenderers = ['renderServerComponent', 'renderToReadableStream']
-const boundariesHookPackages = /^(?:react|@tanstack\/react-(?:query|router))$/
 const boundariesChainMethods = ['handler', 'server', 'client', 'middleware', 'validator', 'inputValidator']
 const boundariesSplitFactories = ['createIsomorphicFn', 'createMiddleware']
-const boundariesRuntimeTypeWrappers = ['TSAsExpression', 'TSSatisfiesExpression', 'TSNonNullExpression', 'TSInstantiationExpression']
+
+const boundariesRuntimeTypeWrappers = [
+  'TSAsExpression',
+  'TSSatisfiesExpression',
+  'TSTypeAssertion',
+  'TSNonNullExpression',
+  'TSInstantiationExpression',
+  'TSEnumDeclaration',
+  'TSEnumBody',
+  'TSEnumMember',
+  'TSModuleDeclaration',
+  'TSModuleBlock',
+  'TSParameterProperty',
+  'TSExportAssignment',
+]
+
 const boundariesClientHookReason = 'client hooks do not belong in server/RSC services'
+
+const boundariesTanstackDefaults = {
+  serverPackages: [
+    ...boundariesServerPackages,
+    '@tanstack/react-start/server',
+    '@tanstack/react-start/server-only',
+    '@tanstack/solid-start/server',
+    '@tanstack/solid-start/server-only',
+    '@tanstack/vue-start/server',
+    '@tanstack/vue-start/server-only',
+  ],
+  clientPackages: ['react-dom/client', '@tanstack/react-start/client-only', '@tanstack/solid-start/client-only', '@tanstack/vue-start/client-only'],
+  hookPackages: ['react', '@tanstack/react-query', '@tanstack/react-router'],
+  startPackages: ['@tanstack/react-start'],
+  rscPackages: ['@tanstack/react-start/rsc', '@tanstack/react-start-rsc'],
+}
 
 function boundariesIsClientHook(name: string): boolean {
   return /^use[A-Z]/.test(name) && name !== 'useId'
@@ -39,19 +69,25 @@ export const boundariesTanstack = defineRule({
       {
         type: 'object',
         additionalProperties: false,
-        properties: { ...boundariesRuntimeProperties, rpcClients: { type: 'array', items: { type: 'string' } } },
-        required: ['web', 'backend', 'aliases', 'backendPackages', 'rpcClients'],
+        properties: {
+          ...boundariesRuntimeProperties,
+          rpc: { type: 'array', items: { type: 'string' } },
+          startPackages: { type: 'array', items: { type: 'string' } },
+          rscPackages: { type: 'array', items: { type: 'string' } },
+        },
+        required: ['web', 'backend', 'aliases', 'backendPackages', 'rpc'],
       },
     ],
     messages: boundariesRuntimeMessages,
   },
   createOnce(context) {
-    let options: BoundariesTypes.BoundariesTanstackOptions
+    let options: BoundariesTypes.BoundariesTanstackOptions & typeof boundariesTanstackDefaults
     let file = ''
     let serverFile = false
     let rscFile = false
     let shared = false
     const runtimeIdentifiers = new Set<number>()
+    let referenced: Set<number> | undefined
     let imports = new Map<string, BoundariesTypes.BoundariesTanstackImport>()
     const boundaries: BoundariesTypes.BoundariesTanstackBoundary[] = []
 
@@ -84,7 +120,10 @@ export const boundariesTanstack = defineRule({
     }
 
     function boundary(position: number): BoundariesTypes.BoundariesTanstackBoundary | undefined {
-      return boundaries.filter((entry) => position >= entry.start && position < entry.end).toSorted((a, b) => b.start - a.start)[0]
+      return boundaries.reduce<BoundariesTypes.BoundariesTanstackBoundary | undefined>(
+        (inner, entry) => (position >= entry.start && position < entry.end && (!inner || entry.start > inner.start) ? entry : inner),
+        undefined,
+      )
     }
 
     function clientSide(position: number): boolean {
@@ -98,7 +137,7 @@ export const boundariesTanstack = defineRule({
         return serverFile
       }
 
-      return entry.side === 'server' && (!staticImport || entry.kind !== 'createIsomorphicFn' || options.rpcClients.includes(file))
+      return entry.side === 'server' && (!staticImport || entry.kind !== 'createIsomorphicFn' || options.rpc.includes(file))
     }
 
     function runtimeReferences(node: ESTree.ImportDeclaration, localName?: string): number[] {
@@ -118,8 +157,8 @@ export const boundariesTanstack = defineRule({
 
       const clientImport =
         /(?:\/hooks\/|\.client-only(?:\.|$))/.test(target) ||
-        /^(?:react-dom\/client|@tanstack\/(?:react|solid|vue)-start\/client-only)(?:\/|$)/.test(source) ||
-        boundariesMatchesImport(options.clientImports, source)
+        boundariesMatchesImport(options.clientPackages, source) ||
+        boundariesMatchesImport(options.client, source)
 
       if (clientImport && (serverFile || rscFile || shared) && !clientSide(node.start)) {
         const references = node.type === 'ImportDeclaration' ? runtimeReferences(node) : []
@@ -132,11 +171,10 @@ export const boundariesTanstack = defineRule({
       }
 
       const serverImport =
-        boundariesIsServerPlatformImport(source) ||
+        boundariesIsServerPlatformImport(source, options.serverPackages) ||
         boundariesIsBackendImport(options, target, source) ||
         /\.server(?:\.[cm]?[jt]sx?)?$/.test(target) ||
-        /^@tanstack\/(?:react|solid|vue)-start\/(?:server|server-only)(?:\/|$)/.test(source) ||
-        boundariesMatchesImport(options.serverImports, source)
+        boundariesMatchesImport(options.server, source)
 
       if (!renderer && !serverImport) {
         return
@@ -175,12 +213,13 @@ export const boundariesTanstack = defineRule({
 
     return {
       Program(program) {
-        options = optionsFirst<BoundariesTypes.BoundariesTanstackOptions>(context)
+        options = { ...boundariesTanstackDefaults, ...optionsFirst<BoundariesTypes.BoundariesTanstackOptions>(context) }
         file = context.filename.replaceAll('\\', '/')
         serverFile = /\.server\.[cm]?[jt]sx?$/.test(file)
         rscFile = /\.rsc\.[cm]?[jt]sx?$/.test(file)
         shared = boundariesIsSharedFile(options, file)
         runtimeIdentifiers.clear()
+        referenced = undefined
         boundaries.length = 0
         imports = new Map(
           program.body.flatMap((statement): [string, BoundariesTypes.BoundariesTanstackImport][] => {
@@ -192,15 +231,15 @@ export const boundariesTanstack = defineRule({
             return statement.specifiers.flatMap((specifier): [string, BoundariesTypes.BoundariesTanstackImport][] => {
               const entry = (name: string): [string, BoundariesTypes.BoundariesTanstackImport][] => [[specifier.local.name, { node: specifier.local, name }]]
 
-              if (boundariesHookPackages.test(source)) {
+              if (options.hookPackages.includes(source)) {
                 return specifier.type === 'ImportSpecifier' ? [] : entry('client-hooks')
               }
 
-              if (boundariesRscPackages.includes(source)) {
+              if (options.rscPackages.includes(source)) {
                 return specifier.type === 'ImportNamespaceSpecifier' ? entry('rsc-renderers') : []
               }
 
-              if (source !== '@tanstack/react-start') {
+              if (!options.startPackages.includes(source)) {
                 return []
               }
 
@@ -219,7 +258,12 @@ export const boundariesTanstack = defineRule({
         astVisit(program, [], (node, ancestors) => {
           if (
             node.type === 'Identifier' &&
-            !ancestors.some((ancestor) => ancestor.type.startsWith('TS') && !boundariesRuntimeTypeWrappers.includes(ancestor.type))
+            !ancestors.some(
+              (ancestor) =>
+                ancestor.type.startsWith('TS') &&
+                (!boundariesRuntimeTypeWrappers.includes(ancestor.type) ||
+                  ((ancestor.type === 'TSEnumDeclaration' || ancestor.type === 'TSModuleDeclaration') && ancestor.declare)),
+            )
           ) {
             runtimeIdentifiers.add(node.start)
           }
@@ -254,7 +298,7 @@ export const boundariesTanstack = defineRule({
 
         for (const specifier of node.specifiers) {
           if (
-            boundariesRscPackages.includes(node.source.value) &&
+            options.rscPackages.includes(node.source.value) &&
             specifier.type === 'ImportSpecifier' &&
             specifier.importKind !== 'type' &&
             specifier.imported.type === 'Identifier' &&
@@ -264,7 +308,7 @@ export const boundariesTanstack = defineRule({
           }
         }
 
-        if (!(serverFile || rscFile) || !boundariesHookPackages.test(node.source.value)) {
+        if (!(serverFile || rscFile) || !options.hookPackages.includes(node.source.value)) {
           return
         }
 
@@ -285,16 +329,9 @@ export const boundariesTanstack = defineRule({
           }
         }
       },
-      ExportNamedDeclaration(node) {
-        if (node.source) {
-          check(node, node.source.value, boundariesIsTypeOnlyExport(node), true)
-        }
-      },
-      ExportAllDeclaration(node) {
-        check(node, node.source.value, node.exportKind === 'type', true)
-      },
+      ...boundariesExportVisitors(check),
       ImportExpression(node) {
-        boundariesImportExpression(context, node, Boolean(options.allowComputedImportsIn?.includes(file)), (source) => check(node, source, false))
+        boundariesImportExpression(context, node, Boolean(options.dynamic?.includes(file)), (source) => check(node, source, false))
       },
       MemberExpression(node) {
         const name = boundariesMemberName(node)
@@ -327,11 +364,11 @@ export const boundariesTanstack = defineRule({
           return
         }
 
-        const referenced = context.sourceCode
-          .getScope(node)
-          .references.some((reference) => reference.identifier.range[0] === node.start && runtimeIdentifiers.has(node.start))
+        referenced ??= new Set(
+          context.sourceCode.scopeManager.scopes.flatMap((scope) => scope.references.map((reference) => reference.identifier.range[0])),
+        )
 
-        if (!referenced) {
+        if (!referenced.has(node.start) || !runtimeIdentifiers.has(node.start)) {
           return
         }
 
@@ -339,7 +376,9 @@ export const boundariesTanstack = defineRule({
           boundariesReport(context, node, name, 'server globals require a server execution boundary')
         }
 
-        if (browserGlobal && (serverFile || rscFile) && !clientSide(node.start)) {
+        const entry = boundary(node.start)
+
+        if (browserGlobal && (entry ? entry.side === 'server' : serverFile || rscFile)) {
           boundariesReport(context, node, name, 'browser globals are unavailable during server execution')
         }
       },

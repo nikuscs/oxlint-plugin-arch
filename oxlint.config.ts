@@ -13,6 +13,7 @@ export default preset({
         'arch/code-literal-in': 'off',
       },
     },
+    scripts: { console: true },
     dist: false,
   },
 })

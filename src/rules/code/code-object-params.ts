@@ -1,8 +1,30 @@
 import { defineRule } from '@oxlint/plugins'
-import { declarationsIsObjectParam } from '../../utils/declarations.utils.ts'
 import { exportsCheckedFunctions } from '../../utils/exports.utils.ts'
 import { optionsFirst, optionsPatterns, optionsPatternSchema } from '../../utils/options.utils.ts'
 import type { CodeObjectParamsOptions } from '../../types/code.types.ts'
+import type { ESTree } from '@oxlint/plugins'
+
+function isObjectParam(node: ESTree.ParamPattern): boolean {
+  if (node.type === 'ObjectPattern') {
+    return true
+  }
+
+  if (node.type === 'TSParameterProperty') {
+    return isObjectParam(node.parameter)
+  }
+
+  if (node.type === 'AssignmentPattern') {
+    return isObjectParam(node.left)
+  }
+
+  const annotation = node.typeAnnotation?.typeAnnotation
+  return (
+    !annotation ||
+    annotation.type === 'TSTypeReference' ||
+    annotation.type === 'TSTypeLiteral' ||
+    annotation.type === 'TSIntersectionType'
+  )
+}
 
 export const codeObjectParams = defineRule({
   meta: {
@@ -12,10 +34,10 @@ export const codeObjectParams = defineRule({
         type: 'object',
         additionalProperties: false,
         properties: {
-          maxParams: { type: 'integer', minimum: 1 },
-          serviceMethods: { type: 'boolean' },
-          allDeclarations: { type: 'boolean' },
-          allowPattern: optionsPatternSchema,
+          max: { type: 'integer', minimum: 1 },
+          services: { type: 'boolean' },
+          all: { type: 'boolean' },
+          allow: optionsPatternSchema,
         },
       },
     ],
@@ -27,14 +49,14 @@ export const codeObjectParams = defineRule({
     return {
       Program(program) {
         const {
-          maxParams = 1,
-          allDeclarations = false,
-          serviceMethods = false,
-          allowPattern,
+          max: maxParams = 1,
+          all: allDeclarations = false,
+          services: serviceMethods = false,
+          allow: allowPattern,
         } = optionsFirst<CodeObjectParamsOptions>(context, {})
 
         for (const { name, node } of exportsCheckedFunctions(program, allDeclarations, serviceMethods, optionsPatterns(allowPattern))) {
-          if (node.params.length <= maxParams && node.params.every(declarationsIsObjectParam)) {
+          if (node.params.length <= maxParams && node.params.every(isObjectParam)) {
             continue
           }
           context.report({

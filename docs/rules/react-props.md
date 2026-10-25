@@ -20,8 +20,8 @@ export function Button({ label }: ButtonProps) {
 
 | Option | Type | Default | |
 | --- | --- | --- | --- |
-| `filePrefix` | `boolean` | `false` | Local components must start with the file name |
+| `prefix` | `boolean` | `false` | Local components must start with the file name |
 
 ```ts
-'arch/react-props': ['error', { filePrefix: true }]
+'arch/react-props': ['error', { prefix: true }]
 ```

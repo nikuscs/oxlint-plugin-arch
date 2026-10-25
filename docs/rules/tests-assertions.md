@@ -16,9 +16,9 @@ test('saves the user', async () => {
 
 | Option | Type | Default | |
 | --- | --- | --- | --- |
-| `additionalTestFunctions` | `string[]` | `[]` | Extra test registration names besides `test` and `it` |
-| `additionalAssertionFunctions` | `string[]` | `[]` | Extra assertion names; `*` and `**` wildcards |
+| `functions` | `string[]` | `[]` | Extra test registration names besides `test` and `it` |
+| `assertions` | `string[]` | `[]` | Extra assertion names; `*` and `**` wildcards |
 
 ```ts
-'arch/tests-assertions': ['error', { additionalAssertionFunctions: ['expectUser'] }]
+'arch/tests-assertions': ['error', { assertions: ['expectUser'] }]
 ```

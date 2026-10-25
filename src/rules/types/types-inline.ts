@@ -27,8 +27,8 @@ export const typesInline = defineRule({
         properties: {
           parameters: { type: 'boolean' },
           returns: { type: 'boolean' },
-          functionTypes: { type: 'boolean' },
-          minMembers: { type: 'integer', minimum: 1 },
+          functions: { type: 'boolean' },
+          min: { type: 'integer', minimum: 1 },
         },
       },
     ],
@@ -79,8 +79,8 @@ export const typesInline = defineRule({
         const options = optionsFirst<TypesInlineOptions>(context, {})
         checkParameters = options.parameters ?? true
         checkReturns = options.returns ?? true
-        checkFunctionTypes = options.functionTypes ?? true
-        minMembers = options.minMembers ?? 1
+        checkFunctionTypes = options.functions ?? true
+        minMembers = options.min ?? 1
         if (!checkParameters && !checkReturns) {
           return false
         }

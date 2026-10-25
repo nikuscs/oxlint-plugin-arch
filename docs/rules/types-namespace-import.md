@@ -1,6 +1,6 @@
 # arch/types-namespace-import
 
-Reports a type-only import with more than `max` named specifiers and rewrites it to `import type * as`.
+Reports a type-only import with more than `max` named specifiers and suggests an `import type * as` name. It has no autofix.
 
 ```ts
 // ❌

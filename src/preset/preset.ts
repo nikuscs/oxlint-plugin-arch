@@ -3,7 +3,9 @@ import { backendGroup } from './groups/backend.ts'
 import { basicsGroup } from './groups/basics.ts'
 import { commentsGroup } from './groups/comments.ts'
 import { consoleGroup } from './groups/console.ts'
+import { denyGroup } from './groups/deny.ts'
 import { expoGroup } from './groups/expo.ts'
+import { externalsGroup } from './groups/externals.ts'
 import { formsGroup } from './groups/forms.ts'
 import { importsGroup } from './groups/imports.ts'
 import { layoutGroup } from './groups/layout.ts'
@@ -22,8 +24,8 @@ import { testsGroup } from './groups/tests.ts'
 import { typesGroup } from './groups/types.ts'
 import { presetProject } from './preset-folders.ts'
 import { presetRecipes, presetTemplates } from './preset-recipes.ts'
-import { presetCommonRules, presetGroupOrder } from './preset.constants.ts'
-import { presetIntersect, presetSeverity } from './preset.utils.ts'
+import { presetCommonRules, presetExternals, presetGroupOrder } from './preset.constants.ts'
+import { PresetError, presetIntersect, presetSeverity } from './preset.utils.ts'
 import type * as PresetTypes from '../types/preset.types.ts'
 import type { OxlintConfig, OxlintOverride } from 'oxlint'
 
@@ -58,14 +60,27 @@ export type {
   PresetOrpcOptions,
   PresetFormsOptions,
   PresetSqlOptions,
+  PresetDenyOptions,
+  PresetExternalsOptions,
+  PresetRegistryOptions,
+  PresetOperations,
 } from '../types/preset.types.ts'
 
-export { PresetError } from './preset.utils.ts'
+export { PresetError }
 
 export const recipes = presetRecipes
 export const templates = presetTemplates
+export const externals = presetExternals
 
 const require = createRequire(import.meta.url)
+
+function presetOptional(name: string, group: string): string {
+  try {
+    return require.resolve(name)
+  } catch {
+    throw new PresetError(`The ${group} group needs ${name}: bun add -d ${name}`)
+  }
+}
 
 const presetBuilders: PresetTypes.PresetBuilders = {
   style: styleGroup,
@@ -89,6 +104,8 @@ const presetBuilders: PresetTypes.PresetBuilders = {
   tailwind: tailwindGroup,
   shadcn: shadcnGroup,
   limits: limitsGroup,
+  deny: denyGroup,
+  externals: externalsGroup,
 }
 
 function presetSettings<K extends PresetTypes.PresetGroupName>(scope: PresetTypes.PresetScope, name: K): PresetTypes.PresetGroupSettings<K> | null {
@@ -173,9 +190,9 @@ function presetPlugins(project: PresetTypes.PresetProject): Pick<OxlintConfig, '
 
   if (react) {
     jsPlugins.push(
-      { name: 'react-extra', specifier: require.resolve('eslint-plugin-react') },
-      require.resolve('eslint-plugin-react-you-might-not-need-an-effect'),
-      require.resolve('eslint-plugin-svg-jsx'),
+      { name: 'react-extra', specifier: presetOptional('eslint-plugin-react', 'react') },
+      presetOptional('eslint-plugin-react-you-might-not-need-an-effect', 'react'),
+      presetOptional('eslint-plugin-svg-jsx', 'react'),
     )
   }
 
@@ -183,11 +200,11 @@ function presetPlugins(project: PresetTypes.PresetProject): Pick<OxlintConfig, '
     return { jsPlugins, settings }
   }
 
-  jsPlugins.push(require.resolve('oxlint-tailwindcss'))
+  jsPlugins.push(presetOptional('oxlint-tailwindcss', 'tailwind'))
   settings.tailwindcss = { rootFontSize: tailwind.rem }
 
   if (shadcn) {
-    jsPlugins.push(require.resolve('@shadcn/lint'))
+    jsPlugins.push(presetOptional('@shadcn/lint', 'shadcn'))
     settings.shadcn = { ui: shadcn.ui, componentImports: shadcn.components }
   }
 

@@ -1,5 +1,5 @@
 import { defineRule } from '@oxlint/plugins'
-import { astImportAliases, astResolvedCallName } from '../../utils/ast.utils.ts'
+import { astCallName, astModuleName } from '../../utils/ast.utils.ts'
 import { optionsFirst } from '../../utils/options.utils.ts'
 import type { CodePairedCallOptions, CodePairedCallState } from '../../types/code.types.ts'
 
@@ -34,7 +34,7 @@ export const codePairedCall = defineRule({
     },
   },
   createOnce(context) {
-    let aliases = new Map<string, string>()
+    const aliases = new Map<string, string>()
     let pairs: CodePairedCallState[] = []
 
     return {
@@ -44,10 +44,28 @@ export const codePairedCall = defineRule({
         pairs = all.map((pair) => ({ ...pair, firstWhen: null, sawRequired: false }))
       },
       Program(program) {
-        aliases = astImportAliases(program)
+        aliases.clear()
+        for (const statement of program.body) {
+          if (statement.type !== 'ImportDeclaration') {
+            continue
+          }
+
+          for (const specifier of statement.specifiers) {
+            if (specifier.type !== 'ImportSpecifier') {
+              continue
+            }
+
+            const imported = astModuleName(specifier.imported)
+
+            if (imported !== specifier.local.name) {
+              aliases.set(specifier.local.name, imported)
+            }
+          }
+        }
       },
       CallExpression(node) {
-        const name = astResolvedCallName(node, aliases)
+        const called = astCallName(node)
+        const name = called ? (aliases.get(called) ?? called) : undefined
 
         for (const pair of pairs) {
           if (name === pair.when) {

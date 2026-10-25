@@ -1,6 +1,6 @@
 # arch/layout-jsx-attributes
 
-Every attribute and the closing `>` or `/>` on its own line once a single-line JSX tag has `minAttributes` attributes.
+Every attribute and the closing `>` or `/>` on its own line once a single-line JSX tag has `min` attributes.
 
 ```tsx
 // ❌
@@ -18,9 +18,9 @@ const button = (
 
 | Option | Type | Default | |
 | --- | --- | --- | --- |
-| `minAttributes` | `number` | `3` | Smallest tag that must break |
+| `min` | `number` | `3` | Smallest tag that must break |
 | `indent` | `number \| 'tab'` | `2` | Indent for the fix |
 
 ```ts
-'arch/layout-jsx-attributes': ['error', { minAttributes: 3 }]
+'arch/layout-jsx-attributes': ['error', { min: 3 }]
 ```

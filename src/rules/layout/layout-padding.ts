@@ -48,8 +48,8 @@ export const layoutPadding = defineRule({
         type: 'object',
         additionalProperties: false,
         properties: {
-          returnMinStatements: { type: 'integer', minimum: 1, default: 3 },
-          multilineVariables: { type: 'boolean' },
+          min: { type: 'integer', minimum: 1, default: 3 },
+          multiline: { type: 'boolean' },
         },
       },
     ],
@@ -129,8 +129,8 @@ export const layoutPadding = defineRule({
     return {
       before() {
         const options = optionsFirst<LayoutPaddingOptions>(context, {})
-        returnMinStatements = options.returnMinStatements ?? 3
-        multilineVariables = options.multilineVariables ?? false
+        returnMinStatements = options.min ?? 3
+        multilineVariables = options.multiline ?? false
         newline = sourceNewline(context.sourceCode.text)
       },
       Program(node) {

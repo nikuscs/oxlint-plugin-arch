@@ -1,6 +1,6 @@
 # arch/code-object-params
 
-An exported function with more than `maxParams` parameters, or a parameter not typed as an object.
+An exported function with more than `max` parameters, or a parameter not typed as an object. A default value does not hide the parameter type, and an `export default` function expression is checked as `default`.
 
 ```ts
 // ❌
@@ -16,11 +16,11 @@ export function createUser({ name, email }: CreateUserInput) {
 
 | Option | Type | Default | |
 | --- | --- | --- | --- |
-| `maxParams` | `number` | `1` | Most object parameters allowed |
-| `allDeclarations` | `boolean` | `false` | Also check unexported top-level functions |
-| `serviceMethods` | `boolean` | `false` | Also check methods of exported `const` objects |
-| `allowPattern` | `string \| string[]` | | Regex for function names to skip |
+| `max` | `number` | `1` | Most object parameters allowed |
+| `all` | `boolean` | `false` | Also check unexported top-level functions |
+| `services` | `boolean` | `false` | Also check methods of exported `const` objects |
+| `allow` | `string \| string[]` | | Regex for function names to skip |
 
 ```ts
-'arch/code-object-params': ['error', { allDeclarations: true, serviceMethods: true }]
+'arch/code-object-params': ['error', { all: true, services: true }]
 ```

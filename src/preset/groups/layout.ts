@@ -1,16 +1,21 @@
 import { posix } from 'node:path'
-import { presetExtensions } from '../preset.constants.ts'
+import { presetBuiltinFileRoles, presetExtensions } from '../preset.constants.ts'
 import { presetOverride, presetScopes } from '../preset.utils.ts'
 import type { PresetBuilder } from '../../types/preset.types.ts'
 
-export const layoutGroup: PresetBuilder<'layout'> = (project) => {
-  const { web, nextWeb, serviceRoots, app, services, utilities, ui, testFiles, layouts } = project
+export const layoutGroup: PresetBuilder<'layout'> = (project, settings) => {
+  const { web, nextWeb, serviceRoots, app, services, utilities, ui, testFiles, layouts, operations } = project
+  const folderOperations = presetScopes(operations, 'services/*/{actions,queries}/*.ts')
+  const operationMessage = "Action/query files export exactly one named operation. Keep helpers used only by this operation private inside its function; do not export them. Move a helper to the module's .utils.ts only when it is genuinely shared, not merely to satisfy lint."
+  const roles = [...presetBuiltinFileRoles.filter((role) => role !== 'action' && role !== 'query'), ...project.suffixes]
   const conceptFiles = project.suffixes.map((suffix) => `**/*.${suffix}.ts`)
   const frontendEntries = [...presetScopes(web, 'services/**/*.{client,server,rsc}.ts'), ...presetScopes(web, 'services/**/*.rsc.tsx')]
   const ungroupedWeb = web.filter((path) => !layouts.some((scope) => scope.path === posix.join(path, 'components')))
 
   return [
     ...layouts.flatMap(({ path, folder, mode }) => {
+      const folders = folder === 'services' && operations.some((source) => posix.join(source, 'services') === path)
+
       const restricted = presetOverride(
         mode === 'flat' ? [`${path}/*/**/${presetExtensions}`] : [`${path}/${presetExtensions}`, `${path}/*/*/**/${presetExtensions}`],
         {
@@ -23,6 +28,7 @@ export const layoutGroup: PresetBuilder<'layout'> = (project) => {
             },
           ],
         },
+        folders ? [`${path}/*/{actions,queries}/*.ts`] : [],
       )
 
       if (mode !== 'domain') {
@@ -30,9 +36,28 @@ export const layoutGroup: PresetBuilder<'layout'> = (project) => {
       }
 
       const prefix = { singularize: folder === 'components' ? 'trailing-s' : 'none', separators: ['.', '-'] }
-      const naming = folder === 'hooks' ? { ...prefix, stripPrefixes: ['use-'] } : prefix
+      const naming = folder === 'hooks' ? { ...prefix, prefixes: ['use-'] } : prefix
+      const domain = [restricted, presetOverride([`${path}/*/${presetExtensions}`], { 'arch/naming-folder': ['error', naming] })]
 
-      return [restricted, presetOverride([`${path}/*/${presetExtensions}`], { 'arch/naming-folder': ['error', naming] })]
+      if (!settings.strict || folder !== 'services') {
+        return domain
+      }
+
+      const strict = presetOverride(
+        [`${path}/*/${presetExtensions}`],
+        {
+          'arch/naming-file': [
+            'error',
+            {
+              pattern: `^[a-z0-9]+(?:-[a-z0-9]+)*[.](?:${roles.join('|')})[.]ts$`,
+              message: `Domain files use domain[-part].<role>.ts with a role from: ${roles.join(', ')}. Add new roles to layout.suffixes.`,
+            },
+          ],
+        },
+        ['**/*-{action,query}.*.ts'],
+      )
+
+      return [...domain, strict]
     }),
     presetOverride(
       presetScopes(ungroupedWeb, `components/*/*/**/${presetExtensions}`),
@@ -71,7 +96,7 @@ export const layoutGroup: PresetBuilder<'layout'> = (project) => {
       services,
       {
         'arch/backend-service-functions': 'error',
-        'arch/types-inline': ['error', { parameters: true, returns: true, functionTypes: true, minMembers: 1 }],
+        'arch/types-inline': ['error', { parameters: true, returns: true, functions: true, min: 1 }],
       },
       [...utilities, ...testFiles, ...conceptFiles],
     ),
@@ -88,36 +113,28 @@ export const layoutGroup: PresetBuilder<'layout'> = (project) => {
     ),
     presetOverride(
       [...presetScopes(app, 'services/**/*-{action,query}.*.ts'), ...presetScopes(web, 'services/**/*-{action,query}.*.rsc.tsx')],
-      {
-        'arch/backend-service-functions': [
-          'error',
-          {
-            allowLocalHelpers: true,
-            singleExport: true,
-            message: "Action/query files export exactly one named operation. Keep helpers used only by this operation private inside its function; do not export them. Move a helper to the module's .utils.ts only when it is genuinely shared, not merely to satisfy lint.",
-          },
-        ],
-      },
+      { 'arch/backend-service-functions': ['error', { helpers: true, single: true, message: operationMessage }] },
       testFiles,
     ),
+    presetOverride(folderOperations, { 'arch/backend-service-functions': ['error', { helpers: true, message: operationMessage }] }, testFiles),
     presetOverride(presetScopes(serviceRoots, 'services/**/*.ts'), { 'arch/files-domain-constants': 'error' }, [...utilities, ...testFiles]),
-    presetOverride(presetScopes(web, 'services/**/*.{ts,tsx}'), { 'arch/files-domain-constants': ['error', { includeData: true }] }, [
+    presetOverride(presetScopes(web, 'services/**/*.{ts,tsx}'), { 'arch/files-domain-constants': ['error', { data: true }] }, [
       '**/*.constants.ts',
       ...testFiles,
     ]),
-    presetOverride(frontendEntries, { 'arch/files-domain-constants': ['error', { includeData: true, allowServiceMethods: true }] }, testFiles),
+    presetOverride(frontendEntries, { 'arch/files-domain-constants': ['error', { data: true, services: true }] }, testFiles),
     presetOverride(
-      [...presetScopes(serviceRoots, 'services/**/*-{action,query}.*.ts'), ...frontendEntries],
-      { 'arch/code-object-params': ['error', { maxParams: 2 }] },
+      [...presetScopes(serviceRoots, 'services/**/*-{action,query}.*.ts'), ...folderOperations, ...frontendEntries],
+      { 'arch/code-object-params': ['error', { max: 2 }] },
       testFiles,
     ),
-    presetOverride(frontendEntries, { 'arch/code-object-params': ['error', { maxParams: 2, serviceMethods: true }] }, testFiles),
+    presetOverride(frontendEntries, { 'arch/code-object-params': ['error', { max: 2, services: true }] }, testFiles),
     presetOverride(
       presetScopes(serviceRoots, 'services/**/*.service.ts'),
-      { 'arch/files-exports': ['error', { names: ['make{Domain}Service', '{Domain}Service'], domainStem: 'before-first-dot', allowTypeExports: false }] },
+      { 'arch/files-exports': ['error', { names: settings.service, stem: 'before-first-dot', types: false }] },
       testFiles,
     ),
-    presetOverride(presetScopes(app, 'services/**/{actions,queries}/**/*.ts'), {
+    presetOverride(presetScopes(app.filter((path) => !operations.includes(path)), 'services/**/{actions,queries}/**/*.ts'), {
       'arch/files-restricted': ['error', { message: 'Use domain-action.name.ts or domain-query.name.ts.' }],
     }),
   ]

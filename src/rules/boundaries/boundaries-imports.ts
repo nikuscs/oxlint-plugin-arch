@@ -2,6 +2,7 @@ import { defineRule } from '@oxlint/plugins'
 import { basename, resolve } from 'node:path'
 import { astIsTypeOnlyImport } from '../../utils/ast.utils.ts'
 import {
+  boundariesExportVisitors,
   boundariesLiteralSource,
   boundariesMatchesImport,
   boundariesResolveTarget,
@@ -38,7 +39,7 @@ function boundariesDomain(path: string, appRoot: string): string | undefined {
 }
 
 function boundariesPrivateDomain({ options, file, target, reExport, roots, owner }: BoundariesImport): string | undefined {
-  const roles = options.fileRoles
+  const roles = options.roles
 
   if (!roles?.length) {
     return undefined
@@ -69,7 +70,7 @@ function boundariesPrivateDomain({ options, file, target, reExport, roots, owner
 function boundariesPortableLib(check: BoundariesImport): string | undefined {
   const { options, file, source, target, typeOnly, reExport, roots, web, backendImport } = check
 
-  if (!options.portableLib || !web || !boundariesContains(`${web}/lib`, file)) {
+  if (!options.portable || !web || !boundariesContains(`${web}/lib`, file)) {
     return undefined
   }
 
@@ -104,14 +105,15 @@ export const boundariesImports = defineRule({
           web: { type: 'array', items: { type: 'string' } },
           backend: { type: 'array', items: { type: 'string' } },
           packages: { anyOf: [{ type: 'string' }, { type: 'array', items: { type: 'string' } }] },
-          fileRoles: { type: 'array', items: { type: 'string' } },
-          portableLib: { type: 'boolean' },
+          roles: { type: 'array', items: { type: 'string' } },
+          portable: { type: 'boolean' },
           backendPackages: { type: 'array', items: { type: 'string' } },
-          publicEntrypoints: { type: 'array', items: { type: 'string' } },
+          entrypoints: { type: 'array', items: { type: 'string' } },
           appPackages: { type: 'array', items: { type: 'string' } },
+          uiPackages: { type: 'array', items: { type: 'string' } },
           aliases: { type: 'object', additionalProperties: { type: 'string' } },
         },
-        required: ['web', 'backend', 'packages', 'backendPackages', 'publicEntrypoints', 'appPackages', 'aliases'],
+        required: ['web', 'backend', 'packages', 'backendPackages', 'entrypoints', 'appPackages', 'aliases'],
       },
     ],
     messages: {
@@ -142,13 +144,13 @@ export const boundariesImports = defineRule({
         /\/(?:core\/|services\/.*(?:\.(?:service|utils)|-(?:action|query)\.|\/(?:actions|queries)\/))/.test(target)
 
       const reason = [
-        web && backendImport && !options.publicEntrypoints.includes(source) ? 'frontend code uses only public backend entry points' : undefined,
+        web && backendImport && !options.entrypoints.includes(source) ? 'frontend code uses only public backend entry points' : undefined,
         inPackage && appTarget ? 'shared packages do not import app internals' : undefined,
         file.includes('/services/') && /\/services\/service(?:\.ts)?$/.test(target) && !typeOnly
           ? 'service dependencies are injected rather than read from the registry'
           : undefined,
         domainContract ? 'domain types/constants use type-only imports from implementations' : undefined,
-        file.endsWith('.client.ts') && !typeOnly && /^(react|react-dom)(\/|$)/.test(source)
+        file.endsWith('.client.ts') && !typeOnly && boundariesMatchesImport(options.uiPackages ?? ['react', 'react-dom'], source)
           ? 'client services are React-free; use hooks for React behavior'
           : undefined,
         boundariesPrivateDomain(imported),
@@ -190,14 +192,7 @@ export const boundariesImports = defineRule({
       ImportDeclaration(node) {
         check(node, node.source.value, astIsTypeOnlyImport(node))
       },
-      ExportNamedDeclaration(node) {
-        if (node.source) {
-          check(node, node.source.value, node.exportKind === 'type', true)
-        }
-      },
-      ExportAllDeclaration(node) {
-        check(node, node.source.value, node.exportKind === 'type', true)
-      },
+      ...boundariesExportVisitors(check),
       ImportExpression(node) {
         const source = boundariesLiteralSource(node)
 
@@ -206,7 +201,7 @@ export const boundariesImports = defineRule({
         }
       },
       TSImportType(node) {
-        const { portableLib, web } = optionsFirst<BoundariesOptions>(context)
+        const { portable: portableLib, web } = optionsFirst<BoundariesOptions>(context)
         const file = context.filename.replaceAll('\\', '/')
 
         if (portableLib && web.some((path) => file.startsWith(`${path}/lib/`))) {

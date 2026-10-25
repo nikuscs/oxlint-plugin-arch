@@ -3,11 +3,11 @@ import { astIsTypeOnlyImport } from '../../utils/ast.utils.ts'
 import {
   boundariesBrowserGlobals,
   boundariesDeclaredVariable,
+  boundariesExportVisitors,
   boundariesImportExpression,
   boundariesIsBackendImport,
   boundariesIsServerPlatformImport,
   boundariesIsSharedFile,
-  boundariesIsTypeOnlyExport,
   boundariesMatchesImport,
   boundariesMemberName,
   boundariesReport,
@@ -15,12 +15,20 @@ import {
   boundariesRuntimeMessages,
   boundariesRuntimeProperties,
   boundariesServerGlobals,
+  boundariesServerPackages,
 } from '../../utils/boundaries.utils.ts'
 import { optionsFirst } from '../../utils/options.utils.ts'
 import type { BoundariesIdentifier, BoundariesNextOptions } from '../../types/boundaries.types.ts'
 import type { ESTree } from '@oxlint/plugins'
 
 const boundariesClientHookReason = 'client hooks do not belong in server, RSC or shared modules'
+
+const boundariesNextDefaults = {
+  serverPackages: [...boundariesServerPackages, 'server-only', 'next/headers', 'next/cache', 'next/server'],
+  clientPackages: ['client-only', 'react-dom/client'],
+  hookPackages: ['react'],
+  publicEnv: 'NEXT_PUBLIC_',
+}
 
 function boundariesIsClientHook(name: string): boolean {
   return /^use[A-Z]/.test(name) && name !== 'useId' && name !== 'use'
@@ -33,7 +41,7 @@ export const boundariesNext = defineRule({
       {
         type: 'object',
         additionalProperties: false,
-        properties: boundariesRuntimeProperties,
+        properties: { ...boundariesRuntimeProperties, publicEnv: { type: 'string' } },
         required: ['web', 'backend', 'aliases', 'backendPackages'],
       },
     ],
@@ -44,7 +52,7 @@ export const boundariesNext = defineRule({
     },
   },
   createOnce(context) {
-    let options: BoundariesNextOptions
+    let options: BoundariesNextOptions & typeof boundariesNextDefaults
     let file = ''
     let server = false
     let client = false
@@ -60,8 +68,8 @@ export const boundariesNext = defineRule({
 
       const clientOnly =
         /(?:\/hooks\/|\.client-only(?:\.|$))/.test(target) ||
-        /^(?:client-only|react-dom\/client)$/.test(source) ||
-        boundariesMatchesImport(options.clientImports, source)
+        boundariesMatchesImport(options.clientPackages, source) ||
+        boundariesMatchesImport(options.client, source)
 
       if (clientOnly && (server || shared)) {
         boundariesReport(context, node, source, 'browser-only dependencies do not belong in server, RSC or shared modules')
@@ -69,11 +77,10 @@ export const boundariesNext = defineRule({
       }
 
       const serverOnly =
-        boundariesIsServerPlatformImport(source) ||
+        boundariesIsServerPlatformImport(source, options.serverPackages) ||
         boundariesIsBackendImport(options, target, source) ||
         /\.(?:server|rsc)(?:\.[cm]?[jt]sx?)?$/.test(target) ||
-        /^(?:server-only|next\/headers|next\/cache|next\/server)$/.test(source) ||
-        boundariesMatchesImport(options.serverImports, source)
+        boundariesMatchesImport(options.server, source)
 
       if (!serverOnly || server) {
         return
@@ -90,7 +97,7 @@ export const boundariesNext = defineRule({
 
     return {
       Program(program) {
-        options = optionsFirst<BoundariesNextOptions>(context)
+        options = { ...boundariesNextDefaults, ...optionsFirst<BoundariesNextOptions>(context) }
         reactNamespaces.clear()
         file = context.filename.replaceAll('\\', '/')
         const directives = new Map<string, ESTree.Node>()
@@ -131,7 +138,7 @@ export const boundariesNext = defineRule({
       ImportDeclaration(node) {
         const typeOnly = astIsTypeOnlyImport(node)
         check(node, node.source.value, typeOnly)
-        if (typeOnly || !(server || shared) || node.source.value !== 'react') {
+        if (typeOnly || !(server || shared) || !options.hookPackages.includes(node.source.value)) {
           return
         }
 
@@ -159,16 +166,9 @@ export const boundariesNext = defineRule({
           boundariesReport(context, node, `${node.object.name}.${name}`, boundariesClientHookReason)
         }
       },
-      ExportNamedDeclaration(node) {
-        if (node.source) {
-          check(node, node.source.value, boundariesIsTypeOnlyExport(node))
-        }
-      },
-      ExportAllDeclaration(node) {
-        check(node, node.source.value, node.exportKind === 'type')
-      },
+      ...boundariesExportVisitors(check),
       ImportExpression(node) {
-        boundariesImportExpression(context, node, Boolean(options.allowComputedImportsIn?.includes(file)), (source) => check(node, source, false))
+        boundariesImportExpression(context, node, Boolean(options.dynamic?.includes(file)), (source) => check(node, source, false))
       },
       'Program:exit'() {
         const scope = context.sourceCode.scopeManager.scopes.at(0)
@@ -207,7 +207,7 @@ export const boundariesNext = defineRule({
             env.object === node &&
             key?.type === 'MemberExpression' &&
             key.object === env &&
-            (boundariesMemberName(key) ?? '').startsWith('NEXT_PUBLIC_')
+            (boundariesMemberName(key) ?? '').startsWith(options.publicEnv)
 
           if (serverGlobal && !server && (client || shared) && !publicEnv) {
             boundariesReport(context, node, name, 'server globals are unavailable in browser and shared modules')

@@ -305,10 +305,10 @@ export const presetNextSegmentExports = [
 
 export const presetExportPrefix = {
   stem: 'before-first-dot',
-  trailingRoles: ['constants', 'utils', 'handler', 'service', 'types'],
-  roleSeparators: ['.', '-'],
+  roles: ['constants', 'utils', 'handler', 'service', 'types'],
+  separators: ['.', '-'],
   normalize: 'remove-separators',
-  allowPattern: '^(make[A-Z]|\\*$)',
+  allow: '^(make[A-Z]|\\*$)',
 }
 
 export const presetGeneratedFiles = [
@@ -330,17 +330,24 @@ export const presetIllustrationPalette = [
 
 export const presetGroupOrder: PresetTypes.PresetGroupName[] = [
   'style', 'imports', 'types', 'layout', 'naming', 'comments', 'basics', 'console', 'tests', 'schemas', 'sql', 'orpc',
-  'react', 'forms', 'tanstack', 'next', 'expo', 'backend', 'tailwind', 'shadcn', 'kit', 'limits',
+  'react', 'forms', 'tanstack', 'next', 'expo', 'backend', 'tailwind', 'shadcn', 'kit', 'limits', 'deny', 'externals',
 ]
 
-export const presetDefaultGroups: PresetTypes.PresetGroupName[] = ['layout', 'limits', 'style', 'basics', 'naming', 'comments', 'types', 'imports', 'tests']
+export const presetDefaultGroups: PresetTypes.PresetGroupName[] = [
+  'layout', 'limits', 'style', 'basics', 'naming', 'comments', 'types', 'imports', 'tests', 'deny', 'externals',
+]
+
+export const presetExternals = [
+  '@napi-rs/*', '@node-rs/*', '@takumi-rs/*', 'sharp', 'pg', 'ioredis', 'bullmq', 'tiny-secp256k1', 'ssh2', 'playwright',
+  'playwright-core',
+]
 
 export const presetGroupOptions: PresetTypes.PresetGroupDefaults = {
-  layout: { level: 'error', services: undefined, hooks: undefined, components: undefined, suffixes: [] },
+  layout: { level: 'error', services: undefined, hooks: undefined, components: undefined, suffixes: [], strict: false, operations: 'flat', service: ['make{Domain}Service', '{Domain}Service'] },
   limits: { level: 'error', lines: 400, types: 1000, complexity: 32 },
-  style: { level: 'error', quotes: 'single', semicolons: true, multiline: true, padding: true },
+  style: { level: 'error', quotes: 'single', semicolons: true, multiline: true, padding: true, dashes: true },
   basics: { level: 'error', trivial: true, state: true, switch: true, negation: true },
-  naming: { level: 'error', files: true, exports: true, folders: true },
+  naming: { level: 'error', files: true, exports: true, folders: true, unique: undefined },
   comments: { level: 'error', directives: true },
   types: { level: 'error', placement: true, safety: true, colocated: [] },
   imports: { level: 'error', sort: true, boundaries: true, aliases: {}, internal: undefined },
@@ -352,12 +359,14 @@ export const presetGroupOptions: PresetTypes.PresetGroupDefaults = {
   tailwind: { level: 'error', css: undefined, rem: 16 },
   shadcn: { level: 'error', ui: '@/components/ui', components: ['^@/components/'] },
   kit: { level: 'error' },
-  backend: { level: 'error', exports: undefined },
+  backend: { level: 'error', exports: undefined, registry: undefined, writes: ['insertInto', 'updateTable', 'deleteFrom', 'mergeInto', 'replaceInto'] },
   orpc: { level: 'error', public: [], composers: [], client: undefined },
   schemas: { level: 'error' },
   forms: { level: 'error', resolver: 'standardSchemaResolver' },
   sql: { level: 'error', sanitizers: ['escapeLikeWildcards'] },
   console: { level: 'error' },
+  deny: { level: 'error', imports: {}, calls: {} },
+  externals: { level: 'error', packages: presetExternals },
 }
 
 export const presetFolderKeys = ['severity', 'source', 'rules']

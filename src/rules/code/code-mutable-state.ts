@@ -34,7 +34,7 @@ export const codeMutableState = defineRule({
             type: 'array',
             items: { type: 'string', enum: ['let', 'var'] },
           },
-          allowNamePattern: optionsPatternSchema,
+          allow: optionsPatternSchema,
         },
       },
     ],
@@ -48,7 +48,7 @@ export const codeMutableState = defineRule({
 
     return {
       before() {
-        const { kinds: configured = ['let', 'var'], allowNamePattern } = optionsFirst<CodeMutableStateOptions>(
+        const { kinds: configured = ['let', 'var'], allow: allowNamePattern } = optionsFirst<CodeMutableStateOptions>(
           context,
           {},
         )

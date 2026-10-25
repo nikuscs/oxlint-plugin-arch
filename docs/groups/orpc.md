@@ -14,6 +14,6 @@ Takes `true`, `false`, `'warn'` or an object:
 | --- | --- | --- | --- |
 | `public` | `string[]` | `[]` | Public procedure globs |
 | `composers` | `string[]` | `[]` | Output schema helpers that count as `.output()` |
-| `client` | `string` | `services/rpc.client.ts` | The one file that owns `RouterClient` |
+| `client` | `string` | each web app's `services/rpc/rpc.client.ts` (`services/rpc.client.ts` with `layout.services: 'flat'`) | Project-relative path of the one file that owns `RouterClient` |
 
 Rules: [`arch/backend-orpc-output`](../rules/backend-orpc-output.md).

@@ -16,8 +16,8 @@ export const User = z.object({ name: z.string().min(1) })
 | --- | --- | --- | --- |
 | `namespaces` | `string[]` | `['z']` | Schema namespace identifiers |
 | `methods` | `string[]` | `['array', 'union', 'record', 'tuple']` | Element calls checked besides `z.object` |
-| `structuralMethods` | `string[]` | `['and', 'array', 'discriminatedUnion', 'intersection', 'lazy', 'object', 'or', 'pipe', 'record', 'transform', 'tuple', 'union']` | Calls that are not scalar |
-| `allowZodScalars` | `boolean` | `true` | Also check single uses inside `methods` calls |
+| `structural` | `string[]` | `['and', 'array', 'discriminatedUnion', 'intersection', 'lazy', 'object', 'or', 'pipe', 'record', 'transform', 'tuple', 'union']` | Calls that are not scalar |
+| `scalars` | `boolean` | `true` | Also check single uses inside `methods` calls |
 
 ```ts
 'arch/schemas-single-use': ['error', { namespaces: ['z'] }]

@@ -5,7 +5,7 @@ export type CodeConstructorEntry = string | { name: string; message?: string }
 
 export interface CodeConstructorOptions {
   constructors: CodeConstructorEntry[]
-  checkCalls?: boolean
+  calls?: boolean
   message?: string
 }
 
@@ -15,14 +15,14 @@ export interface CodeLiteralInOptions {
 
 export interface CodeMutableStateOptions {
   kinds?: ('let' | 'var')[]
-  allowNamePattern?: OptionsPattern
+  allow?: OptionsPattern
 }
 
 export interface CodeObjectParamsOptions {
-  maxParams?: number
-  allDeclarations?: boolean
-  serviceMethods?: boolean
-  allowPattern?: OptionsPattern
+  max?: number
+  all?: boolean
+  services?: boolean
+  allow?: OptionsPattern
 }
 
 export interface CodePairedCallPair {
@@ -44,19 +44,19 @@ export interface CodePairedCallState extends CodePairedCallPair {
 export interface CodePromiseMutationOptions {
   combinators: string[]
   methods: string[]
-  checkAssignments: boolean
+  assignments: boolean
 }
 
 export type CodePromiseMutationBinding = Pick<ESTree.IdentifierReference, 'name' | 'range'>
 
 export interface CodeTrivialFunctionsOptions {
-  allowPattern?: OptionsPattern
-  allowCallees?: string[]
-  allowAsync?: boolean
+  allow?: OptionsPattern
+  callees?: string[]
+  async?: boolean
   mode?: 'legacy' | 'precise'
-  checkServiceMethods?: boolean
-  bannedNames?: string[]
-  checkGenericGuards?: boolean
+  services?: boolean
+  deny?: string[]
+  guards?: boolean
 }
 
 export interface CodeTrivialFunctionsGuardState {

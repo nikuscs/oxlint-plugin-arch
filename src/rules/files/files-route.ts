@@ -37,21 +37,21 @@ export const filesRoute = defineRule({
         type: 'object',
         additionalProperties: false,
         properties: {
-          exportName: { type: 'string' },
-          allowedExports: { type: 'array', items: { type: 'string' } },
-          inspectExports: { type: 'boolean' },
-          bannedHooks: { type: 'array', items: { type: 'string' } },
-          banIntrinsicJsx: { type: 'boolean' },
+          export: { type: 'string' },
+          exports: { type: 'array', items: { type: 'string' } },
+          inspect: { type: 'boolean' },
+          hooks: { type: 'array', items: { type: 'string' } },
+          intrinsic: { type: 'boolean' },
         },
       },
     ],
     defaultOptions: [
       {
-        exportName: 'Route',
-        allowedExports: [],
-        inspectExports: false,
-        bannedHooks: ['useState', 'useEffect', 'useMutation'],
-        banIntrinsicJsx: true,
+        export: 'Route',
+        exports: [],
+        inspect: false,
+        hooks: ['useState', 'useEffect', 'useMutation'],
+        intrinsic: true,
       },
     ],
     messages: {
@@ -63,10 +63,9 @@ export const filesRoute = defineRule({
   createOnce(context) {
     return {
       Program(program) {
-        const { exportName, allowedExports = [], inspectExports = false, bannedHooks, banIntrinsicJsx } =
-          optionsFirst<FilesRouteOptions>(context)
+        const { export: exportName, exports, inspect, hooks, intrinsic } = optionsFirst<FilesRouteOptions>(context)
 
-        const allowed = new Set([exportName, ...allowedExports])
+        const allowed = new Set([exportName, ...exports])
         const expected = [...allowed].join("', '")
         const bindings = exportsCollect(program)
 
@@ -80,15 +79,15 @@ export const filesRoute = defineRule({
           }
         }
 
-        const banned = new Set(bannedHooks)
+        const banned = new Set(hooks)
         const inspected = new Set<number>()
 
         for (const item of declarationsTopLevelUnexportedFunctions(program)) {
           inspected.add(item.node.start)
-          inspectAdapter(context, item, banned, banIntrinsicJsx)
+          inspectAdapter(context, item, banned, intrinsic)
         }
 
-        if (!inspectExports) {
+        if (!inspect) {
           return
         }
 
@@ -105,7 +104,7 @@ export const filesRoute = defineRule({
 
         for (const item of [...exportsFunctions(program), ...defaultFunctions]) {
           if (routeNames.has(item.name) && !inspected.has(item.node.start)) {
-            inspectAdapter(context, item, banned, banIntrinsicJsx)
+            inspectAdapter(context, item, banned, intrinsic)
           }
         }
       },

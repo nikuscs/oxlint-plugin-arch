@@ -19,12 +19,12 @@ export const filesExports = defineRule({
         properties: {
           names: { type: 'array', items: { type: 'string' } },
           patterns: { type: 'array', items: { type: 'string' } },
-          domainStem: { type: 'string', enum: [...namingStemModes] },
-          trailingRoles: { type: 'array', items: { type: 'string' } },
-          roleSeparators: { type: 'array', items: { type: 'string' } },
-          allowTypeExports: { type: 'boolean' },
+          stem: { type: 'string', enum: [...namingStemModes] },
+          roles: { type: 'array', items: { type: 'string' } },
+          separators: { type: 'array', items: { type: 'string' } },
+          types: { type: 'boolean' },
           factory: { type: 'string' },
-          factoryScope: { type: 'string', enum: ['exports', 'declarations'] },
+          scope: { type: 'string', enum: ['exports', 'declarations'] },
         },
         anyOf: [{ required: ['names'] }, { required: ['patterns'] }, { required: ['factory'] }],
       },
@@ -42,7 +42,7 @@ export const filesExports = defineRule({
 
         if (options.factory !== undefined) {
           const expected = options.factory.replaceAll('{Stem}', namingPascalCase(basename)).replaceAll('{stem}', basename)
-          const functions = options.factoryScope === 'declarations' ? declarationsFunctions(program) : exportsFunctions(program)
+          const functions = options.scope === 'declarations' ? declarationsFunctions(program) : exportsFunctions(program)
 
           if (functions.length === 0) {
             context.report({
@@ -67,7 +67,7 @@ export const filesExports = defineRule({
           return
         }
 
-        const domain = namingFileStem(basename, options.domainStem, options.trailingRoles, options.roleSeparators)
+        const domain = namingFileStem(basename, options.stem, options.roles, options.separators)
         const pascalDomain = namingPascalCase(domain)
         const camelDomain = namingCamelCase(domain)
         const allowed = (options.names ?? []).map((template) => template.replaceAll('{Domain}', pascalDomain).replaceAll('{domain}', camelDomain))
@@ -83,7 +83,7 @@ export const filesExports = defineRule({
         const allowedLabel = [...allowed, ...patterns.map((pattern) => pattern.toString())].join(', ')
 
         for (const binding of exportsCollect(program)) {
-          if (options.allowTypeExports && binding.typeOnly) {
+          if (options.types && binding.typeOnly) {
             continue
           }
 

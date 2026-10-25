@@ -12,6 +12,11 @@ export function optionsFirst<T>(context: Context, fallback?: T): T {
   return (context.options[0] ?? fallback) as T
 }
 
+export function optionsAll<T>(context: Context): T[] {
+  // oxlint-disable-next-line dillon-anti-slop/require-safety-comment-for-type-assertion -- Oxlint validates options against meta.schema before create runs
+  return context.options as T[]
+}
+
 export function optionsPatterns(pattern: OptionsPattern | undefined, flags?: string): RegExp[] {
   return optionsPatternsWithEmpty(pattern === undefined ? undefined : [pattern].flat().filter((source) => source !== ''), flags)
 }
@@ -27,8 +32,22 @@ export function optionsPatternsTest(patterns: RegExp[], value: string): boolean 
   })
 }
 
+export function optionsGlob(pattern: string): RegExp {
+  const source = pattern
+    .replaceAll(/[.+^$()|[\]\\]/g, '\\$&')
+    .replaceAll('?', '[^/]')
+    .replaceAll('**/', '\u0000')
+    .replaceAll('**', '\u0001')
+    .replaceAll('*', '[^/]*')
+    .replaceAll('\u0000', '(?:.*/)?')
+    .replaceAll('\u0001', '.*')
+    .replaceAll(/\{([^}]*)\}/g, (_, options: string) => `(?:${options.split(',').join('|')})`)
+
+  return new RegExp(`^${source}$`)
+}
+
 export function optionsPatternLabel(pattern: OptionsPattern | undefined): string {
-  return pattern === undefined ? '' : [pattern].flat().join(' | ')
+  return pattern === undefined ? '' : [pattern].flat().filter((source) => source !== '').join(' | ')
 }
 
 export function optionsAssertMockingApis(patterns: string[]): void {

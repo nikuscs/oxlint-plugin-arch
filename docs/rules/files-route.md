@@ -19,12 +19,12 @@ function UsersRoute() {
 
 | Option | Type | Default | |
 | --- | --- | --- | --- |
-| `exportName` | `string` | `'Route'` | The one export the file needs |
-| `allowedExports` | `string[]` | `[]` | Other exports to allow |
-| `inspectExports` | `boolean` | `false` | Also inspect exported route functions |
-| `bannedHooks` | `string[]` | `['useState', 'useEffect', 'useMutation']` | Hooks adapters must not call |
-| `banIntrinsicJsx` | `boolean` | `true` | Report lowercase JSX like `<div>` |
+| `export` | `string` | `'Route'` | The one export the file needs |
+| `exports` | `string[]` | `[]` | Other exports to allow |
+| `inspect` | `boolean` | `false` | Also inspect exported route functions |
+| `hooks` | `string[]` | `['useState', 'useEffect', 'useMutation']` | Hooks adapters must not call |
+| `intrinsic` | `boolean` | `true` | Report lowercase JSX like `<div>` |
 
 ```ts
-'arch/files-route': ['error', { allowedExports: ['loader'], bannedHooks: ['useState', 'useEffect'] }]
+'arch/files-route': ['error', { exports: ['loader'], hooks: ['useState', 'useEffect'] }]
 ```

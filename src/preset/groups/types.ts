@@ -41,12 +41,12 @@ export const typesGroup: PresetBuilder<'types'> = (project, settings) => {
       presetOverride(presetScopes(app, '**/*.{utils,constants}.ts'), { 'arch/types-declarations': 'error' }, [...ui, ...testFiles]),
       presetOverride(
         [...presetScopes([...schemaOwners, ...packageSources], 'types/**/*.types.ts'), ...colocated, ...presetScopes(app, '**/*.constants.ts')],
-        { 'arch/files-no-functions': ['error', { banReExports: false }] },
+        { 'arch/files-no-functions': ['error', { reexports: false }] },
       ),
       ...(runtimeFreeTypes.length > 0
         ? [
           presetOverride(presetScopes(runtimeFreeTypes, 'types/**/*.types.ts'), {
-            'arch/files-types-only': ['error', { runtimeImports: 'ban', allowImportSources: [], banReExports: true }],
+            'arch/files-types-only': ['error', { imports: 'ban', sources: [], reexports: true }],
           }),
         ]
         : []),
@@ -62,7 +62,7 @@ export const typesGroup: PresetBuilder<'types'> = (project, settings) => {
         'arch/types-imported-alias': 'error',
         'arch/code-literal-in': 'error',
         'arch/code-promise-mutation': 'error',
-        'arch/code-constructor': ['error', { constructors: ['Error'], checkCalls: true }],
+        'arch/code-constructor': ['error', { constructors: ['Error'], calls: true }],
         'dillon-anti-slop/no-chained-type-assertions': 'error',
         'dillon-anti-slop/no-conditional-empty-object-spread': 'error',
         'dillon-anti-slop/no-known-value-widening': 'error',

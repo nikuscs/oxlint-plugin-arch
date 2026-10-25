@@ -13,13 +13,33 @@ export const expoGroup: PresetBuilder<'expo'> = (project, settings) => {
       {
         'arch/files-route': [
           'error',
-          { exportName: 'default', allowedExports: presetExpoRouteExports, bannedHooks: ['useState', 'useEffect', 'useMutation'], banIntrinsicJsx: false },
+          { export: 'default', exports: presetExpoRouteExports, hooks: ['useState', 'useEffect', 'useMutation'], intrinsic: false },
+        ],
+      },
+      testFiles,
+    ),
+    presetOverride(
+      presetScopes(expoWeb, 'app/**/*.tsx'),
+      {
+        'arch/naming-file': [
+          'error',
+          {
+            pattern: '^(?:_layout|index|\\[(?:[.]{3})?[\\w.]+\\]|[+][a-z][\\w-]*|[a-z][a-z0-9-]*)(?:[.](?:web|native|ios|android))?[.]tsx$',
+            message: 'Expo Router files are kebab-case, _layout, index, [param], [...rest] or +special.',
+          },
+        ],
+        'arch/files-helpers': [
+          'error',
+          {
+            allow: '^makeStyles$',
+            message: 'Route files hold screens and their components; move logic to a service or hook.',
+          },
         ],
       },
       testFiles,
     ),
     presetOverride(presetScopes(expoWeb, 'app/**/*+api.ts'), {
-      'arch/files-route': ['error', { exportName: 'GET', allowedExports: ['HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], bannedHooks: [], banIntrinsicJsx: false }],
+      'arch/files-route': ['error', { export: 'GET', exports: ['HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], hooks: [], intrinsic: false }],
     }),
   ]
 

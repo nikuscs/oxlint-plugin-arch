@@ -14,7 +14,7 @@ export const typesDeclarations = defineRule({
         type: 'object',
         additionalProperties: false,
         properties: {
-          allowPattern: optionsPatternSchema,
+          allow: optionsPatternSchema,
         },
       },
     ],
@@ -27,12 +27,12 @@ export const typesDeclarations = defineRule({
     let allowedValues: RegExp[] = []
 
     function check(node: TypesDeclarationNode) {
-      const allowedValue =
-        node.type === 'TSTypeAliasDeclaration' &&
-        allowedValues.length > 0 &&
-        optionsPatternsTest(allowedValues, `= ${context.sourceCode.getText(node.typeAnnotation)}`)
-
-      if (optionsPatternsTest(allowedNames, node.id.name) || allowedValue) {
+      if (
+        optionsPatternsTest(allowedNames, node.id.name) ||
+        (node.type === 'TSTypeAliasDeclaration' &&
+          allowedValues.length > 0 &&
+          optionsPatternsTest(allowedValues, `= ${context.sourceCode.getText(node.typeAnnotation)}`))
+      ) {
         return
       }
       context.report({
@@ -44,7 +44,7 @@ export const typesDeclarations = defineRule({
 
     return {
       before() {
-        const { allowPattern } = optionsFirst<TypesDeclarationsOptions>(context, {})
+        const { allow: allowPattern } = optionsFirst<TypesDeclarationsOptions>(context, {})
         const sources = allowPattern === undefined ? [] : [allowPattern].flat()
         allowedNames = optionsPatterns(sources.filter((source) => !isValuePattern(source)))
         allowedValues = optionsPatterns(sources.filter(isValuePattern))

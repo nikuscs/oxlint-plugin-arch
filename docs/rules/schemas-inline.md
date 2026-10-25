@@ -15,8 +15,8 @@ export const Users = z.array(User)
 | --- | --- | --- | --- |
 | `namespaces` | `string[]` | `['z']` | Schema namespace identifiers |
 | `methods` | `string[]` | `['array', 'union', 'record', 'tuple']` | Calls whose elements are checked |
-| `structuralMethods` | `string[]` | `['array', 'discriminatedUnion', 'intersection', 'lazy', 'object', 'record', 'tuple', 'union']` | Calls that count as structural |
-| `allowZodScalars` | `boolean` | `true` | Allow inline scalars like `z.string()` |
+| `structural` | `string[]` | `['array', 'discriminatedUnion', 'intersection', 'lazy', 'object', 'record', 'tuple', 'union']` | Calls that count as structural |
+| `scalars` | `boolean` | `true` | Allow inline scalars like `z.string()` |
 
 ```ts
 'arch/schemas-inline': ['error', { namespaces: ['z', 'v'] }]

@@ -1,6 +1,6 @@
 import { defineRule } from '@oxlint/plugins'
 import { astMemberName } from '../../utils/ast.utils.ts'
-import { optionsFirst, optionsPatternSchema, optionsPatternsTest } from '../../utils/options.utils.ts'
+import { optionsFirst, optionsPatternSchema, optionsPatternsTest, optionsPatternsWithEmpty } from '../../utils/options.utils.ts'
 import { sourceIndentSchema, sourceIndentUnit, sourceLineIndent, sourceNewline } from '../../utils/source.utils.ts'
 import type * as LayoutTypes from '../../types/layout.types.ts'
 import type { ESTree } from '@oxlint/plugins'
@@ -20,12 +20,12 @@ export const layoutChain = defineRule({
               type: 'object',
               additionalProperties: false,
               properties: {
-                minDepth: { type: 'integer', minimum: 1 },
+                min: { type: 'integer', minimum: 1 },
                 methods: { type: 'array', items: { type: 'string' } },
-                onlyMethods: { type: 'array', items: { type: 'string' } },
-                rootPattern: optionsPatternSchema,
+                only: { type: 'array', items: { type: 'string' } },
+                root: optionsPatternSchema,
               },
-              required: ['minDepth'],
+              required: ['min'],
             },
           },
           indent: sourceIndentSchema,
@@ -47,10 +47,10 @@ export const layoutChain = defineRule({
       before() {
         const options = optionsFirst<LayoutTypes.LayoutChainOptions>(context, { groups: [] })
         groups = options.groups.map((group) => ({
-          minDepth: group.minDepth,
+          min: group.min,
           methods: group.methods ? new Set(group.methods) : undefined,
-          onlyMethods: group.onlyMethods ? new Set(group.onlyMethods) : undefined,
-          rootPatterns: [group.rootPattern ?? []].flat().map((pattern) => new RegExp(pattern)),
+          only: group.only ? new Set(group.only) : undefined,
+          rootPatterns: optionsPatternsWithEmpty(group.root),
         }))
         indentUnit = sourceIndentUnit(options.indent)
         newline = sourceNewline(context.sourceCode.text)
@@ -71,14 +71,12 @@ export const layoutChain = defineRule({
 
         while (root.type === 'CallExpression' && root.callee.type === 'MemberExpression') {
           const member: ESTree.MemberExpression = root.callee
-          links.unshift({
-            call: root,
-            member,
-            methodName: astMemberName(member),
-          })
+          links.push({ member, methodName: astMemberName(member) })
           processed.add(root)
           root = member.object
         }
+
+        links.reverse()
 
         let rootName: ESTree.Expression = root
 
@@ -86,7 +84,7 @@ export const layoutChain = defineRule({
           rootName = rootName.expression
         }
 
-        const matches = groups.some(({ minDepth, methods, onlyMethods, rootPatterns }) => {
+        const matches = groups.some(({ min: minDepth, methods, only: onlyMethods, rootPatterns }) => {
           if (links.length < minDepth) {
             return false
           }
@@ -99,7 +97,7 @@ export const layoutChain = defineRule({
           )
         })
 
-        if (!matches) {
+        if (!matches || links.some(({ member }) => member.computed)) {
           return
         }
 
@@ -111,12 +109,6 @@ export const layoutChain = defineRule({
         let needsFix = false
 
         for (const { member } of links) {
-          if (member.computed) {
-            fixable = false
-            needsFix = true
-            continue
-          }
-
           const operatorToken = source.getTokenBefore(member.property)
           const objectEnd = (operatorToken && source.getTokenBefore(operatorToken)) ?? member.object
           const range: [number, number] = [objectEnd.range[1], member.property.range[0]]

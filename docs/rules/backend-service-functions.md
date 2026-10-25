@@ -21,12 +21,12 @@ export function createChat(title: string) {
 
 | Option | Type | Default | |
 | --- | --- | --- | --- |
-| `allowLocalHelpers` | `boolean` | `false` | Allow helpers nested inside the operation |
-| `allowReturnedMethods` | `boolean` | `false` | Allow functions returned as methods of the operation's object |
+| `helpers` | `boolean` | `false` | Allow helpers nested inside the operation |
+| `methods` | `boolean` | `false` | Allow functions returned as methods of the operation's object |
 | `frontend` | `boolean` | `false` | Several exported operations, each with local helpers |
-| `singleExport` | `boolean` | `false` | Export exactly one named operation and nothing else |
+| `single` | `boolean` | `false` | Export exactly one named operation and nothing else |
 | `message` | `string` | built in | Report text |
 
 ```ts
-'arch/backend-service-functions': ['error', { allowLocalHelpers: true, singleExport: true }]
+'arch/backend-service-functions': ['error', { helpers: true, single: true }]
 ```

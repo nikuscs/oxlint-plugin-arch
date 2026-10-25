@@ -1,20 +1,27 @@
 export interface BackendOrpcOutputOptions {
   composers: string[]
-  handlerMethod?: string
-  outputMethod?: string
+  handler?: string
+  output?: string
 }
 
 export interface BackendServiceFunctionsOptions {
   frontend?: boolean
-  allowLocalHelpers?: boolean
-  allowReturnedMethods?: boolean
-  singleExport?: boolean
+  helpers?: boolean
+  methods?: boolean
+  single?: boolean
   message?: string
 }
 
 export interface BackendSqlLikeOptions {
   methods: string[]
   sanitizers: string[]
-  allowSanitizedBindings?: boolean
-  operatorMethods?: string[]
+  bindings?: boolean
+  operators?: string[]
+}
+
+export interface BackendRegistryOptions {
+  registry: string
+  services: string
+  skip?: string[]
+  object?: string
 }

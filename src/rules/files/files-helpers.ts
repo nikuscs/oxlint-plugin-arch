@@ -13,10 +13,10 @@ export const filesHelpers = defineRule({
         type: 'object',
         additionalProperties: false,
         properties: {
-          allowPattern: optionsPatternSchema,
+          allow: optionsPatternSchema,
           message: { type: 'string' },
-          detectComponents: { type: 'boolean' },
-          hookPattern: optionsPatternSchema,
+          components: { type: 'boolean' },
+          hooks: optionsPatternSchema,
         },
       },
     ],
@@ -28,10 +28,10 @@ export const filesHelpers = defineRule({
     return {
       Program(program) {
         const {
-          allowPattern,
+          allow: allowPattern,
           message = 'Keep this helper inside its owning component or hook.',
-          detectComponents = true,
-          hookPattern = '^use[A-Z]',
+          components: detectComponents = true,
+          hooks: hookPattern = '^use[A-Z]',
         } = optionsFirst<FilesHelpersOptions>(context, {})
 
         const allowed = optionsPatterns(allowPattern)

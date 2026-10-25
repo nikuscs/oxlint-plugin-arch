@@ -10,13 +10,13 @@ function layoutObjectIsWhitespace(text: string): boolean {
 export const layoutObject = defineRule({
   meta: {
     type: 'layout',
-    fixable: 'code',
+    fixable: 'whitespace',
     schema: [
       {
         type: 'object',
         additionalProperties: false,
         properties: {
-          minProperties: { type: 'integer', minimum: 1, default: 3 },
+          min: { type: 'integer', minimum: 1, default: 3 },
           scope: { type: 'string', enum: ['call-args', 'all'], default: 'call-args' },
           indent: { ...sourceIndentSchema, default: 2 },
         },
@@ -36,7 +36,7 @@ export const layoutObject = defineRule({
     return {
       before() {
         const options = optionsFirst<LayoutObjectOptions>(context, {})
-        minProperties = options.minProperties ?? 3
+        minProperties = options.min ?? 3
         scope = options.scope ?? 'call-args'
         indentUnit = sourceIndentUnit(options.indent)
         newline = sourceNewline(context.sourceCode.text)
@@ -88,11 +88,11 @@ export const layoutObject = defineRule({
               if (!layoutObjectIsWhitespace(between.slice(0, comma)) || !layoutObjectIsWhitespace(between.slice(comma + 1))) {
                 return null
               }
-              gaps.push([next ? after + comma + 1 : after, limit])
+              gaps.push([after + comma + 1, limit])
             }
 
             return gaps.map((gap, index) =>
-              fixer.replaceTextRange(gap, index === gaps.length - 1 ? `,${newline}${baseIndent}` : `${newline}${propertyIndent}`),
+              fixer.replaceTextRange(gap, index === gaps.length - 1 ? `${newline}${baseIndent}` : `${newline}${propertyIndent}`),
             )
           },
         })

@@ -2,7 +2,7 @@ import { presetOverride, presetScopes } from '../preset.utils.ts'
 import type { PresetBuilder } from '../../types/preset.types.ts'
 
 export const basicsGroup: PresetBuilder<'basics'> = (project, settings) => {
-  const trivial = { mode: 'precise', allowAsync: false, allowCallees: [] }
+  const trivial = { mode: 'precise', async: false, callees: [] }
   const { appFiles, safetyFiles, ui, web } = project
 
   return [
@@ -11,7 +11,7 @@ export const basicsGroup: PresetBuilder<'basics'> = (project, settings) => {
         presetOverride(appFiles, { 'arch/code-trivial-functions': ['error', trivial] }, ui),
         presetOverride(
           [...presetScopes(web, 'services/**/*.{client,server,rsc}.ts'), ...presetScopes(web, 'services/**/*.rsc.tsx')],
-          { 'arch/code-trivial-functions': ['error', { ...trivial, checkServiceMethods: true }] },
+          { 'arch/code-trivial-functions': ['error', { ...trivial, services: true }] },
           ui,
         ),
       ]

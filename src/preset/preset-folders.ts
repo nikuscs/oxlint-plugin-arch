@@ -76,6 +76,18 @@ function presetGroupValue<K extends PresetTypes.PresetGroupName>(
   return { ...base, ...changes, level: severity ?? base.level }
 }
 
+function presetDenyEntries(inherited: Record<string, string>, changes: Record<string, string | false> | undefined): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries({ ...inherited, ...changes }).flatMap(([key, message]) => {
+      if (message !== false && typeof message !== 'string') {
+        throw new PresetError(`Deny entry \`${key}\` takes a message string or false.`)
+      }
+
+      return message === false ? [] : [[key, message]]
+    }),
+  )
+}
+
 function presetEffective(folder: PresetTypes.PresetFolder, parent: PresetTypes.PresetEffective | null): PresetTypes.PresetEffective {
   const resolveGroup = <K extends PresetTypes.PresetGroupName>(name: K) => {
     const defaults = PresetConstants.presetDefaultGroups.includes(name) ? PresetConstants.presetGroupOptions[name] : null
@@ -84,7 +96,20 @@ function presetEffective(folder: PresetTypes.PresetFolder, parent: PresetTypes.P
   }
 
   // SAFETY: every entry pairs a group name with that same group's resolved settings.
-  return Object.fromEntries(PresetConstants.presetGroupOrder.map(resolveGroup)) as PresetTypes.PresetEffective
+  const effective = Object.fromEntries(PresetConstants.presetGroupOrder.map(resolveGroup)) as PresetTypes.PresetEffective
+  const deny = folder.deny
+
+  if (effective.deny && deny instanceof Object) {
+    const inherited = (parent ? parent.deny : null) ?? PresetConstants.presetGroupOptions.deny
+
+    effective.deny = {
+      ...effective.deny,
+      imports: presetDenyEntries(inherited.imports, deny.imports),
+      calls: presetDenyEntries(inherited.calls, deny.calls),
+    }
+  }
+
+  return effective
 }
 
 function presetFolder(key: string, value: unknown): PresetTypes.PresetFolder {
@@ -251,6 +276,13 @@ export function presetProject(config: PresetTypes.PresetConfig): PresetTypes.Pre
       .map((key) => presetUnit(root, key, scope))
   })
 
+  const unitKeys = new Set(units.map((unit) => unit.scope.key))
+  const misplaced = live.find((scope) => !unitKeys.has(scope.key) && Object(scope.folder.layout).operations !== undefined)
+
+  if (misplaced) {
+    throw new PresetError(`Set layout.operations on an app or package folder, not on \`${misplaced.key}\`.`)
+  }
+
   const of = (kind: PresetTypes.PresetKind) => units.filter((unit) => unit.kind === kind)
   const webUnits = of('web')
   const web = webUnits.map((unit) => unit.source)
@@ -350,6 +382,7 @@ export function presetProject(config: PresetTypes.PresetConfig): PresetTypes.Pre
       Object.entries(unit.layout).map(([folder, mode]) => ({ path: posix.join(unit.source, folder), folder, mode })),
     ),
     rpcClients,
+    operations: units.flatMap((unit) => (unit.scope.effective.layout?.operations === 'folders' ? [unit.source] : [])),
     packages: libraryUnits.map((unit) => unit.key),
     scripts: of('console').map((unit) => unit.key),
     web,

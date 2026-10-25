@@ -2,6 +2,8 @@
 
 shadcn/ui usage: no restyling, no arbitrary values. Opt-in.
 
+Needs `bun add -d @shadcn/lint`.
+
 ```ts
 folders: {
   'apps/web': { shadcn: { ui: '@acme/ui' } },

@@ -1,6 +1,8 @@
 # arch/layout-call-arguments
 
-One argument per line once a single-line call or `new` has `minArguments` arguments.
+One argument per line once a single-line call or `new` has `min` arguments.
+
+The fix changes only whitespace and preserves whether a trailing comma is present.
 
 ```ts
 // ❌
@@ -16,9 +18,9 @@ createUser(
 
 | Option | Type | Default | |
 | --- | --- | --- | --- |
-| `minArguments` | `number` | `3` | Smallest call that must break |
+| `min` | `number` | `3` | Smallest call that must break |
 | `indent` | `number` | `2` | Spaces per indent level for the fix |
 
 ```ts
-'arch/layout-call-arguments': ['error', { minArguments: 3 }]
+'arch/layout-call-arguments': ['error', { min: 3 }]
 ```

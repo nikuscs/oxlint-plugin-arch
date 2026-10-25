@@ -104,13 +104,13 @@ export function presetRuntime(
     backend: project.backend.map((path) => resolve(project.root, path)),
     aliases: project.aliases,
     backendPackages: project.units.flatMap((unit) => (unit.kind === 'backend' ? [presetPackageName(project.root, unit.key) ?? []].flat() : [])),
-    serverImports: settings.server,
-    clientImports: settings.client,
-    allowComputedImportsIn: settings.dynamic.map((path) => resolve(project.root, path)),
+    server: settings.server,
+    client: settings.client,
+    dynamic: settings.dynamic.map((path) => resolve(project.root, path)),
   }
 
   if (rule === 'arch/boundaries-tanstack') {
-    options.rpcClients = project.rpcClients.map((path) => resolve(project.root, path))
+    options.rpc = project.rpcClients.map((path) => resolve(project.root, path))
   }
 
   return presetOverride([...presetScopes(files, 'services/**/*.{ts,tsx}'), ...presetScopes(files, 'lib/**/*.{ts,tsx}')], {

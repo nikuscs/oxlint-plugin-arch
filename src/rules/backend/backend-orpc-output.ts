@@ -29,8 +29,8 @@ export const backendOrpcOutput = defineRule({
         additionalProperties: false,
         properties: {
           composers: { type: 'array', items: { type: 'string' } },
-          handlerMethod: { type: 'string' },
-          outputMethod: { type: 'string' },
+          handler: { type: 'string' },
+          output: { type: 'string' },
         },
         required: ['composers'],
       },
@@ -47,7 +47,7 @@ export const backendOrpcOutput = defineRule({
           return
         }
 
-        const { composers, handlerMethod = 'handler', outputMethod = 'output' } = optionsFirst<BackendOrpcOutputOptions>(context)
+        const { composers, handler: handlerMethod = 'handler', output: outputMethod = 'output' } = optionsFirst<BackendOrpcOutputOptions>(context)
 
         if (astMemberName(node.callee) !== handlerMethod) {
           return

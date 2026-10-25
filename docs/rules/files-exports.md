@@ -15,15 +15,15 @@ export function useInvoiceQuery() {}
 | --- | --- | --- | --- |
 | `names` | `string[]` | none | Allowed names, with `{Domain}` / `{domain}` |
 | `patterns` | `string[]` | `[]` | Allowed regex sources, same placeholders |
-| `domainStem` | `'before-first-dot' \| 'full-basename'` | `'before-first-dot'` | How the domain is read from the file name |
-| `trailingRoles` | `string[]` | `[]` | Role suffixes stripped from the domain |
-| `roleSeparators` | `string[]` | `['.', '-']` | Separators before a trailing role |
-| `allowTypeExports` | `boolean` | `false` | Skip type-only exports |
+| `stem` | `'before-first-dot' \| 'full-basename'` | `'before-first-dot'` | How the domain is read from the file name |
+| `roles` | `string[]` | `[]` | Role suffixes stripped from the domain |
+| `separators` | `string[]` | `['.', '-']` | Separators before a trailing role |
+| `types` | `boolean` | `false` | Skip type-only exports |
 | `factory` | `string` | none | Required function name; `{Stem}` is the PascalCase file name, `{stem}` is raw |
-| `factoryScope` | `'exports' \| 'declarations'` | `'exports'` | Functions `factory` checks: exported, or every function |
+| `scope` | `'exports' \| 'declarations'` | `'exports'` | Functions `factory` checks: exported, or every function |
 
 At least one of `names`, `patterns` or `factory` is required.
 
 ```ts
-'arch/files-exports': ['error', { names: ['use{Domain}Query'], allowTypeExports: true }]
+'arch/files-exports': ['error', { names: ['use{Domain}Query'], types: true }]
 ```

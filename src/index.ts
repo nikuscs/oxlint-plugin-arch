@@ -1,7 +1,9 @@
 import { eslintCompatPlugin } from '@oxlint/plugins'
 import { backendOrpcOutput } from './rules/backend/backend-orpc-output.ts'
+import { backendRegistry } from './rules/backend/backend-registry.ts'
 import { backendServiceFunctions } from './rules/backend/backend-service-functions.ts'
 import { backendSqlLike } from './rules/backend/backend-sql-like.ts'
+import { boundariesDeny } from './rules/boundaries/boundaries-deny.ts'
 import { boundariesImports } from './rules/boundaries/boundaries-imports.ts'
 import { boundariesNext } from './rules/boundaries/boundaries-next.ts'
 import { boundariesRpcDatabase } from './rules/boundaries/boundaries-rpc-database.ts'
@@ -16,12 +18,14 @@ import { codePairedCall } from './rules/code/code-paired-call.ts'
 import { codePromiseMutation } from './rules/code/code-promise-mutation.ts'
 import { codeSwitch } from './rules/code/code-switch.ts'
 import { codeTrivialFunctions } from './rules/code/code-trivial-functions.ts'
+import { commentsCode } from './rules/comments/comments-code.ts'
 import { commentsDirectives } from './rules/comments/comments-directives.ts'
-import { comments } from './rules/comments/comments.ts'
+import { copyDashes } from './rules/copy/copy-dashes.ts'
 import { filesComponentsOnly } from './rules/files/files-components-only.ts'
 import { filesConstantsOnly } from './rules/files/files-constants-only.ts'
 import { filesDomainConstants } from './rules/files/files-domain-constants.ts'
 import { filesExports } from './rules/files/files-exports.ts'
+import { filesExternals } from './rules/files/files-externals.ts'
 import { filesFactoryKeys } from './rules/files/files-factory-keys.ts'
 import { filesHelpers } from './rules/files/files-helpers.ts'
 import { filesNoFunctions } from './rules/files/files-no-functions.ts'
@@ -65,8 +69,10 @@ export default eslintCompatPlugin({
   meta: { name: 'arch' },
   rules: {
     'backend-orpc-output': backendOrpcOutput,
+    'backend-registry': backendRegistry,
     'backend-service-functions': backendServiceFunctions,
     'backend-sql-like': backendSqlLike,
+    'boundaries-deny': boundariesDeny,
     'boundaries-imports': boundariesImports,
     'boundaries-next': boundariesNext,
     'boundaries-rpc-database': boundariesRpcDatabase,
@@ -81,12 +87,14 @@ export default eslintCompatPlugin({
     'code-promise-mutation': codePromiseMutation,
     'code-switch': codeSwitch,
     'code-trivial-functions': codeTrivialFunctions,
-    comments,
+    'comments-code': commentsCode,
     'comments-directives': commentsDirectives,
+    'copy-dashes': copyDashes,
     'files-components-only': filesComponentsOnly,
     'files-constants-only': filesConstantsOnly,
     'files-domain-constants': filesDomainConstants,
     'files-exports': filesExports,
+    'files-externals': filesExternals,
     'files-factory-keys': filesFactoryKeys,
     'files-helpers': filesHelpers,
     'files-no-functions': filesNoFunctions,

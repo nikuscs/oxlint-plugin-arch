@@ -12,9 +12,9 @@ import { invoiceMaxLines } from './invoice.constants.ts'
 
 | Option | Type | Default | |
 | --- | --- | --- | --- |
-| `includeData` | `boolean` | `false` | Also report literal data (objects, arrays, `new Map([...])`) of any name |
-| `allowServiceMethods` | `boolean` | `false` | Skip service objects exposing public methods |
+| `data` | `boolean` | `false` | Also report literal data (objects, arrays, `new Map([...])`) of any name |
+| `services` | `boolean` | `false` | Skip service objects exposing public methods |
 
 ```ts
-'arch/files-domain-constants': ['error', { includeData: true }]
+'arch/files-domain-constants': ['error', { data: true }]
 ```

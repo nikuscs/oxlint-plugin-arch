@@ -18,12 +18,12 @@ User.parse(input)
 | --- | --- | --- | --- |
 | `packages` | `string[]` | `['zod']` | Schema packages (subpaths included) |
 | `namespaces` | `string[]` | `['z']` | Constructor identifiers |
-| `allowIn` | `string[]` | `[]` | File name suffixes that may build schemas |
-| `allowPathPatterns` | `string[]` | `[]` | Path regexes that may build schemas |
+| `allow` | `string[]` | `[]` | File name suffixes that may build schemas |
+| `patterns` | `string[]` | `[]` | Path regexes that may build schemas |
 | `message` | `string` | none | Message for both reports |
-| `runtimeImportMessage` | `string` | none | Import message; `{{source}}` is replaced |
+| `importMessage` | `string` | none | Import message; `{{source}}` is replaced |
 | `constructionMessage` | `string` | none | Construction message |
 
 ```ts
-'arch/schemas-local': ['error', { allowIn: ['.schemas.ts'] }]
+'arch/schemas-local': ['error', { allow: ['.schemas.ts'] }]
 ```

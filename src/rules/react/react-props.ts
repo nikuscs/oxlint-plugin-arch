@@ -52,7 +52,7 @@ export const reactProps = defineRule({
         type: 'object',
         additionalProperties: false,
         properties: {
-          filePrefix: { type: 'boolean' },
+          prefix: { type: 'boolean' },
         },
       },
     ],
@@ -66,7 +66,7 @@ export const reactProps = defineRule({
   createOnce(context) {
     return {
       Program(program) {
-        const { filePrefix = false } = optionsFirst<ReactPropsOptions>(context, {})
+        const { prefix: filePrefix = false } = optionsFirst<ReactPropsOptions>(context, {})
         const stem = namingFileStem(namingBasename(context.filename).replace(/\.(tsx?|jsx?)$/, ''))
         const prefix = namingNormalized(stem, 'remove-separators')
         const exported = new Set(exportsCollect(program).flatMap((binding) => (binding.typeOnly ? [] : [binding.localName])))

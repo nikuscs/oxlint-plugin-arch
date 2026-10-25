@@ -3,12 +3,16 @@ import type { OxlintConfig, OxlintOverride } from 'oxlint'
 export type PresetLevel = 'error' | 'warn'
 export type PresetSwitch = boolean | 'warn'
 export type PresetLayoutMode = 'flat' | 'domain'
+export type PresetOperations = 'flat' | 'folders'
 
 export interface PresetLayoutOptions {
   services?: PresetLayoutMode | false
   hooks?: PresetLayoutMode | false
   components?: PresetLayoutMode | false
   suffixes?: string[]
+  strict?: boolean
+  operations?: PresetOperations
+  service?: string[]
 }
 
 export interface PresetLimitsOptions {
@@ -22,6 +26,7 @@ export interface PresetStyleOptions {
   semicolons?: boolean
   multiline?: boolean
   padding?: boolean
+  dashes?: boolean
 }
 
 export interface PresetBasicsOptions {
@@ -32,9 +37,10 @@ export interface PresetBasicsOptions {
 }
 
 export interface PresetNamingOptions {
-  files?: boolean
-  exports?: boolean
+  files?: boolean | string
+  exports?: boolean | string
   folders?: boolean
+  unique?: string
 }
 
 export interface PresetCommentsOptions {
@@ -105,9 +111,25 @@ export interface PresetShadcnOptions {
   components?: string[]
 }
 
+export interface PresetRegistryOptions {
+  file: string
+  skip?: string[]
+  object?: string
+}
+
 export interface PresetBackendOptions {
-  services?: boolean
   exports?: string[]
+  registry?: string | PresetRegistryOptions
+  writes?: string[]
+}
+
+export interface PresetDenyOptions {
+  imports?: Record<string, string | false>
+  calls?: Record<string, string | false>
+}
+
+export interface PresetExternalsOptions {
+  packages?: string[]
 }
 
 export interface PresetOrpcOptions {
@@ -147,6 +169,8 @@ export interface PresetGroups {
   forms?: PresetSwitch | PresetFormsOptions
   sql?: PresetSwitch | PresetSqlOptions
   console?: PresetSwitch
+  deny?: PresetSwitch | PresetDenyOptions
+  externals?: PresetSwitch | PresetExternalsOptions
 }
 
 export type PresetGroupName = keyof PresetGroups
@@ -154,7 +178,7 @@ export type PresetGroupName = keyof PresetGroups
 export interface PresetFolder extends PresetGroups {
   severity?: PresetLevel
   source?: string
-  rules?: Record<string, PresetLevel | 'off'>
+  rules?: PresetRules
 }
 
 export type PresetFolders = Record<string, boolean | PresetFolder>
@@ -171,11 +195,11 @@ export type PresetJsPlugins = NonNullable<OxlintConfig['jsPlugins']>
 export type PresetSettings = NonNullable<OxlintConfig['settings']>
 
 export interface PresetResolvedGroups {
-  layout: PresetLayoutOptions & { suffixes: string[] }
+  layout: PresetLayoutOptions & Required<Pick<PresetLayoutOptions, 'suffixes' | 'strict' | 'operations' | 'service'>>
   limits: Required<PresetLimitsOptions>
   style: Required<PresetStyleOptions>
   basics: Required<PresetBasicsOptions>
-  naming: Required<PresetNamingOptions>
+  naming: Required<Omit<PresetNamingOptions, 'unique'>> & Pick<PresetNamingOptions, 'unique'>
   comments: Required<PresetCommentsOptions>
   types: Required<PresetTypesOptions>
   imports: Omit<Required<PresetImportsOptions>, 'internal'> & Pick<PresetImportsOptions, 'internal'>
@@ -187,12 +211,14 @@ export interface PresetResolvedGroups {
   tailwind: Pick<PresetTailwindOptions, 'css'> & { rem: number }
   shadcn: Required<PresetShadcnOptions>
   kit: PresetEmptyOptions
-  backend: PresetBackendOptions
+  backend: PresetBackendOptions & Required<Pick<PresetBackendOptions, 'writes'>>
   orpc: PresetOrpcOptions
   schemas: PresetEmptyOptions
   forms: Required<PresetFormsOptions>
   sql: Required<PresetSqlOptions>
   console: PresetEmptyOptions
+  deny: { imports: Record<string, string>; calls: Record<string, string> }
+  externals: Required<PresetExternalsOptions>
 }
 
 export interface PresetEmptyOptions {
@@ -236,10 +262,10 @@ export interface PresetRuntimeOptions {
   backend: string[]
   aliases: Record<string, string>
   backendPackages: string[]
-  serverImports: string[]
-  clientImports: string[]
-  allowComputedImportsIn: string[]
-  rpcClients?: string[]
+  server: string[]
+  client: string[]
+  dynamic: string[]
+  rpc?: string[]
 }
 
 export interface PresetImportRestriction {
@@ -262,6 +288,7 @@ export interface PresetProject {
   orpc: Required<PresetOrpcOptions>
   layouts: PresetLayoutScope[]
   rpcClients: string[]
+  operations: string[]
   packages: string[]
   scripts: string[]
   web: string[]

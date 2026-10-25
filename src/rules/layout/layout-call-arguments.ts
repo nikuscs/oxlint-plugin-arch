@@ -7,13 +7,13 @@ import type { ESTree } from '@oxlint/plugins'
 export const layoutCallArguments = defineRule({
   meta: {
     type: 'layout',
-    fixable: 'code',
+    fixable: 'whitespace',
     schema: [
       {
         type: 'object',
         additionalProperties: false,
         properties: {
-          minArguments: {
+          min: {
             type: 'integer',
             minimum: 2,
             default: 3,
@@ -84,7 +84,8 @@ export const layoutCallArguments = defineRule({
               return fixer.replaceTextRange(gap, `${newline}${argumentIndent}`)
             }
 
-            return fixer.replaceTextRange(gap, `,${newline}${index === gaps.length - 1 ? baseIndent : argumentIndent}`)
+            const comma = between[index].includes(',') ? ',' : ''
+            return fixer.replaceTextRange(gap, `${comma}${newline}${index === gaps.length - 1 ? baseIndent : argumentIndent}`)
           }),
       })
     }
@@ -92,7 +93,7 @@ export const layoutCallArguments = defineRule({
     return {
       before() {
         const options = optionsFirst<LayoutCallArgumentsOptions>(context, {})
-        minArguments = options.minArguments ?? 3
+        minArguments = options.min ?? 3
         indent = options.indent ?? 2
       },
       CallExpression: check,
