@@ -1,1 +1,0 @@
-import { named } from './exports'; console.log(named);

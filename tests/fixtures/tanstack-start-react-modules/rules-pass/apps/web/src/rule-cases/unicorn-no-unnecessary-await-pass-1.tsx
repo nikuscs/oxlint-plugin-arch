@@ -1,1 +1,0 @@
-await a ? b : c

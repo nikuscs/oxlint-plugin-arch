@@ -1,1 +1,0 @@
-[1].reduce((a,b) => [...a,b], [] as number[]);

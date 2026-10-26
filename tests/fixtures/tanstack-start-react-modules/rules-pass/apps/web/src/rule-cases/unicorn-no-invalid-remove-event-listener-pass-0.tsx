@@ -1,1 +1,0 @@
-new el.removeEventListener("click", () => {})

@@ -1,1 +1,0 @@
-function process(value: unknown) { return value; }

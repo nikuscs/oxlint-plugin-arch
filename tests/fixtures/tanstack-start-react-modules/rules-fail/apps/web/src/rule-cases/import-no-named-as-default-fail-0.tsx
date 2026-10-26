@@ -1,1 +1,0 @@
-import named from './default-export'; console.log(named);

@@ -1,1 +1,0 @@
-<div onMouseOver={() => void 0} />;

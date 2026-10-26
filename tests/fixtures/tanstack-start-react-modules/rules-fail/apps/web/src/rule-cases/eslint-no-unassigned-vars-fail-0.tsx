@@ -1,1 +1,0 @@
-let x; let a = x, b; log(x, a, b);

@@ -1,1 +1,0 @@
-async function run() { try { return Promise.resolve(1); } catch { return 0; } }

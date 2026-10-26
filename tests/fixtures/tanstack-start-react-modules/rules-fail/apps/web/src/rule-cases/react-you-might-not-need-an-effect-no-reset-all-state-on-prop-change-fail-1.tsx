@@ -1,1 +1,0 @@
-import {useState,useEffect} from 'react'; function Component({items}) {const [selection,setSelection] = useState(null); useEffect(()=>{setSelection(null);},[items]);}

@@ -1,1 +1,0 @@
-import './import-no-self-import-fail-0';

@@ -1,1 +1,0 @@
-<App {...props}>foo</App>

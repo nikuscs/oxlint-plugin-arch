@@ -1,1 +1,0 @@
-import value from './default-export'; console.log(value);

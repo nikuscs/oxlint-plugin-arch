@@ -1,1 +1,0 @@
-function foo() { return x; var x = 1; }

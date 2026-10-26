@@ -1,1 +1,0 @@
-function foo(resolve, reject) { return 1; }

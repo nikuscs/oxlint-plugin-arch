@@ -1,1 +1,0 @@
-function bar() { q: for(;;) { break q; } } function foo () { var q = t; }

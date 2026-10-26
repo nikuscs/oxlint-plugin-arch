@@ -5,45 +5,38 @@
   "type": "module",
   "main": "./dist/index.js",
   "exports": {
-    ".": "./dist/index.js",
-    "./presets": {
-      "types": "./dist/presets/index.d.ts",
-      "default": "./dist/presets/index.js"
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
     },
-    "./presets/react-modules-preset": {
-      "types": "./dist/presets/react-modules-preset.d.ts",
-      "default": "./dist/presets/react-modules-preset.js"
+    "./preset": {
+      "types": "./dist/preset/preset.d.ts",
+      "default": "./dist/preset/preset.js"
     },
-    "./presets/next-react-modules-preset": {
-      "types": "./dist/presets/next-react-modules-preset.d.ts",
-      "default": "./dist/presets/next-react-modules-preset.js"
-    },
-    "./presets/tanstack-start-react-modules-preset": {
-      "types": "./dist/presets/tanstack-start-react-modules-preset.d.ts",
-      "default": "./dist/presets/tanstack-start-react-modules-preset.js"
-    },
-    "./rules/dillon-anti-slop": {
-      "types": "./dist/rules/dillon-anti-slop/index.d.ts",
-      "default": "./dist/rules/dillon-anti-slop/index.js"
-    },
-    "./rules/module-policy": {
-      "types": "./dist/rules/module-policy/index.d.ts",
-      "default": "./dist/rules/module-policy/index.js"
+    "./dillon-anti-slop": {
+      "types": "./dist/vendor/dillon-anti-slop/index.d.ts",
+      "default": "./dist/vendor/dillon-anti-slop/index.js"
     }
   },
   "files": [
     "CHANGELOG.md",
-    "src/rules/dillon-anti-slop/LICENSE",
-    "src/rules/dillon-anti-slop/UPSTREAM.md",
+    "src/vendor/dillon-anti-slop/LICENSE",
+    "src/vendor/dillon-anti-slop/UPSTREAM.md",
     "dist"
   ],
   "scripts": {
-    "build": "bun build src/index.ts src/presets/index.ts src/presets/react-modules-preset.ts src/presets/next-react-modules-preset.ts src/presets/tanstack-start-react-modules-preset.ts src/rules/dillon-anti-slop/index.ts src/rules/module-policy/index.ts --root src --outdir dist --target node --format esm --packages external && tsc --project tsconfig.build.json",
-    "check": "bun run lint && bun run build && bun run typecheck && bun run test && bun run check:examples",
-    "lint": "oxlint src examples scripts",
-    "test": "vitest run src/tests",
+    "build": "rm -rf dist && bun build src/index.ts src/preset/preset.ts src/vendor/dillon-anti-slop/index.ts --root src --outdir dist --target node --format esm --packages external && tsc --project tsconfig.build.json",
+    "test": "vitest run src",
+    "check": "bun run build && bun run lint && bun run typecheck && bun run test && bun run lint:dead && bun run lint:dupes && bun run docs:check",
+    "docs": "bun scripts/docs.ts",
+    "docs:check": "bun scripts/docs.ts --check",
+    "bench": "bun scripts/bench.ts",
+    "lint": "oxlint -c oxlint.config.ts --disable-nested-config src examples scripts",
+    "lint:dead": "fallow dead-code",
+    "lint:dupes": "fallow dupes",
+    "lint:slop": "scanr slop",
+    "agents:sync": "bun .agents/sync.ts",
     "typecheck": "tsrs --noEmit",
-    "check:examples": "oxlint examples/minimal.oxlint.config.ts -c examples/minimal.oxlint.config.ts --disable-nested-config && oxlint examples/full.oxlint.config.ts -c examples/full.oxlint.config.ts --disable-nested-config && oxlint examples/dist.oxlint.config.ts -c examples/dist.oxlint.config.ts --disable-nested-config && oxlint examples/monorepo.oxlint.config.ts -c examples/monorepo.oxlint.config.ts --disable-nested-config && oxlint --print-config -c examples/preset.oxlint.config.ts > /dev/null && oxlint --print-config -c examples/mixed-frameworks.oxlint.config.ts > /dev/null",
     "prepublishOnly": "bun run check",
     "release": "bash scripts/release.sh",
     "release:patch": "bash scripts/release.sh patch --yes",
@@ -54,35 +47,35 @@
     "@eslint-community/eslint-plugin-eslint-comments": "4.8.1",
     "@oxlint/plugins": "1.89.0",
     "@regru/eslint-plugin-prefer-early-return": "1.0.0",
-    "@shadcn/lint": "0.2.3",
     "eslint-plugin-import": "2.32.0",
     "eslint-plugin-perfectionist": "5.13.0",
-    "eslint-plugin-react": "7.37.5",
-    "eslint-plugin-react-you-might-not-need-an-effect": "1.0.2",
-    "eslint-plugin-svg-jsx": "1.3.0",
     "eslint-plugin-tsdoc": "0.5.4",
     "eslint-plugin-unused-imports": "4.4.1",
-    "oxlint-plugin-eslint": "1.89.0",
-    "oxlint-tailwindcss": "1.16.0"
+    "oxlint-plugin-eslint": "1.89.0"
   },
   "peerDependencies": {
+    "@shadcn/lint": ">=0.2.3",
+    "eslint-plugin-react": ">=7.37.5",
+    "eslint-plugin-react-you-might-not-need-an-effect": ">=1.0.2",
+    "eslint-plugin-svg-jsx": ">=1.3.0",
     "oxlint": ">=1.85.0",
+    "oxlint-tailwindcss": ">=1.16.0",
     "oxlint-tsgolint": ">=7.0.2003"
   },
   "devDependencies": {
-    "@orpc/server": "1.16.1",
-    "@tanstack/react-router": "1.170.45",
+    "@shadcn/lint": "0.2.3",
     "@types/node": "26.6.5",
-    "@types/react": "19.3.0",
     "bumpp": "12.3.0",
+    "eslint-plugin-react": "7.37.5",
+    "eslint-plugin-react-you-might-not-need-an-effect": "1.0.2",
+    "eslint-plugin-svg-jsx": "1.3.0",
+    "fallow": "3.36.0",
     "oxlint": "1.89.0",
+    "oxlint-tailwindcss": "1.16.0",
     "oxlint-tsgolint": "7.0.2004",
-    "react": "19.3.1",
-    "tailwindcss": "4.3.3",
     "tsrs": "0.18.0-ts7.1.0-dev.20260929",
     "typescript": "7.0.2",
-    "vitest": "5.0.5",
-    "zod": "4.6.7"
+    "vitest": "5.0.5"
   },
   "packageManager": "bun@1.3.14",
   "license": "MIT",
@@ -105,6 +98,21 @@
     "plugin"
   ],
   "peerDependenciesMeta": {
+    "@shadcn/lint": {
+      "optional": true
+    },
+    "eslint-plugin-react": {
+      "optional": true
+    },
+    "eslint-plugin-react-you-might-not-need-an-effect": {
+      "optional": true
+    },
+    "eslint-plugin-svg-jsx": {
+      "optional": true
+    },
+    "oxlint-tailwindcss": {
+      "optional": true
+    },
     "oxlint-tsgolint": {
       "optional": true
     }

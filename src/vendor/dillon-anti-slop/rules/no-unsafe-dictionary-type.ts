@@ -1,0 +1,131 @@
+import { defineRule } from '@oxlint/plugins'
+import { dictionaryTypesClassify, dictionaryTypesUnsafeValue } from '../shared/dictionary-types.ts'
+import { typeEnvironmentCreate } from '../shared/type-environment.ts'
+import { typeReferenceName } from '../shared/type-reference-name.ts'
+import type { DillonAntiSlopTypeEnvironment } from '../../../types/dillon-anti-slop.types.ts'
+import type { ESTree } from '@oxlint/plugins'
+
+const typeNodeKinds: ReadonlySet<string> = new Set([
+  'JSDocNonNullableType',
+  'JSDocNullableType',
+  'JSDocUnknownType',
+  'TSAnyKeyword',
+  'TSArrayType',
+  'TSBigIntKeyword',
+  'TSBooleanKeyword',
+  'TSConditionalType',
+  'TSConstructorType',
+  'TSFunctionType',
+  'TSImportType',
+  'TSIndexedAccessType',
+  'TSInferType',
+  'TSIntersectionType',
+  'TSIntrinsicKeyword',
+  'TSLiteralType',
+  'TSMappedType',
+  'TSNamedTupleMember',
+  'TSNeverKeyword',
+  'TSNullKeyword',
+  'TSNumberKeyword',
+  'TSObjectKeyword',
+  'TSParenthesizedType',
+  'TSStringKeyword',
+  'TSSymbolKeyword',
+  'TSTemplateLiteralType',
+  'TSThisType',
+  'TSTupleType',
+  'TSTypeLiteral',
+  'TSTypeOperator',
+  'TSTypePredicate',
+  'TSTypeQuery',
+  'TSTypeReference',
+  'TSUndefinedKeyword',
+  'TSUnionType',
+  'TSUnknownKeyword',
+  'TSVoidKeyword',
+])
+
+function isTypeNode(node: ESTree.Node): node is ESTree.TSType {
+  return typeNodeKinds.has(node.type)
+}
+
+export const noUnsafeDictionaryTypeRule = defineRule({
+  meta: {
+    type: 'problem',
+    docs: {
+      description: 'Disallow object-dictionary contracts whose direct value type is unknown, any, object, {}, or a union/alias containing one of those escape hatches.',
+    },
+    messages: {
+      unsafeDictionary: "This dictionary's {{value}} value type gives callers no concrete value contract. Use an owner/schema-derived value type; parse external payloads before insertion.",
+    },
+  },
+  createOnce(context) {
+    let environment: DillonAntiSlopTypeEnvironment | null = null
+
+    const report = (node: ESTree.Node, value: string) => {
+      context.report({
+        node,
+        messageId: 'unsafeDictionary',
+        data: { value },
+      })
+    }
+
+    const reportIfUnsafe = (node: ESTree.TSType) => {
+      if (environment === null) {
+        return
+      }
+
+      if (node.type === 'TSTypeReference' && (node.typeArguments?.params.length ?? 0) === 0) {
+        const name = typeReferenceName(node)
+
+        if (name !== null && environment.aliases.has(name)) {
+          let owner: ESTree.Node = node.parent
+
+          while (owner.type !== 'Program' && owner.type !== 'TSTypeAliasDeclaration') {
+            owner = owner.parent
+          }
+
+          if (owner.type !== 'TSTypeAliasDeclaration') {
+            return
+          }
+        }
+      }
+
+      const unsafe = dictionaryTypesClassify(node, environment)
+
+      if (unsafe === null) {
+        return
+      }
+
+      let current: ESTree.Node = node.parent
+
+      while (current.type !== 'Program') {
+        if (isTypeNode(current) && dictionaryTypesClassify(current, environment) !== null) {
+          return
+        }
+        current = current.parent
+      }
+      report(node, unsafe)
+    }
+
+    return {
+      Program(node) {
+        environment = typeEnvironmentCreate(node)
+      },
+      TSTypeReference: reportIfUnsafe,
+      TSTypeLiteral: reportIfUnsafe,
+      TSMappedType: reportIfUnsafe,
+      TSIndexSignature(node) {
+        if (environment === null || node.parent.type === 'TSTypeLiteral') {
+          return
+        }
+
+        const unsafe = dictionaryTypesUnsafeValue(node.typeAnnotation.typeAnnotation, environment, new Map(), new Set())
+
+        if (unsafe !== null) {
+          report(node, unsafe)
+        }
+      },
+    }
+  },
+})

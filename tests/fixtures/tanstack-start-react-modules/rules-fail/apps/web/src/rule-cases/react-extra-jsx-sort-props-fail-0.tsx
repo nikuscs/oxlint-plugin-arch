@@ -1,1 +1,0 @@
-const view = <div title="two" id="one" />;

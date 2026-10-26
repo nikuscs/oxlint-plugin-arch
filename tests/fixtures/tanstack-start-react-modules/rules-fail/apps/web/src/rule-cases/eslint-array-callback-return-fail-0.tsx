@@ -1,1 +1,0 @@
-[1].map(x => { console.log(x); });

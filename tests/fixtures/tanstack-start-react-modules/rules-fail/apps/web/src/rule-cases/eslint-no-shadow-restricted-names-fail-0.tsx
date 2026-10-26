@@ -1,1 +1,0 @@
-function NaN(NaN) { var NaN; !function NaN(NaN) { try {} catch(NaN) {} }; }

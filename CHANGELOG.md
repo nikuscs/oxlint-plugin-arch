@@ -1,5 +1,214 @@
 # Changelog
 
+## Unreleased
+
+### Breaking: rebuilt package
+
+- Every owned rule is now `arch/<family>-<subject>`; the `modules` plugin is gone. Update configs and `oxlint-disable` comments with the table below. Old IDs are not aliased: an old ID in a disable comment no longer suppresses anything.
+- Entry points: `oxlint-plugin-arch` (rules), `oxlint-plugin-arch/preset` (`preset`, `recipes`, `templates`, `PresetError` and the option types) and `oxlint-plugin-arch/dillon-anti-slop`. The `presets/*` and `rules/*` subpaths are removed.
+- Selector rules (`code-switch`, `code-double-negation`, `naming-types`, `types-local-alias`, `react-empty-effect`, `react-dynamic-classes`, `boundaries-rpc-database`, `tests-concurrent-db`) accept an optional `message` option.
+- The preset is `preset({ root, folders })`: folders map to groups, nested folders inherit and refine, recipes and templates hold shared defaults. `reactModulesPreset`, `nextReactModulesPreset`, `tanstackStartReactModulesPreset`, `architecture`, roles, `policies`, `ruleSeverities` and `ruleExclusions` are removed; see the option table below. Expo apps get an `expo` group. `naming-shape` in the preset is replaced by `dillon-anti-slop/no-shape-in-symbol-names`. Invalid folders and options throw `PresetError`.
+- Rule options use one short vocabulary (`allow`, `deny`, `min`, `max`, `message`, ...); see the rule option table below. Old option names are not aliased and fail schema validation. Defaults are unchanged. Rule behavior and messages are otherwise unchanged apart from the fixes under Fixed (two messages that named an option now name the new one); checked by running the 0.11 rule tests against the new rules, and by linting two consumer monorepos with equivalent folder configs.
+- Merged rules: `naming-export-prefix`, `naming-export-pattern` and `naming-export-template` are now `naming-exports`, one check per option object (`mode: 'prefix' | 'pattern' | 'template'`), so several checks can share a file: `['error', { mode: 'prefix' }, { mode: 'pattern', pattern: '^use[A-Z]' }]`. `allDeclarations: true` → `scope: 'declarations'`, `allFunctions: true` → `scope: 'functions'`, `naming-export-template`'s `mode: 'all' | 'some'` → `match`; the other options follow the rule option table. `files-factory` is now `files-exports` with `factory` (its `allDeclarations: true` → `scope: 'declarations'`; `names` is no longer required). `comments-members` is now `comments-code` with `members: 'only'` (`'also'` adds member checks to the normal ones). `naming-shape` is removed; use `dillon-anti-slop/no-shape-in-symbol-names`. `code-switch` now defaults to `'Avoid switch statements.'`. Message IDs and texts are unchanged, apart from the fixes under Fixed.
+- Docs: `docs/folders.md`, one page per group in `docs/groups/`, one page per rule in `docs/rules/`, `docs/vendor.md` and `docs/plugin-only.md`. The README group and rule tables are generated (`bun run docs`).
+- New `arch/copy-dashes`: reports em dashes in strings, template text and JSX text. On in the preset as `style.dashes`.
+- React plugins, `oxlint-tailwindcss` and `@shadcn/lint` are optional peer dependencies, loaded only when a folder turns on their group; a missing one throws `PresetError` with the install command.
+- `bun run bench <repo>` times every rule against a consumer repo and prints the slowest.
+- Architecture checks that needed vitest tests are now lint:
+  - `deny` group (on, empty): per-folder `imports` and `calls` bans, inherited and merged down the tree, via the new `arch/boundaries-deny` (static, re-export and literal dynamic imports).
+  - `externals` group (on): new `arch/files-externals` checks `ssr.external` in `vite.config.*` and `serverExternalPackages` in `next.config.*` against `package.json`; `externals` exports the default must-stay-external list.
+  - `backend.registry`: new `arch/backend-registry`, every `services/<domain>/` has `<domain>.service.ts` and is listed in the registry file. `backend.writes`: methods query files may not call (Kysely writes by default).
+  - `layout.strict` (closed set of domain file roles), `layout.operations: 'folders'` (`actions/` and `queries/` with `make…` factories), `layout.service` (allowed `.service.ts` exports).
+  - `naming.files` and `naming.exports` take a regex for the folder; `naming.unique` keeps a file name part unique per folder (migration numbers), via the new `unique` option of `arch/naming-file`.
+  - `tanstack` keeps `@tanstack/react-start/rsc` in `services/*.rsc.{ts,tsx}`; `expo` checks Expo Router file names and keeps route files free of helpers.
+  - Folder `rules` take `[level, options]` as well as a level.
+
+| Old preset option | New |
+| --- | --- |
+| `tanstackStartReactModulesPreset(...)` | `preset({ root, folders })` |
+| `architecture: { 'apps/web': 'web' }` | `folders: { 'apps/web': recipes.tanstack }` (`recipes.next`, `recipes.expo`) |
+| role `server` / `runner` | `recipes.backend` |
+| role `packages` | `recipes.library` (`'packages/*'` for a folder of packages) |
+| role `scripts`, `cliFiles` | `recipes.cli` on the folder |
+| entry `layout: { services: 'flat' }`, `sourceDir` | folder `layout: { services: 'flat' }`, `source` |
+| `framework` | the `tanstack` / `next` / `expo` group on the folder |
+| `severity` | folder `severity` |
+| `ruleSeverities`, `ruleExclusions` | folder `rules: { 'arch/x': 'warn' \| 'off' }` |
+| `policies: { x: false }` | the group set to `false` on the folder |
+| `ignorePatterns` | the folder set to `false` |
+| `formatting.semi`, `formatting.quotes` | `style.semicolons`, `style.quotes` |
+| `limits.maxFileLines`, `maxTypeFileLines`, `maxFunctionComplexity` | `limits.lines`, `limits.types`, `limits.complexity` |
+| `modules.customFileRoles` | `layout.suffixes` |
+| `modules.migrationFiles` | the migrations folder with `layout: false` |
+| `modules.colocatedTypeFiles` | `types.colocated` |
+| `imports.backendEntryPoints`, `aliases`, `internalSortPatterns` | `backend.exports`, `imports.aliases`, `imports.internal` |
+| `orpc.publicProcedureFiles`, `outputSchemaComposers`, `clientOwnerFile` | `orpc.public`, `orpc.composers`, `orpc.client` |
+| `sql.likeSanitizers`, `forms.schemaResolver` | `sql.sanitizers`, `forms.resolver` |
+| `react.compiler`, `react.componentProps` | `react.compiler`, `react.props` |
+| `tests.profile`, `additionalTestFunctions`, `additionalAssertionFunctions`, `mocking` | `tests.fixtures`, `tests.functions`, `tests.assertions`, `tests.mocking` |
+| `tanstackStart.*` / `next.*` server, client, computed imports | `tanstack` / `next` group `server`, `client`, `dynamic` |
+| `tailwind.cssEntryPoint(sByRoot)`, `rootFontSize` | folder `tailwind.css`, `tailwind.rem` |
+| `shadcn.ui`, `shadcn.components` | `shadcn.ui`, `shadcn.components`; mark UI kit packages with `kit: true` |
+
+| Old ID | New ID |
+| --- | --- |
+| `arch/call-arguments-multiline` | `arch/layout-call-arguments` |
+| `arch/call-array-multiline` | `arch/layout-call-array` |
+| `arch/chain-newline` | `arch/layout-chain` |
+| `arch/component-props` | `arch/react-props` |
+| `arch/declaration-name` | `arch/naming-declarations` |
+| `arch/export-file-prefix` | `arch/naming-exports` |
+| `arch/export-name-pattern` | `arch/naming-exports` (`mode: 'pattern'`) |
+| `arch/filename-export-name` | `arch/naming-exports` (`mode: 'template'`) |
+| `arch/filename-match` | `arch/naming-file` |
+| `arch/folder-prefix` | `arch/naming-folder` |
+| `arch/jsx-attributes-multiline` | `arch/layout-jsx-attributes` |
+| `arch/key-value-same-line` | `arch/layout-key-value` |
+| `arch/no-comments` | `arch/comments-code` |
+| `arch/no-extra-exports` | `arch/files-exports` |
+| `arch/no-extra-factory-keys` | `arch/files-factory-keys` |
+| `arch/no-file-level-helpers` | `arch/files-helpers` |
+| `arch/no-imported-type-alias` | `arch/types-imported-alias` |
+| `arch/no-inline-schema-elements` | `arch/schemas-inline` |
+| `arch/no-inline-types` | `arch/types-inline` |
+| `arch/no-literal-in` | `arch/code-literal-in` |
+| `arch/no-local-schema-construction` | `arch/schemas-local` |
+| `arch/no-member-comments` | `arch/comments-code` (`members: 'only'`) |
+| `arch/no-module-mutable-state` | `arch/code-mutable-state` |
+| `arch/no-promise-all-mutation` | `arch/code-promise-mutation` |
+| `arch/no-rederive-schema` | `arch/schemas-rederive` |
+| `arch/no-restricted-constructor` | `arch/code-constructor` |
+| `arch/no-restricted-files` | `arch/files-restricted` |
+| `arch/no-restricted-token` | `arch/boundaries-token-owner` |
+| `arch/no-runtime-in-types` | `arch/files-types-only` |
+| `arch/no-single-use-scalar-schema` | `arch/schemas-single-use` |
+| `arch/no-top-level-functions` | `arch/files-no-functions` |
+| `arch/no-trivial-functions` | `arch/code-trivial-functions` |
+| `arch/no-type-declarations` | `arch/types-declarations` |
+| `arch/no-unescaped-like` | `arch/backend-sql-like` |
+| `arch/object-multiline` | `arch/layout-object` |
+| `arch/only-export-components` | `arch/files-components-only` |
+| `arch/only-export-constants` | `arch/files-constants-only` |
+| `arch/padding-between-statements` | `arch/layout-padding` |
+| `arch/prefer-namespace-type-import` | `arch/types-namespace-import` |
+| `arch/require-file-factory` | `arch/files-exports` (`factory`) |
+| `arch/require-object-params` | `arch/code-object-params` |
+| `arch/require-orpc-output` | `arch/backend-orpc-output` |
+| `arch/require-paired-call` | `arch/code-paired-call` |
+| `arch/route-surface` | `arch/files-route` |
+| `arch/ternary-layout` | `arch/layout-ternary` |
+| `arch/test-title-pattern` | `tests-titles` |
+| `modules/backend-switch` | `arch/code-switch` |
+| `modules/concurrent-db` | `tests-concurrent-db` |
+| `modules/domain-constants` | `arch/files-domain-constants` |
+| `modules/double-negation` | `arch/code-double-negation` |
+| `modules/dynamic-classes` | `arch/react-dynamic-classes` |
+| `modules/empty-effect` | `arch/react-empty-effect` |
+| `modules/import-boundaries` | `arch/boundaries-imports` |
+| `modules/local-type-alias` | `arch/types-local-alias` |
+| `modules/memoization` | `arch/react-memo` |
+| `modules/next-runtime` | `arch/boundaries-next` |
+| `modules/no-unknown` | `arch/types-unknown` |
+| `modules/pascal-interface` | `arch/naming-types` |
+| `modules/reasoned-directives` | `arch/comments-directives` |
+| `modules/rpc-database` | `arch/boundaries-rpc-database` |
+| `modules/service-functions` | `arch/backend-service-functions` |
+| `modules/service-types` | `arch/types-service` |
+| `modules/shape-suffix` | `dillon-anti-slop/no-shape-in-symbol-names` |
+| `modules/tanstack-runtime` | `arch/boundaries-tanstack` |
+| `modules/test-assertions` | `tests-assertions` |
+| `modules/test-modifiers` | `tests-modifiers` |
+
+| Rule | Old option | New option |
+| --- | --- | --- |
+| `backend-orpc-output` | `handlerMethod`, `outputMethod` | `handler`, `output` |
+| `backend-service-functions` | `allowLocalHelpers`, `allowReturnedMethods`, `singleExport` | `helpers`, `methods`, `single` |
+| `backend-sql-like` | `allowSanitizedBindings`, `operatorMethods` | `bindings`, `operators` |
+| `boundaries-imports` | `fileRoles`, `portableLib`, `publicEntrypoints` | `roles`, `portable`, `entrypoints` |
+| `boundaries-next`, `boundaries-tanstack` | `serverImports`, `clientImports`, `allowComputedImportsIn` | `server`, `client`, `dynamic` |
+| `boundaries-tanstack` | `rpcClients` | `rpc` |
+| `boundaries-token-owner` (and each `restrictions[]` entry) | `allowIn`, `allowPathPatterns` | `allow`, `patterns` |
+| `code-constructor` | `checkCalls` | `calls` |
+| `code-mutable-state` | `allowNamePattern` | `allow` |
+| `code-object-params` | `maxParams`, `allDeclarations`, `serviceMethods`, `allowPattern` | `max`, `all`, `services`, `allow` |
+| `code-promise-mutation` | `checkAssignments` | `assignments` |
+| `code-trivial-functions` | `allowPattern`, `allowCallees`, `allowAsync`, `checkServiceMethods`, `bannedNames`, `checkGenericGuards` | `allow`, `callees`, `async`, `services`, `deny`, `guards` |
+| `comments-code` | `allowWhy`, `allowPatterns`, `allowJsdoc` | `why`, `allow`, `jsdoc` |
+| `files-components-only` | `matchFileName`, `trailingRoles`, `allowTypeExports`, `denyTypePattern` | `filename`, `roles`, `types`, `deny` |
+| `files-constants-only` | `allowFunctionValues`, `allowTypeExports`, `allowReExports` | `functions`, `types`, `reexports` |
+| `files-domain-constants` | `includeData`, `allowServiceMethods` | `data`, `services` |
+| `files-exports` | `domainStem`, `trailingRoles`, `roleSeparators`, `allowTypeExports`, `factoryScope` | `stem`, `roles`, `separators`, `types`, `scope` |
+| `files-factory-keys` (and each `sets[]` entry) | `factoryPattern`, `requireKeys`, `keySets` | `factory`, `required`, `sets` |
+| `files-helpers` | `allowPattern`, `detectComponents`, `hookPattern` | `allow`, `components`, `hooks` |
+| `files-no-functions` | `banReExports`, `allowPattern` | `reexports`, `allow` |
+| `files-route` | `exportName`, `allowedExports`, `inspectExports`, `bannedHooks`, `banIntrinsicJsx` | `export`, `exports`, `inspect`, `hooks`, `intrinsic` |
+| `files-types-only` | `runtimeImports`, `allowImportSources`, `banReExports` | `imports`, `sources`, `reexports` |
+| `layout-call-arguments` | `minArguments` | `min` |
+| `layout-call-array` | `minElements` | `min` |
+| `layout-chain` (`groups[]`) | `minDepth`, `onlyMethods`, `rootPattern` | `min`, `only`, `root` |
+| `layout-jsx-attributes` | `minAttributes` | `min` |
+| `layout-object` | `minProperties` | `min` |
+| `layout-padding` | `returnMinStatements`, `multilineVariables` | `min`, `multiline` |
+| `layout-ternary` | `maxLength` | `max` |
+| `naming-declarations` | `trailingRoles`, `roleSeparators`, `allowPattern` | `roles`, `separators`, `allow` |
+| `naming-exports` | `trailingRoles`, `roleSeparators`, `ignoreTypeExports`, `serviceMethods`, `allowPattern`, `placeholderPattern` | `roles`, `separators`, `types`, `services`, `allow`, `placeholder` |
+| `naming-folder` | `stripPrefixes` | `prefixes` |
+| `react-props` | `filePrefix` | `prefix` |
+| `schemas-inline`, `schemas-single-use` | `structuralMethods`, `allowZodScalars` | `structural`, `scalars` |
+| `schemas-local` | `allowIn`, `allowPathPatterns`, `runtimeImportMessage` | `allow`, `patterns`, `importMessage` |
+| `tests-assertions` | `additionalTestFunctions`, `additionalAssertionFunctions` | `functions`, `assertions` |
+| `tests-modifiers` | `additionalTestFunctions` | `functions` |
+| `tests-titles` | `forbid` | `deny` |
+| `types-declarations` | `allowPattern` | `allow` |
+| `types-inline` | `functionTypes`, `minMembers` | `functions`, `min` |
+
+### Changed
+
+- `boundaries-imports`, `boundaries-next` and `boundaries-tanstack` no longer require their root and package options. An omitted `web`, `backend`, `packages`, `backendPackages`, `appPackages`, `entrypoints` or `rpc` defaults to `[]`, and `aliases` to `{}`; configs that set them behave as before.
+- Preset: a key inside a `false` folder, `backend.writes` below a backend folder, a non-object group value (`null`, arrays, numbers), folders that disagree on `tailwind.rem` or `shadcn.ui`/`shadcn.components`, and expo `client`/`dynamic` now throw instead of being ignored.
+- Preset types: `console` and `kit` take `true` or `false`; expo options are `{ server }` (`PresetExpoOptions`).
+
+### Fixed
+
+- `comments-code` (was `no-comments`): member-comment fixes keep member tokens, separating line breaks and blank lines, skip comments a `disable-next-line` targets, and honor `jsdoc` and `allow`. Removing an inline comment between two spaces leaves one space.
+- `layout-chain` skips chains with computed links instead of reporting them forever. `layout-call-arguments` and `layout-object` fixes keep the original trailing-comma presence.
+- `types-namespace-import` reports without an autofix.
+- `backend-registry`: keys come from top-level objects and factory results (or the one named by `object`), string keys count, a domain without `<folder>.service.ts` is reported on the registry file, and a missing `services` folder is no longer a crash.
+- `backend-sql-like`: sanitized bindings resolve by scope, a reassigned top-level binding is not trusted, and every dynamic part of a LIKE value must be sanitized.
+- `boundaries-tanstack`: browser globals inside server callbacks are reported in any file; code under `<T>x` casts and non-`declare` enums or namespaces counts as runtime; global lookups no longer scale quadratically.
+- `boundaries-tanstack`, `boundaries-next`, `boundaries-imports`: library identities are options with today's values as defaults (`serverPackages`, `clientPackages`, `hookPackages`, `startPackages`, `rscPackages`, `uiPackages`, `publicEnv`); subpaths of server-only and client-only packages match.
+- `boundaries-imports`: `export { type X } from` counts as type-only. `boundaries-deny` and `boundaries-rpc-database` match literal computed callees (`console['log']()`), and `boundaries-rpc-database` no longer matches `db[name]()`.
+- `files-externals`: subpath externals (`pg/native`) check their package; a list with spreads skips the missing-package check; a malformed nearest `package.json` skips the rule.
+- `files-components-only` splits file names only on `-` and `.` again (`user_card.tsx` → `User_card`). `naming-exports` pattern mode treats an empty pattern as match-all again.
+- `naming-file` takes several option objects; `unique` counts only sibling files its object's `pattern` accepts.
+- `files-no-functions`, `code-object-params` and `code-trivial-functions` check `export default` function expressions; `code-object-params` checks a defaulted parameter by its type. `files-no-functions` no longer reports type-only re-exports. `files-exports` checks an aliased export (`export { local as useInvoiceQuery }`) by its exported name. `schemas-inline` names the namespace actually called.
+- Preset: a folder's `naming.files` and `naming.unique` add to the built-in file checks instead of replacing them; invalid `naming` regexes and `layout.operations` below an app or package folder throw `PresetError`; `backend.registry` works for a root-level backend and takes `object`.
+- `bun run bench` resolves plugins from the consumer's config.
+- `boundaries-tanstack` reports static server imports used inside explicit client callbacks even in `.server.ts` files.
+- `layout-call-arguments` reports incorrect layouts with comments or unsafe argument ranges without offering an autofix.
+- `comments-code` removes horizontal padding around inline comments after opening parentheses, producing `foo(1)` from `foo(/* note */ 1)`.
+- Export-name rules (`naming-exports`, `files-exports` and others) read every name in a destructured export (`export const { a, b } = source`) instead of reporting `<anonymous>`.
+- `files-exports` factory mode checks an aliased export by its exported name, and reports aliased exports at the export specifier.
+- `files-no-functions` also allows `export type * from` and `export { type A } from`.
+- `files-factory-keys` checks returned objects wrapped in `as const`, `satisfies` or `!`.
+- `bun run bench` shows Oxlint startup errors, works when no JS rule ran, removes its temp files and resolves symlinked repo paths.
+- `bun run build` clears `dist/` first, so local packs no longer ship stale modules.
+- Preset: when `'.'` is an app, backend or CLI it stays a unit; a top-level key becomes its own unit only when it sets `tanstack`, `next`, `expo`, `backend` or `console`, and a `console` key beside a root app is a CLI rather than an inherited app.
+- Preset: `imports.aliases` and `imports.internal` apply to the folder that sets them; two apps with their own `@/` alias no longer share the last one (`arch/boundaries-imports`, `arch/boundaries-tanstack`, `arch/boundaries-next`, import sorting).
+- Preset: a folder `severity` now also sets the level of the common rules in that folder, and `no-console` inherits `severity` from parent folders.
+- Preset: an exact key beside a `false` `*` key (`'packages/*': false, 'packages/ui': {...}`) is linted instead of ignored.
+- Preset: a `naming.files` pattern in a folder adds to the `layout.strict` domain file check instead of replacing it.
+- Preset: `root` resolves through symlinks, so absolute option paths match the file paths Oxlint reports.
+- `tests-assertions` finds the test callback before a trailing timeout or after an options object, so `test('x', () => {}, 1000)` is reported and its assertions are no longer flagged as standalone.
+- `tests-assertions` no longer follows a helper binding that is reassigned after its declaration.
+- `tests-assertions` tracks renamed `test`, `it` and assertion imports from `bun:test`.
+- `tests-concurrent-db` only reports `db` destructured from the `test.concurrent` callback's context (its parameter, or the parameter destructured in the body), not unrelated local `db` patterns or nested callbacks.
+- `tests-modifiers` reports `.only`, `.skip` and `.todo` after `skipIf()`, `runIf()` and `if()` builders.
+- `types-imported-alias` ignores an alias whose target is its own type parameter (`type Identity<T> = T`), and no longer resolves `export { X } from './other'` against a local alias named `X`.
+- `react-memo` resolves the member root binding, so a local or parameter named `React` no longer counts as React.
+- `dillon-anti-slop/no-widen-then-assert` resolves identifiers through their scope instead of scanning every scope's references, removing quadratic work on files with many assertions.
+- `naming-exports` template mode checks an aliased export (`export { create as makeReportActionCreate }`) by its exported name.
+
 ## 0.11.0
 
 - `modules/no-unknown` allows `unknown` on the narrowed parameter of a type guard (`function isAppError(error: unknown): error is AppError`) and on the error parameter of a catch callback (`catch: (error: unknown) => E`, `.catch((error: unknown) => …)`). Other uses still fail. This applies to every root.

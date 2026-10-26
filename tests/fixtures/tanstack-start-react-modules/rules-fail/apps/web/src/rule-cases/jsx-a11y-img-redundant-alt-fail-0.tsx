@@ -1,1 +1,0 @@
-<img alt='Photo of friend.' />;

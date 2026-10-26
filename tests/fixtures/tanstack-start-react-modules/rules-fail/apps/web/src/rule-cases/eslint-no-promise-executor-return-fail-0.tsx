@@ -1,1 +1,0 @@
-new Promise(function (resolve, reject) { return 1; })

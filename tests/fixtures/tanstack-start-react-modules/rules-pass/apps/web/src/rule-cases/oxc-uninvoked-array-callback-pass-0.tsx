@@ -1,1 +1,0 @@
-const list = new Array(5).fill().map(_ => {})

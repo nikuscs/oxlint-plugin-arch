@@ -1,0 +1,17 @@
+{
+  "$schema": "https://t3.codes/schema/t3.json",
+  "scripts": [
+    {
+      "name": "Setup worktree",
+      "command": "./.agents/orchestrators/workspace.sh setup",
+      "icon": "configure",
+      "runOnWorktreeCreate": true,
+      "async": false
+    },
+    {
+      "name": "Check",
+      "command": "./.agents/orchestrators/workspace.sh check",
+      "icon": "play"
+    }
+  ]
+}

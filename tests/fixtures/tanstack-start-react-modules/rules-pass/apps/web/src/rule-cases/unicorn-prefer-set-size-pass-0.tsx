@@ -1,1 +1,0 @@
-new Set(foo).size

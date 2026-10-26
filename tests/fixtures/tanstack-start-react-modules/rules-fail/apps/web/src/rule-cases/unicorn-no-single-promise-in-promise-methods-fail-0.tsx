@@ -1,1 +1,0 @@
-await Promise.race([(0, promise)])

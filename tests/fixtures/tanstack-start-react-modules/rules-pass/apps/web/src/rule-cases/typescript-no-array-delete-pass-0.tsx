@@ -1,1 +1,0 @@
-const list = [1,2]; list.splice(0, 1);

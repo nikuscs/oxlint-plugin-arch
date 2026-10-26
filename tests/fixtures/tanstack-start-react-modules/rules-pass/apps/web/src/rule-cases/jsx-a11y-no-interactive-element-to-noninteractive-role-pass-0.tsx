@@ -1,1 +1,0 @@
-<TestComponent onClick={doFoo} />

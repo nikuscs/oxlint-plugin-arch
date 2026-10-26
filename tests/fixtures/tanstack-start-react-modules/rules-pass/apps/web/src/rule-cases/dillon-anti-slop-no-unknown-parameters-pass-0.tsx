@@ -1,1 +1,0 @@
-function process(value: string) { return value.trim(); }

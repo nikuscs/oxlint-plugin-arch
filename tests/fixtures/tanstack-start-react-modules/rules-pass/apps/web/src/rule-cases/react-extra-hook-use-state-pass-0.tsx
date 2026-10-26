@@ -1,1 +1,0 @@
-import { useState } from 'react'; function Component() { const [value,setValue] = useState(0); return <button onClick={() => setValue(1)}>{value}</button>; }
