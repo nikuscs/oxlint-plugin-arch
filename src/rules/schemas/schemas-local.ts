@@ -5,6 +5,7 @@ import type { ESTree } from '@oxlint/plugins'
 
 const schemasLocalImportMessage = 'Do not import runtime schema constructors from {{source}}; import a named schema instead.'
 const schemasLocalConstructionMessage = 'Do not construct schemas locally; import a named schema instead.'
+const schemasLocalCalls = ['config', 'prettifyError', 'treeifyError', 'flattenError', 'formatError']
 
 export const schemasLocal = defineRule({
   meta: {
@@ -16,6 +17,7 @@ export const schemasLocal = defineRule({
         properties: {
           packages: { type: 'array', items: { type: 'string' } },
           namespaces: { type: 'array', items: { type: 'string' } },
+          calls: { type: 'array', items: { type: 'string' } },
           allow: { type: 'array', items: { type: 'string' } },
           patterns: { type: 'array', items: { type: 'string' } },
           message: { type: 'string' },
@@ -33,8 +35,24 @@ export const schemasLocal = defineRule({
   createOnce(context) {
     let constructors = new Set<string>()
     let packages = new Set<string>()
+    let calls = new Set<string>()
+    let pending: { node: ESTree.ImportDeclaration; locals: string[] }[] = []
+    let schemaUses = new Set<string>()
+    let callUses = new Set<string>()
     let importMessage = schemasLocalImportMessage
     let constructionMessage = schemasLocalConstructionMessage
+
+    function isAllowedCall(node: ESTree.Node, member: ESTree.Node | null): boolean {
+      return (
+        member?.type === 'MemberExpression' &&
+        member.object === node &&
+        !member.computed &&
+        member.property.type === 'Identifier' &&
+        calls.has(member.property.name) &&
+        member.parent.type === 'CallExpression' &&
+        member.parent.callee === member
+      )
+    }
 
     function isPackage(source: string): boolean {
       return packages.has(source) || [...packages].some((name) => source.startsWith(`${name}/`))
@@ -64,6 +82,10 @@ export const schemasLocal = defineRule({
         const filename = context.filename.replaceAll('\\', '/')
         constructors = new Set(options.namespaces)
         packages = new Set(options.packages)
+        calls = new Set(options.calls ?? schemasLocalCalls)
+        pending = []
+        schemaUses = new Set()
+        callUses = new Set()
         importMessage = options.importMessage ?? options.message ?? schemasLocalImportMessage
         constructionMessage = options.constructionMessage ?? options.message ?? schemasLocalConstructionMessage
         if (
@@ -89,7 +111,32 @@ export const schemasLocal = defineRule({
         for (const name of locals) {
           constructors.add(name)
         }
-        reportRuntimeImport(node, node.source.value)
+
+        if (locals.length === 0) {
+          reportRuntimeImport(node, node.source.value)
+          return
+        }
+
+        pending.push({ node, locals })
+      },
+      Identifier(node) {
+        if (!constructors.has(node.name) || node.parent.type.startsWith('Import')) {
+          return
+        }
+
+        if (isAllowedCall(node, node.parent)) {
+          callUses.add(node.name)
+          return
+        }
+
+        schemaUses.add(node.name)
+      },
+      'Program:exit'() {
+        const runtime = pending.filter(({ locals }) => locals.some((name) => schemaUses.has(name) || !callUses.has(name)))
+
+        for (const { node } of runtime) {
+          reportRuntimeImport(node, node.source.value)
+        }
       },
       ExportNamedDeclaration: checkReexport,
       ExportAllDeclaration: checkReexport,
@@ -100,7 +147,7 @@ export const schemasLocal = defineRule({
           root = root.object
         }
 
-        if (root.type !== 'Identifier' || !constructors.has(root.name)) {
+        if (root.type !== 'Identifier' || !constructors.has(root.name) || (node.callee.type === 'MemberExpression' && node.callee.object === root && isAllowedCall(root, root.parent))) {
           return
         }
         context.report({

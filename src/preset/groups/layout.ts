@@ -1,15 +1,15 @@
 import { posix } from 'node:path'
 import { presetBuiltinFileRoles, presetExtensions } from '../preset.constants.ts'
-import { presetOverride, presetScopes } from '../preset.utils.ts'
+import { presetOverride, presetScopes, presetServiceScopes } from '../preset.utils.ts'
 import type { PresetBuilder } from '../../types/preset.types.ts'
 
 export const layoutGroup: PresetBuilder<'layout'> = (project, settings) => {
   const { web, nextWeb, serviceRoots, app, services, utilities, ui, testFiles, layouts, operations } = project
-  const folderOperations = presetScopes(operations, 'services/*/{actions,queries}/*.ts')
+  const folderOperations = presetServiceScopes(project.serviceFolders, operations, '*/{actions,queries}/*.ts')
   const operationMessage = "Action/query files export exactly one named operation. Keep helpers used only by this operation private inside its function; do not export them. Move a helper to the module's .utils.ts only when it is genuinely shared, not merely to satisfy lint."
   const roles = [...presetBuiltinFileRoles.filter((role) => role !== 'action' && role !== 'query'), ...project.suffixes]
   const conceptFiles = project.suffixes.map((suffix) => `**/*.${suffix}.ts`)
-  const frontendEntries = [...presetScopes(web, 'services/**/*.{client,server,rsc}.ts'), ...presetScopes(web, 'services/**/*.rsc.tsx')]
+  const frontendEntries = [...presetServiceScopes(project.serviceFolders, web, '**/*.{client,server,rsc}.ts'), ...presetServiceScopes(project.serviceFolders, web, '**/*.rsc.tsx')]
   const ungroupedWeb = web.filter((path) => !layouts.some((scope) => scope.path === posix.join(path, 'components')))
 
   return [
@@ -77,7 +77,7 @@ export const layoutGroup: PresetBuilder<'layout'> = (project, settings) => {
       [...presetScopes(web, 'hooks/**'), ...ui],
     ),
     presetOverride(
-      presetScopes(web, 'services/**/*.{ts,tsx}'),
+      presetServiceScopes(project.serviceFolders, web, '**/*.{ts,tsx}'),
       {
         'arch/files-restricted': [
           'error',
@@ -89,7 +89,7 @@ export const layoutGroup: PresetBuilder<'layout'> = (project, settings) => {
       [
         '**/*.{client,server,rsc,utils,constants}.ts',
         '**/*.rsc.tsx',
-        ...presetScopes(nextWeb, 'services/**/*.action.ts'),
+        ...presetServiceScopes(project.serviceFolders, nextWeb, '**/*.action.ts'),
         ...conceptFiles,
         ...project.colocated,
         ...testFiles,
@@ -106,7 +106,7 @@ export const layoutGroup: PresetBuilder<'layout'> = (project, settings) => {
     presetOverride(frontendEntries, { 'arch/backend-service-functions': ['error', { frontend: true }] }, testFiles),
     ...conceptFiles.map((pattern) =>
       presetOverride(
-        presetScopes(app, `services/${pattern}`),
+        presetServiceScopes(project.serviceFolders, app, pattern),
         {
           'arch/backend-service-functions': 'off',
           'arch/naming-exports': ['error', { stem: 'full-basename', scope: 'functions' }],
@@ -115,29 +115,29 @@ export const layoutGroup: PresetBuilder<'layout'> = (project, settings) => {
       ),
     ),
     presetOverride(
-      [...presetScopes(app, 'services/**/*-{action,query}.*.ts'), ...presetScopes(web, 'services/**/*-{action,query}.*.rsc.tsx')],
+      [...presetServiceScopes(project.serviceFolders, app, '**/*-{action,query}.*.ts'), ...presetServiceScopes(project.serviceFolders, web, '**/*-{action,query}.*.rsc.tsx')],
       { 'arch/backend-service-functions': ['error', { helpers: true, single: true, message: operationMessage }] },
       testFiles,
     ),
     presetOverride(folderOperations, { 'arch/backend-service-functions': ['error', { helpers: true, single: true, message: operationMessage }] }, testFiles),
-    presetOverride(presetScopes(serviceRoots, 'services/**/*.ts'), { 'arch/files-domain-constants': 'error' }, [...utilities, ...testFiles]),
-    presetOverride(presetScopes(web, 'services/**/*.{ts,tsx}'), { 'arch/files-domain-constants': ['error', { data: true }] }, [
+    presetOverride(presetServiceScopes(project.serviceFolders, serviceRoots, '**/*.ts'), { 'arch/files-domain-constants': 'error' }, [...utilities, ...testFiles]),
+    presetOverride(presetServiceScopes(project.serviceFolders, web, '**/*.{ts,tsx}'), { 'arch/files-domain-constants': ['error', { data: true }] }, [
       '**/*.constants.ts',
       ...testFiles,
     ]),
     presetOverride(frontendEntries, { 'arch/files-domain-constants': ['error', { data: true, services: true }] }, testFiles),
     presetOverride(
-      [...presetScopes(serviceRoots, 'services/**/*-{action,query}.*.ts'), ...folderOperations, ...frontendEntries],
+      [...presetServiceScopes(project.serviceFolders, serviceRoots, '**/*-{action,query}.*.ts'), ...folderOperations, ...frontendEntries],
       { 'arch/code-object-params': ['error', { max: 2 }] },
       testFiles,
     ),
     presetOverride(frontendEntries, { 'arch/code-object-params': ['error', { max: 2, services: true }] }, testFiles),
     presetOverride(
-      presetScopes(serviceRoots, 'services/**/*.service.ts'),
+      presetServiceScopes(project.serviceFolders, serviceRoots, '**/*.service.ts'),
       { 'arch/files-exports': ['error', { names: settings.service, stem: 'before-first-dot', types: false }] },
       testFiles,
     ),
-    presetOverride(presetScopes(app.filter((path) => !operations.includes(path)), 'services/**/{actions,queries}/**/*.ts'), {
+    presetOverride(presetServiceScopes(project.serviceFolders, app.filter((path) => !operations.includes(path)), '**/{actions,queries}/**/*.ts'), {
       'arch/files-restricted': ['error', { message: 'Use domain-action.name.ts or domain-query.name.ts.' }],
     }),
   ]

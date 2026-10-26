@@ -23,18 +23,24 @@ function boundariesStripExtension(path: string): string {
   return path.replace(/\.[cm]?[jt]sx?$/, '')
 }
 
-function boundariesDomain(path: string, appRoot: string): string | undefined {
+function boundariesServiceFolder(options: BoundariesOptions, root: string): string {
+  const nested = [...options.web, ...options.backend].filter((other) => other.length > root.length && boundariesContains(root, other))
+
+  return options.services?.find((folder) => folder.startsWith(`${root}/`) && !nested.some((other) => boundariesContains(other, folder))) ?? `${root}/services`
+}
+
+function boundariesDomain(path: string, appRoot: string, services: string): string | undefined {
   const relative = path.slice(appRoot.length + 1)
 
   if (relative.startsWith('types/') && relative.endsWith('.types.ts')) {
     return relative.slice('types/'.length).split('.')[0]
   }
 
-  if (!relative.startsWith('services/')) {
+  if (!boundariesContains(services, path) || path === services) {
     return undefined
   }
 
-  const parts = relative.slice('services/'.length).split('/')
+  const parts = path.slice(services.length + 1).split('/')
   return parts.length > 1 ? parts[0] : parts[0].split('.')[0].replace(/-(?:action|query|driver)$/, '')
 }
 
@@ -46,8 +52,8 @@ function boundariesPrivateDomain({ options, file, target, reExport, roots, owner
   }
 
   const targetOwner = roots.find((path) => boundariesContains(path, target))
-  const fileDomain = owner ? boundariesDomain(file, owner) : undefined
-  const targetDomain = targetOwner ? boundariesDomain(target, targetOwner) : undefined
+  const fileDomain = owner ? boundariesDomain(file, owner, boundariesServiceFolder(options, owner)) : undefined
+  const targetDomain = targetOwner ? boundariesDomain(target, targetOwner, boundariesServiceFolder(options, targetOwner)) : undefined
   const sameDomain = owner && owner === targetOwner && fileDomain && fileDomain === targetDomain
   const targetStem = boundariesStripExtension(target)
   const publicSurface = boundariesPublicSurface.test(targetStem) && !boundariesActionOrQuery.test(targetStem)
@@ -70,12 +76,12 @@ function boundariesPrivateDomain({ options, file, target, reExport, roots, owner
 function boundariesPortableLib(check: BoundariesImport): string | undefined {
   const { options, file, source, target, typeOnly, reExport, roots, web, backendImport } = check
 
-  if (!options.portable || !web || !boundariesContains(`${web}/lib`, file)) {
+  if (!options.portable || !web || !boundariesContains(`${web}/lib`, file) || boundariesServiceFolder(options, web) === `${web}/lib`) {
     return undefined
   }
 
   const portableTarget = target.startsWith('/') ? resolve(target).replaceAll('\\', '/') : target
-  const appService = roots.some((path) => boundariesContains(`${path}/services`, portableTarget))
+  const appService = roots.some((path) => boundariesContains(boundariesServiceFolder(options, path), portableTarget))
   const backendTarget = options.backend.some((path) => boundariesContains(path, portableTarget))
   const appPackage = boundariesMatchesImport(options.appPackages, source)
 
@@ -108,6 +114,7 @@ export const boundariesImports = defineRule({
           backend: { type: 'array', items: { type: 'string' } },
           packages: { anyOf: [{ type: 'string' }, { type: 'array', items: { type: 'string' } }] },
           roles: { type: 'array', items: { type: 'string' } },
+          services: { type: 'array', items: { type: 'string' } },
           portable: { type: 'boolean' },
           backendPackages: { type: 'array', items: { type: 'string' } },
           entrypoints: { type: 'array', items: { type: 'string' } },
@@ -139,15 +146,22 @@ export const boundariesImports = defineRule({
       const appTarget =
         backendImport || options.web.some((path) => boundariesContains(path, target)) || boundariesMatchesImport(options.appPackages, source)
 
+      const serviceFolders = roots.map((path) => boundariesServiceFolder(options, path))
+      const serviceTarget = serviceFolders.find((folder) => boundariesContains(folder, target))
+      const serviceFile = serviceFolders.find((folder) => boundariesContains(folder, file))
+
       const domainContract =
         /\.(?:types|constants)\.ts$/.test(file) &&
         !typeOnly &&
-        /\/(?:core\/|services\/.*(?:\.(?:service|utils)|-(?:action|query)\.|\/(?:actions|queries)\/))/.test(target)
+        (/\/(?:core\/|services\/.*(?:\.(?:service|utils)|-(?:action|query)\.|\/(?:actions|queries)\/))/.test(target) ||
+          (serviceTarget !== undefined && /\/.*(?:\.(?:service|utils)|-(?:action|query)\.|\/(?:actions|queries)\/)/.test(target.slice(serviceTarget.length))))
 
       const reason = [
         web && backendImport && !options.entrypoints.includes(source) ? 'frontend code uses only public backend entry points' : undefined,
         inPackage && appTarget ? 'shared packages do not import app internals' : undefined,
-        file.includes('/services/') && /\/services\/service(?:\.ts)?$/.test(target) && !typeOnly
+        ((file.includes('/services/') && /\/services\/service(?:\.ts)?$/.test(target)) ||
+          (serviceFile !== undefined && /^\/service(?:\.ts)?$/.test(target.slice(serviceFile.length)))) &&
+        !typeOnly
           ? 'service dependencies are injected rather than read from the registry'
           : undefined,
         domainContract ? 'domain types/constants use type-only imports from implementations' : undefined,
@@ -202,10 +216,10 @@ export const boundariesImports = defineRule({
         }
       },
       TSImportType(node) {
-        const { portable: portableLib, web } = { ...boundariesImportsDefaults, ...optionsFirst<Partial<BoundariesOptions>>(context) }
+        const options = { ...boundariesImportsDefaults, ...optionsFirst<Partial<BoundariesOptions>>(context) }
         const file = context.filename.replaceAll('\\', '/')
 
-        if (portableLib && web.some((path) => file.startsWith(`${path}/lib/`))) {
+        if (options.portable && options.web.some((path) => file.startsWith(`${path}/lib/`) && boundariesServiceFolder(options, path) !== `${path}/lib`)) {
           check(node, node.source.value, true)
         }
       },

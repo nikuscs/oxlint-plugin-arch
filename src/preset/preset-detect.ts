@@ -2,7 +2,7 @@ import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { matchesGlob, posix, resolve } from 'node:path'
 import { presetRecipes } from './preset-recipes.ts'
 import * as PresetConstants from './preset.constants.ts'
-import { presetIsDirectory, presetManifest } from './preset.utils.ts'
+import { presetIsDirectory, presetManifest, presetServicesFolder } from './preset.utils.ts'
 import type * as PresetTypes from '../types/preset.types.ts'
 
 function presetDirectories(root: string, base: string, skip = PresetConstants.presetDetectSkip): string[] {
@@ -25,7 +25,7 @@ function presetSource(root: string, directory: string, configured?: string): str
   return existsSync(resolve(root, directory, 'src')) ? posix.join(directory, 'src') : directory
 }
 
-export function presetRegistryFile(root: string, source: string, configured: PresetTypes.PresetBackendOptions['registry']): string | undefined {
+export function presetRegistryFile(root: string, source: string, configured: PresetTypes.PresetBackendOptions['registry'], services: string): string | undefined {
   if (configured === false) {
     return undefined
   }
@@ -36,23 +36,23 @@ export function presetRegistryFile(root: string, source: string, configured: Pre
     return posix.normalize(file)
   }
 
-  return PresetConstants.presetRegistryFiles.map((path) => posix.join(source, path)).find((path) => existsSync(resolve(root, path)))
+  return [posix.join(services, 'service.ts'), ...PresetConstants.presetRegistryFiles.map((path) => posix.join(source, path))].find((path) => existsSync(resolve(root, path)))
 }
 
-function presetDomains(root: string, source: string): string[] {
-  return presetDirectories(root, posix.join(source, 'services'), presetNamedSkip)
+function presetDomains(root: string, services: string): string[] {
+  return presetDirectories(root, services, presetNamedSkip)
     .map((path) => posix.basename(path))
-    .filter((name) => existsSync(resolve(root, source, 'services', name, `${name}.service.ts`)))
+    .filter((name) => existsSync(resolve(root, services, name, `${name}.service.ts`)))
 }
 
-function presetRecipe(root: string, directory: string, app: boolean, configured?: string): PresetTypes.PresetRecipe {
+function presetRecipe(root: string, directory: string, app: boolean, folder: PresetTypes.PresetFolder): PresetTypes.PresetRecipe {
   const manifest = presetManifest(root, directory)
   const dependencies = new Set([manifest.dependencies, manifest.devDependencies, manifest.peerDependencies].flatMap((listed) => Object.keys(listed ?? {})))
   const has = (names: string[]) => names.some((name) => dependencies.has(name))
-  const source = presetSource(root, directory, configured)
+  const source = presetSource(root, directory, folder.source)
   const framework = PresetConstants.presetDetectFrameworks.find(([, names]) => has(names))?.[0]
-
-  const services = resolve(root, source, 'services')
+  const servicesFolder = presetServicesFolder(root, source, folder.services, app)
+  const services = resolve(root, servicesFolder)
   const entries = presetIsDirectory(services) ? readdirSync(services, { withFileTypes: true }) : []
   const folders = entries.filter((entry) => presetIsDirectory(resolve(services, entry.name))).length
   const flat = entries.filter((entry) => entry.isFile() && /\.tsx?$/.test(entry.name)).length > folders
@@ -65,7 +65,7 @@ function presetRecipe(root: string, directory: string, app: boolean, configured?
     return presetRecipes.desktop
   }
 
-  if (presetDomains(root, source).length > 0 || (has(PresetConstants.presetDetectBackend) && (app || presetIsDirectory(services)))) {
+  if (presetDomains(root, servicesFolder).length > 0 || (has(PresetConstants.presetDetectBackend) && (app || presetIsDirectory(services)))) {
     return presetRecipes.backend
   }
 
@@ -179,9 +179,11 @@ function presetBackendConventions(
   const at = (path: string) => (local === '.' ? path : posix.join(local, path))
   const exists = (path: string) => existsSync(resolve(root, key, path))
   const configured = value.backend instanceof Object ? value.backend.registry : undefined
-  const registryFile = presetRegistryFile(root, source, configured)
+  const servicesFolder = presetServicesFolder(root, source, value.services)
+  const servicesKey = posix.relative(key, servicesFolder)
+  const registryFile = presetRegistryFile(root, source, configured, servicesFolder)
   const registry = registryFile === undefined ? undefined : posix.relative(key, registryFile)
-  const services = presetSpecifiers(manifest, at('services'))
+  const services = presetSpecifiers(manifest, servicesKey)
   const message = 'Use the service API, not another service’s operations.'
 
   const operations = Object.fromEntries(
@@ -205,7 +207,7 @@ function presetBackendConventions(
   }
 
   const conventions: PresetTypes.PresetFolders = {
-    [at('services')]: presetDeny(serviceImports),
+    [servicesKey]: presetDeny(serviceImports),
     [at('core')]: presetDeny(operations),
     [at('rpc')]: presetDeny(registryImports),
     [at('routes')]: presetDeny(registryImports),
@@ -215,7 +217,7 @@ function presetBackendConventions(
     },
   }
 
-  for (const domain of presetDirectories(root, posix.join(source, 'services'), presetNamedSkip).map((path) => posix.basename(path))) {
+  for (const domain of presetDirectories(root, servicesFolder, presetNamedSkip).map((path) => posix.basename(path))) {
     const imports = services.flatMap((prefix) =>
       PresetConstants.presetOperationImports
         .filter((pattern) => !denied.has(`${prefix}/${pattern}`))
@@ -225,7 +227,7 @@ function presetBackendConventions(
         ]),
     )
 
-    conventions[at(`services/${domain}`)] = presetDeny(Object.fromEntries(imports))
+    conventions[posix.join(servicesKey, domain)] = presetDeny(Object.fromEntries(imports))
   }
 
   for (const tests of ['tests', 'test']) {
@@ -377,22 +379,22 @@ function presetGroupOff(folders: PresetTypes.PresetFolders, path: string, group:
 export function presetDetect(root: string, folders: PresetTypes.PresetFolders): PresetTypes.PresetFolders {
   const manifest = presetManifest(root, '.')
 
-  const configuredSource = (key: string) => {
+  const configured = (key: string): PresetTypes.PresetFolder => {
     const value = folders[key]
 
-    return value instanceof Object ? value.source : undefined
+    return value instanceof Object ? value : {}
   }
 
   const patterns = presetWorkspacePatterns(root, manifest)
   const directories = presetWorkspaces(root, patterns)
 
   const detected: PresetTypes.PresetFolders = Object.fromEntries(
-    directories.map((directory) => [directory, presetRecipe(root, directory, !directory.startsWith('packages/'), configuredSource(directory))]),
+    directories.map((directory) => [directory, presetRecipe(root, directory, !directory.startsWith('packages/'), configured(directory))]),
   )
 
-  const rootRecipe = presetRecipe(root, '.', true, configuredSource('.'))
+  const rootRecipe = presetRecipe(root, '.', true, configured('.'))
   const single = Object.keys(manifest).length > 0 || rootRecipe !== presetRecipes.library
-  const rootApp = rootRecipe !== presetRecipes.library && presetSource(root, '.', configuredSource('.')) !== '.'
+  const rootApp = rootRecipe !== presetRecipes.library && presetSource(root, '.', configured('.').source) !== '.'
 
   if (patterns.length === 0 ? single : rootApp) {
     detected['.'] = rootRecipe

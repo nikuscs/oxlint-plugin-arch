@@ -182,6 +182,7 @@ export type PresetGroupName = keyof PresetGroups
 export interface PresetFolder extends PresetGroups {
   severity?: PresetLevel
   source?: string
+  services?: string
   rules?: PresetRules
 }
 
@@ -254,6 +255,7 @@ export interface PresetUnit {
   kind: PresetKind
   framework?: PresetFramework
   source: string
+  services: string
   layout: Record<string, PresetLayoutMode>
 }
 
@@ -293,6 +295,7 @@ export interface PresetManifest {
 
 export interface PresetProject {
   root: string
+  serviceFolders: Record<string, string>
   scopes: PresetScope[]
   units: PresetUnit[]
   suffixes: string[]

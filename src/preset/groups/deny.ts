@@ -1,5 +1,5 @@
 import { presetExtensions } from '../preset.constants.ts'
-import { presetOverride, presetScopes } from '../preset.utils.ts'
+import { presetOverride, presetServiceScopes } from '../preset.utils.ts'
 import type { PresetBuilder } from '../../types/preset.types.ts'
 import type { OxlintOverride } from 'oxlint'
 
@@ -19,8 +19,8 @@ export const denyGroup: PresetBuilder<'deny'> = (project, settings) => {
     }
 
     const files = [
-      ...presetScopes([unit.source], 'services/**/*-query.*.ts'),
-      ...presetScopes(project.operations.filter((path) => path === unit.source), 'services/*/queries/*.ts'),
+      ...presetServiceScopes(project.serviceFolders, [unit.source], '**/*-query.*.ts'),
+      ...presetServiceScopes(project.serviceFolders, project.operations.filter((path) => path === unit.source), '*/queries/*.ts'),
     ]
 
     const reads = Object.fromEntries(writes.map((name) => [name, 'Query files only read; move writes to an action.']))

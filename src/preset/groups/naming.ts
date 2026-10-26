@@ -1,5 +1,5 @@
 import { presetExportPrefix, presetExtensions, presetNamingRules } from '../preset.constants.ts'
-import { PresetError, presetOverride, presetScopes } from '../preset.utils.ts'
+import { PresetError, presetOverride, presetScopes, presetServiceScopes } from '../preset.utils.ts'
 import { layoutGroup } from './layout.ts'
 import type { NamingFileOptions } from '../../types/naming.types.ts'
 import type { PresetBuilder, PresetRules } from '../../types/preset.types.ts'
@@ -21,7 +21,7 @@ export const namingGroup: PresetBuilder<'naming'> = (project, settings, owner) =
   const { web, serviceRoots, app, ui, testFiles, components, hooks, operations } = project
   const flatApp = app.filter((path) => !operations.includes(path))
   const folderApp = app.filter((path) => operations.includes(path))
-  const frontendEntries = [...presetScopes(web, 'services/**/*.{client,server,rsc}.ts'), ...presetScopes(web, 'services/**/*.rsc.tsx')]
+  const frontendEntries = [...presetServiceScopes(project.serviceFolders, web, '**/*.{client,server,rsc}.ts'), ...presetServiceScopes(project.serviceFolders, web, '**/*.rsc.tsx')]
   const ungroupedWeb = web.filter((path) => !project.layouts.some((scope) => scope.path === `${path}/components`))
   const overrides: OxlintOverride[] = []
   const { files: filesPattern, exports: exportsPattern, unique } = settings
@@ -88,7 +88,7 @@ export const namingGroup: PresetBuilder<'naming'> = (project, settings, owner) =
   )
   add(
     'exports',
-    presetScopes(web, 'services/**/*.constants.ts'),
+    presetServiceScopes(project.serviceFolders, web, '**/*.constants.ts'),
     { 'arch/naming-exports': ['error', { ...presetExportPrefix, scope: 'declarations', allow: '^\\*$' }] },
     testFiles,
   )
@@ -132,7 +132,7 @@ export const namingGroup: PresetBuilder<'naming'> = (project, settings, owner) =
   )
 
   for (const role of ['action', 'query']) {
-    const files = [...presetScopes(flatApp, `services/**/*-${role}.*.ts`), ...presetScopes(web, `services/**/*-${role}.*.rsc.tsx`)]
+    const files = [...presetServiceScopes(project.serviceFolders, flatApp, `**/*-${role}.*.ts`), ...presetServiceScopes(project.serviceFolders, web, `**/*-${role}.*.rsc.tsx`)]
 
     add('files', files, {
       'arch/naming-file': ['error', { pattern: `^[a-z0-9]+(?:-[a-z0-9]+)*-${role}\\.[a-z0-9]+(?:-[a-z0-9]+)*\\.ts$`, message: namingOperationMessage }],
@@ -147,7 +147,7 @@ export const namingGroup: PresetBuilder<'naming'> = (project, settings, owner) =
   }
 
   for (const [role, folder, separator] of [['action', 'actions', '.'], ['query', 'queries', '-']]) {
-    const files = presetScopes(folderApp, `services/*/${folder}/*.ts`)
+    const files = presetServiceScopes(project.serviceFolders, folderApp, `*/${folder}/*.ts`)
 
     add('files', files, {
       'arch/naming-file': [
@@ -168,7 +168,7 @@ export const namingGroup: PresetBuilder<'naming'> = (project, settings, owner) =
 
   for (const role of ['action', 'query']) {
     for (const suffix of ['client.ts', 'server.ts', 'rsc.ts', 'rsc.tsx']) {
-      const files = presetScopes(web, `services/**/*-${role}.*.${suffix}`)
+      const files = presetServiceScopes(project.serviceFolders, web, `**/*-${role}.*.${suffix}`)
 
       add('files', files, {
         'arch/naming-file': [
@@ -185,7 +185,7 @@ export const namingGroup: PresetBuilder<'naming'> = (project, settings, owner) =
 
   add(
     'exports',
-    presetScopes(web, 'services/**/*.rsc.{ts,tsx}'),
+    presetServiceScopes(project.serviceFolders, web, '**/*.rsc.{ts,tsx}'),
     { 'arch/naming-exports': ['error', namingFrontendPrefix, { mode: 'pattern', pattern: '^[a-z][a-z0-9]*Rsc[A-Z][a-zA-Z0-9]*$' }] },
     ['**/*-{action,query}.*.rsc.{ts,tsx}', ...testFiles],
   )

@@ -57,6 +57,7 @@ export const importsGroup: PresetTypes.PresetBuilder<'imports'> = (project, sett
           backend: absolute(project.backend),
           packages: absolute(project.packages),
           roles: project.suffixes,
+          services: absolute([...project.web, ...project.backend].map((source) => project.serviceFolders[source])),
           portable: true,
           aliases: presetAliases(project.root, settings.aliases),
           appPackages: importsPackageNames(project, ['web', 'backend']),

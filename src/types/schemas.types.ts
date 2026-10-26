@@ -8,6 +8,7 @@ export interface SchemasElementOptions {
 export interface SchemasLocalOptions {
   packages: string[]
   namespaces: string[]
+  calls?: string[]
   allow?: string[]
   patterns?: string[]
   message?: string

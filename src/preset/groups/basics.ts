@@ -1,4 +1,4 @@
-import { presetOverride, presetScopes } from '../preset.utils.ts'
+import { presetOverride, presetServiceScopes } from '../preset.utils.ts'
 import type { PresetBuilder } from '../../types/preset.types.ts'
 
 export const basicsGroup: PresetBuilder<'basics'> = (project, settings) => {
@@ -10,7 +10,7 @@ export const basicsGroup: PresetBuilder<'basics'> = (project, settings) => {
       ? [
         presetOverride(appFiles, { 'arch/code-trivial-functions': ['error', trivial] }, ui),
         presetOverride(
-          [...presetScopes(web, 'services/**/*.{client,server,rsc}.ts'), ...presetScopes(web, 'services/**/*.rsc.tsx')],
+          [...presetServiceScopes(project.serviceFolders, web, '**/*.{client,server,rsc}.ts'), ...presetServiceScopes(project.serviceFolders, web, '**/*.rsc.tsx')],
           { 'arch/code-trivial-functions': ['error', { ...trivial, services: true }] },
           ui,
         ),

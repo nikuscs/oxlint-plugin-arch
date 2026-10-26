@@ -4,7 +4,7 @@ import { presetDetect, presetRegistryFile } from './preset-detect.ts'
 import { presetStylesheet } from './preset-stylesheet.ts'
 import { presetUnits } from './preset-units.ts'
 import * as PresetConstants from './preset.constants.ts'
-import { PresetError, presetIsDirectory, presetManifest, presetScopes } from './preset.utils.ts'
+import { PresetError, presetIsDirectory, presetManifest, presetScopes, presetServiceScopes } from './preset.utils.ts'
 import type * as PresetTypes from '../types/preset.types.ts'
 
 function presetNormalizeKey(key: string): string {
@@ -232,6 +232,12 @@ export function presetProject(config: PresetTypes.PresetConfig): PresetTypes.Pre
   const unitKeys = new Set(units.map((unit) => unit.scope.key))
   const misplaced = live.find((scope) => !unitKeys.has(scope.key) && Object(scope.folder.layout).operations !== undefined)
 
+  const servicesKey = live.find((scope) => !unitKeys.has(scope.key) && scope.folder.services !== undefined)
+
+  if (servicesKey) {
+    throw new PresetError(`Set services on an app or package folder, not on \`${servicesKey.key}\`.`)
+  }
+
   if (misplaced) {
     throw new PresetError(`Set layout.operations on an app or package folder, not on \`${misplaced.key}\`.`)
   }
@@ -251,6 +257,7 @@ export function presetProject(config: PresetTypes.PresetConfig): PresetTypes.Pre
   const libraryUnits = of('library')
   const packageSources = libraryUnits.map((unit) => unit.source)
   const app = [...web, ...backend, ...packageSources]
+  const serviceFolders = Object.fromEntries(units.map((unit) => [unit.source, unit.services]))
   const appFiles = presetScopes(app)
   const webFiles = presetScopes(web)
   const effective = live.map((scope) => scope.effective)
@@ -269,7 +276,7 @@ export function presetProject(config: PresetTypes.PresetConfig): PresetTypes.Pre
   const client = orpcScopes.find((settings) => settings.client !== undefined)?.client
 
   const rpcClients = client === undefined
-    ? webUnits.map((unit) => posix.join(unit.source, 'services', unit.layout.services === 'domain' ? 'rpc/rpc.client.ts' : 'rpc.client.ts'))
+    ? webUnits.map((unit) => posix.join(unit.services, unit.layout.services === 'domain' ? 'rpc/rpc.client.ts' : 'rpc.client.ts'))
     : [client]
 
   const kitUnits = units.filter((unit) => unit.scope.effective.kit)
@@ -350,6 +357,7 @@ export function presetProject(config: PresetTypes.PresetConfig): PresetTypes.Pre
 
   return {
     root,
+    serviceFolders,
     scopes: live,
     units,
     suffixes,
@@ -362,7 +370,7 @@ export function presetProject(config: PresetTypes.PresetConfig): PresetTypes.Pre
       client: client ?? '',
     },
     layouts: units.flatMap((unit) =>
-      Object.entries(unit.layout).map(([folder, mode]) => ({ path: posix.join(unit.source, folder), folder, mode })),
+      Object.entries(unit.layout).map(([folder, mode]) => ({ path: folder === 'services' ? unit.services : posix.join(unit.source, folder), folder, mode })),
     ),
     rpcClients,
     operations: units.flatMap((unit) => (unit.scope.effective.layout?.operations === 'folders' ? [unit.source] : [])),
@@ -386,7 +394,7 @@ export function presetProject(config: PresetTypes.PresetConfig): PresetTypes.Pre
       ...presetScopes(packageSources, `hooks/**/${PresetConstants.presetExtensions}`),
     ],
     backendFiles: presetScopes(backend),
-    services: presetScopes(app, `services/**/${PresetConstants.presetExtensions}`),
+    services: presetServiceScopes(serviceFolders, app),
     utilities: ['**/*.utils.ts', '**/*.constants.ts', '**/*.types.ts'],
     types: presetScopes(app, 'types/**'),
     uiRoots,
@@ -400,7 +408,7 @@ export function presetProject(config: PresetTypes.PresetConfig): PresetTypes.Pre
     publicEntrypoints,
     baseImports: PresetConstants.presetBaseImports,
     css: { ...webCss, ...kitCss },
-    registries: backendUnits.flatMap((unit) => presetRegistryFile(root, unit.source, unit.scope.effective.backend?.registry) ?? []),
+    registries: backendUnits.flatMap((unit) => presetRegistryFile(root, unit.source, unit.scope.effective.backend?.registry, unit.services) ?? []),
     ignores: skipped.map((key) => `${key}/**`),
     outputs: ['.', ...units.map((unit) => unit.key)].flatMap((key) => PresetConstants.presetOutputFolders.map((folder) => (key === '.' ? `${folder}/**` : `${key}/${folder}/**`))),
   }

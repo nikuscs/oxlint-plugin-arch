@@ -1,4 +1,4 @@
-import { presetOverride, presetRuntime, presetScopes } from '../preset.utils.ts'
+import { presetOverride, presetRuntime, presetScopes, presetServiceScopes } from '../preset.utils.ts'
 import type { PresetBuilder } from '../../types/preset.types.ts'
 
 export const tanstackGroup: PresetBuilder<'tanstack'> = (project, settings) => {
@@ -30,7 +30,7 @@ export const tanstackGroup: PresetBuilder<'tanstack'> = (project, settings) => {
           },
         ],
       },
-      presetScopes(tanstackWeb, 'services/**/*.rsc.{ts,tsx}'),
+      presetServiceScopes(project.serviceFolders, tanstackWeb, '**/*.rsc.{ts,tsx}'),
     ),
     ...presetRuntime(project, settings, 'tanstack', 'arch/boundaries-tanstack'),
   ]

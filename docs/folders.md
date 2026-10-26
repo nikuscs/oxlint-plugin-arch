@@ -60,6 +60,7 @@ Detection also adds conventions:
 | Backend registry | `backend.registry` when set, else `services/service.ts`, `core/core.services.ts` or `service.ts`; see [`backend`](groups/backend.md). The registry file is exempt from the domain layout |
 | Stylesheet | See [`tailwind`](groups/tailwind.md) |
 | Web `services/` | `layout.services: 'flat'` when it holds more files than folders |
+| App or backend without `services/` | Its `lib/` is the service folder; with `services/`, `lib/` stays portable helpers |
 
 Your folders merge over the detected ones: a key you set wins, and objects merge (`layout: { hooks: false }` keeps the detected `services: 'flat'`). A detected key inside a folder you set as a `*` glob or a parent is left out, and a `*` key still gets the conventions of each folder it matches. Conventions inside a `false` folder are dropped, and a group you set to `false` on a parent stays off. Detection follows symlinked folders and skips broken links.
 
@@ -81,6 +82,7 @@ Your folders merge over the detected ones: a key you set wins, and objects merge
 | --- | --- | --- |
 | `severity` | `'error' \| 'warn'` | Level for every rule in the folder, inherited by its subfolders; the `correctness` category keeps the `'.'` level |
 | `source` | `string` | Source folder inside this folder: default `src`, or the folder itself for CLIs and when it has no `src` |
+| `services` | `string` | Service folder inside `source`: default `services`, or `lib` for an app or backend that has no `services/`. Every service check (layout, naming, import boundaries, registry) follows it. Set on an app or package folder |
 | `rules` | `Record<rule, level \| [level, options]>` | Last-word overrides for single rules; options replace the rule's options in the folder |
 | any [group](#-groups) | `true \| false \| 'warn' \| options` | |
 

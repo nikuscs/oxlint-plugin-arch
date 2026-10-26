@@ -1,7 +1,7 @@
 import { existsSync, readdirSync } from 'node:fs'
 import { posix, resolve } from 'node:path'
 import * as PresetConstants from './preset.constants.ts'
-import { PresetError, presetIsDirectory } from './preset.utils.ts'
+import { PresetError, presetIsDirectory, presetServicesFolder } from './preset.utils.ts'
 import type * as PresetTypes from '../types/preset.types.ts'
 
 const presetFrameworks: PresetTypes.PresetFramework[] = ['tanstack', 'next', 'expo']
@@ -84,7 +84,10 @@ function presetUnit(root: string, key: string, scope: PresetTypes.PresetScope): 
     }
   }
 
-  return { key, scope, kind, framework, source: presetUnitSource(root, key, kind, folder.source), layout }
+  const source = presetUnitSource(root, key, kind, folder.source)
+  const services = presetServicesFolder(root, source, folder.services, kind === 'web' || kind === 'backend')
+
+  return { key, scope, kind, framework, source, services, layout }
 }
 
 export function presetUnits(root: string, scopes: PresetTypes.PresetScope[], ignored: Set<string>): PresetTypes.PresetUnit[] {

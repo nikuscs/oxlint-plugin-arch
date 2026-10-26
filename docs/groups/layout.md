@@ -13,7 +13,7 @@ Takes `true`, `false`, `'warn'` or an object:
 
 | Key | Type | Default | |
 | --- | --- | --- | --- |
-| `services` | `'flat' \| 'domain' \| false` | `'domain'` | `services/` layout |
+| `services` | `'flat' \| 'domain' \| false` | `'domain'` | Service folder layout (`services/`, or the folder's [`services`](../folders.md#-folder-keys) key) |
 | `hooks` | `'flat' \| 'domain' \| false` | web: 'flat' | `hooks/` layout |
 | `components` | `'flat' \| 'domain' \| false` | one group folder | `components/` layout |
 | `suffixes` | `string[]` | `[]` | Extra `*.<suffix>.ts` service file kinds |

@@ -28,7 +28,7 @@ export const backendGroup: PresetBuilder<'backend'> = (project, settings) => {
 
   const registries = file === undefined
     ? backendUnits.flatMap((unit) => {
-      const found = presetRegistryFile(project.root, unit.source, undefined)
+      const found = presetRegistryFile(project.root, unit.source, undefined, unit.services)
 
       return found ? [{ file: found, unit }] : []
     })
@@ -41,7 +41,7 @@ export const backendGroup: PresetBuilder<'backend'> = (project, settings) => {
 
     const options: BackendRegistryOptions = {
       registry: resolve(project.root, registry.file),
-      services: resolve(project.root, registry.unit.source, 'services'),
+      services: resolve(project.root, registry.unit.services),
       skip: configured.skip ?? (file === undefined ? presetRegistrySkip : []),
     }
 

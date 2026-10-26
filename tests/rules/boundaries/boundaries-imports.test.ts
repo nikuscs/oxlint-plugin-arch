@@ -23,6 +23,24 @@ describe('arch/boundaries-imports', () => {
       options: { web: ['/project/web'], roles: ['driver'] },
     },
     {
+      name: 'lib/ as the service folder is not a portable library',
+      filename: '/project/web/lib/fade.ts',
+      code: "import type { Chat } from '../types/chat.types'",
+      options: { web: ['/project/web'], portable: true, services: ['/project/web/lib'] },
+    },
+    {
+      name: 'private roles stay inside their domain in a named service folder',
+      filename: '/project/web/lib/credits.ts',
+      code: "import { prompt } from './credits.prompts'",
+      options: { web: ['/project/web'], roles: ['prompts'], services: ['/project/web/lib'] },
+    },
+    {
+      name: 'a nested app keeps its own service folder',
+      filename: '/project/services/chat/chat.service.ts',
+      code: "import { prompt } from './chat.prompts'",
+      options: { web: ['/project/web'], backend: ['/project'], roles: ['prompts'], services: ['/project/web/lib', '/project/services'] },
+    },
+    {
       name: 'portable library imports its own contract',
       filename: '/project/web/lib/fade.utils.ts',
       code: "import type { FadeOptions } from '../types/fade.types'",
@@ -102,6 +120,20 @@ describe('arch/boundaries-imports', () => {
       filename: '/project/web/services/chat/chat.service.ts',
       code: "import { prompt } from '../user/user.prompts'",
       options: { web: ['/project/web'], roles: ['prompts'] },
+      errors: ['boundary'],
+    },
+    {
+      name: 'private roles cannot cross domains in a named service folder',
+      filename: '/project/web/lib/credits.ts',
+      code: "import { prompt } from './usage.prompts'",
+      options: { web: ['/project/web'], roles: ['prompts'], services: ['/project/web/lib'] },
+      errors: ['boundary'],
+    },
+    {
+      name: 'a named service folder keeps the registry out of services',
+      filename: '/project/web/lib/credits.ts',
+      code: "import { services } from './service'",
+      options: { web: ['/project/web'], services: ['/project/web/lib'] },
       errors: ['boundary'],
     },
     {

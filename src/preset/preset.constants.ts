@@ -373,7 +373,7 @@ export const presetGroupOptions: PresetTypes.PresetGroupDefaults = {
   externals: { level: 'error', packages: presetExternals },
 }
 
-export const presetFolderKeys = ['severity', 'source', 'rules']
+export const presetFolderKeys = ['severity', 'source', 'services', 'rules']
 
 export const presetA11yRules = [
   'alt-text', 'anchor-has-content', 'anchor-is-valid', 'aria-activedescendant-has-tabindex', 'aria-props',
@@ -407,7 +407,7 @@ export const presetDetectSkip = ['node_modules', 'dist', 'build', 'coverage', 'p
 
 export const presetStylesheetNames = ['styles', 'globals', 'global', 'app', 'index', 'main', 'style', 'tailwind']
 
-export const presetRegistryFiles = ['services/service.ts', 'core/core.services.ts', 'service.ts']
+export const presetRegistryFiles = ['core/core.services.ts', 'service.ts']
 
 export const presetRegistrySkip = ['brand', 'database', 'db', 'math', 'security', 'tools']
 

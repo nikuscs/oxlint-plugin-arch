@@ -1,6 +1,6 @@
 import { readFileSync, statSync } from 'node:fs'
-import { resolve } from 'node:path'
-import { presetExtensions, presetGeneratedFiles } from './preset.constants.ts'
+import { posix, resolve } from 'node:path'
+import { presetExtensions, presetGeneratedFiles, presetLiteralSegment } from './preset.constants.ts'
 import type * as PresetTypes from '../types/preset.types.ts'
 import type { OxlintOverride } from 'oxlint'
 
@@ -8,6 +8,10 @@ export class PresetError extends Error {}
 
 export function presetScopes(roots: string[], suffix = `**/${presetExtensions}`): string[] {
   return roots.map((root) => (root === '.' ? suffix : `${root}/${suffix}`))
+}
+
+export function presetServiceScopes(folders: Record<string, string>, sources: string[], suffix = `**/${presetExtensions}`): string[] {
+  return presetScopes(sources.map((source) => folders[source] ?? posix.join(source, 'services')), suffix)
 }
 
 export function presetOverride(files: string[], rules: PresetTypes.PresetRules, excludeFiles: string[] = []): OxlintOverride {
@@ -123,7 +127,7 @@ export function presetRuntime(
     }
 
     return [
-      presetOverride([...presetScopes([unit.source], 'services/**/*.{ts,tsx}'), ...presetScopes([unit.source], 'lib/**/*.{ts,tsx}')], {
+      presetOverride([...presetServiceScopes(project.serviceFolders, [unit.source], '**/*.{ts,tsx}'), ...presetScopes([unit.source], 'lib/**/*.{ts,tsx}')], {
         [rule]: ['error', options],
       }),
     ]
@@ -144,6 +148,20 @@ export function presetIsDirectory(path: string): boolean {
   } catch {
     return false
   }
+}
+
+export function presetServicesFolder(root: string, source: string, configured?: string, fallback = true): string {
+  if (configured !== undefined) {
+    if (!configured.split('/').every((segment) => presetLiteralSegment.test(segment))) {
+      throw new PresetError(`services \`${configured}\` must be a literal relative path.`)
+    }
+
+    return posix.join(source, configured)
+  }
+
+  const lib = fallback && !presetIsDirectory(resolve(root, source, 'services')) && presetIsDirectory(resolve(root, source, 'lib'))
+
+  return posix.join(source, lib ? 'lib' : 'services')
 }
 
 export function presetIsFile(path: string): boolean {

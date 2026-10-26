@@ -1,5 +1,15 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- Preset: folder key `services` names an app's or package's service folder inside `source` (default `services`). An app or backend without `services/` uses `lib/` as its service folder, so a flat `lib/` gets the same layout, naming, import-boundary and registry checks; next to `services/`, `lib/` stays portable helpers. `arch/boundaries-imports` gets the matching `services` option.
+
+### Fixed
+
+- `arch/schemas-local` no longer reports `z.config(...)` and zod's error formatters (`prettifyError`, `treeifyError`, `flattenError`, `formatError`), or an import used only for them; they build no schema. The new `calls` option sets that list.
+
 ## 0.12.1
 
 ### Changed
