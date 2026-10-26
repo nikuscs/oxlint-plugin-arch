@@ -1,6 +1,6 @@
-import { mkdirSync, mkdtempSync, rmSync, symlinkSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, rmSync, symlinkSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join, matchesGlob, resolve } from 'node:path'
+import { dirname, join, matchesGlob, resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { preset, PresetError, recipes, templates } from './preset.ts'
 import type { PresetFolders } from '../types/preset.types.ts'
@@ -8,7 +8,29 @@ import type { PresetFolders } from '../types/preset.types.ts'
 describe('preset', () => {
   const root = resolve(import.meta.dirname, '../..')
 
-  it.each<{ name: string; tree?: string[]; link?: boolean; folders: PresetFolders; file: string; rule: string; expected: unknown }>([
+  const manifest = (name: string, dependencies: Record<string, string>, extra: object = {}) =>
+    JSON.stringify({
+      ...extra,
+      name,
+      dependencies,
+    })
+
+  const workspaces = JSON.stringify({ workspaces: ['apps/*', 'packages/*'] })
+  const server = { 'apps/server/package.json': manifest('server', { hono: '1' }, { imports: { '#/*': './src/*' } }) }
+  const tailwind = '@import "tailwindcss";'
+  const routerClient = (allow: string[]) => ['error', { restrictions: expect.arrayContaining([expect.objectContaining({ token: 'RouterClient', allow })]) }]
+
+  it.each<{
+    name: string
+    tree?: string[]
+    files?: Record<string, string>
+    link?: boolean
+    folders: PresetFolders
+    detect?: boolean
+    file: string
+    rule: string
+    expected: unknown
+  }>([
     { name: 'the TanStack recipe adds route checks', folders: { src: recipes.tanstack }, file: 'src/src/routes/index.tsx', rule: 'arch/files-route', expected: ['error', { export: 'Route' }] },
     { name: 'the Next recipe adds route checks', folders: { src: recipes.next }, file: 'src/src/app/page.tsx', rule: 'arch/files-route', expected: ['error', { export: 'default' }] },
     { name: 'the Expo recipe adds route checks', folders: { src: recipes.expo }, file: 'src/src/app/index.tsx', rule: 'arch/files-route', expected: ['error', { export: 'default' }] },
@@ -104,6 +126,254 @@ describe('preset', () => {
       expected: ['error', { message: expect.stringMatching(/^Domain files/) }, { pattern: '^order' }],
     },
     {
+      name: 'a TanStack dependency picks the tanstack recipe',
+      tree: ['apps/web/src/routes/'],
+      files: { 'package.json': workspaces, 'apps/web/package.json': manifest('web', { '@tanstack/react-start': '1' }) },
+      folders: {},
+      file: 'apps/web/src/routes/index.tsx',
+      rule: 'arch/files-route',
+      expected: ['error', { export: 'Route' }],
+    },
+    {
+      name: 'a vinext root package picks the next recipe',
+      tree: ['src/app/'],
+      files: { 'package.json': manifest('site', { vinext: '1' }) },
+      folders: {},
+      file: 'src/app/page.tsx',
+      rule: 'arch/files-route',
+      expected: ['error', { export: 'default' }],
+    },
+    {
+      name: 'an Expo dependency picks the expo recipe',
+      tree: ['apps/mobile/src/app/'],
+      files: { 'package.json': workspaces, 'apps/mobile/package.json': manifest('mobile', { expo: '1' }) },
+      folders: {},
+      file: 'apps/mobile/src/app/index.tsx',
+      rule: 'arch/files-route',
+      expected: ['error', { export: 'default' }],
+    },
+    {
+      name: 'a desktop dependency picks the desktop recipe',
+      files: { 'package.json': workspaces, 'apps/desktop/package.json': manifest('desktop', { electrobun: '1' }) },
+      folders: {},
+      file: 'apps/desktop/src/a.ts',
+      rule: 'no-console',
+      expected: undefined,
+    },
+    {
+      name: 'a React app with components picks the react recipe',
+      tree: ['apps/site/src/components/'],
+      files: { 'package.json': workspaces, 'apps/site/package.json': manifest('site', { react: '1' }) },
+      folders: {},
+      file: 'apps/site/src/a.tsx',
+      rule: 'arch/react-memo',
+      expected: 'error',
+    },
+    {
+      name: 'a React package with components picks the ui recipe',
+      tree: ['packages/ui/src/components/order/'],
+      files: { 'package.json': workspaces, 'packages/ui/package.json': manifest('ui', { react: '1' }), 'packages/ui/src/styles.css': tailwind },
+      folders: {},
+      file: 'packages/ui/src/components/order/order-card.tsx',
+      rule: 'arch/files-components-only',
+      expected: undefined,
+    },
+    {
+      name: 'a backend dependency with services picks the backend recipe',
+      tree: ['apps/server/src/services/order/'],
+      files: { 'package.json': workspaces, ...server },
+      folders: {},
+      file: 'apps/server/src/services/order/order-query.list.ts',
+      rule: 'arch/boundaries-deny',
+      expected: ['error', { calls: { insertInto: 'Query files only read; move writes to an action.' } }],
+    },
+    {
+      name: 'a backend dependency without services stays a library',
+      files: { 'package.json': workspaces, 'packages/db/package.json': manifest('db', { kysely: '1' }) },
+      folders: {},
+      file: 'packages/db/src/a.ts',
+      rule: 'arch/code-switch',
+      expected: undefined,
+    },
+    {
+      name: 'a folder without a package.json is not a unit',
+      files: { 'package.json': workspaces, 'apps/native/Cargo.toml': '' },
+      folders: {},
+      file: 'apps/native/src/a.ts',
+      rule: 'arch/schemas-local',
+      expected: undefined,
+    },
+    {
+      name: 'a package bans the backend import aliases',
+      tree: ['apps/server/src/services/'],
+      files: { 'package.json': workspaces, ...server, 'packages/utils/package.json': manifest('utils', { 'date-fns': '1' }) },
+      folders: {},
+      file: 'packages/utils/src/a.ts',
+      rule: 'arch/boundaries-deny',
+      expected: ['error', { imports: { '#/**': expect.any(String), '../../apps/**': expect.any(String) } }],
+    },
+    {
+      name: 'a package keeps its own import aliases',
+      tree: ['apps/server/src/services/'],
+      files: { 'package.json': workspaces, ...server, 'packages/utils/package.json': manifest('utils', { 'date-fns': '1' }, { imports: { '#/*': './src/*' } }) },
+      folders: {},
+      file: 'packages/utils/src/a.ts',
+      rule: 'arch/boundaries-deny',
+      expected: ['error', { imports: expect.not.objectContaining({ '#/**': expect.anything() }) }],
+    },
+    {
+      name: 'a web app bans backend aliases and server services',
+      tree: ['apps/server/src/services/', 'apps/web/src/'],
+      files: { 'package.json': workspaces, ...server, 'apps/web/package.json': manifest('web', { '@tanstack/react-start': '1' }) },
+      folders: {},
+      file: 'apps/web/src/a.tsx',
+      rule: 'arch/boundaries-deny',
+      expected: ['error', { imports: { '#/**': expect.any(String), '**/services/*.service': expect.any(String) } }],
+    },
+    {
+      name: 'a web app without a backend keeps its service imports',
+      tree: ['apps/web/src/'],
+      files: { 'package.json': workspaces, 'apps/web/package.json': manifest('web', { '@tanstack/react-start': '1' }) },
+      folders: {},
+      file: 'apps/web/src/a.tsx',
+      rule: 'arch/boundaries-deny',
+      expected: ['error', { imports: expect.not.objectContaining({ '**/services/*.service': expect.anything() }) }],
+    },
+    {
+      name: 'a Tailwind app.css wins over a plain styles.css',
+      files: {
+        'package.json': workspaces,
+        'apps/web/package.json': manifest('web', { '@tanstack/react-start': '1' }),
+        'apps/web/src/app.css': tailwind,
+        'apps/web/src/styles.css': 'body {}',
+      },
+      folders: {},
+      file: 'apps/web/src/a.tsx',
+      rule: 'tailwindcss/enforce-canonical',
+      expected: ['error', { entryPoint: expect.stringMatching(/apps\/web\/src\/app\.css$/) }],
+    },
+    {
+      name: 'a globals.css with @tailwind is the Tailwind entry',
+      files: { 'package.json': workspaces, 'apps/site/package.json': manifest('site', { next: '1' }), 'apps/site/src/globals.css': '@tailwind base;' },
+      folders: {},
+      file: 'apps/site/src/a.tsx',
+      rule: 'tailwindcss/enforce-canonical',
+      expected: ['error', { entryPoint: expect.stringMatching(/globals\.css$/) }],
+    },
+    {
+      name: 'a UI kit uses the stylesheet of the app that depends on it',
+      tree: ['packages/ui/src/components/'],
+      files: {
+        'package.json': workspaces,
+        'apps/web/package.json': manifest('web', { '@tanstack/react-start': '1', ui: '1' }),
+        'apps/web/src/app.css': tailwind,
+        'apps/site/package.json': manifest('site', { next: '1' }),
+        'apps/site/src/globals.css': tailwind,
+        'packages/ui/package.json': manifest('ui', { react: '1' }),
+      },
+      folders: {},
+      file: 'packages/ui/src/components/button.tsx',
+      rule: 'tailwindcss/enforce-canonical',
+      expected: ['error', { entryPoint: expect.stringMatching(/apps\/web\/src\/app\.css$/) }],
+    },
+    {
+      name: 'a flat web services folder gets the flat layout',
+      files: {
+        'package.json': workspaces,
+        'apps/web/package.json': manifest('web', { '@tanstack/react-start': '1' }),
+        'apps/web/src/services/order.ts': '',
+        'apps/web/src/services/user.ts': '',
+      },
+      folders: {},
+      file: 'apps/web/src/a.tsx',
+      rule: 'arch/boundaries-token-owner',
+      expected: routerClient(['apps/web/src/services/rpc.client.ts']),
+    },
+    {
+      name: 'a user layout keeps the detected flat services',
+      files: {
+        'package.json': workspaces,
+        'apps/web/package.json': manifest('web', { '@tanstack/react-start': '1' }),
+        'apps/web/src/services/order.ts': '',
+        'apps/web/src/services/user.ts': '',
+      },
+      folders: { 'apps/web': { layout: { hooks: false } } },
+      file: 'apps/web/src/a.tsx',
+      rule: 'arch/boundaries-token-owner',
+      expected: routerClient(['apps/web/src/services/rpc.client.ts']),
+    },
+    {
+      name: 'a services/service.ts file becomes the registry',
+      files: { 'package.json': workspaces, ...server, 'apps/server/src/services/service.ts': '' },
+      folders: {},
+      file: 'apps/server/src/services/service.ts',
+      rule: 'arch/backend-registry',
+      expected: ['error', { registry: expect.stringMatching(/services\/service\.ts$/), skip: ['brand', 'database', 'db', 'math', 'security', 'tools'] }],
+    },
+    {
+      name: 'an explicit registry file skips no service by default',
+      files: { 'package.json': workspaces, ...server, 'apps/server/src/registry.ts': '', 'apps/server/src/services/service.ts': '' },
+      folders: { 'apps/server': { backend: { registry: 'apps/server/src/registry.ts' } } },
+      file: 'apps/server/src/registry.ts',
+      rule: 'arch/backend-registry',
+      expected: ['error', { skip: [] }],
+    },
+    {
+      name: 'a src/migrations folder gets numbered names',
+      tree: ['apps/server/src/services/', 'apps/server/src/migrations/'],
+      files: { 'package.json': workspaces, ...server },
+      folders: {},
+      file: 'apps/server/src/migrations/001_init.ts',
+      rule: 'arch/naming-file',
+      expected: ['error', { unique: '^(\\d{3,14})[-_]' }],
+    },
+    {
+      name: 'a database/migrations folder gets numbered names',
+      tree: ['apps/server/src/services/', 'apps/server/src/database/migrations/'],
+      files: { 'package.json': workspaces, ...server },
+      folders: {},
+      file: 'apps/server/src/database/migrations/20240101120000-init.ts',
+      rule: 'arch/naming-file',
+      expected: ['error', { unique: '^(\\d{3,14})[-_]' }],
+    },
+    {
+      name: 'a migrations folder beside src gets numbered names',
+      tree: ['apps/server/src/services/', 'apps/server/migrations/'],
+      files: { 'package.json': workspaces, ...server },
+      folders: {},
+      file: 'apps/server/migrations/001_init.ts',
+      rule: 'arch/naming-file',
+      expected: ['error', { unique: '^(\\d{3,14})[-_]' }],
+    },
+    {
+      name: 'a tests/kits folder gets kit names',
+      tree: ['apps/server/src/services/', 'apps/server/tests/kits/'],
+      files: { 'package.json': workspaces, ...server },
+      folders: {},
+      file: 'apps/server/tests/kits/order.kit.ts',
+      rule: 'arch/naming-file',
+      expected: ['error', { pattern: expect.stringContaining('kit') }],
+    },
+    {
+      name: 'a test/kits folder gets kit names',
+      tree: ['apps/server/src/services/', 'apps/server/test/kits/'],
+      files: { 'package.json': workspaces, ...server },
+      folders: {},
+      file: 'apps/server/test/kits/order.kit.ts',
+      rule: 'arch/naming-file',
+      expected: ['error', { pattern: expect.stringContaining('kit') }],
+    },
+    {
+      name: 'detect false keeps only the configured folders',
+      tree: ['apps/web/src/routes/'],
+      files: { 'package.json': workspaces, 'apps/web/package.json': manifest('web', { '@tanstack/react-start': '1' }) },
+      folders: {},
+      detect: false,
+      file: 'apps/web/src/routes/index.tsx',
+      rule: 'arch/files-route',
+      expected: undefined,
+    },
+    {
       name: 'a symlinked root resolves to its real path',
       tree: ['apps/web/src/'],
       link: true,
@@ -112,8 +382,8 @@ describe('preset', () => {
       rule: 'arch/boundaries-imports',
       expected: ['error', { packages: [expect.not.stringContaining('-link')] }],
     },
-  ])('$name', ({ tree, link, folders, file, rule, expected }) => {
-    const base = tree ? mkdtempSync(join(tmpdir(), 'arch-preset-')) : root
+  ])('$name', ({ tree, files, link, folders, detect, file, rule, expected }) => {
+    const base = tree || files ? mkdtempSync(join(tmpdir(), 'arch-preset-')) : root
     const linked = `${base}-link`
 
     try {
@@ -121,11 +391,21 @@ describe('preset', () => {
         mkdirSync(join(base, path), { recursive: true })
       }
 
+      for (const [path, content] of Object.entries(files ?? {})) {
+        mkdirSync(dirname(join(base, path)), { recursive: true })
+        writeFileSync(join(base, path), content)
+      }
+
       if (link) {
         symlinkSync(base, linked)
       }
 
-      const config = preset({ root: link ? linked : base, folders })
+      const config = preset({
+        root: link ? linked : base,
+        folders,
+        detect,
+      })
+
       const matches = (globs: string[] | undefined) => (globs ?? []).some((glob) => matchesGlob(file, glob))
       const rules = { ...config.rules }
 
@@ -137,7 +417,7 @@ describe('preset', () => {
 
       expect({ value: matches(config.ignorePatterns) ? 'ignored' : rules[rule] }).toMatchObject({ value: expected })
     } finally {
-      if (tree) {
+      if (tree || files) {
         rmSync(base, { recursive: true, force: true })
         rmSync(linked, { force: true })
       }

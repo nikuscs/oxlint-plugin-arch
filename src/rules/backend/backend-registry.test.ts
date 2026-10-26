@@ -12,6 +12,13 @@ describe('arch/backend-registry', () => {
       options: { registry: '<root>/src/core/core.services.ts', services: '<root>/src/services' },
     },
     {
+      name: 'a plural key registers the service',
+      filename: 'src/core/core.services.ts',
+      files: { 'src/services/category/category.service.ts': 'export const category = {}' },
+      code: 'export const services = { categories: makeCategoryService }',
+      options: { registry: '<root>/src/core/core.services.ts', services: '<root>/src/services' },
+    },
+    {
       name: 'hyphenated domains use camelCase keys',
       filename: 'src/core/core.services.ts',
       files: { 'src/services/user-profile/user-profile.service.ts': 'export const profile = {}' },

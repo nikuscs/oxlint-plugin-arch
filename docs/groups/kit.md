@@ -8,4 +8,4 @@ folders: {
 }
 ```
 
-Takes `true` or `false`.
+Takes `true` or `false`. Detected for a package with `react` and a `components/` folder (`recipes.ui`).

@@ -11,7 +11,7 @@ Architecture rules for Oxlint (`arch/*`), a vendored anti-slop plugin (`dillon-a
 
 ## Rules
 
-- Rules stay generic and configurable: no app names, paths or exceptions. Consumer globs and policy live in the consumer's Oxlint config.
+- Rules stay generic and configurable: no app names, paths or exceptions. The preset may default conventions it can read from `package.json` or common folder names (`services/`, `migrations/`, `tests/kits/`); app-specific globs and policy live in the consumer's Oxlint config.
 - Use Oxlint's ESTree API; add no other production parser.
 - Reuse `src/utils/*.utils.ts` before writing a helper. A helper one file uses stays in that file.
 - The repo lints itself with its own preset (`oxlint.config.ts`). Fix the code to pass; lint, fallow and TypeScript settings change only on the user's explicit request.

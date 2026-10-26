@@ -97,9 +97,9 @@
 | `arch/require-paired-call` | `arch/code-paired-call` |
 | `arch/route-surface` | `arch/files-route` |
 | `arch/ternary-layout` | `arch/layout-ternary` |
-| `arch/test-title-pattern` | `tests-titles` |
+| `arch/test-title-pattern` | `arch/tests-titles` |
 | `modules/backend-switch` | `arch/code-switch` |
-| `modules/concurrent-db` | `tests-concurrent-db` |
+| `modules/concurrent-db` | `arch/tests-concurrent-db` |
 | `modules/domain-constants` | `arch/files-domain-constants` |
 | `modules/double-negation` | `arch/code-double-negation` |
 | `modules/dynamic-classes` | `arch/react-dynamic-classes` |
@@ -116,8 +116,8 @@
 | `modules/service-types` | `arch/types-service` |
 | `modules/shape-suffix` | `dillon-anti-slop/no-shape-in-symbol-names` |
 | `modules/tanstack-runtime` | `arch/boundaries-tanstack` |
-| `modules/test-assertions` | `tests-assertions` |
-| `modules/test-modifiers` | `tests-modifiers` |
+| `modules/test-assertions` | `arch/tests-assertions` |
+| `modules/test-modifiers` | `arch/tests-modifiers` |
 
 | Rule | Old option | New option |
 | --- | --- | --- |
@@ -164,6 +164,12 @@
 
 ### Changed
 
+- Preset detection: `preset()` picks each workspace folder's recipe from its `package.json` dependencies, and adds conventions for backend `services/`, `core/`, `rpc/`, `routes/`, `cli/`, `tests/kits/` and `migrations/` folders, web apps and packages. It also detects the Tailwind stylesheet by content (`app.css`, `styles.css`, `globals.css`, ...), the backend registry file, backend entries from `exports`, and flat web services. Your folders merge over the detected ones; `detect: false` turns it off. See `docs/folders.md`.
+- New recipes `react`, `desktop` and `ui`; `kit` stays as an alias of `ui`.
+- A UI kit without its own stylesheet uses the stylesheet of the web app that depends on it, else the first web app's, and no longer throws when there are several web apps.
+- `backend.registry` takes an options object without `file`. A configured `file` skips no service by default.
+- `backend.writes` adds `dispatch` and `send`.
+- `backend-registry` accepts a singular or plural registry key for a service folder (`order` → `orders`, `category` → `categories`).
 - `boundaries-imports`, `boundaries-next` and `boundaries-tanstack` no longer require their root and package options. An omitted `web`, `backend`, `packages`, `backendPackages`, `appPackages`, `entrypoints` or `rpc` defaults to `[]`, and `aliases` to `{}`; configs that set them behave as before.
 - Preset: a key inside a `false` folder, `backend.writes` below a backend folder, a non-object group value (`null`, arrays, numbers), folders that disagree on `tailwind.rem` or `shadcn.ui`/`shadcn.components`, and expo `client`/`dynamic` now throw instead of being ignored.
 - Preset types: `console` and `kit` take `true` or `false`; expo options are `{ server }` (`PresetExpoOptions`).

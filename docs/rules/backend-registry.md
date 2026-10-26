@@ -1,6 +1,6 @@
 # arch/backend-registry
 
-Every domain folder under `services` has a `<folder>.service.ts`, and the registry file names each one as a camelCase key of a top-level object or of the object a top-level function returns (`object` pins one name).
+Every domain folder under `services` has a `<folder>.service.ts`, and the registry file names each one as a camelCase key, singular or plural (`artifact` or `artifacts`), of a top-level object or of the object a top-level function returns (`object` pins one name).
 
 ```ts
 // services/billing/billing.service.ts exists

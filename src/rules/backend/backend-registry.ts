@@ -88,7 +88,7 @@ export const backendRegistry = defineRule({
               messageId: 'missing',
               data: { folder },
             })
-          } else if (!keys.has(key)) {
+          } else if (![key, `${key}s`, key.replace(/y$/, 'ies')].some((name) => keys.has(name))) {
             context.report({
               node: program,
               messageId: 'unregistered',

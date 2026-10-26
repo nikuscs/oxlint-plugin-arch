@@ -116,14 +116,14 @@ export interface PresetShadcnOptions {
 }
 
 export interface PresetRegistryOptions {
-  file: string
+  file?: string
   skip?: string[]
   object?: string
 }
 
 export interface PresetBackendOptions {
   exports?: string[]
-  registry?: string | PresetRegistryOptions
+  registry?: false | string | PresetRegistryOptions
   writes?: string[]
 }
 
@@ -189,7 +189,8 @@ export type PresetFolders = Record<string, boolean | PresetFolder>
 
 export interface PresetConfig {
   root?: string
-  folders: PresetFolders
+  folders?: PresetFolders
+  detect?: boolean
 }
 
 export type PresetRecipe = PresetGroups
@@ -280,6 +281,11 @@ export interface PresetImportRestriction {
 
 export interface PresetManifest {
   name?: string
+  dependencies?: Record<string, string>
+  devDependencies?: Record<string, string>
+  workspaces?: string[] | { packages?: string[] }
+  imports?: Record<string, unknown>
+  exports?: unknown
 }
 
 export interface PresetProject {

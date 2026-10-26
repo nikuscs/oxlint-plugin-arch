@@ -1,6 +1,15 @@
 # 🗂️ Folders
 
-`preset()` takes a map of folders. Each folder says what it holds; groups add the rules.
+`preset()` takes a map of folders. Each folder says what it holds; groups add the rules. Most projects need only the folders detection gets wrong:
+
+```ts
+// oxlint.config.ts
+import { preset } from 'oxlint-plugin-arch/preset'
+
+export default preset({ root: import.meta.dirname, folders: { '.': { style: { quotes: 'double' } } } })
+```
+
+Everything spelled out, with detection off:
 
 ```ts
 // oxlint.config.ts
@@ -8,18 +17,51 @@ import { preset, recipes } from 'oxlint-plugin-arch/preset'
 
 export default preset({
   root: import.meta.dirname,
+  detect: false,
   folders: {
     '.': { layout: { suffixes: ['prompts'] }, tests: { assertions: ['arch.**.to*'] } },
     'apps/web': recipes.tanstack,
     'apps/server': { ...recipes.backend, orpc: { public: ['apps/server/src/rpc/api/**'] } },
     'apps/server/src/services/database/migrations': { layout: false },
     'packages/*': recipes.library,
-    'packages/ui': { ...recipes.kit, react: { a11y: false } },
+    'packages/ui': { ...recipes.ui, react: { a11y: false } },
     scripts: recipes.cli,
     'tools/legacy': false,
   },
 })
 ```
+
+## 🔎 Detection
+
+Unless `detect: false`, the preset reads the root `package.json` `workspaces` (or the root package when there are none) and picks a recipe for each workspace folder from its dependencies. The first match wins:
+
+| Dependencies | Recipe |
+| --- | --- |
+| `@tanstack/react-start` | `tanstack` |
+| `next` or `vinext` | `next` |
+| `expo` | `expo` |
+| `electrobun`, `electron` or `@tauri-apps/*` | `desktop` |
+| `@orpc/server`, `hono`, `kysely`, `drizzle-orm`, `express`, `fastify` or `elysia`, in an app or next to a `services/` folder | `backend` |
+| `react` with a `components/` folder | `react` (app) or `ui` (package) |
+| anything else | `library` |
+
+A `scripts/` folder gets `cli`, and `'.'` bans `framer-motion`. Folders without a `package.json` (Rust, Go) are not units.
+
+Detection also adds conventions:
+
+| Where | Adds |
+| --- | --- |
+| Backend `services/` | Bans importing the registry, another service's `actions`/`queries`, and the backend's own package entries |
+| Backend `core/`, `rpc/`, `routes/`, `cli/` | Bans service operations or the registry; `cli/` also bans `.service` imports and names files `cli…` |
+| Backend `tests/kits/` or `test/kits/` | Kit file names; the tests import kit files, not the kit index |
+| Any `migrations/` in a backend | Numbered file names (`001_init.ts`, `20240101120000-init.ts`), unique numbers, no layout check |
+| Web app | Bans the backend's `package.json` `imports` aliases, and server `.service` files when there is a backend; `components/` and `routes/` import only the backend client entry |
+| Package | Bans `../../apps/**` and the backend's import aliases (not its own) |
+| Backend registry | `services/service.ts`, `core/core.services.ts` or `service.ts`, see [`backend`](groups/backend.md) |
+| Stylesheet | See [`tailwind`](groups/tailwind.md) |
+| Web `services/` | `layout.services: 'flat'` when it holds more files than folders |
+
+Your folders merge over the detected ones: a key you set wins, and objects merge (`layout: { hooks: false }` keeps the detected `services: 'flat'`). A detected key inside a folder you set as a `*` glob or a parent is left out.
 
 ## 📐 Rules
 
@@ -69,8 +111,10 @@ Recipes are plain objects that only toggle groups, so spreading them is safe.
 | `next` | `react`, `next`, `tailwind`, `shadcn`, `schemas`, `forms` |
 | `expo` | `react`, `expo`, `schemas`, `forms` |
 | `backend` | `backend`, `schemas`, `sql` |
+| `react` | `react`, `tailwind`, `schemas` |
 | `library` | `schemas` |
-| `kit` | `react`, `kit`, `tailwind` |
+| `ui` | `react`, `kit`, `tailwind` (`kit` is the same recipe) |
+| `desktop` | `console` |
 | `cli` | `console` |
 
 ```ts

@@ -24,29 +24,25 @@ Linters catch bugs; this catches drift. Describe your folders once, and the pres
 
 ```sh
 bun add -d oxlint oxlint-tsgolint oxlint-plugin-arch
-# React, Tailwind and shadcn groups (the tanstack, next, expo and kit recipes):
+# React, Tailwind and shadcn groups (the tanstack, next, expo, react and ui recipes):
 bun add -d eslint-plugin-react eslint-plugin-react-you-might-not-need-an-effect eslint-plugin-svg-jsx oxlint-tailwindcss @shadcn/lint
 ```
 
-**2. Describe your folders**
+**2. Add the preset**
 
 ```ts
 // oxlint.config.ts
-import { preset, recipes } from 'oxlint-plugin-arch/preset'
+import { preset } from 'oxlint-plugin-arch/preset'
 
 export default preset({
   root: import.meta.dirname,
   folders: {
-    'apps/web': recipes.tanstack,
-    'apps/server': recipes.backend,
-    'packages/*': recipes.library,
-    'packages/ui': { ...recipes.kit, react: { a11y: false } },
-    scripts: recipes.cli,
+    'packages/ui': { react: { a11y: false } },
   },
 })
 ```
 
-Inheritance, groups, recipes and templates: [docs/folders.md](docs/folders.md). Rules without the preset: [docs/plugin-only.md](docs/plugin-only.md).
+The preset detects each workspace from its `package.json` (TanStack, Next, Expo, backend, UI kit, library) along with its stylesheet, service registry and migrations. List only the folders you want to change. Detection, inheritance, groups, recipes and templates: [docs/folders.md](docs/folders.md). Rules without the preset: [docs/plugin-only.md](docs/plugin-only.md).
 
 **3. Lint**
 

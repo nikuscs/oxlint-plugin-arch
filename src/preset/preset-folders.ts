@@ -1,17 +1,12 @@
 import { existsSync, readdirSync, realpathSync, statSync } from 'node:fs'
 import { posix, resolve } from 'node:path'
+import { presetDetect, presetManifest, presetStylesheet } from './preset-detect.ts'
 import * as PresetConstants from './preset.constants.ts'
-import { PresetError, presetPackageName, presetScopes } from './preset.utils.ts'
+import { PresetError, presetScopes } from './preset.utils.ts'
 import type * as PresetTypes from '../types/preset.types.ts'
 
 const presetFrameworks: PresetTypes.PresetFramework[] = ['tanstack', 'next', 'expo']
 const presetKindGroups: PresetTypes.PresetKindGroup[] = [...presetFrameworks, 'backend', 'console']
-
-const presetCssFallback = {
-  tanstack: 'application/styles.css',
-  next: 'app/globals.css',
-  expo: 'application/styles.css',
-} satisfies Record<PresetTypes.PresetFramework, string>
 
 function presetNormalizeKey(key: string): string {
   const portable = key.replaceAll('\\', '/')
@@ -268,8 +263,9 @@ function presetScopesTree(root: string, folders: PresetTypes.PresetFolders): Pre
 export function presetProject(config: PresetTypes.PresetConfig): PresetTypes.PresetProject {
   const given = resolve(config.root ?? process.cwd())
   const root = existsSync(given) ? realpathSync(given) : given
-  const scopes = presetScopesTree(root, config.folders)
-  const ignored = new Set(Object.entries(config.folders).flatMap(([key, value]) => (value === false ? [presetNormalizeKey(key)] : [])))
+  const folders = config.detect === false ? (config.folders ?? {}) : presetDetect(root, config.folders ?? {})
+  const scopes = presetScopesTree(root, folders)
+  const ignored = new Set(Object.entries(folders).flatMap(([key, value]) => (value === false ? [presetNormalizeKey(key)] : [])))
   const live = scopes.filter((scope) => !ignored.has(scope.key))
   const [rootScope] = scopes
   const rootKind = presetKind('.', (name) => Boolean(rootScope.effective[name])).kind
@@ -355,38 +351,46 @@ export function presetProject(config: PresetTypes.PresetConfig): PresetTypes.Pre
   const uiRoots = [...new Set([...web.map((path) => posix.join(path, 'components/ui')), ...kitUnits.map((unit) => unit.source)])]
   const webUiRoots = uiRoots.filter((path) => web.some((webRoot) => webRoot === '.' || path === webRoot || path.startsWith(`${webRoot}/`)))
 
-  const webCss = Object.fromEntries(
-    webUnits.flatMap((unit) => {
-      const tailwind = unit.scope.effective.tailwind
+  const stylesheet = (unit: PresetTypes.PresetUnit) => {
+    const tailwind = unit.scope.effective.tailwind
 
-      if (!tailwind || !unit.framework) {
-        return []
-      }
+    if (!tailwind) {
+      return undefined
+    }
 
-      return [[unit.source, resolve(root, tailwind.css ?? posix.join(unit.source, presetCssFallback[unit.framework]))]]
-    }),
-  )
+    const css = tailwind.css ?? presetStylesheet(root, unit.key)
+
+    return css === undefined ? undefined : resolve(root, css)
+  }
+
+  const webCss = Object.fromEntries(webUnits.flatMap((unit) => {
+    const css = stylesheet(unit)
+
+    return css ? [[unit.source, css]] : []
+  }))
 
   const webStylesheets = [...new Set(Object.values(webCss))]
 
   const kitCss = Object.fromEntries(
-    kitUnits.flatMap((unit) => {
-      const tailwind = unit.scope.effective.tailwind
+    units
+      .filter((unit) => unit.kind !== 'web' && unit.scope.effective.tailwind && !webUiRoots.includes(unit.source))
+      .flatMap((unit) => {
+        const name = presetManifest(root, unit.key).name ?? ''
 
-      if (!tailwind || webUiRoots.includes(unit.source) || unit.kind === 'web') {
-        return []
-      }
+        const consumer = webUnits.find((candidate) => {
+          const manifest = presetManifest(root, candidate.key)
 
-      if (tailwind.css !== undefined) {
-        return [[unit.source, resolve(root, tailwind.css)]]
-      }
+          return name in { ...manifest.dependencies, ...manifest.devDependencies }
+        })
 
-      if (webStylesheets.length === 1) {
-        return [[unit.source, webStylesheets[0]]]
-      }
+        const css = stylesheet(unit) ?? (unit.scope.effective.kit ? ((consumer && webCss[consumer.source]) ?? webStylesheets.at(0)) : undefined)
 
-      throw new PresetError(`The UI kit ${unit.key} needs a Tailwind stylesheet: set tailwind.css on it.`)
-    }),
+        if (css === undefined && unit.scope.effective.kit) {
+          throw new PresetError(`The UI kit ${unit.key} needs a Tailwind stylesheet: set tailwind.css on it.`)
+        }
+
+        return css ? [[unit.source, css]] : []
+      }),
   )
 
   const backendExports = listOf(effective.map((groups) => groups.backend?.exports))
@@ -394,10 +398,17 @@ export function presetProject(config: PresetTypes.PresetConfig): PresetTypes.Pre
   const publicEntrypoints = backendExports.length > 0
     ? backendExports
     : backendRoots.flatMap((directory) => {
-      const name = presetPackageName(root, directory)
+      const manifest = presetManifest(root, directory)
+      const entries = manifest.exports instanceof Object ? Object.keys(manifest.exports).filter((key) => key.startsWith('./')) : []
 
-      return name ? [`${name}/client`] : []
+      if (!manifest.name) {
+        return []
+      }
+
+      return entries.length > 0 ? entries.map((key) => `${manifest.name}/${key.slice(2)}`) : [`${manifest.name}/client`]
     })
+
+  const publicProcedures = listOf(orpcScopes.map((settings) => settings.public))
 
   const skipped = [...ignored].flatMap((key) => {
     if (!key.endsWith('/*')) {
@@ -419,7 +430,9 @@ export function presetProject(config: PresetTypes.PresetConfig): PresetTypes.Pre
     suffixes,
     colocated: listOf(effective.map((groups) => groups.types?.colocated)),
     orpc: {
-      public: listOf(orpcScopes.map((settings) => settings.public)),
+      public: publicProcedures.length > 0
+        ? publicProcedures
+        : backendUnits.map((unit) => posix.join(unit.source, 'rpc/api')).filter((path) => existsSync(resolve(root, path))).map((path) => `${path}/**`),
       composers: listOf(orpcScopes.map((settings) => settings.composers)),
       client: client ?? '',
     },

@@ -359,7 +359,7 @@ export const presetGroupOptions: PresetTypes.PresetGroupDefaults = {
   tailwind: { level: 'error', css: undefined, rem: 16 },
   shadcn: { level: 'error', ui: '@/components/ui', components: ['^@/components/'] },
   kit: { level: 'error' },
-  backend: { level: 'error', exports: undefined, registry: undefined, writes: ['insertInto', 'updateTable', 'deleteFrom', 'mergeInto', 'replaceInto'] },
+  backend: { level: 'error', exports: undefined, registry: undefined, writes: ['insertInto', 'updateTable', 'deleteFrom', 'mergeInto', 'replaceInto', 'dispatch', 'send'] },
   orpc: { level: 'error', public: [], composers: [], client: undefined },
   schemas: { level: 'error' },
   forms: { level: 'error', resolver: 'standardSchemaResolver' },
@@ -388,3 +388,39 @@ export const presetExpoRouteExports = ['ErrorBoundary', 'unstable_settings', 'ge
 export const presetTestFiles = ['**/{test,tests,e2e}/**/*.{ts,tsx,mts,cts}', '**/*.{test,spec}.{ts,tsx,mts,cts}']
 
 export const presetBaseImports = [{ group: ['zod/v4', 'zod/v4/**'], message: 'Import from zod, not its transition entry point.' }]
+
+export const presetDetectFrameworks: ['tanstack' | 'next' | 'expo', string[]][] = [
+  ['tanstack', ['@tanstack/react-start']],
+  ['next', ['next', 'vinext']],
+  ['expo', ['expo']],
+]
+
+export const presetDetectDesktop = ['electrobun', 'electron', '@tauri-apps/api', '@tauri-apps/cli']
+
+export const presetDetectBackend = ['@orpc/server', 'hono', 'kysely', 'drizzle-orm', 'express', 'fastify', 'elysia']
+
+export const presetDetectSkip = ['node_modules', 'dist', 'build', 'coverage', 'public', '.output', '.next', '.vinext', '.turbo', '.wrangler', 'target']
+
+export const presetStylesheetNames = ['styles', 'globals', 'global', 'app', 'index', 'main', 'style', 'tailwind']
+
+export const presetRegistryFiles = ['services/service.ts', 'core/core.services.ts', 'service.ts']
+
+export const presetRegistrySkip = ['brand', 'database', 'db', 'math', 'security', 'tools']
+
+export const presetServerEntries = ['rpc', 'server', 'security', 'services']
+
+export const presetOperationImports = ['*/*-action.*', '*/*-query.*', '*/actions/*', '*/queries/*']
+
+export const presetKitImports = ['**/kits', '**/kits/index', '**/kits/index.ts']
+
+export const presetKitFiles = '^(?:kit|[a-z0-9]+(?:-[a-z0-9]+)*\\.kit)\\.ts$'
+
+export const presetCliFiles = '^cli(?:-[a-z0-9]+)*(?:\\.[a-z0-9-]+)*\\.tsx?$'
+
+export const presetMigrationFiles = '^(?:\\d{3,14}[-_][a-z0-9]+(?:[-_][a-z0-9]+)*|index)\\.ts$'
+
+export const presetMigrationNumber = '^(\\d{3,14})[-_]'
+
+export const presetRootImports = { 'framer-motion': 'Use motion/react.' }
+
+export const presetPackageImports = { '../../apps/**': 'Packages stay app-agnostic; do not import app internals.' }
