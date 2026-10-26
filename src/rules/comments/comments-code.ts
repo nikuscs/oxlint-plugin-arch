@@ -265,6 +265,10 @@ export const commentsCode = defineRule({
                   return fixer.removeRange([start - (/[\t ]*$/.exec(before)?.[0].length ?? 0), end])
                 }
 
+                if (/[\t ]$/.test(before)) {
+                  return fixer.removeRange([start, end + (/^[\t ]*/.exec(afterOnLine)?.[0].length ?? 0)])
+                }
+
                 const left = text[start - 1]
                 const right = text[end]
                 const separator = left && right && !/\s/.test(left) && !/\s/.test(right) ? ' ' : ''

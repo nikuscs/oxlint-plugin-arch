@@ -1,10 +1,11 @@
 import { preset } from './dist/preset/preset.js'
 
-export default preset({
+const config = preset({
   root: import.meta.dirname,
   folders: {
     '.': {
       style: { semicolons: false },
+      tests: { assertions: ['testerRun'] },
       rules: {
         'dillon-anti-slop/no-runtime-typeof': 'off',
         'dillon-anti-slop/no-reflect-get': 'off',
@@ -17,3 +18,10 @@ export default preset({
     dist: false,
   },
 })
+
+config.overrides.push({
+  files: ['src/**/*.test.ts'],
+  rules: { 'max-lines': ['error', { max: 600, skipBlankLines: true, skipComments: true }] },
+})
+
+export default config

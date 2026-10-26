@@ -17,11 +17,11 @@ export const loadNotes = createServerFn().handler(() => readFile('notes.md', 'ut
 
 | Option | Type | Default | |
 | --- | --- | --- | --- |
-| `web` | `string[]` | required | Frontend root directories |
-| `backend` | `string[]` | required | Backend root directories |
-| `aliases` | `Record<string, string>` | required | Import prefix to directory |
-| `backendPackages` | `string[]` | required | Package names that count as server imports |
-| `rpc` | `string[]` | required | Files allowed to statically import server code for `createIsomorphicFn` |
+| `web` | `string[]` | `[]` | Frontend root directories |
+| `backend` | `string[]` | `[]` | Backend root directories |
+| `aliases` | `Record<string, string>` | `{}` | Import prefix to directory |
+| `backendPackages` | `string[]` | `[]` | Package names that count as server imports |
+| `rpc` | `string[]` | `[]` | Files allowed to statically import server code for `createIsomorphicFn` |
 | `server` | `string[]` | none | Extra server-only import prefixes |
 | `client` | `string[]` | none | Extra browser-only import prefixes |
 | `dynamic` | `string[]` | none | Files allowed to use non-literal `import()` |

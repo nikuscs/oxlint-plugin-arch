@@ -8,11 +8,11 @@ Review the changed files and their callers against `.agents/references/architect
 bun run check
 ```
 
-`check` builds, self-lints with the repo's own preset, typechecks (examples and scripts too), runs fallow dead-code and dupes, and checks the generated README tables. It must exit 0 with no diagnostics.
+`check` builds, self-lints, runs the tests with the repo's own preset, typechecks (examples and scripts too), runs fallow dead-code and dupes, and checks the generated README tables. It must exit 0 with no diagnostics.
 
 A new or changed rule must not show up near the top of `bun run bench <consumer repo>` without a reason.
 
-Tests are paused during the refactor. For a behavior change, prove it: lint a small snippet with the built rule and show the diagnostics before and after.
+`bun run test` runs every rule's rows. A behavior change adds or changes the row that proves it. Rows hold only data: `name`, `code`, and when needed `filename`, `files`, `options`, `output`, `errors`.
 
 ## Review
 
@@ -28,7 +28,7 @@ Tests are paused during the refactor. For a behavior change, prove it: lint a sm
 
 ## Self-lint exceptions
 
-`oxlint.config.ts` turns off five rules for this repository, approved by the owner. Rules and the preset read untyped input (ESTree nodes, rule options, user configs), so runtime checks are their parsing step:
+`oxlint.config.ts` turns off five rules for this repository and raises `max-lines` to 600 for `src/**/*.test.ts`, approved by the owner. Rules and the preset read untyped input (ESTree nodes, rule options, user configs), so runtime checks are their parsing step:
 
 | Rule | Why it is off here |
 | --- | --- |
@@ -36,6 +36,7 @@ Tests are paused during the refactor. For a behavior change, prove it: lint a sm
 | `dillon-anti-slop/no-reflect-get` | the vendored rules inspect `Reflect` calls by shape |
 | `dillon-anti-slop/no-unknown-parameters`, `arch/types-unknown` | parsers take `unknown` before narrowing it |
 | `arch/code-literal-in` | `'key' in node` checks optional ESTree fields |
+| `max-lines` 600 in `src/**/*.test.ts` | a rule's test file is one `it.each` table of data rows; the full table stays in one file |
 
 Any other suppression is a finding.
 

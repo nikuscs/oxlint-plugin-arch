@@ -13,15 +13,17 @@
 src/
 ├── index.ts                         the arch plugin: every rule, imports and entries alphabetical
 ├── rules/<family>/<family>-<subject>.ts   one rule; helpers only it uses stay in the file
+├── rules/<family>/<family>-<subject>.test.ts   its rows: one it.each table run through testerRun
 ├── preset/
 │   ├── preset.ts                    public entry: preset(), recipes, templates, types; scopes each group to its folders
+│   ├── preset.test.ts               config resolution only: recipes, templates, groups, errors
 │   ├── preset-folders.ts            resolves folders: keys, inheritance, units and the project lists groups read
 │   ├── preset-recipes.ts            recipes and templates: plain group toggles
 │   ├── preset.constants.ts          group defaults and order, rule lists, fixed values
 │   ├── preset.utils.ts              override, scope, glob intersection and severity helpers; PresetError
 │   └── groups/<group>.ts            one group: a builder returning overrides for the given settings
 ├── types/<topic>.types.ts           every type and interface, one file per topic
-├── utils/<topic>.utils.ts           logic two or more files share
+├── utils/<topic>.utils.ts           logic two or more files share; tester.utils.ts runs test rows
 └── vendor/dillon-anti-slop/         forked upstream plugin; shared/ holds its own helpers
 docs/folders.md, docs/groups/<group>.md, docs/rules/<rule>.md, docs/vendor.md, docs/plugin-only.md
 examples/*.oxlint.config.ts          typechecked example configs

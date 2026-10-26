@@ -15,15 +15,16 @@ Architecture rules for Oxlint (`arch/*`), a vendored anti-slop plugin (`dillon-a
 - Use Oxlint's ESTree API; add no other production parser.
 - Reuse `src/utils/*.utils.ts` before writing a helper. A helper one file uses stays in that file.
 - The repo lints itself with its own preset (`oxlint.config.ts`). Fix the code to pass; lint, fallow and TypeScript settings change only on the user's explicit request.
-- Tests are paused during the refactor; add one only when asked.
+- Every rule has `src/rules/<family>/<rule>.test.ts`: one `it.each` table of rows run through `testerRun`, nothing above the table, no mocks. `src/rules/copy/copy-dashes.test.ts` is the exemplar.
 - After a substantial set of changes, run the `review` skill in full (simplify, code, blast), fix its findings, and rerun the checks before reporting.
 
 ## Adding or changing a rule
 
 1. Write `src/rules/<family>/<family>-<subject>.ts`; option types go in `src/types/<family>.types.ts`.
-2. Register it in `src/index.ts`, alphabetical.
-3. Write `docs/rules/<rule>.md` (one sentence, ❌/✅ snippet, options table, config line), link it from its group page if a group enables it, and run `bun run docs`.
-4. Add a bullet under `## Unreleased` in `CHANGELOG.md`.
+2. Write its `.test.ts` beside it: passing rows, failing rows, and for fixable rules an output row, an already-fixed row and an `output: null` row.
+3. Register it in `src/index.ts`, alphabetical.
+4. Write `docs/rules/<rule>.md` (one sentence, ❌/✅ snippet, options table, config line), link it from its group page if a group enables it, and run `bun run docs`.
+5. Add a bullet under `## Unreleased` in `CHANGELOG.md`.
 
 ## Validation
 

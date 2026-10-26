@@ -26,7 +26,8 @@
   ],
   "scripts": {
     "build": "bun build src/index.ts src/preset/preset.ts src/vendor/dillon-anti-slop/index.ts --root src --outdir dist --target node --format esm --packages external && tsc --project tsconfig.build.json",
-    "check": "bun run build && bun run lint && bun run typecheck && bun run lint:dead && bun run lint:dupes && bun run docs:check",
+    "test": "vitest run src",
+    "check": "bun run build && bun run lint && bun run typecheck && bun run test && bun run lint:dead && bun run lint:dupes && bun run docs:check",
     "docs": "bun scripts/docs.ts",
     "docs:check": "bun scripts/docs.ts --check",
     "bench": "bun scripts/bench.ts",
@@ -73,7 +74,8 @@
     "oxlint-tailwindcss": "1.16.0",
     "oxlint-tsgolint": "7.0.2004",
     "tsrs": "0.18.0-ts7.1.0-dev.20260929",
-    "typescript": "7.0.2"
+    "typescript": "7.0.2",
+    "vitest": "5.0.5"
   },
   "packageManager": "bun@1.3.14",
   "license": "MIT",

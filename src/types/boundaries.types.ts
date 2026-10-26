@@ -26,7 +26,7 @@ export interface BoundariesImport {
   backendImport: boolean
 }
 
-export interface BoundariesNextOptions extends Pick<BoundariesOptions, 'web' | 'backend' | 'aliases' | 'backendPackages'> {
+export interface BoundariesNextOptions extends Partial<Pick<BoundariesOptions, 'web' | 'backend' | 'aliases' | 'backendPackages'>> {
   server?: string[]
   client?: string[]
   dynamic?: string[]
@@ -37,7 +37,7 @@ export interface BoundariesNextOptions extends Pick<BoundariesOptions, 'web' | '
 }
 
 export interface BoundariesTanstackOptions extends BoundariesNextOptions {
-  rpc: string[]
+  rpc?: string[]
   startPackages?: string[]
   rscPackages?: string[]
 }

@@ -94,6 +94,8 @@ function boundariesPortableLib(check: BoundariesImport): string | undefined {
   return undefined
 }
 
+const boundariesImportsDefaults: BoundariesOptions = { web: [], backend: [], packages: [], backendPackages: [], appPackages: [], aliases: {}, entrypoints: [] }
+
 export const boundariesImports = defineRule({
   meta: {
     type: 'problem',
@@ -113,7 +115,6 @@ export const boundariesImports = defineRule({
           uiPackages: { type: 'array', items: { type: 'string' } },
           aliases: { type: 'object', additionalProperties: { type: 'string' } },
         },
-        required: ['web', 'backend', 'packages', 'backendPackages', 'entrypoints', 'appPackages', 'aliases'],
       },
     ],
     messages: {
@@ -122,7 +123,7 @@ export const boundariesImports = defineRule({
   },
   createOnce(context) {
     function check(node: ESTree.Node, source: string, typeOnly: boolean, reExport = false): void {
-      const options = optionsFirst<BoundariesOptions>(context)
+      const options = { ...boundariesImportsDefaults, ...optionsFirst<Partial<BoundariesOptions>>(context) }
       const file = context.filename.replaceAll('\\', '/')
       const roots = [...options.web, ...options.backend].sort((a, b) => b.length - a.length)
       const owner = roots.find((path) => boundariesContains(path, file))
@@ -201,7 +202,7 @@ export const boundariesImports = defineRule({
         }
       },
       TSImportType(node) {
-        const { portable: portableLib, web } = optionsFirst<BoundariesOptions>(context)
+        const { portable: portableLib, web } = { ...boundariesImportsDefaults, ...optionsFirst<Partial<BoundariesOptions>>(context) }
         const file = context.filename.replaceAll('\\', '/')
 
         if (portableLib && web.some((path) => file.startsWith(`${path}/lib/`))) {

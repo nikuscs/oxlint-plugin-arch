@@ -12,13 +12,13 @@ import { chatClient } from '@app/server/client'
 
 | Option | Type | Default | |
 | --- | --- | --- | --- |
-| `web` | `string[]` | required | Frontend root directories |
-| `backend` | `string[]` | required | Backend root directories |
-| `packages` | `string \| string[]` | required | Shared package roots |
-| `backendPackages` | `string[]` | required | Package names that count as backend imports |
-| `appPackages` | `string[]` | required | App package names shared packages must not import |
-| `entrypoints` | `string[]` | required | Backend modules the frontend may import |
-| `aliases` | `Record<string, string>` | required | Import prefix to directory |
+| `web` | `string[]` | `[]` | Frontend root directories |
+| `backend` | `string[]` | `[]` | Backend root directories |
+| `packages` | `string \| string[]` | `[]` | Shared package roots |
+| `backendPackages` | `string[]` | `[]` | Package names that count as backend imports |
+| `appPackages` | `string[]` | `[]` | App package names shared packages must not import |
+| `entrypoints` | `string[]` | `[]` | Backend modules the frontend may import |
+| `aliases` | `Record<string, string>` | `{}` | Import prefix to directory |
 | `roles` | `string[]` | none | Extra private file suffixes, like `prompts` |
 | `uiPackages` | `string[]` | `['react', 'react-dom']` | Packages `.client.ts` services may not import at runtime |
 | `portable` | `boolean` | `false` | `<web>/lib` may not import app services or app types |

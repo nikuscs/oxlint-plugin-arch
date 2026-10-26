@@ -162,9 +162,13 @@
 | `types-declarations` | `allowPattern` | `allow` |
 | `types-inline` | `functionTypes`, `minMembers` | `functions`, `min` |
 
+### Changed
+
+- `boundaries-imports`, `boundaries-next` and `boundaries-tanstack` no longer require their root and package options. An omitted `web`, `backend`, `packages`, `backendPackages`, `appPackages`, `entrypoints` or `rpc` defaults to `[]`, and `aliases` to `{}`; configs that set them behave as before.
+
 ### Fixed
 
-- `comments-code` (was `no-comments`): member-comment fixes keep member tokens, separating line breaks and blank lines, skip comments a `disable-next-line` targets, and honor `jsdoc` and `allow`.
+- `comments-code` (was `no-comments`): member-comment fixes keep member tokens, separating line breaks and blank lines, skip comments a `disable-next-line` targets, and honor `jsdoc` and `allow`. Removing an inline comment between two spaces leaves one space.
 - `layout-chain` skips chains with computed links instead of reporting them forever. `layout-call-arguments` and `layout-object` fixes keep the original trailing-comma presence.
 - `types-namespace-import` reports without an autofix.
 - `backend-registry`: keys come from top-level objects and factory results (or the one named by `object`), string keys count, a domain without `<folder>.service.ts` is reported on the registry file, and a missing `services` folder is no longer a crash.
@@ -175,7 +179,7 @@
 - `files-externals`: subpath externals (`pg/native`) check their package; a list with spreads skips the missing-package check; a malformed nearest `package.json` skips the rule.
 - `files-components-only` splits file names only on `-` and `.` again (`user_card.tsx` → `User_card`). `naming-exports` pattern mode treats an empty pattern as match-all again.
 - `naming-file` takes several option objects; `unique` counts only sibling files its object's `pattern` accepts.
-- `files-no-functions`, `code-object-params` and `code-trivial-functions` check `export default` function expressions; `code-object-params` checks a defaulted parameter by its type. `schemas-inline` names the namespace actually called.
+- `files-no-functions`, `code-object-params` and `code-trivial-functions` check `export default` function expressions; `code-object-params` checks a defaulted parameter by its type. `files-no-functions` no longer reports type-only re-exports. `files-exports` checks an aliased export (`export { local as useInvoiceQuery }`) by its exported name. `schemas-inline` names the namespace actually called.
 - Preset: a folder's `naming.files` and `naming.unique` add to the built-in file checks instead of replacing them; invalid `naming` regexes and `layout.operations` below an app or package folder throw `PresetError`; `backend.registry` works for a root-level backend and takes `object`.
 - `bun run bench` resolves plugins from the consumer's config.
 

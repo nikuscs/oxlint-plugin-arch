@@ -42,7 +42,12 @@ const boundariesRuntimeTypeWrappers = [
 
 const boundariesClientHookReason = 'client hooks do not belong in server/RSC services'
 
-const boundariesTanstackDefaults = {
+const boundariesTanstackDefaults: Required<Omit<BoundariesTypes.BoundariesTanstackOptions, 'server' | 'client' | 'dynamic' | 'publicEnv'>> = {
+  web: [],
+  backend: [],
+  aliases: {},
+  backendPackages: [],
+  rpc: [],
   serverPackages: [
     ...boundariesServerPackages,
     '@tanstack/react-start/server',
@@ -75,7 +80,6 @@ export const boundariesTanstack = defineRule({
           startPackages: { type: 'array', items: { type: 'string' } },
           rscPackages: { type: 'array', items: { type: 'string' } },
         },
-        required: ['web', 'backend', 'aliases', 'backendPackages', 'rpc'],
       },
     ],
     messages: boundariesRuntimeMessages,

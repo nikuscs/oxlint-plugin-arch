@@ -87,7 +87,7 @@ export const filesExports = defineRule({
             continue
           }
 
-          const name = binding.localName ?? binding.exportedName
+          const name = binding.exportedName === 'default' ? (binding.localName ?? 'default') : binding.exportedName
 
           if (!allowed.includes(name) && !patterns.some((pattern) => pattern.test(name))) {
             context.report({

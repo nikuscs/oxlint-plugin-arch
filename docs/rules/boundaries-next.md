@@ -14,10 +14,10 @@ export const session = async () => (await cookies()).get('session')
 
 | Option | Type | Default | |
 | --- | --- | --- | --- |
-| `web` | `string[]` | required | Frontend root directories |
-| `backend` | `string[]` | required | Backend root directories |
-| `aliases` | `Record<string, string>` | required | Import prefix to directory |
-| `backendPackages` | `string[]` | required | Package names that count as server imports |
+| `web` | `string[]` | `[]` | Frontend root directories |
+| `backend` | `string[]` | `[]` | Backend root directories |
+| `aliases` | `Record<string, string>` | `{}` | Import prefix to directory |
+| `backendPackages` | `string[]` | `[]` | Package names that count as server imports |
 | `server` | `string[]` | none | Extra server-only import prefixes |
 | `client` | `string[]` | none | Extra browser-only import prefixes |
 | `dynamic` | `string[]` | none | Files allowed to use non-literal `import()` |

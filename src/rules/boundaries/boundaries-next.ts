@@ -23,7 +23,11 @@ import type { ESTree } from '@oxlint/plugins'
 
 const boundariesClientHookReason = 'client hooks do not belong in server, RSC or shared modules'
 
-const boundariesNextDefaults = {
+const boundariesNextDefaults: Required<Omit<BoundariesNextOptions, 'server' | 'client' | 'dynamic'>> = {
+  web: [],
+  backend: [],
+  aliases: {},
+  backendPackages: [],
   serverPackages: [...boundariesServerPackages, 'server-only', 'next/headers', 'next/cache', 'next/server'],
   clientPackages: ['client-only', 'react-dom/client'],
   hookPackages: ['react'],
@@ -42,7 +46,6 @@ export const boundariesNext = defineRule({
         type: 'object',
         additionalProperties: false,
         properties: { ...boundariesRuntimeProperties, publicEnv: { type: 'string' } },
-        required: ['web', 'backend', 'aliases', 'backendPackages'],
       },
     ],
     messages: {

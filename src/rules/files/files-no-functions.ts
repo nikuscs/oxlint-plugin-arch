@@ -32,7 +32,7 @@ export const filesNoFunctions = defineRule({
 
         for (const statement of program.body) {
           const isReExport =
-            statement.type === 'ExportAllDeclaration' || (statement.type === 'ExportNamedDeclaration' && Boolean(statement.source))
+            statement.type === 'ExportAllDeclaration' || (statement.type === 'ExportNamedDeclaration' && Boolean(statement.source) && statement.exportKind !== 'type')
 
           if (banReExports && isReExport) {
             context.report({ node: statement, messageId: 'noReExport' })
