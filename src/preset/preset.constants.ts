@@ -355,7 +355,7 @@ export const presetGroupOptions: PresetTypes.PresetGroupDefaults = {
   react: { level: 'error', a11y: true, effects: true, memo: undefined, props: true, perf: undefined, compiler: true },
   tanstack: { level: 'error', server: [], client: [], dynamic: [] },
   next: { level: 'error', server: [], client: [], dynamic: [] },
-  expo: { level: 'error', server: [], client: [], dynamic: [] },
+  expo: { level: 'error', server: [] },
   tailwind: { level: 'error', css: undefined, rem: 16 },
   shadcn: { level: 'error', ui: '@/components/ui', components: ['^@/components/'] },
   kit: { level: 'error' },

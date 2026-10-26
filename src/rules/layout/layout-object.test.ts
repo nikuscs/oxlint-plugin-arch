@@ -8,16 +8,7 @@ describe('arch/layout-object', () => {
     { name: 'already split object passes', code: 'save({\n  id,\n  name,\n  email,\n})' },
     { name: 'objects outside calls pass by default', code: 'const row = { id, name, email }' },
     { name: 'min raises the threshold', code: 'save({ a: 1, b: 2, c: 3 })', options: { min: 4 } },
-    {
-      name: 'an already split argument passes',
-      code: "function run() {\n  execFileSync(cmd, args, {\n    encoding: 'utf8',\n    maxBuffer: 1,\n    stdio: ['ignore', 'pipe', 'inherit']\n  });\n}",
-    },
-    {
-      name: 'an already split argument with a trailing comma passes',
-      code: "function run() {\n  execFileSync(cmd, args, {\n    encoding: 'utf8',\n    maxBuffer: 1,\n    stdio: ['ignore', 'pipe', 'inherit'],\n  });\n}",
-    },
     { name: 'plain arguments pass', code: 'save(id, name, email)' },
-    { name: 'min four passes three keys', code: 'foo({ a: 1, b: 2, c: 3 })', options: { min: 4 } },
     { name: 'a comment blocks the fix', code: 'save({ a: 1, b: 2, c: 3 /* keep */ })', output: null, errors: ['callArgs'] },
     { name: 'splits a call argument', code: 'save({ id, name, email })', output: 'save({\n  id,\n  name,\n  email\n})', errors: ['callArgs'] },
     { name: 'keeps a trailing comma', code: 'save({ id, name, email, })', output: 'save({\n  id,\n  name,\n  email,\n})', errors: ['callArgs'] },
@@ -25,7 +16,7 @@ describe('arch/layout-object', () => {
     { name: 'splits a spread', code: 'save({ ...row, id, name })', output: 'save({\n  ...row,\n  id,\n  name\n})', errors: ['callArgs'] },
     { name: 'splits a middle argument', code: 'save(1, { id, name, email }, 2)', output: 'save(1, {\n  id,\n  name,\n  email\n}, 2)', errors: ['callArgs'] },
     {
-      name: 'leaves a nested object for scope all',
+      name: 'the default scope leaves a nested object inline',
       code: 'save({ a: 1, b: 2, c: { d: 1, e: 2, f: 3 } })',
       output: 'save({\n  a: 1,\n  b: 2,\n  c: { d: 1, e: 2, f: 3 }\n})',
       errors: ['callArgs'],

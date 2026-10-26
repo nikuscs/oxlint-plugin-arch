@@ -60,11 +60,11 @@ describe('arch/naming-file', () => {
       ],
     },
     {
-      name: 'a name off the pattern',
+      name: 'a name off the pattern reports its message',
       filename: 'UserCard.tsx',
       code: 'export {}',
       options: { pattern: '^[a-z0-9-]+\\.tsx?$', message: 'Use kebab-case file names.' },
-      errors: ['mismatch'],
+      errors: ['Use kebab-case file names.'],
     },
     {
       name: 'a missing environment suffix',

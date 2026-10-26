@@ -17,6 +17,8 @@ describe('arch/files-types-only', () => {
     { name: 'a type import equals passes', code: "import type Alias = require('./shape')" },
     { name: 'an alias of a type namespace passes', code: 'namespace Types { export interface X {} }\nexport import Alias = Types' },
     { name: 'an allowed kind passes', code: 'export enum Role { Member }\nexport const ROLE = 1', options: { allow: ['enum', 'variable'] } },
+    { name: 'an allowed class passes', code: 'export class User {}', options: { allow: ['class'] } },
+    { name: 'an allowed function passes', code: 'export function readUser() {}', options: { allow: ['function'] } },
     { name: 'an allowed default passes', code: 'export = () => 1', options: { allow: ['default'] } },
     {
       name: 'type imports pass with imports banned',

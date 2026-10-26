@@ -26,6 +26,11 @@ describe('arch/react-dynamic-classes', () => {
     },
     { name: 'concatenated class fails', code: '<button className={"btn-" + size} />', errors: ['forbidden'] },
     { name: 'nested concatenation fails', code: '<button className={clsx("btn-" + size)} />', errors: ['forbidden'] },
-    { name: 'custom message is accepted', code: '<button className={"btn-" + size} />', options: { message: 'Use complete classes.' }, errors: ['forbidden'] },
+    {
+      name: 'custom message is reported',
+      code: '<button className={"btn-" + size} />',
+      options: { message: 'Use complete classes.' },
+      errors: ['Use complete classes.'],
+    },
   ])('$name', (row) => testerRun(reactDynamicClasses, row))
 })

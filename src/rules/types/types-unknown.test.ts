@@ -16,7 +16,7 @@ describe('arch/types-unknown', () => {
     { name: 'a parameter', code: 'function parse(input: unknown) {}', errors: ['forbidden'] },
     { name: 'a variable in a guard', code: 'function isUser(value: User): value is Admin { const raw: unknown = value }', errors: ['forbidden'] },
     { name: 'a second guard parameter', code: 'function isUser(value: unknown, extra: unknown): value is User {}', errors: ['forbidden'] },
-    { name: 'a guard return', code: 'function isUser(value: unknown): unknown {}', errors: ['forbidden', 'forbidden'] },
+    { name: 'unknown parameter and return without a predicate fail', code: 'function isUser(value: unknown): unknown {}', errors: ['forbidden', 'forbidden'] },
     { name: 'a then callback', code: 'load().then((value: unknown) => value)', errors: ['forbidden'] },
     { name: 'a second catch parameter', code: 'load().catch((error: Error, extra: unknown) => extra)', errors: ['forbidden'] },
     { name: 'a catch return', code: 'interface Attempt { catch: (error: Error) => unknown }', errors: ['forbidden'] },

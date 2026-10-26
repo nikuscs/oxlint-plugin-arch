@@ -1,6 +1,6 @@
 # arch/react-memo
 
-Reports `memo`, `useMemo` and `useCallback` imported from `react` or used as `React.*`.
+Reports `memo`, `useMemo` and `useCallback` imported from `react` or used as a member of a `react` default or namespace import, or of an undeclared `React` global.
 
 ```tsx
 // ❌

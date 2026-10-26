@@ -14,8 +14,8 @@ Takes `true`, `false`, `'warn'` or an object:
 
 | Key | Type | Default | |
 | --- | --- | --- | --- |
-| `ui` | `string` | `'@/components/ui'` | UI import path |
-| `components` | `string[]` | `['^@/components/']` | Component import patterns |
+| `ui` | `string` | `'@/components/ui'` | UI import path; project-wide, so every folder must agree |
+| `components` | `string[]` | `['^@/components/']` | Component import patterns; project-wide, so every folder must agree |
 
 Rules: [`arch/react-dynamic-classes`](../rules/react-dynamic-classes.md).
 

@@ -32,6 +32,6 @@ export const tanstackGroup: PresetBuilder<'tanstack'> = (project, settings) => {
       },
       presetScopes(tanstackWeb, 'services/**/*.rsc.{ts,tsx}'),
     ),
-    presetRuntime(project, settings, tanstackWeb, 'arch/boundaries-tanstack'),
+    ...presetRuntime(project, settings, 'tanstack', 'arch/boundaries-tanstack'),
   ]
 }

@@ -1,6 +1,6 @@
 # arch/tests-assertions
 
-Reports tests with no recognized assertion and `expect` calls outside any test or helper.
+Reports tests with no recognized assertion and `expect` calls outside any test or helper. Renamed `test`, `it` and assertion imports from `vitest`, `bun:test`, `@jest/globals` and `@playwright/test` are tracked.
 
 ```ts
 // ❌

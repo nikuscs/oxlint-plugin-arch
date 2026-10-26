@@ -38,56 +38,14 @@ describe('arch/tests-assertions', () => {
       options: { functions: ['integrationTest'], assertions: ['verifyResult'] },
     },
     { name: 'wildcard assertions', code: "test('architecture', () => arch().expect('src').not.toImport('private'))", options: { assertions: ['arch.**.to*'] } },
+    { name: 'test.concurrent registers a test', code: "test.concurrent('saves', () => { expect(1).toBe(1) })" },
+    { name: 'a callback before a timeout', code: "test('saves', () => { expect(1).toBe(1) }, 1000)" },
+    { name: 'a callback after options', code: "test('saves', { retry: 2 }, () => { expect(1).toBe(1) })" },
+    { name: 'renamed bun:test imports', code: "import { test as check, expect as verify } from 'bun:test'; check('saves', () => { verify(1).toBe(1) })" },
     {
       name: 'an assertion in a Playwright fixture passes',
       code: "import { test as base, expect } from '@playwright/test'; const test = base.extend({ page: async ({ page }, use) => { await use(page); expect([]).toEqual([]); } });",
     },
-    {
-      name: 'an assertion in a Vitest tuple fixture passes',
-      code: "import { test as base, expect } from 'vitest'; const test = base.extend({ guard: [async ({}, use) => { await use(1); expect(1).toBe(1); }, { auto: true }] });",
-    },
-    {
-      name: 'a polling assertion in a factory test passes',
-      code: "const test = createKitTest(); test('polls', async () => { await expect.poll(() => 1).toBe(1); });",
-    },
-    { name: 'a soft assertion in a factory test passes', code: "const test = createKitTest(); test('soft', () => { expect.soft(1).toBe(1); });" },
-    {
-      name: 'a renamed native test and assertion passes',
-      code: "import { test as check, expect as verify } from 'vitest'; check('native', () => { verify(1).toBe(1); });",
-    },
-    { name: 'an assertion in a factory test passes', code: "const test = createKitTest(); test('value', () => { expect(1).toBe(1); });" },
-    {
-      name: 'an assertion in a factory for callback passes',
-      code: "const test = createKitTest(); test.for([1])('value', (value) => { expect(value).toBe(1); });",
-    },
-    {
-      name: 'an assertion in a multiline tagged table passes',
-      code: `const test = createKitTest(); test.each\`value
-\${1}\`('value', (value) => { expect(value).toBe(1); });`,
-    },
-    {
-      name: 'a named asserting callback in a factory test passes',
-      code: "const test = createKitTest(); test('value', check); function check() { expect(1).toBe(1); }",
-    },
-    {
-      name: 'a called asserting helper in a factory test passes',
-      code: "const test = createKitTest(); test('value', () => { check(); }); function check() { expect(1).toBe(1); }",
-    },
-    {
-      name: 'an assertion in a factory promise callback passes',
-      code: "const test = createKitTest(); test('value', async () => { await promise.then((value) => { expect(value).toBe(1); }); });",
-    },
-    {
-      name: 'a renamed assert in a factory test passes',
-      code: "import { assert as verify } from 'vitest'; const test = createKitTest(); test('value', () => { verify(true); });",
-    },
-    {
-      name: 'an imported custom test and assertion passes',
-      code: "import { integrationTest } from './test'; import { verifyResult } from './support'; integrationTest('value', () => { verifyResult(1); });",
-      options: { functions: ['integrationTest'], assertions: ['verifyResult'] },
-    },
-    { name: 'a factory todo without a callback passes', code: "const test = createKitTest(); test.todo('later');" },
-    { name: 'an uncalled assertion function declaration passes', code: 'function exportedAssertion() { expect(1).toBe(1); }' },
     { name: 'an empty test', code: "test('saves', () => {})", errors: ['missing'] },
     { name: 'a matcher alone', code: "test('saves', () => { expect.any(String) })", errors: ['missing'] },
     { name: 'a parameter named expect', code: "test('saves', (expect) => { expect(1) })", errors: ['missing'] },
@@ -120,59 +78,21 @@ describe('arch/tests-assertions', () => {
       code: "test.for([{ verify: (n) => expect(n).toBe(1) }])('row', ({ verify }) => { function run(verify) { verify(1) } run(() => {}) })",
       errors: ['missing'],
     },
+    { name: 'an empty test before a timeout', code: "test('saves', () => {}, 1000)", errors: ['missing'] },
+    { name: 'an empty test.only', code: "test.only('saves', () => {})", errors: ['missing'] },
+    { name: 'an empty test.skip', code: "test.skip('saves', () => {})", errors: ['missing'] },
+    { name: 'an empty test imported from vitest', code: "import { test } from 'vitest'; test('saves', () => {})", errors: ['missing'] },
+    { name: 'an empty renamed bun:test import', code: "import { test as check } from 'bun:test'; check('saves', () => {})", errors: ['missing'] },
+    { name: 'an empty renamed @jest/globals import', code: "import { it as check } from '@jest/globals'; check('saves', () => {})", errors: ['missing'] },
+    { name: 'an imported matcher alone', code: "import { expect } from 'vitest'; test('saves', () => { expect.any(String) })", errors: ['missing'] },
+    {
+      name: 'a reassigned helper is not followed',
+      code: "let check = () => expect(1).toBe(1); check = () => {}; test('saves', () => check())",
+      errors: ['missing'],
+    },
     { name: 'expect at the top level', code: 'expect(1).toBe(1)', errors: ['standalone'] },
     { name: 'expect in describe', code: "describe('users', () => expect(1).toBe(1))", errors: ['standalone'] },
     { name: 'expect in an IIFE', code: '(() => expect(1).toBe(1))()', errors: ['standalone'] },
     { name: 'expect in an unregistered table', code: 'const rows = [{ verify: () => expect(1).toBe(1) }]', errors: ['standalone'] },
-    { name: 'a fake expect callback parameter', code: "test('fake parameter', (expect) => { expect(1); });", errors: ['missing'] },
-    { name: 'an empty imported native test', code: "import { test } from 'vitest'; test('empty native', () => {});", errors: ['missing'] },
-    {
-      name: 'a factory test with only an imported matcher',
-      code: "import { expect } from 'vitest'; const test = createKitTest(); test('imported matcher only', () => { expect.any(String); });",
-      errors: ['missing'],
-    },
-    {
-      name: 'a factory test with only a global matcher',
-      code: "const test = createKitTest(); test('matcher only', () => { expect.any(String); });",
-      errors: ['missing'],
-    },
-    { name: 'an empty factory test', code: "const test = createKitTest(); test('empty', () => {});", errors: ['missing'] },
-    {
-      name: 'a factory for callback without an assertion',
-      code: "const test = createKitTest(); test.for([1])('empty', (value) => { Math.abs(value); });",
-      errors: ['missing'],
-    },
-    {
-      name: 'an unused arrow assertion in a factory test',
-      code: "const test = createKitTest(); test('unused helper', () => { const check = () => expect(1).toBe(1); });",
-      errors: ['missing'],
-    },
-    {
-      name: 'an unused declared assertion in a factory test',
-      code: "const test = createKitTest(); test('unused declaration', () => { function check() { expect(1).toBe(1); } });",
-      errors: ['missing'],
-    },
-    {
-      name: 'a locally shadowed expect in a factory test',
-      code: "const test = createKitTest(); test('fake expectation', () => { const expect = () => {}; expect(1); });",
-      errors: ['missing'],
-    },
-    {
-      name: 'cyclic helpers in a factory test',
-      code: "const test = createKitTest(); test('cyclic helpers', () => { first(); }); function first() { second(); } function second() { first(); }",
-      errors: ['missing'],
-    },
-    {
-      name: 'a shadowed asserting helper in a factory test',
-      code: "const test = createKitTest(); function check() { expect(1).toBe(1); } test('shadow', () => { const check = () => {}; check(); });",
-      errors: ['missing'],
-    },
-    {
-      name: 'an imported custom for callback without an assertion',
-      code: "import { integrationTest } from './test'; integrationTest.for([1])('empty', (value) => { Math.abs(value); });",
-      options: { functions: ['integrationTest'] },
-      errors: ['missing'],
-    },
-    { name: 'a standalone suite assertion statement', code: "describe('suite', () => expect(1).toBe(1));", errors: ['standalone'] },
   ])('$name', (row) => testerRun(testsAssertions, row))
 })

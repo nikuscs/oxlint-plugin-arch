@@ -49,9 +49,14 @@ describe('arch/boundaries-token-owner', () => {
       code: "import type { RouterClient } from './client.ts'\ntype Client = OtherClient<Router>",
       options: { token: 'RouterClient', allow: ['/services/rpc.client.ts'] },
     },
-    { name: 'a different value name passes', filename: '/repo/apps/web/src/hooks/use-client.ts', code: 'const client = OtherClient', options: { token: 'RouterClient' } },
     {
-      name: 'owners and other members pass per restriction',
+      name: 'a different value name passes',
+      filename: '/repo/apps/web/src/hooks/use-client.ts',
+      code: 'const client = OtherClient',
+      options: { token: 'RouterClient' },
+    },
+    {
+      name: 'computed member access is ignored',
       filename: '/repo/apps/web/src/platform/current.ts',
       code: "const platform = process.platform\nconst value = db['insertInto']('users')",
       options: { restrictions: [{ token: 'RouterClient', allow: ['/services/rpc.client.ts'] }, { member: 'process.platform', patterns: ['/platform/'] }, { member: '*.insertInto' }] },
@@ -80,7 +85,7 @@ describe('arch/boundaries-token-owner', () => {
       name: 'dotted member includes the custom hint',
       code: 'process.env.SECRET',
       options: { restrictions: [{ member: 'process.env', message: 'Read env.ts.' }] },
-      errors: ['restrictedWithMessage'],
+      errors: ["'process.env' may only appear in configured owner paths. Read env.ts."],
     },
     {
       name: 'wildcard member matches any receiver',

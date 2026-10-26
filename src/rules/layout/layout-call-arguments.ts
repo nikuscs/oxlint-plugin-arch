@@ -42,8 +42,7 @@ export const layoutCallArguments = defineRule({
       if (
         args.length < minArguments ||
         !last ||
-        args.some((arg) => (arg.type === 'ArrowFunctionExpression' || arg.type === 'FunctionExpression') && arg.loc.start.line !== arg.loc.end.line) ||
-        source.getCommentsInside(node).length > 0
+        args.some((arg) => (arg.type === 'ArrowFunctionExpression' || arg.type === 'FunctionExpression') && arg.loc.start.line !== arg.loc.end.line)
       ) {
         return
       }
@@ -60,16 +59,17 @@ export const layoutCallArguments = defineRule({
 
       const between = gaps.map((gap) => text.slice(...gap))
 
-      if (
+      if (between.every((gap) => gap.includes('\n'))) {
+        return
+      }
+
+      const unsafe =
+        source.getCommentsInside(node).length > 0 ||
         text[open] !== '(' ||
         text[close] !== ')' ||
         !/^\s*$/.test(between[0]) ||
         between.slice(1, -1).some((gap) => !/^\s*,\s*$/.test(gap)) ||
-        !/^\s*,?\s*$/.test(between.at(-1) ?? '') ||
-        between.every((gap) => gap.includes('\n'))
-      ) {
-        return
-      }
+        !/^\s*,?\s*$/.test(between.at(-1) ?? '')
 
       const baseIndent = sourceLineIndent(text, open)
       const newline = sourceNewline(text)
@@ -78,7 +78,7 @@ export const layoutCallArguments = defineRule({
         node,
         messageId: 'multiline',
         data: { min: String(minArguments) },
-        fix: (fixer) =>
+        fix: unsafe ? undefined : (fixer) =>
           gaps.map((gap, index) => {
             if (index === 0) {
               return fixer.replaceTextRange(gap, `${newline}${argumentIndent}`)

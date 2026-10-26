@@ -1,5 +1,6 @@
 import { presetExportPrefix, presetExtensions, presetNamingRules } from '../preset.constants.ts'
 import { PresetError, presetOverride, presetScopes } from '../preset.utils.ts'
+import { layoutGroup } from './layout.ts'
 import type { NamingFileOptions } from '../../types/naming.types.ts'
 import type { PresetBuilder, PresetRules } from '../../types/preset.types.ts'
 import type { OxlintOverride } from 'oxlint'
@@ -10,7 +11,7 @@ function namingOperation(role: string, file: string) {
   return { mode: 'template', file, export: `{domain}${role === 'action' ? 'Action' : 'Query'}{Name}`, placeholder: '[a-z0-9-]+', camelCase: true }
 }
 
-export const namingGroup: PresetBuilder<'naming'> = (project, settings) => {
+export const namingGroup: PresetBuilder<'naming'> = (project, settings, owner) => {
   const { web, serviceRoots, app, ui, testFiles, components, hooks, operations } = project
   const flatApp = app.filter((path) => !operations.includes(path))
   const folderApp = app.filter((path) => operations.includes(path))
@@ -38,6 +39,14 @@ export const namingGroup: PresetBuilder<'naming'> = (project, settings) => {
 
     folderChecks.push(check)
     overrides.push(presetOverride([`**/${presetExtensions}`], { 'arch/naming-file': ['error', check] }))
+
+    for (const override of owner.effective.layout ? layoutGroup(project, owner.effective.layout, owner) : []) {
+      const layoutRule = override.rules?.['arch/naming-file']
+
+      if (Array.isArray(layoutRule)) {
+        overrides.push({ ...override, rules: { 'arch/naming-file': [...layoutRule, check] } })
+      }
+    }
   }
 
   const add = (kind: 'files' | 'exports' | 'folders', files: string[], rules: PresetRules, excludeFiles?: string[]) => {

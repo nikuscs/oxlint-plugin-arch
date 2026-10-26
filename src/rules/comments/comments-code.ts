@@ -265,6 +265,13 @@ export const commentsCode = defineRule({
                   return fixer.removeRange([start - (/[\t ]*$/.exec(before)?.[0].length ?? 0), end])
                 }
 
+                if (/\([\t ]*$/.test(before)) {
+                  return fixer.removeRange([
+                    start - (/[\t ]*$/.exec(before)?.[0].length ?? 0),
+                    end + (/^[\t ]*/.exec(afterOnLine)?.[0].length ?? 0),
+                  ])
+                }
+
                 if (/[\t ]$/.test(before)) {
                   return fixer.removeRange([start, end + (/^[\t ]*/.exec(afterOnLine)?.[0].length ?? 0)])
                 }

@@ -25,7 +25,7 @@
     "dist"
   ],
   "scripts": {
-    "build": "bun build src/index.ts src/preset/preset.ts src/vendor/dillon-anti-slop/index.ts --root src --outdir dist --target node --format esm --packages external && tsc --project tsconfig.build.json",
+    "build": "rm -rf dist && bun build src/index.ts src/preset/preset.ts src/vendor/dillon-anti-slop/index.ts --root src --outdir dist --target node --format esm --packages external && tsc --project tsconfig.build.json",
     "test": "vitest run src",
     "check": "bun run build && bun run lint && bun run typecheck && bun run test && bun run lint:dead && bun run lint:dupes && bun run docs:check",
     "docs": "bun scripts/docs.ts",

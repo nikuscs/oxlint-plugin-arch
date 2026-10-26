@@ -14,5 +14,11 @@ describe('arch/copy-dashes', () => {
     { name: 'JSX attribute', code: 'const Hero = () => <img alt="Ship \u2014 today" />', errors: ['dash'] },
     { name: 'one report per dash', code: "const title = 'a \u2014 b \u2014 c'", errors: ['dash', 'dash'] },
     { name: 'custom list', code: "const range = '1\u20132'", options: { deny: ['\u2013'] }, errors: ['dash'] },
+    {
+      name: 'custom message replaces the hint',
+      code: "const title = 'Fast \u2014 and cheap'",
+      options: { message: 'Use a comma.' },
+      errors: ["Remove '\u2014' from this text. Use a comma."],
+    },
   ])('$name', (row) => testerRun(copyDashes, row))
 })

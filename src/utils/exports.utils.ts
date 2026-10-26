@@ -1,4 +1,4 @@
-import { astModuleName } from './ast.utils.ts'
+import { astBindings, astModuleName } from './ast.utils.ts'
 import {
   declarationsIsFunctionValue,
   declarationsIsRuntime,
@@ -27,16 +27,16 @@ function exportsBindings(declaration: ESTree.Declaration | null): ExportsBinding
   }
 
   if (declaration.type === 'VariableDeclaration') {
-    return declaration.declarations.map((item) => ({
-      exportedName: item.id.type === 'Identifier' ? item.id.name : '<anonymous>',
-      localName: item.id.type === 'Identifier' ? item.id.name : undefined,
+    return declaration.declarations.flatMap((item) => astBindings(item.id).map(({ name }) => ({
+      exportedName: name,
+      localName: name,
       node: declaration,
       declaration,
-      initializer: item.init,
+      initializer: item.id.type === 'Identifier' ? item.init : undefined,
       typeOnly: false,
       default: false,
       reExport: false,
-    }))
+    })))
   }
 
   return [
@@ -131,7 +131,7 @@ export function exportsCollect(program: ESTree.Program): ExportsBinding[] {
           }),
           exportedName,
           localName,
-          node: local?.node ?? specifier,
+          node: exportedName !== localName ? specifier : (local?.node ?? specifier),
           typeOnly: specifier.exportKind === 'type' || statement.exportKind === 'type' || Boolean(local?.typeOnly),
           default: exportedName === 'default',
           reExport: Boolean(statement.source),
@@ -141,9 +141,9 @@ export function exportsCollect(program: ESTree.Program): ExportsBinding[] {
   })
 }
 
-export function exportsFunctions(program: ESTree.Program): DeclarationsTypes.DeclarationsFunction[] {
+export function exportsFunctions(program: ESTree.Program, exportedNames = false): DeclarationsTypes.DeclarationsFunction[] {
   return exportsCollect(program).flatMap((binding) => {
-    const name = binding.localName ?? binding.exportedName
+    const name = exportedNames && !binding.default ? binding.exportedName : (binding.localName ?? binding.exportedName)
 
     if (binding.declaration?.type === 'FunctionDeclaration') {
       return [{ name, node: binding.declaration }]

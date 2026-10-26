@@ -29,6 +29,6 @@ describe('arch/naming-folder', () => {
       options: { after: 'components' },
       errors: ['prefix'],
     },
-    { name: 'a prefix outside prefixes', filename: 'users/use-user-query.ts', code: 'export {}', errors: ['prefix'] },
+    { name: 'use- is not stripped without prefixes', filename: 'users/use-user-query.ts', code: 'export {}', errors: ['prefix'] },
   ])('$name', (row) => testerRun(namingFolder, row))
 })

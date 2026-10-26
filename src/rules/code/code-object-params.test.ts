@@ -81,7 +81,7 @@ describe('arch/code-object-params', () => {
       errors: ['objectParams'],
     },
     {
-      name: 'three params over max two',
+      name: 'two primitive params fail at max two',
       code: 'export const makeService = (name: string, email: string) => name',
       options: { max: 2 },
       errors: ['objectParams'],

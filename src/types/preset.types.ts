@@ -101,6 +101,10 @@ export interface PresetFrameworkOptions {
   dynamic?: string[]
 }
 
+export interface PresetExpoOptions {
+  server?: string[]
+}
+
 export interface PresetTailwindOptions {
   css?: string
   rem?: number
@@ -159,16 +163,16 @@ export interface PresetGroups {
   react?: PresetSwitch | PresetReactOptions
   tanstack?: PresetSwitch | PresetFrameworkOptions
   next?: PresetSwitch | PresetFrameworkOptions
-  expo?: PresetSwitch | PresetFrameworkOptions
+  expo?: PresetSwitch | PresetExpoOptions
   tailwind?: PresetSwitch | PresetTailwindOptions
   shadcn?: PresetSwitch | PresetShadcnOptions
-  kit?: PresetSwitch
+  kit?: boolean
   backend?: PresetSwitch | PresetBackendOptions
   orpc?: PresetSwitch | PresetOrpcOptions
   schemas?: PresetSwitch
   forms?: PresetSwitch | PresetFormsOptions
   sql?: PresetSwitch | PresetSqlOptions
-  console?: PresetSwitch
+  console?: boolean
   deny?: PresetSwitch | PresetDenyOptions
   externals?: PresetSwitch | PresetExternalsOptions
 }
@@ -207,7 +211,7 @@ export interface PresetResolvedGroups {
   react: Required<Pick<PresetReactOptions, 'a11y' | 'effects' | 'props' | 'compiler'>> & Pick<PresetReactOptions, 'memo' | 'perf'>
   tanstack: Required<PresetFrameworkOptions>
   next: Required<PresetFrameworkOptions>
-  expo: Required<PresetFrameworkOptions>
+  expo: Required<PresetExpoOptions>
   tailwind: Pick<PresetTailwindOptions, 'css'> & { rem: number }
   shadcn: Required<PresetShadcnOptions>
   kit: PresetEmptyOptions
@@ -233,6 +237,7 @@ export type PresetGroupDefaults = { [K in PresetGroupName]: PresetGroupSettings<
 
 export type PresetKind = 'web' | 'backend' | 'library' | 'console'
 export type PresetFramework = 'tanstack' | 'next' | 'expo'
+export type PresetKindGroup = PresetFramework | 'backend' | 'console'
 
 export interface PresetScope {
   key: string
@@ -283,8 +288,6 @@ export interface PresetProject {
   units: PresetUnit[]
   suffixes: string[]
   colocated: string[]
-  aliases: Record<string, string>
-  internal: string[] | undefined
   orpc: Required<PresetOrpcOptions>
   layouts: PresetLayoutScope[]
   rpcClients: string[]
@@ -321,6 +324,6 @@ export interface PresetProject {
   ignores: string[]
 }
 
-export type PresetBuilder<K extends PresetGroupName> = (project: PresetProject, settings: PresetGroupSettings<K>) => OxlintOverride[]
+export type PresetBuilder<K extends PresetGroupName> = (project: PresetProject, settings: PresetGroupSettings<K>, scope: PresetScope) => OxlintOverride[]
 
 export type PresetBuilders = { [K in PresetGroupName]?: PresetBuilder<K> }

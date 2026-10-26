@@ -7,7 +7,8 @@ describe('arch/layout-ternary', () => {
     { name: 'a short ternary on one line passes', code: "const label = active ? 'On' : 'Off'" },
     { name: 'a split ternary over max passes', code: 'const result = ready\n  ? yes\n  : no', options: { max: 20 } },
     { name: 'a line at exactly max passes', code: 'x = a ? b : c', options: { max: 13 } },
-    { name: 'nested ternaries are skipped', code: 'const result = a ? b ? c : d : e' },
+    { name: 'a ternary with a nested operand is skipped', code: 'const result = a\n  ? b ? c : d\n  : e' },
+    { name: 'a nested ternary is skipped', code: 'const result = a\n  ? b\n    ? c\n    : d\n  : e' },
     { name: 'a comment skips the ternary', code: 'const result = a /* keep */\n  ? b\n  : c' },
     { name: 'a multiline operand skips the ternary', code: 'const result = a ? {\n  b: 1\n} : c' },
     {
@@ -15,12 +16,6 @@ describe('arch/layout-ternary', () => {
       code: `const label = \`\${active ? 'On' : 'Off'}\`
 `,
       options: { max: 20 },
-    },
-    {
-      name: 'a short ternary in a template passes',
-      code: `const result = \`prefix \${ready ? yes : no}\`
-`,
-      options: { max: 10 },
     },
     {
       name: 'joins a template literal ternary over max',

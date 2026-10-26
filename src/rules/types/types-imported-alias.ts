@@ -14,7 +14,8 @@ function importedAliasTarget(declaration: ESTree.Node | null, imports: ReadonlyM
     return undefined
   }
 
-  return imports.has(type.typeName.name) ? type.typeName.name : undefined
+  const { name } = type.typeName
+  return imports.has(name) && !declaration.typeParameters?.params.some((parameter) => parameter.name.name === name) ? name : undefined
 }
 
 export const typesImportedAlias = defineRule({
@@ -75,7 +76,7 @@ export const typesImportedAlias = defineRule({
             report(statement.declaration, statement.declaration.id.name, inline)
           }
 
-          for (const specifier of statement.specifiers) {
+          for (const specifier of statement.source ? [] : statement.specifiers) {
             const local = astModuleName(specifier.local)
             const imported = aliases.get(local)
 

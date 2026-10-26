@@ -5,6 +5,12 @@ import { boundariesTanstack } from './boundaries-tanstack.ts'
 describe('arch/boundaries-tanstack', () => {
   it.each([
     { name: 'server files own server dependencies', filename: 'chat.server.ts', code: "import { readFile } from 'node:fs'; readFile(process.env.FILE)" },
+    { name: 'unused server imports pass in server files', filename: 'chat.server.ts', code: "import { readFile } from 'node:fs'" },
+    {
+      name: 'an innermost server callback owns imports inside a client callback',
+      filename: 'chat.server.ts',
+      code: "import { createClientOnlyFn, createServerOnlyFn } from '@tanstack/react-start'; import { readFile } from 'node:fs'; createClientOnlyFn(() => createServerOnlyFn(() => readFile('notes.md')))",
+    },
     { name: 'type-only server imports pass', code: "import type { Chat } from './chat.server'" },
     {
       name: 'aliased server factory owns static dependencies',
@@ -126,6 +132,18 @@ describe('arch/boundaries-tanstack', () => {
       filename: '/repo/web/src/services/chat/chat.server.ts',
       code: 'export const chatRead = (path) => import(path)',
       options: { web: ['/repo/web/src', '/repo/admin/src'], backend: ['/repo/api/src'], aliases: { '@web': '/repo/web/src', '@api': '/repo/api/src' }, backendPackages: ['@app/server'], rpc: ['/repo/web/src/services/rpc/rpc.client.ts'], dynamic: ['/repo/web/src/services/chat/chat.server.ts'] },
+    },
+    {
+      name: 'server files reject server imports used in client-only callbacks',
+      filename: 'chat.server.ts',
+      code: "import { createClientOnlyFn } from '@tanstack/react-start'; import { readFile } from 'node:fs'; createClientOnlyFn(() => readFile('notes.md'))",
+      errors: ['runtime'],
+    },
+    {
+      name: 'server files reject mixed server and client uses of a server import',
+      filename: 'chat.server.ts',
+      code: "import { createIsomorphicFn } from '@tanstack/react-start'; import { readFile } from 'node:fs'; createIsomorphicFn().server(() => readFile('notes.md')).client(() => readFile('notes.md'))",
+      errors: ['runtime'],
     },
     { name: 'server dependency outside an execution boundary', code: "import { readFile } from 'node:fs'; readFile('notes.md')", errors: ['runtime'] },
     {

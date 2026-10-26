@@ -93,27 +93,39 @@ export function presetIntersect(glob: string, scope: string): string[] {
   return [...new Set(matches)]
 }
 
+export function presetAliases(root: string, aliases: Record<string, string> | undefined): Record<string, string> {
+  return Object.fromEntries(Object.entries(aliases ?? {}).map(([alias, path]) => [alias.replace(/\/$/, ''), resolve(root, path)]))
+}
+
 export function presetRuntime(
   project: PresetTypes.PresetProject,
   settings: Required<PresetTypes.PresetFrameworkOptions>,
-  files: string[],
+  framework: PresetTypes.PresetFramework,
   rule: string,
-): OxlintOverride {
-  const options: PresetTypes.PresetRuntimeOptions = {
-    web: project.web.map((path) => resolve(project.root, path)),
-    backend: project.backend.map((path) => resolve(project.root, path)),
-    aliases: project.aliases,
-    backendPackages: project.units.flatMap((unit) => (unit.kind === 'backend' ? [presetPackageName(project.root, unit.key) ?? []].flat() : [])),
-    server: settings.server,
-    client: settings.client,
-    dynamic: settings.dynamic.map((path) => resolve(project.root, path)),
-  }
+): OxlintOverride[] {
+  return project.units.flatMap((unit) => {
+    if (unit.framework !== framework) {
+      return []
+    }
 
-  if (rule === 'arch/boundaries-tanstack') {
-    options.rpc = project.rpcClients.map((path) => resolve(project.root, path))
-  }
+    const options: PresetTypes.PresetRuntimeOptions = {
+      web: project.web.map((path) => resolve(project.root, path)),
+      backend: project.backend.map((path) => resolve(project.root, path)),
+      aliases: presetAliases(project.root, unit.scope.effective.imports?.aliases),
+      backendPackages: project.units.flatMap((item) => (item.kind === 'backend' ? (presetPackageName(project.root, item.key) ?? []) : [])),
+      server: settings.server,
+      client: settings.client,
+      dynamic: settings.dynamic.map((path) => resolve(project.root, path)),
+    }
 
-  return presetOverride([...presetScopes(files, 'services/**/*.{ts,tsx}'), ...presetScopes(files, 'lib/**/*.{ts,tsx}')], {
-    [rule]: ['error', options],
+    if (rule === 'arch/boundaries-tanstack') {
+      options.rpc = project.rpcClients.map((path) => resolve(project.root, path))
+    }
+
+    return [
+      presetOverride([...presetScopes([unit.source], 'services/**/*.{ts,tsx}'), ...presetScopes([unit.source], 'lib/**/*.{ts,tsx}')], {
+        [rule]: ['error', options],
+      }),
+    ]
   })
 }

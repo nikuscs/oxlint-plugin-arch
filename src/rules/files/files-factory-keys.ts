@@ -7,6 +7,15 @@ import type { FilesFactoryKeysCompiled, FilesFactoryKeysOptions } from '../../ty
 import type { OptionsPattern } from '../../types/options.types.ts'
 import type { ESTree } from '@oxlint/plugins'
 
+function returnedObject(expression: ESTree.Expression | null): ESTree.ObjectExpression | undefined {
+  if (expression?.type === 'TSAsExpression' || expression?.type === 'TSSatisfiesExpression' ||
+    expression?.type === 'TSTypeAssertion' || expression?.type === 'TSNonNullExpression') {
+    return returnedObject(expression.expression)
+  }
+
+  return expression?.type === 'ObjectExpression' ? expression : undefined
+}
+
 function compileKeys(pattern: OptionsPattern, keys: string[], requireKeys: string[]): FilesFactoryKeysCompiled {
   const allowedList = keys.concat(requireKeys.filter((key) => !keys.includes(key)))
 
@@ -89,12 +98,22 @@ export const filesFactoryKeys = defineRule({
 
           const objects: ESTree.ObjectExpression[] = []
 
-          if (factory.node.type === 'ArrowFunctionExpression' && factory.node.body.type === 'ObjectExpression') {
-            objects.push(factory.node.body)
+          if (factory.node.type === 'ArrowFunctionExpression' && factory.node.body.type !== 'BlockStatement') {
+            const object = returnedObject(factory.node.body)
+
+            if (object) {
+              objects.push(object)
+            }
           } else {
             astVisit(factory.node.body, [factory.node], (node, ancestors) => {
-              if (node.type === 'ReturnStatement' && node.argument?.type === 'ObjectExpression' && astNearestFunction(ancestors) === factory.node) {
-                objects.push(node.argument)
+              if (node.type !== 'ReturnStatement' || astNearestFunction(ancestors) !== factory.node) {
+                return
+              }
+
+              const object = returnedObject(node.argument)
+
+              if (object) {
+                objects.push(object)
               }
             })
           }

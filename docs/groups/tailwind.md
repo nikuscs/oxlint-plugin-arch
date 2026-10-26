@@ -15,6 +15,6 @@ Takes `true`, `false`, `'warn'` or an object:
 | Key | Type | Default | |
 | --- | --- | --- | --- |
 | `css` | `string` | `src/application/styles.css` (Next: `src/app/globals.css`) | Stylesheet, root-relative |
-| `rem` | `number` | `16` | Root font size |
+| `rem` | `number` | `16` | Root font size; project-wide, so every folder must agree |
 
 Plus `tailwindcss` (8).

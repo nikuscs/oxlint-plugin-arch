@@ -1,6 +1,6 @@
 # arch/tests-modifiers
 
-Reports `.only`, `.skip` and `.todo` on `test`, `it`, `describe` and `suite`.
+Reports `.only`, `.skip` and `.todo` on `test`, `it`, `describe` and `suite`, including after `skipIf()`, `runIf()` and `if()`.
 
 ```ts
 // ❌

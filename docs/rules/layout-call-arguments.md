@@ -2,7 +2,7 @@
 
 One argument per line once a single-line call or `new` has `min` arguments.
 
-The fix changes only whitespace and preserves whether a trailing comma is present.
+The fix changes only whitespace and preserves whether a trailing comma is present. Incorrect layouts with comments or unsafe argument ranges (including parenthesized arguments) are reported without a fix. Already split calls and calls containing multiline callbacks are left alone.
 
 ```ts
 // ❌

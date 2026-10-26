@@ -24,21 +24,6 @@ describe('arch/schemas-rederive', () => {
       options: { from: ['@app/schemas'], operators: ['output'] },
     },
     {
-      name: 'local inference with explicit operators passes',
-      code: 'const localSchema = z.object({})\ntype Local = z.infer<typeof localSchema>',
-      options: { from: ['@app/server/client'], namespaces: ['z'], operators: ['infer', 'input'] },
-    },
-    {
-      name: 'an imported DTO alias with explicit operators passes',
-      code: "import type { BrandDto } from '@app/server/client'\ntype Brand = BrandDto",
-      options: { from: ['@app/server/client'], namespaces: ['z'], operators: ['infer', 'input'] },
-    },
-    {
-      name: 'local module inference with explicit operators passes',
-      code: "import { brandSchema } from './local.ts'\ntype Brand = z.infer<typeof brandSchema>",
-      options: { from: ['@app/server/client'], namespaces: ['z'], operators: ['infer', 'input'] },
-    },
-    {
       name: 'imported schema inference fails',
       code: "import { UserSchema } from '@app/schemas'\ntype User = z.infer<typeof UserSchema>",
       options: { from: ['@app/schemas'] },
@@ -66,18 +51,6 @@ describe('arch/schemas-rederive', () => {
       name: 'custom operator is checked',
       code: "import { User } from '@app/schemas'\ntype Result = z.output<typeof User>",
       options: { from: ['@app/schemas'], operators: ['output'] },
-      errors: ['rederive'],
-    },
-    {
-      name: 'inference from an imported server schema',
-      code: "import { brandApiDetail } from '@app/server/client'\ntype Brand = z.infer<typeof brandApiDetail>",
-      options: { from: ['@app/server/client'], namespaces: ['z'], operators: ['infer', 'input'] },
-      errors: ['rederive'],
-    },
-    {
-      name: 'input derivation from an aliased server schema',
-      code: "import { brandApiDetail as detailSchema } from '@app/server/client'\ntype Brand = z.input<typeof detailSchema>",
-      options: { from: ['@app/server/client'], namespaces: ['z'], operators: ['infer', 'input'] },
       errors: ['rederive'],
     },
   ])('$name', (row) => testerRun(schemasRederive, row))

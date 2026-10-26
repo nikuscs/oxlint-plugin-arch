@@ -1,5 +1,6 @@
 import { defineRule } from '@oxlint/plugins'
-import { astDottedName, astModuleName } from '../../utils/ast.utils.ts'
+import { astMemberName, astModuleName } from '../../utils/ast.utils.ts'
+import { boundariesDeclaredVariable } from '../../utils/boundaries.utils.ts'
 
 const reactMemoNames = ['memo', 'useMemo', 'useCallback']
 
@@ -12,33 +13,30 @@ export const reactMemo = defineRule({
     },
   },
   createOnce(context) {
-    let namespaces = new Set<string>()
     return {
-      before() {
-        namespaces = new Set(['React'])
-      },
       ImportDeclaration(node) {
         if (node.source.value !== 'react') {
           return
         }
 
         for (const specifier of node.specifiers) {
-          if (specifier.type !== 'ImportSpecifier') {
-            namespaces.add(specifier.local.name)
-            continue
-          }
-
-          const name = astModuleName(specifier.imported)
-
-          if (reactMemoNames.includes(name)) {
+          if (specifier.type === 'ImportSpecifier' && reactMemoNames.includes(astModuleName(specifier.imported))) {
             context.report({ node: specifier, messageId: 'memo' })
           }
         }
       },
       MemberExpression(node) {
-        const parts = astDottedName(node)?.split('.')
+        if (node.object.type !== 'Identifier' || !reactMemoNames.includes(astMemberName(node) ?? '')) {
+          return
+        }
 
-        if (parts?.length === 2 && namespaces.has(parts[0]) && reactMemoNames.includes(parts[1])) {
+        const variable = boundariesDeclaredVariable(context.sourceCode.getScope(node), node.object.name)
+
+        const isReact = variable
+          ? variable.defs.some((def) => def.type === 'ImportBinding' && def.node.type !== 'ImportSpecifier' && def.parent?.type === 'ImportDeclaration' && def.parent.source.value === 'react')
+          : node.object.name === 'React'
+
+        if (isReact) {
           context.report({ node, messageId: 'memo' })
         }
       },

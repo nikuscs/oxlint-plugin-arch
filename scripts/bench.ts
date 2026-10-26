@@ -1,16 +1,22 @@
 import { spawnSync } from 'node:child_process'
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdtempSync, readFileSync, realpathSync, rmSync, writeFileSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { tmpdir } from 'node:os'
 import { dirname, join, resolve } from 'node:path'
 
 const [target = '.', ...flags] = process.argv.slice(2)
-const repo = resolve(target)
+const repo = realpathSync(resolve(target))
 const config = flags.find((flag) => flag.startsWith('--config='))?.slice('--config='.length) ?? 'oxlint.config.ts'
 const top = Number(flags.find((flag) => flag.startsWith('--top='))?.slice('--top='.length) ?? 25)
 const oxlint = join(repo, 'node_modules/.bin/oxlint')
 const work = mkdtempSync(join(tmpdir(), 'arch-bench-'))
 const timings = join(work, 'timings.json')
+
+process.on('exit', () => {
+  if (!flags.includes('--keep')) {
+    rmSync(work, { recursive: true, force: true })
+  }
+})
 
 const loaded = spawnSync('bun', ['--eval', `console.log(JSON.stringify((await import(${JSON.stringify(join(repo, config))})).default))`], {
   cwd: repo,
@@ -19,7 +25,7 @@ const loaded = spawnSync('bun', ['--eval', `console.log(JSON.stringify((await im
 })
 
 if (loaded.status !== 0) {
-  console.error(loaded.stderr || loaded.stdout)
+  console.error(loaded.error?.message ?? (loaded.stderr || loaded.stdout))
   process.exit(1)
 }
 
@@ -92,13 +98,13 @@ if (!flags.includes('--keep')) {
   rmSync(benchConfig, { force: true })
 }
 
-const ms: Record<string, number> = JSON.parse(readFileSync(timings, 'utf8'))
-const total = Object.values(ms).reduce((sum, value) => sum + value, 0)
-
-if (run.status !== 0 && !run.stdout.startsWith('{')) {
-  console.error(run.stdout || run.stderr)
+if (run.error || (run.status !== 0 && !run.stdout.startsWith('{'))) {
+  console.error(run.error?.message ?? (run.stderr || run.stdout))
   process.exit(1)
 }
+
+const ms: Record<string, number> = existsSync(timings) ? JSON.parse(readFileSync(timings, 'utf8')) : {}
+const total = Object.values(ms).reduce((sum, value) => sum + value, 0)
 
 const diagnostics = JSON.parse(run.stdout).diagnostics.length
 

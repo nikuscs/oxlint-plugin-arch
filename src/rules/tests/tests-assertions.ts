@@ -19,7 +19,7 @@ const testsAssertionsFunctions = [
   'assertType',
 ]
 
-const testsAssertionsPackages = ['vitest', '@jest/globals', '@playwright/test']
+const testsAssertionsPackages = ['vitest', 'bun:test', '@jest/globals', '@playwright/test']
 
 const testsAssertionsDeclarations = new Set([
   'VariableDeclarator',
@@ -164,9 +164,12 @@ function testRegistration(
     return undefined
   }
 
-  const argument = call.arguments.at(-1)
-  const callback = argument?.type === 'Identifier' ? state.functions.get(argument) : argument
-  return isFunction(callback) ? { call, callback, table } : undefined
+  const callback = call.arguments
+    .slice(1)
+    .map((argument) => (argument.type === 'Identifier' ? state.functions.get(argument) : argument))
+    .findLast(isFunction)
+
+  return callback ? { call, callback, table } : undefined
 }
 
 function isAssertedTest(
@@ -365,7 +368,7 @@ export const testsAssertions = defineRule({
             const fn = node.type === 'VariableDeclarator' ? node.init : declaredFunction
 
             if (isFunction(fn)) {
-              for (const reference of variable.references) {
+              for (const reference of variable.references.every((entry) => entry.init || !entry.isWrite()) ? variable.references : []) {
                 state.functions.set(reference.identifier, fn)
               }
               state.allowed.add(fn)

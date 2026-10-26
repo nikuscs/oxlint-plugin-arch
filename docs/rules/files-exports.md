@@ -24,6 +24,8 @@ export function useInvoiceQuery() {}
 
 At least one of `names`, `patterns` or `factory` is required.
 
+Named exports are checked by their exported aliases, including `factory` with `scope: 'exports'`. Default exports keep their local names. Destructuring exports are checked once per bound name; aliased name diagnostics point to the export specifier.
+
 ```ts
 'arch/files-exports': ['error', { names: ['use{Domain}Query'], types: true }]
 ```

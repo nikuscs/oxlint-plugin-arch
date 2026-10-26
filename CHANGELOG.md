@@ -97,9 +97,9 @@
 | `arch/require-paired-call` | `arch/code-paired-call` |
 | `arch/route-surface` | `arch/files-route` |
 | `arch/ternary-layout` | `arch/layout-ternary` |
-| `arch/test-title-pattern` | `arch/tests-titles` |
+| `arch/test-title-pattern` | `tests-titles` |
 | `modules/backend-switch` | `arch/code-switch` |
-| `modules/concurrent-db` | `arch/tests-concurrent-db` |
+| `modules/concurrent-db` | `tests-concurrent-db` |
 | `modules/domain-constants` | `arch/files-domain-constants` |
 | `modules/double-negation` | `arch/code-double-negation` |
 | `modules/dynamic-classes` | `arch/react-dynamic-classes` |
@@ -116,8 +116,8 @@
 | `modules/service-types` | `arch/types-service` |
 | `modules/shape-suffix` | `dillon-anti-slop/no-shape-in-symbol-names` |
 | `modules/tanstack-runtime` | `arch/boundaries-tanstack` |
-| `modules/test-assertions` | `arch/tests-assertions` |
-| `modules/test-modifiers` | `arch/tests-modifiers` |
+| `modules/test-assertions` | `tests-assertions` |
+| `modules/test-modifiers` | `tests-modifiers` |
 
 | Rule | Old option | New option |
 | --- | --- | --- |
@@ -165,6 +165,8 @@
 ### Changed
 
 - `boundaries-imports`, `boundaries-next` and `boundaries-tanstack` no longer require their root and package options. An omitted `web`, `backend`, `packages`, `backendPackages`, `appPackages`, `entrypoints` or `rpc` defaults to `[]`, and `aliases` to `{}`; configs that set them behave as before.
+- Preset: a key inside a `false` folder, `backend.writes` below a backend folder, a non-object group value (`null`, arrays, numbers), folders that disagree on `tailwind.rem` or `shadcn.ui`/`shadcn.components`, and expo `client`/`dynamic` now throw instead of being ignored.
+- Preset types: `console` and `kit` take `true` or `false`; expo options are `{ server }` (`PresetExpoOptions`).
 
 ### Fixed
 
@@ -182,6 +184,30 @@
 - `files-no-functions`, `code-object-params` and `code-trivial-functions` check `export default` function expressions; `code-object-params` checks a defaulted parameter by its type. `files-no-functions` no longer reports type-only re-exports. `files-exports` checks an aliased export (`export { local as useInvoiceQuery }`) by its exported name. `schemas-inline` names the namespace actually called.
 - Preset: a folder's `naming.files` and `naming.unique` add to the built-in file checks instead of replacing them; invalid `naming` regexes and `layout.operations` below an app or package folder throw `PresetError`; `backend.registry` works for a root-level backend and takes `object`.
 - `bun run bench` resolves plugins from the consumer's config.
+- `boundaries-tanstack` reports static server imports used inside explicit client callbacks even in `.server.ts` files.
+- `layout-call-arguments` reports incorrect layouts with comments or unsafe argument ranges without offering an autofix.
+- `comments-code` removes horizontal padding around inline comments after opening parentheses, producing `foo(1)` from `foo(/* note */ 1)`.
+- Export-name rules (`naming-exports`, `files-exports` and others) read every name in a destructured export (`export const { a, b } = source`) instead of reporting `<anonymous>`.
+- `files-exports` factory mode checks an aliased export by its exported name, and reports aliased exports at the export specifier.
+- `files-no-functions` also allows `export type * from` and `export { type A } from`.
+- `files-factory-keys` checks returned objects wrapped in `as const`, `satisfies` or `!`.
+- `bun run bench` shows Oxlint startup errors, works when no JS rule ran, removes its temp files and resolves symlinked repo paths.
+- `bun run build` clears `dist/` first, so local packs no longer ship stale modules.
+- Preset: when `'.'` is an app, backend or CLI it stays a unit; a top-level key becomes its own unit only when it sets `tanstack`, `next`, `expo`, `backend` or `console`, and a `console` key beside a root app is a CLI rather than an inherited app.
+- Preset: `imports.aliases` and `imports.internal` apply to the folder that sets them; two apps with their own `@/` alias no longer share the last one (`arch/boundaries-imports`, `arch/boundaries-tanstack`, `arch/boundaries-next`, import sorting).
+- Preset: a folder `severity` now also sets the level of the common rules in that folder, and `no-console` inherits `severity` from parent folders.
+- Preset: an exact key beside a `false` `*` key (`'packages/*': false, 'packages/ui': {...}`) is linted instead of ignored.
+- Preset: a `naming.files` pattern in a folder adds to the `layout.strict` domain file check instead of replacing it.
+- Preset: `root` resolves through symlinks, so absolute option paths match the file paths Oxlint reports.
+- `tests-assertions` finds the test callback before a trailing timeout or after an options object, so `test('x', () => {}, 1000)` is reported and its assertions are no longer flagged as standalone.
+- `tests-assertions` no longer follows a helper binding that is reassigned after its declaration.
+- `tests-assertions` tracks renamed `test`, `it` and assertion imports from `bun:test`.
+- `tests-concurrent-db` only reports `db` destructured from the `test.concurrent` callback's context (its parameter, or the parameter destructured in the body), not unrelated local `db` patterns or nested callbacks.
+- `tests-modifiers` reports `.only`, `.skip` and `.todo` after `skipIf()`, `runIf()` and `if()` builders.
+- `types-imported-alias` ignores an alias whose target is its own type parameter (`type Identity<T> = T`), and no longer resolves `export { X } from './other'` against a local alias named `X`.
+- `react-memo` resolves the member root binding, so a local or parameter named `React` no longer counts as React.
+- `dillon-anti-slop/no-widen-then-assert` resolves identifiers through their scope instead of scanning every scope's references, removing quadratic work on files with many assertions.
+- `naming-exports` template mode checks an aliased export (`export { create as makeReportActionCreate }`) by its exported name.
 
 ## 0.11.0
 

@@ -1,6 +1,6 @@
 # arch/tests-concurrent-db
 
-Reports a `db` fixture destructured in a `test.concurrent` callback.
+Reports a `db` fixture destructured from a `test.concurrent` callback's context, in its parameter or its body.
 
 ```ts
 // ❌

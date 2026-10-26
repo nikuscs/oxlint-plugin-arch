@@ -8,4 +8,4 @@ folders: {
 }
 ```
 
-Takes `true`, `false`, `'warn'`.
+Takes `true` or `false`.

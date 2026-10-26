@@ -8,12 +8,12 @@ export const optionsPatternSchema: OptionsSchema = {
 }
 
 export function optionsFirst<T>(context: Context, fallback?: T): T {
-  // oxlint-disable-next-line dillon-anti-slop/require-safety-comment-for-type-assertion -- Oxlint validates options against meta.schema before create runs
+  // SAFETY: Oxlint validates options against meta.schema before create runs.
   return (context.options[0] ?? fallback) as T
 }
 
 export function optionsAll<T>(context: Context): T[] {
-  // oxlint-disable-next-line dillon-anti-slop/require-safety-comment-for-type-assertion -- Oxlint validates options against meta.schema before create runs
+  // SAFETY: Oxlint validates options against meta.schema before create runs.
   return context.options as T[]
 }
 

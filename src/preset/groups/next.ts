@@ -32,6 +32,6 @@ export const nextGroup: PresetBuilder<'next'> = (project, settings) => {
         },
       ],
     }),
-    presetRuntime(project, settings, nextWeb, 'arch/boundaries-next'),
+    ...presetRuntime(project, settings, 'next', 'arch/boundaries-next'),
   ]
 }

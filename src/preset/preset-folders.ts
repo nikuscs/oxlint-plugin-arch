@@ -1,10 +1,11 @@
-import { existsSync, readdirSync, statSync } from 'node:fs'
+import { existsSync, readdirSync, realpathSync, statSync } from 'node:fs'
 import { posix, resolve } from 'node:path'
 import * as PresetConstants from './preset.constants.ts'
 import { PresetError, presetPackageName, presetScopes } from './preset.utils.ts'
 import type * as PresetTypes from '../types/preset.types.ts'
 
 const presetFrameworks: PresetTypes.PresetFramework[] = ['tanstack', 'next', 'expo']
+const presetKindGroups: PresetTypes.PresetKindGroup[] = [...presetFrameworks, 'backend', 'console']
 
 const presetCssFallback = {
   tanstack: 'application/styles.css',
@@ -64,6 +65,10 @@ function presetGroupValue<K extends PresetTypes.PresetGroupName>(
 
   if (value === 'warn') {
     return { ...base, level: 'warn' }
+  }
+
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    throw new PresetError(`Group \`${name}\` takes true, false, 'warn' or an options object.`)
   }
 
   const changes: Partial<PresetTypes.PresetGroupSettings<K>> = Object(value)
@@ -151,9 +156,12 @@ function presetUnitSource(root: string, key: string, kind: PresetTypes.PresetKin
   return kind === 'console' || (key === '.' && !existsSync(resolve(root, 'src'))) ? key : posix.join(key, 'src')
 }
 
-function presetUnit(root: string, key: string, scope: PresetTypes.PresetScope): PresetTypes.PresetUnit {
-  const { effective } = scope
-  const frameworks = presetFrameworks.filter((name) => effective[name])
+function presetSets(folder: PresetTypes.PresetFolder, name: PresetTypes.PresetKindGroup): boolean {
+  return folder[name] !== undefined && folder[name] !== false
+}
+
+function presetKind(key: string, enabled: (name: PresetTypes.PresetKindGroup) => boolean) {
+  const frameworks = presetFrameworks.filter(enabled)
 
   if (frameworks.length > 1) {
     throw new PresetError(`Folder \`${key}\` enables more than one of tanstack, next and expo.`)
@@ -161,7 +169,7 @@ function presetUnit(root: string, key: string, scope: PresetTypes.PresetScope): 
 
   const [framework] = frameworks
 
-  if (frameworks.length > 0 && effective.backend) {
+  if (frameworks.length > 0 && enabled('backend')) {
     throw new PresetError(`Folder \`${key}\` is either an app (tanstack, next, expo) or a backend, not both.`)
   }
 
@@ -169,12 +177,19 @@ function presetUnit(root: string, key: string, scope: PresetTypes.PresetScope): 
 
   if (frameworks.length > 0) {
     kind = 'web'
-  } else if (effective.backend) {
+  } else if (enabled('backend')) {
     kind = 'backend'
-  } else if (effective.console) {
+  } else if (enabled('console')) {
     kind = 'console'
   }
 
+  return { kind, framework }
+}
+
+function presetUnit(root: string, key: string, scope: PresetTypes.PresetScope): PresetTypes.PresetUnit {
+  const { folder, effective } = scope
+  const own = presetKindGroups.some((name) => presetSets(folder, name))
+  const { kind, framework } = presetKind(key, (name) => (own ? presetSets(folder, name) : Boolean(effective[name])))
   const layout: Record<string, PresetTypes.PresetLayoutMode> = {}
   const settings = effective.layout
 
@@ -183,9 +198,9 @@ function presetUnit(root: string, key: string, scope: PresetTypes.PresetScope): 
     const hooks = settings.hooks ?? (kind === 'web' ? 'flat' : false)
     const modes = { services, hooks, components: settings.components ?? false }
 
-    for (const [folder, mode] of Object.entries(modes)) {
+    for (const [name, mode] of Object.entries(modes)) {
       if (mode === 'flat' || mode === 'domain') {
-        layout[folder] = mode
+        layout[name] = mode
       }
     }
   }
@@ -242,27 +257,44 @@ function presetScopesTree(root: string, folders: PresetTypes.PresetFolders): Pre
       key,
       parent,
       depth: segments.length,
-      folder: value === false ? { ...folder, severity: undefined } : folder,
+      folder,
       effective: presetEffective(folder, parent.effective),
     })
   }
 
-  return scopes.map((scope) => (folders[scope.key] === false ? { ...scope, effective: {} } : scope))
+  return scopes
 }
 
 export function presetProject(config: PresetTypes.PresetConfig): PresetTypes.PresetProject {
-  const root = resolve(config.root ?? process.cwd())
+  const given = resolve(config.root ?? process.cwd())
+  const root = existsSync(given) ? realpathSync(given) : given
   const scopes = presetScopesTree(root, config.folders)
   const ignored = new Set(Object.entries(config.folders).flatMap(([key, value]) => (value === false ? [presetNormalizeKey(key)] : [])))
   const live = scopes.filter((scope) => !ignored.has(scope.key))
+  const [rootScope] = scopes
+  const rootKind = presetKind('.', (name) => Boolean(rootScope.effective[name])).kind
+  const dead = live.find((scope) => scope.parent && ignored.has(scope.parent.key) && scope.parent.depth < scope.depth)
 
-  const unitScopes = live.filter(
-    (scope) => scope.key !== '.' && (scope.parent?.key === '.' || (scope.parent?.depth === scope.depth && !scope.key.includes('*'))),
-  )
+  if (dead) {
+    throw new PresetError(`Folder \`${dead.key}\` sits inside the skipped folder \`${dead.parent?.key}\`.`)
+  }
 
+  const candidates: PresetTypes.PresetScope[] = []
+
+  for (const scope of scopes) {
+    const top = scope.parent?.key === '.' && (rootKind === 'library' || presetKindGroups.some((name) => presetSets(scope.folder, name)))
+    const sibling = scope.parent !== null && candidates.includes(scope.parent) && scope.parent.depth === scope.depth && !scope.key.includes('*')
+
+    if (top || sibling) {
+      candidates.push(scope)
+    }
+  }
+
+  const unitScopes = candidates.filter((scope) => !ignored.has(scope.key))
   const explicit = new Set(unitScopes.map((scope) => scope.key))
+  const rootUnit = rootKind !== 'library' || unitScopes.length === 0
 
-  const units = (unitScopes.length > 0 ? unitScopes : live.slice(0, 1)).flatMap((scope) => {
+  const units = [...(rootUnit ? [rootScope] : []), ...unitScopes].flatMap((scope) => {
     if (!scope.key.endsWith('/*')) {
       return [presetUnit(root, scope.key, scope)]
     }
@@ -281,6 +313,12 @@ export function presetProject(config: PresetTypes.PresetConfig): PresetTypes.Pre
 
   if (misplaced) {
     throw new PresetError(`Set layout.operations on an app or package folder, not on \`${misplaced.key}\`.`)
+  }
+
+  const writes = live.find((scope) => !unitKeys.has(scope.key) && Object(scope.folder.backend).writes !== undefined)
+
+  if (writes) {
+    throw new PresetError(`Set backend.writes on a backend folder, not on \`${writes.key}\`.`)
   }
 
   const of = (kind: PresetTypes.PresetKind) => units.filter((unit) => unit.kind === kind)
@@ -361,9 +399,18 @@ export function presetProject(config: PresetTypes.PresetConfig): PresetTypes.Pre
       return name ? [`${name}/client`] : []
     })
 
-  const aliases = Object.fromEntries(
-    effective.flatMap((groups) => Object.entries(groups.imports?.aliases ?? {})).map(([alias, path]) => [alias.replace(/\/$/, ''), resolve(root, path)]),
-  )
+  const skipped = [...ignored].flatMap((key) => {
+    if (!key.endsWith('/*')) {
+      return [key]
+    }
+
+    const base = key.slice(0, -2)
+
+    return readdirSync(resolve(root, base))
+      .filter((name) => statSync(resolve(root, base, name)).isDirectory())
+      .map((name) => posix.join(base, name))
+      .filter((path) => !live.some((scope) => scope.key === path))
+  })
 
   return {
     root,
@@ -371,8 +418,6 @@ export function presetProject(config: PresetTypes.PresetConfig): PresetTypes.Pre
     units,
     suffixes,
     colocated: listOf(effective.map((groups) => groups.types?.colocated)),
-    aliases,
-    internal: scopes[0].effective.imports?.internal,
     orpc: {
       public: listOf(orpcScopes.map((settings) => settings.public)),
       composers: listOf(orpcScopes.map((settings) => settings.composers)),
@@ -417,6 +462,6 @@ export function presetProject(config: PresetTypes.PresetConfig): PresetTypes.Pre
     publicEntrypoints,
     baseImports: PresetConstants.presetBaseImports,
     css: { ...webCss, ...kitCss },
-    ignores: [...ignored].map((key) => `${key}/**`),
+    ignores: skipped.map((key) => `${key}/**`),
   }
 }

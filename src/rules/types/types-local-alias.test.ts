@@ -7,6 +7,6 @@ describe('arch/types-local-alias', () => {
     { name: 'an interface passes', code: 'interface ButtonProps { label: string }' },
     { name: 'an object alias', code: 'type ButtonProps = { label: string }', errors: ['forbidden'] },
     { name: 'a scalar alias', code: 'type UserId = string', errors: ['forbidden'] },
-    { name: 'custom message', code: 'type UserId = string', options: { message: 'Use an interface.' }, errors: ['forbidden'] },
+    { name: 'custom message is reported', code: 'type UserId = string', options: { message: 'Use an interface.' }, errors: ['Use an interface.'] },
   ])('$name', (row) => testerRun(typesLocalAlias, row))
 })

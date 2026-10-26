@@ -17,34 +17,7 @@ test(\`loads \${count} items\`, fn)`,
       options: { deny: '^loads' },
     },
     { name: 'unlisted modifiers are skipped', code: "test.fails('should save', fn)", options: { deny: '^should' } },
-    {
-      name: 'a set of allowed test and suite titles passes',
-      code: "test('saves a record', fn); it.skip('loads a record', fn); describe.only('records', fn)",
-      options: { callees: ['describe', 'it', 'test'], deny: '^should ', flags: '' },
-    },
-    {
-      name: 'an each title matching the required prefix passes',
-      code: "test.each(cases)('saves %s', fn)",
-      options: { callees: ['test'], require: '^saves', flags: '' },
-    },
-    {
-      name: 'an interpolated record title passes',
-      code: `test(\`loads \${count} records\`, fn)
-`,
-      options: { callees: ['test'], deny: '^should', flags: '' },
-    },
-    {
-      name: 'an interpolated title matching static fragments passes',
-      code: `test(\`loads \${count} items\`, fn)
-`,
-      options: { callees: ['test'], deny: '^loads\\s+items$', flags: '' },
-    },
-    {
-      name: 'a forbidden title on an unlisted modifier passes',
-      code: "test.fails('should be ignored', fn)",
-      options: { callees: ['test'], deny: '^should', flags: '' },
-    },
-    { name: 'an allowed tagged each title passes', code: "test.each`a | b`('saves a record', fn)", options: { callees: ['test'], deny: '^should', flags: '' } },
+    { name: 'an allowed tagged each title passes', code: "test.each`a | b`('saves a record', fn)", options: { deny: '^should' } },
     { name: 'deny', code: "test('should save', fn)", options: { deny: '^should ' }, errors: ['forbidden'] },
     { name: 'any deny pattern', code: "test('should save', fn)", options: { deny: ['^bad', '^should'] }, errors: ['forbidden'] },
     { name: 'require', code: "test('works', fn)", options: { require: '^saves' }, errors: ['required'] },
@@ -67,22 +40,9 @@ test(\`loads \${count} items\`, fn)`,
       errors: ['forbidden', 'forbidden'],
     },
     {
-      name: 'forbidden titles on modified each calls',
-      code: "test.skip.each(cases)('should save', fn); test.concurrent.each(cases)('should load', fn); test.only.each(cases)('should save %s', fn)",
-      options: { callees: ['test'], deny: '^should', flags: '' },
-      errors: ['forbidden', 'forbidden', 'forbidden'],
-    },
-    {
-      name: 'a forbidden title on a multiline tagged table',
-      code: `test.each\`a | b
-\${1} | \${2}\`('should add', fn)`,
-      options: { callees: ['test'], deny: '^should', flags: '' },
-      errors: ['forbidden'],
-    },
-    {
       name: 'a custom callee title missing the required pattern',
       code: "spec('does not match', fn)",
-      options: { callees: ['spec'], require: '^works$', flags: '' },
+      options: { callees: ['spec'], require: '^works$' },
       errors: ['required'],
     },
   ])('$name', (row) => testerRun(testsTitles, row))

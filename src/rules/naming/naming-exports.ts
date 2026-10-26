@@ -142,7 +142,7 @@ export const namingExports = defineRule({
               return options.camelCase ? namingCamelCase(group) : group
             })
 
-            const functions = (scope === 'exports' ? exportsFunctions(program) : declarationsFunctions(program)).filter(
+            const functions = (scope === 'exports' ? exportsFunctions(program, true) : declarationsFunctions(program)).filter(
               ({ name }) => !optionsPatternsTest(allowed, name),
             )
 

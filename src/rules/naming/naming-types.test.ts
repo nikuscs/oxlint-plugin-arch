@@ -10,6 +10,6 @@ describe('arch/naming-types', () => {
     { name: 'a snake_case interface', code: 'interface user_props { id: string }', errors: ['forbidden'] },
     { name: 'a camelCase interface', code: 'interface userProps { id: string }', errors: ['forbidden'] },
     { name: 'an underscore inside the name', code: 'interface User_Props { id: string }', errors: ['forbidden'] },
-    { name: 'a custom message', code: 'interface userProps { id: string }', options: { message: 'Use PascalCase.' }, errors: ['forbidden'] },
+    { name: 'a custom message', code: 'interface userProps { id: string }', options: { message: 'Use PascalCase.' }, errors: ['Use PascalCase.'] },
   ])('$name', (row) => testerRun(namingTypes, row))
 })

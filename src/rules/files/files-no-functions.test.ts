@@ -8,6 +8,8 @@ describe('arch/files-no-functions', () => {
     { name: 'a nested function passes', code: 'export const handlers = { save() {} }' },
     { name: 'a re-export passes when re-exports are off', code: "export * from './currency.ts'", options: { reexports: false } },
     { name: 'a type re-export passes', code: "export type { Money } from './money.ts'" },
+    { name: 'a type star re-export passes', code: "export type * from './money.ts'" },
+    { name: 'type-only specifiers pass', code: "export { type Money, type Currency } from './money.ts'" },
     { name: 'an allowed name passes', code: 'export function isMoney() {}\nexport function toMoney() {}', options: { allow: ['^is', '^to'] } },
     { name: 'a layout constant passes', filename: '/repo/apps/server/src/types/layout.constants.ts', code: "export const layout = 'wide'" },
     {
@@ -27,6 +29,8 @@ describe('arch/files-no-functions', () => {
     { name: 'a default function expression', code: 'export default () => 1', errors: ['noFunction'] },
     { name: 'a name outside the allow list', code: 'export function toCents() {}', options: { allow: '^is' }, errors: ['noFunction'] },
     { name: 'a star re-export', code: "export * from './currency.ts'", errors: ['noReExport'] },
+    { name: 'mixed specifiers re-export a value', code: "export { type Money, currency } from './money.ts'", errors: ['noReExport'] },
+    { name: 'an empty re-export remains banned', code: "export {} from './money.ts'", errors: ['noReExport'] },
     { name: 'a named re-export', code: "export { toCents } from './money.ts'", errors: ['noReExport'] },
     { name: 'one report per function', code: 'const a = () => 1, b = function () {}', errors: ['noFunction', 'noFunction'] },
     {

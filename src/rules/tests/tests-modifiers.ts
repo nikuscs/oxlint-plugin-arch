@@ -1,13 +1,34 @@
 import { defineRule } from '@oxlint/plugins'
-import { astDottedName, astModuleName } from '../../utils/ast.utils.ts'
+import { astMemberName, astModuleName } from '../../utils/ast.utils.ts'
 import { optionsFirst } from '../../utils/options.utils.ts'
 import type { TestsModifiersOptions } from '../../types/tests.types.ts'
+import type { ESTree } from '@oxlint/plugins'
 
 const testsModifiersNames = ['test', 'it', 'describe', 'suite']
 
 const testsModifiersPackages = new Set(['vitest', 'bun:test', '@playwright/test', '@jest/globals'])
 
 const testsModifiersBanned = new Set(['only', 'skip', 'todo'])
+
+const testsModifiersBuilders = new Set(['if', 'runIf', 'skipIf'])
+
+function modifierName(node: ESTree.Node): string | undefined {
+  if (node.type === 'Identifier') {
+    return node.name
+  }
+
+  if (node.type === 'CallExpression' && node.callee.type === 'MemberExpression' && testsModifiersBuilders.has(astMemberName(node.callee) ?? '')) {
+    return modifierName(node.callee)
+  }
+
+  if (node.type !== 'MemberExpression') {
+    return undefined
+  }
+
+  const object = modifierName(node.object)
+  const property = astMemberName(node)
+  return object && property ? `${object}.${property}` : undefined
+}
 
 export const testsModifiers = defineRule({
   meta: {
@@ -51,7 +72,7 @@ export const testsModifiers = defineRule({
         }
       },
       MemberExpression(node) {
-        const name = astDottedName(node)
+        const name = modifierName(node)
 
         if (!name || !testsModifiersBanned.has(name.split('.').at(-1) ?? '')) {
           return

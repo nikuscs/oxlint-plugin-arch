@@ -54,6 +54,7 @@ export type {
   PresetMockingPreset,
   PresetReactOptions,
   PresetFrameworkOptions,
+  PresetExpoOptions,
   PresetTailwindOptions,
   PresetShadcnOptions,
   PresetBackendOptions,
@@ -108,6 +109,16 @@ const presetBuilders: PresetTypes.PresetBuilders = {
   externals: externalsGroup,
 }
 
+function presetLevel(scope: PresetTypes.PresetScope): PresetTypes.PresetLevel {
+  for (let current: PresetTypes.PresetScope | null = scope; current; current = current.parent) {
+    if (current.folder.severity) {
+      return current.folder.severity
+    }
+  }
+
+  return 'error'
+}
+
 function presetSettings<K extends PresetTypes.PresetGroupName>(scope: PresetTypes.PresetScope, name: K): PresetTypes.PresetGroupSettings<K> | null {
   const settings: PresetTypes.PresetEffective[K] = scope.effective[name]
 
@@ -116,7 +127,7 @@ function presetSettings<K extends PresetTypes.PresetGroupName>(scope: PresetType
   }
 
   // SAFETY: the console group has no options; its builder only reads the level.
-  return settings ? null : ({ level: scope.folder.severity ?? 'error' } as PresetTypes.PresetGroupSettings<K>)
+  return settings ? null : ({ level: presetLevel(scope) } as PresetTypes.PresetGroupSettings<K>)
 }
 
 function presetEmit<K extends PresetTypes.PresetGroupName>(
@@ -147,7 +158,7 @@ function presetEmit<K extends PresetTypes.PresetGroupName>(
 
     const excluded = nearest(owner).map((scope) => `${scope.key}/**`)
 
-    return builder(project, settings).flatMap((override) => {
+    return builder(project, settings, owner).flatMap((override) => {
       const files = override.files.flatMap((glob) => presetIntersect(glob, owner.key))
 
       if (files.length === 0 || !override.rules) {
@@ -168,8 +179,18 @@ function presetEmit<K extends PresetTypes.PresetGroupName>(
 
 function presetPlugins(project: PresetTypes.PresetProject): Pick<OxlintConfig, 'jsPlugins' | 'settings'> {
   const react = project.scopes.some((scope) => scope.effective.react)
-  const tailwind = project.scopes.find((scope) => scope.effective.tailwind)?.effective.tailwind
-  const shadcn = project.scopes.find((scope) => scope.effective.shadcn)?.effective.shadcn
+  const tailwinds = project.scopes.flatMap((scope) => (scope.effective.tailwind ? [scope.effective.tailwind] : []))
+  const shadcns = project.scopes.flatMap((scope) => (scope.effective.shadcn ? [scope.effective.shadcn] : []))
+  const tailwind = tailwinds.at(0)
+  const shadcn = shadcns.at(0)
+
+  if (new Set(tailwinds.map((settings) => settings.rem)).size > 1) {
+    throw new PresetError('tailwind.rem is project-wide: set the same value in every folder, or set it once on `.`.')
+  }
+
+  if (new Set(shadcns.map((settings) => JSON.stringify([settings.ui, settings.components]))).size > 1) {
+    throw new PresetError('shadcn.ui and shadcn.components are project-wide: set the same values in every folder, or set them once on `.`.')
+  }
 
   const jsPlugins: PresetTypes.PresetJsPlugins = [
     { name: 'eslint-js', specifier: require.resolve('oxlint-plugin-eslint') },
@@ -214,7 +235,7 @@ function presetPlugins(project: PresetTypes.PresetProject): Pick<OxlintConfig, '
 export function preset(config: PresetTypes.PresetConfig): OxlintConfig {
   const project = presetProject(config)
   const [root] = project.scopes
-  const level = root.folder.severity ?? 'error'
+  const level = presetLevel(root)
 
   const emitGroup = <K extends PresetTypes.PresetGroupName>(name: K) => {
     const builder: PresetTypes.PresetBuilders[K] = presetBuilders[name]
@@ -222,7 +243,12 @@ export function preset(config: PresetTypes.PresetConfig): OxlintConfig {
     return builder ? presetEmit(project, name, builder) : []
   }
 
-  const overrides = presetGroupOrder.flatMap(emitGroup)
+  const severities = project.scopes
+    .filter((scope) => scope.parent && presetLevel(scope) !== presetLevel(scope.parent))
+    .toSorted((left, right) => left.depth - right.depth)
+    .map((scope) => ({ files: [`${scope.key}/**`], rules: presetSeverity(presetCommonRules, presetLevel(scope)) }))
+
+  const overrides = [...severities, ...presetGroupOrder.flatMap(emitGroup)]
 
   for (const scope of project.scopes.toSorted((left, right) => left.depth - right.depth)) {
     if (scope.folder.rules) {

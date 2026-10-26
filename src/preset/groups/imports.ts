@@ -1,6 +1,6 @@
 import { resolve } from 'node:path'
 import { presetExtensions, presetImportRules } from '../preset.constants.ts'
-import { presetOverride, presetPackageName, presetScopes } from '../preset.utils.ts'
+import { presetAliases, presetOverride, presetPackageName, presetScopes } from '../preset.utils.ts'
 import type * as PresetTypes from '../../types/preset.types.ts'
 
 function importsPackageNames(project: PresetTypes.PresetProject, kinds: PresetTypes.PresetKind[]): string[] {
@@ -24,7 +24,7 @@ export const importsGroup: PresetTypes.PresetBuilder<'imports'> = (project, sett
         ignoreCase: true,
         newlinesBetween: 0,
         environment: 'bun',
-        internalPattern: project.internal ?? [
+        internalPattern: settings.internal ?? [
           '^@/.*',
           '^#.*',
           '^~icons/.*',
@@ -58,7 +58,7 @@ export const importsGroup: PresetTypes.PresetBuilder<'imports'> = (project, sett
           packages: absolute(project.packages),
           roles: project.suffixes,
           portable: true,
-          aliases: project.aliases,
+          aliases: presetAliases(project.root, settings.aliases),
           appPackages: importsPackageNames(project, ['web', 'backend']),
           backendPackages: importsPackageNames(project, ['backend']),
           entrypoints: project.publicEntrypoints,

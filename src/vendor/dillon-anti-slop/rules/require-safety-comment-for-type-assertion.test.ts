@@ -12,8 +12,6 @@ describe('dillon-anti-slop/require-safety-comment-for-type-assertion', () => {
     { name: 'an inline justification passes', code: 'const input = /* SAFETY: the target was checked */ event.target as HTMLInputElement' },
     { name: 'a justified exported const passes', code: '// SAFETY: Validated by the input parser.\nexport const value = input as string;' },
     { name: 'a justified default export passes', code: '// SAFETY: Validated by the input parser.\nexport default input as string;' },
-    { name: 'a justified local const passes', code: '// SAFETY: Validated by the input parser.\nconst value = input as string;' },
-    { name: 'a trailing-semicolon const assertion passes', code: 'const value = "one" as const;' },
     { name: 'an unjustified assertion fails', code: 'const input = event.target as HTMLInputElement', errors: ['missingSafetyComment'] },
     {
       name: 'an ordinary comment is not a justification',

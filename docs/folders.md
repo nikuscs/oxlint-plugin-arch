@@ -26,18 +26,18 @@ export default preset({
 | | |
 | --- | --- |
 | `'.'` | The whole project. Every other folder inherits from its parent and changes only what it sets. |
-| Deepest wins | A file follows the deepest matching folder. An exact key beats a `*` glob at the same depth (`packages/ui` over `packages/*`). |
+| Deepest wins | A file follows the deepest matching folder. An exact key beats a `*` glob at the same depth (`packages/ui` over `packages/*`, also when `packages/*` is `false`). |
 | Folder value | `true` inherits, `false` skips the folder, an object inherits and changes. |
-| Group value | `true` on with the inherited settings (defaults when nothing is inherited), `false` off, `'warn'` the same as warnings, an object = inherited settings plus changes. |
+| Group value | `true` on with the inherited settings (defaults when nothing is inherited), `false` off, `'warn'` the same as warnings, an object = inherited settings plus changes. `console` and `kit` take only `true` or `false`. |
 | Paths | Paths inside settings are relative to `root`; `source` is relative to its folder. |
-| Units | Top-level keys are units (app, backend, library, CLI). A key inside another key only refines it. |
-| Errors | Unknown keys, unknown options and missing folders throw. |
+| Units | Top-level keys are units (app, backend, library, CLI). When `'.'` is itself an app, backend or CLI, it stays a unit, and only top-level keys that set `tanstack`, `next`, `expo`, `backend` or `console` become units. A key inside another key only refines it. |
+| Errors | Unknown keys, unknown options, missing folders and keys inside a `false` folder throw. |
 
 ## 🧩 Folder keys
 
 | Key | | |
 | --- | --- | --- |
-| `severity` | `'error' \| 'warn'` | Level for every rule in the folder |
+| `severity` | `'error' \| 'warn'` | Level for every rule in the folder, inherited by its subfolders; the `correctness` category keeps the `'.'` level |
 | `source` | `string` | Source folder inside this folder: default `src`, or `.` for CLIs and for a root without `src` |
 | `rules` | `Record<rule, level \| [level, options]>` | Last-word overrides for single rules; options replace the rule's options in the folder |
 | any [group](#-groups) | `true \| false \| 'warn' \| options` | |

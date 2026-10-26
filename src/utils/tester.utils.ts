@@ -1,4 +1,4 @@
-import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs'
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { dirname, join } from 'node:path'
 import { RuleTester } from 'oxlint/plugins-dev'
@@ -18,21 +18,25 @@ export function testerRun(rule: Rule, { name, code, filename = 'file.tsx', files
   const valid: RuleTester.ValidTestCase = { code, filename: join(root, filename) }
 
   if (options !== undefined) {
-    const rooted: TesterOption[] = JSON.parse(JSON.stringify([options].flat()).replaceAll('<root>', root))
+    const rooted: TesterOption[] = JSON.parse(JSON.stringify([options].flat()).replaceAll('<root>', JSON.stringify(root).slice(1, -1)))
 
     valid.options = rooted
   }
 
-  if (!errors) {
-    testerTool.run(name, rule, { valid: [valid], invalid: [] })
-    return
+  const invalid: RuleTester.InvalidTestCase = {
+    ...valid,
+    errors: (errors ?? []).map((error) => (/\s/.test(error) ? { message: error } : { messageId: error })),
   }
-
-  const invalid: RuleTester.InvalidTestCase = { ...valid, errors: errors.map((messageId) => ({ messageId })) }
 
   if (output !== undefined) {
     invalid.output = output
   }
 
-  testerTool.run(name, rule, { valid: [], invalid: [invalid] })
+  try {
+    testerTool.run(name, rule, errors ? { valid: [], invalid: [invalid] } : { valid: [valid], invalid: [] })
+  } finally {
+    if (root) {
+      rmSync(root, { recursive: true, force: true })
+    }
+  }
 }

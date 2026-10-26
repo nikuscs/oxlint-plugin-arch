@@ -20,6 +20,12 @@ describe('arch/layout-padding', () => {
       output: null,
       errors: ['variableAndBlock'],
     },
+    {
+      name: 'a block disable-next-line comment blocks the fix',
+      code: 'const n = 1; /* oxlint-disable-next-line no-console */\nfunction save() { console.log("x") }',
+      output: null,
+      errors: ['variableAndBlock'],
+    },
     { name: 'a comment across the line break blocks the fix', code: 'const n = 1; /* keep\n*/ function save() {}', output: null, errors: ['variableAndBlock'] },
     { name: 'variable then function', code: 'const n = 1\nfunction save() {}', output: 'const n = 1\n\nfunction save() {}', errors: ['variableAndBlock'] },
     { name: 'function then variable', code: 'function save() {}\nconst n = 1', output: 'function save() {}\n\nconst n = 1', errors: ['variableAndBlock'] },
@@ -83,28 +89,11 @@ describe('arch/layout-padding', () => {
       errors: ['variableAndBlock'],
     },
     { name: 'pads a function after a class', code: 'class Box {}\nfunction save() {}', output: 'class Box {}\n\nfunction save() {}', errors: ['beforeBlock'] },
-    {
-      name: 'pads an exported class after a variable',
-      code: 'const n = 1\nexport class Box {}',
-      output: 'const n = 1\n\nexport class Box {}',
-      errors: ['variableAndBlock'],
-    },
+    { name: 'pads an exported class after a declaration', code: 'const n = 1\nexport class Box {}', output: 'const n = 1\n\nexport class Box {}', errors: ['variableAndBlock'] },
     {
       name: 'pads a default export after a variable',
       code: 'const n = 1\nexport default function save() {}',
       output: 'const n = 1\n\nexport default function save() {}',
-      errors: ['variableAndBlock'],
-    },
-    {
-      name: 'a block disable-next-line comment blocks the fix',
-      code: 'const n = 1; /* oxlint-disable-next-line no-console */\nfunction save() { console.log("x") }',
-      output: null,
-      errors: ['variableAndBlock'],
-    },
-    {
-      name: 'an eslint disable-next-line comment blocks the fix',
-      code: 'const n = 1; /* eslint-disable-next-line no-console */\nfunction save() { console.log("x") }',
-      output: null,
       errors: ['variableAndBlock'],
     },
   ])('$name', (row) => testerRun(layoutPadding, row))

@@ -195,11 +195,11 @@ export const boundariesTanstack = defineRule({
       }
 
       if (node.type === 'ImportDeclaration') {
-        if (serverFile) {
+        const references = runtimeReferences(node, renderer?.local.name)
+
+        if (serverFile && !references.some(clientSide)) {
           return
         }
-
-        const references = runtimeReferences(node, renderer?.local.name)
 
         if (references.length > 0 && references.every((position) => serverPosition(position, true))) {
           return

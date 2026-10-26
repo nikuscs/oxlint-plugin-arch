@@ -42,7 +42,7 @@ export const filesExports = defineRule({
 
         if (options.factory !== undefined) {
           const expected = options.factory.replaceAll('{Stem}', namingPascalCase(basename)).replaceAll('{stem}', basename)
-          const functions = options.scope === 'declarations' ? declarationsFunctions(program) : exportsFunctions(program)
+          const functions = options.scope === 'declarations' ? declarationsFunctions(program) : exportsFunctions(program, true)
 
           if (functions.length === 0) {
             context.report({

@@ -21,6 +21,12 @@ describe('arch/layout-jsx-attributes', () => {
       errors: ['multiline'],
     },
     {
+      name: 'splits after type arguments',
+      code: 'const view = <Panel<Row> first={1} second={2} third={3} />',
+      output: 'const view = <Panel<Row>\n  first={1}\n  second={2}\n  third={3}\n/>',
+      errors: ['multiline'],
+    },
+    {
       name: 'indents from the tag line',
       code: 'function View() {\n  return <Panel first={1} second={2} third={3} />\n}',
       output: 'function View() {\n  return <Panel\n    first={1}\n    second={2}\n    third={3}\n  />\n}',

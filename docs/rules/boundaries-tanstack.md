@@ -2,6 +2,8 @@
 
 Reports server-only imports, globals and RSC renderers used outside a `createServerFn().handler`, `createServerOnlyFn` or `.server()` boundary, browser-only imports in `.server`, `.rsc` and shared modules, client hooks in `.server` and `.rsc` modules, and browser globals in those modules or inside a server boundary.
 
+Server files may own static server imports, but cannot use them inside an explicit client-only callback. The innermost execution boundary determines ownership.
+
 ```ts
 // ❌ routes/notes.ts
 import { readFile } from 'node:fs/promises'

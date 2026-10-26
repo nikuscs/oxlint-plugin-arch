@@ -1,8 +1,9 @@
 import { defineRule } from '@oxlint/plugins'
 import { expressionsIsAssertion, expressionsUnwrapParentheses } from '../shared/expressions.ts'
+import { resolveVariable } from '../shared/resolve-variable.ts'
 import { typeReferenceName } from '../shared/type-reference-name.ts'
 import type * as DillonAntiSlopTypes from '../../../types/dillon-anti-slop.types.ts'
-import type { ESTree, Scope, Variable } from '@oxlint/plugins'
+import type { ESTree, SourceCode, Variable } from '@oxlint/plugins'
 
 const functionBoundaryTypes = new Set([
   'ArrowFunctionExpression',
@@ -162,22 +163,6 @@ function functionBoundary(node: ESTree.Node): ESTree.Node | null {
   return null
 }
 
-function resolvedVariableForIdentifier(
-  scopes: readonly Scope[],
-  identifier: ESTree.IdentifierReference,
-): Variable | null {
-  for (const scope of scopes) {
-    const reference = scope.references.find(
-      (candidate) => candidate.identifier.start === identifier.start && candidate.identifier.end === identifier.end,
-    )
-
-    if (reference !== undefined) {
-      return reference.resolved
-    }
-  }
-  return null
-}
-
 function stableConstBinding(variable: Variable): DillonAntiSlopTypes.DillonAntiSlopConstBinding | null {
   for (const definition of variable.defs) {
     if (definition.type === 'Variable' && definition.node.type === 'VariableDeclarator') {
@@ -196,7 +181,7 @@ function stableConstBinding(variable: Variable): DillonAntiSlopTypes.DillonAntiS
 
 function knownValueEvidence(
   expression: ESTree.Expression,
-  scopes: readonly Scope[],
+  sourceCode: SourceCode,
   boundary: ESTree.Node | null,
   visitedVariables: ReadonlySet<Variable>,
 ): DillonAntiSlopTypes.DillonAntiSlopKnownValueEvidence | null {
@@ -223,7 +208,7 @@ function knownValueEvidence(
     return null
   }
 
-  const variable = resolvedVariableForIdentifier(scopes, unwrapped)
+  const variable = resolveVariable(sourceCode, unwrapped)
 
   if (variable === null || visitedVariables.has(variable)) {
     return null
@@ -247,7 +232,7 @@ function knownValueEvidence(
     return null
   }
 
-  return knownValueEvidence(binding.init, scopes, boundary, new Set([...visitedVariables, variable]))
+  return knownValueEvidence(binding.init, sourceCode, boundary, new Set([...visitedVariables, variable]))
 }
 
 export const noWidenThenAssertRule = defineRule({
@@ -261,8 +246,6 @@ export const noWidenThenAssertRule = defineRule({
     },
   },
   createOnce(context) {
-    let scopes: readonly Scope[] = []
-
     const checkAssertion = (node: DillonAntiSlopTypes.DillonAntiSlopTypeAssertion) => {
       const expression = expressionsUnwrapParentheses(node.expression)
 
@@ -270,7 +253,7 @@ export const noWidenThenAssertRule = defineRule({
         return
       }
 
-      const variable = resolvedVariableForIdentifier(scopes, expression)
+      const variable = resolveVariable(context.sourceCode, expression)
       const binding = variable === null ? null : stableConstBinding(variable)
 
       if (variable === null || binding?.declarator.id.type !== 'Identifier') {
@@ -298,7 +281,7 @@ export const noWidenThenAssertRule = defineRule({
           ? expressionsUnwrapParentheses(initializerAssertion.expression)
           : init
 
-      const evidence = knownValueEvidence(originalExpression, scopes, boundary, new Set([variable]))
+      const evidence = knownValueEvidence(originalExpression, context.sourceCode, boundary, new Set([variable]))
 
       if (evidence === null || node.start <= declarator.end || functionBoundary(node) !== boundary) {
         return
@@ -326,9 +309,6 @@ export const noWidenThenAssertRule = defineRule({
     }
 
     return {
-      Program() {
-        scopes = context.sourceCode.scopeManager.scopes
-      },
       TSAsExpression: checkAssertion,
       TSTypeAssertion: checkAssertion,
     }

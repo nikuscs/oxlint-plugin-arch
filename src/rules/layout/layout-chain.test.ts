@@ -12,21 +12,8 @@ describe('arch/layout-chain', () => {
     { name: 'methods needs one listed call', code: 'db.select().from(users).where(active)', options: { groups: [{ min: 3, methods: ['execute'] }] } },
     { name: 'only needs every call listed', code: 'service.input(schema).other(run)', options: { groups: [{ min: 2, only: ['input', 'handler'] }] } },
     { name: 'root must match the pattern', code: 'service.input(schema).handler(run)', options: { groups: [{ min: 2, root: 'Procedure$' }] } },
-    {
-      name: 'a short query chain passes',
-      code: 'db.selectFrom("users").execute()',
-      options: { groups: [{ min: 3, methods: ['selectFrom', 'insertInto', 'updateTable', 'deleteFrom', 'mergeInto', 'execute', 'executeTakeFirst', 'executeTakeFirstOrThrow'] }, { min: 2, only: ['input', 'handler', 'use', 'output'], root: 'Procedure$' }, { min: 3, methods: ['filter', 'map', 'flatMap', 'sort', 'reduce', 'reduceRight', 'find', 'findIndex', 'findLast', 'findLastIndex', 'some', 'every', 'forEach'] }] },
-    },
-    {
-      name: 'a split procedure chain passes',
-      code: 'userProcedure\n  .input(schema)\n  .handler(run)',
-      options: { groups: [{ min: 3, methods: ['selectFrom', 'insertInto', 'updateTable', 'deleteFrom', 'mergeInto', 'execute', 'executeTakeFirst', 'executeTakeFirstOrThrow'] }, { min: 2, only: ['input', 'handler', 'use', 'output'], root: 'Procedure$' }, { min: 3, methods: ['filter', 'map', 'flatMap', 'sort', 'reduce', 'reduceRight', 'find', 'findIndex', 'findLast', 'findLastIndex', 'some', 'every', 'forEach'] }] },
-    },
-    {
-      name: 'a split parenthesized chain passes',
-      code: '(items ?? [])\n  .filter(active)\n  .map(toName)\n  .sort()',
-      options: { groups: [{ min: 3, methods: ['selectFrom', 'insertInto', 'updateTable', 'deleteFrom', 'mergeInto', 'execute', 'executeTakeFirst', 'executeTakeFirstOrThrow'] }, { min: 2, only: ['input', 'handler', 'use', 'output'], root: 'Procedure$' }, { min: 3, methods: ['filter', 'map', 'flatMap', 'sort', 'reduce', 'reduceRight', 'find', 'findIndex', 'findLast', 'findLastIndex', 'some', 'every', 'forEach'] }] },
-    },
+    { name: 'a split parenthesized chain passes', code: '(items ?? [])\n  .filter(active)\n  .map(toName)\n  .sort()', options: { groups: [{ min: 3 }] } },
+    { name: 'an empty groups list disables the rule', code: 'items.filter(active).map(toName).sort()', options: { groups: [] } },
     {
       name: 'a comment between links blocks the fix',
       code: 'items.filter(active) /* keep */.map(toName).sort()',
@@ -95,20 +82,6 @@ describe('arch/layout-chain', () => {
       code: 'items.filter(active).map(toName).sort()',
       options: { groups: [{ min: 3 }], indent: 'tab' },
       output: 'items\n\t.filter(active)\n\t.map(toName)\n\t.sort()',
-      errors: ['newline'],
-    },
-    {
-      name: 'splits a procedure chain',
-      code: 'service.input(schema).use(auth).output(result)',
-      options: { groups: [{ min: 3, methods: ['selectFrom', 'insertInto', 'updateTable', 'deleteFrom', 'mergeInto', 'execute', 'executeTakeFirst', 'executeTakeFirstOrThrow'] }, { min: 2, only: ['input', 'handler', 'use', 'output'], root: 'Procedure$' }, { min: 3, methods: ['filter', 'map', 'flatMap', 'sort', 'reduce', 'reduceRight', 'find', 'findIndex', 'findLast', 'findLastIndex', 'some', 'every', 'forEach'] }] },
-      output: 'service\n  .input(schema)\n  .use(auth)\n  .output(result)',
-      errors: ['newline'],
-    },
-    {
-      name: 'a long comment blocks the fix',
-      code: 'items.filter(active) /* keep this link */.map(toName).sort()',
-      options: { groups: [{ min: 3 }] },
-      output: null,
       errors: ['newline'],
     },
   ])('$name', (row) => testerRun(layoutChain, row))

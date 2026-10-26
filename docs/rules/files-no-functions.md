@@ -1,6 +1,6 @@
 # arch/files-no-functions
 
-Reports top-level functions, including `export default` function expressions, and value re-exports.
+Reports top-level functions, including `export default` function expressions, and value re-exports. Type-only re-exports pass, including `export type *` and named lists containing only `type` specifiers.
 
 ```ts
 // ❌ money.ts

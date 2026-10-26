@@ -15,6 +15,6 @@ describe('arch/boundaries-rpc-database', () => {
     { name: 'merge query', code: "db.mergeInto('chats')", errors: ['forbidden'] },
     { name: 'raw query', code: 'db.executeQuery(query)', errors: ['forbidden'] },
     { name: 'literal computed method', code: "db['selectFrom']('chats')", errors: ['forbidden'] },
-    { name: 'custom message retains enforcement', code: 'db.executeQuery(query)', options: { message: 'Use a service.' }, errors: ['forbidden'] },
+    { name: 'custom message replaces the default', code: 'db.executeQuery(query)', options: { message: 'Use a service.' }, errors: ['Use a service.'] },
   ])('$name', (row) => testerRun(boundariesRpcDatabase, row))
 })

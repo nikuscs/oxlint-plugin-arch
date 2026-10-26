@@ -6,6 +6,11 @@ describe('arch/files-factory-keys', () => {
   it.each([
     { name: 'off without keys or sets', code: 'export function makeUser() { return { debug: true } }' },
     { name: 'allowed keys pass', code: "export function makeUser() { return { id: 1, name: 'Ada' } }", options: { keys: ['id', 'name'] } },
+    {
+      name: 'wrapped allowed keys pass',
+      code: 'export const makeUser = () => (({ id: 1 } as const) satisfies { id: number })',
+      options: { keys: ['id'], required: ['id'] },
+    },
     { name: 'a shorthand key passes', code: 'export function makeAction() { async function run() {} return { run } }', options: { keys: ['run'] } },
     { name: 'an arrow body passes', code: 'export const makeQuery = () => ({ get() {}, list() {} })', options: { keys: ['get', 'list'] } },
     {
@@ -60,6 +65,31 @@ describe('arch/files-factory-keys', () => {
       name: 'allowed and required keys together pass',
       code: 'export function makeAction() { return { run() {}, preview() {} } }',
       options: { keys: ['run'], required: ['preview'] },
+    },
+    {
+      name: 'as const return checks extra and missing keys',
+      code: 'export function makeUser() { return { debug: true } as const }',
+      options: { keys: ['id'], required: ['id'] },
+      errors: ['missingKey', 'extraKey'],
+    },
+    {
+      name: 'satisfies arrow checks extra and missing keys',
+      code: 'export const makeUser = () => ({ debug: true } satisfies Record<string, unknown>)',
+      options: { keys: ['id'], required: ['id'] },
+      errors: ['missingKey', 'extraKey'],
+    },
+    {
+      name: 'nested assertion and non-null wrappers still check keys',
+      code: 'export const makeUser = () => (({ debug: true } as const)!)',
+      options: { keys: ['id'] },
+      errors: ['extraKey'],
+    },
+    {
+      name: 'type assertion return checks keys',
+      filename: 'factory.ts',
+      code: 'export function makeUser() { return <Record<string, unknown>>{ debug: true } }',
+      options: { keys: ['id'] },
+      errors: ['extraKey'],
     },
     { name: 'an extra key', code: 'export function makeUser() { return { id: 1, debug: true } }', options: { keys: ['id', 'name'] }, errors: ['extraKey'] },
     {

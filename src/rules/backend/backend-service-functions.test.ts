@@ -59,6 +59,6 @@ describe('arch/backend-service-functions', () => {
       options: { frontend: true, single: true },
       errors: ['exports', 'helper', 'helper'],
     },
-    { name: 'custom helper message', code: 'function normalize() {}', options: { message: 'Keep helpers local.' }, errors: ['helper'] },
+    { name: 'custom helper message', code: 'function normalize() {}', options: { message: 'Keep helpers local.' }, errors: ['normalize: Keep helpers local.'] },
   ])('$name', (row) => testerRun(backendServiceFunctions, row))
 })
