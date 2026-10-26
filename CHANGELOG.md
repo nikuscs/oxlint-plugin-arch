@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- Preset: Expo apps skip the DOM SVG rules (`svg-jsx/*`). React Native and Skia props such as `<Path style="stroke">` are not CSS strings, and the rule's autofix crashed on them.
+
 ## 0.12.2
 
 ### Added

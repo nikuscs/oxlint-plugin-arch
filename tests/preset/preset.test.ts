@@ -9,6 +9,8 @@ describe('preset', () => {
   const root = resolve(import.meta.dirname, '../..')
 
   it.each<TesterPresetRow>([
+    { name: 'an Expo app skips the DOM SVG rules', folders: { src: recipes.expo }, file: 'src/components/chart.tsx', rule: 'svg-jsx/no-style-string', expected: 'off' },
+    { name: 'a web app keeps the DOM SVG rules', folders: { src: recipes.tanstack }, file: 'src/components/chart.tsx', rule: 'svg-jsx/no-style-string', expected: 'error' },
     { name: 'the TanStack recipe adds route checks', folders: { src: recipes.tanstack }, file: 'src/routes/index.tsx', rule: 'arch/files-route', expected: ['error', { export: 'Route' }] },
     {
       name: 'an rsc file keeps the export prefix next to the Rsc pattern',

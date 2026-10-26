@@ -38,6 +38,7 @@ export const expoGroup: PresetBuilder<'expo'> = (project, settings) => {
       },
       testFiles,
     ),
+    presetOverride(presetScopes(expoWeb), { 'svg-jsx/camel-case-colon': 'off', 'svg-jsx/no-style-string': 'off' }),
     presetOverride(presetScopes(expoWeb, 'app/**/*+api.ts'), {
       'arch/files-route': ['error', { export: 'GET', exports: ['HEAD', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'], hooks: [], intrinsic: false }],
     }),

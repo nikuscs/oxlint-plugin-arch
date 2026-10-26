@@ -14,6 +14,6 @@ Takes `true`, `false`, `'warn'` or an object:
 | --- | --- | --- | --- |
 | `server` | `string[]` | `[]` | Imports banned in the app |
 
-Route files under `app/` are kebab-case, `_layout`, `index`, `[param]`, `[...rest]` or `+special`, and hold only screens, their components and `makeStyles`.
+Route files under `app/` are kebab-case, `_layout`, `index`, `[param]`, `[...rest]` or `+special`, and hold only screens, their components and `makeStyles`. The DOM SVG rules (`svg-jsx/*`) are off: React Native and Skia use `style` for their own values.
 
 Rules: [`arch/files-helpers`](../rules/files-helpers.md), [`arch/files-route`](../rules/files-route.md), [`arch/naming-file`](../rules/naming-file.md).
