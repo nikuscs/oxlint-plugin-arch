@@ -33,7 +33,14 @@ export function optionsPatternsTest(patterns: RegExp[], value: string): boolean 
 }
 
 export function optionsGlob(pattern: string): RegExp {
+  const negated: string[] = []
+
   const source = pattern
+    .replaceAll(/!\(([^()]*)\)/g, (_, options: string) => {
+      negated.push(options.split('|').map((option) => option.replaceAll(/[.+^$()|[\]\\*?{}]/g, '\\$&')).join('|'))
+
+      return `\u0002${negated.length - 1}\u0003`
+    })
     .replaceAll(/[.+^$()|[\]\\]/g, '\\$&')
     .replaceAll('?', '[^/]')
     .replaceAll('**/', '\u0000')
@@ -43,7 +50,7 @@ export function optionsGlob(pattern: string): RegExp {
     .replaceAll('\u0001', '.*')
     .replaceAll(/\{([^}]*)\}/g, (_, options: string) => `(?:${options.split(',').join('|')})`)
 
-  return new RegExp(`^${source}$`)
+  return new RegExp(`^${negated.reduce((text, names, index) => text.replace(`\u0002${index}\u0003`, `(?!(?:${names})(?:/|$))[^/]*`), source)}$`)
 }
 
 export function optionsPatternLabel(pattern: OptionsPattern | undefined): string {

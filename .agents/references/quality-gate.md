@@ -28,7 +28,7 @@ A new or changed rule must not show up near the top of `bun run bench <consumer 
 
 ## Self-lint exceptions
 
-`oxlint.config.ts` turns off five rules for this repository and raises `max-lines` to 600 for `src/**/*.test.ts`, approved by the owner. Rules and the preset read untyped input (ESTree nodes, rule options, user configs), so runtime checks are their parsing step:
+`oxlint.config.ts` turns off five rules for this repository and raises `max-lines` to 600 for `tests/**/*.test.ts`, approved by the owner. Rules and the preset read untyped input (ESTree nodes, rule options, user configs), so runtime checks are their parsing step:
 
 | Rule | Why it is off here |
 | --- | --- |
@@ -36,7 +36,7 @@ A new or changed rule must not show up near the top of `bun run bench <consumer 
 | `dillon-anti-slop/no-reflect-get` | the vendored rules inspect `Reflect` calls by shape |
 | `dillon-anti-slop/no-unknown-parameters`, `arch/types-unknown` | parsers take `unknown` before narrowing it |
 | `arch/code-literal-in` | `'key' in node` checks optional ESTree fields |
-| `max-lines` 600 in `src/**/*.test.ts` | a rule's test file is one `it.each` table of data rows; the full table stays in one file |
+| `max-lines` 600 in `tests/**/*.test.ts` | a rule's test file is one `it.each` table of data rows; the full table stays in one file |
 
 Any other suppression is a finding.
 

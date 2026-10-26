@@ -7,6 +7,12 @@ import type { OxlintOverride } from 'oxlint'
 
 const namingOperationMessage = 'Use domain-action.name.ts or domain-query.name.ts.'
 
+const namingFrontendPrefix = { ...presetExportPrefix, scope: 'functions', services: true, allow: '^\\*$' }
+
+function namingOperationPrefix(role: string) {
+  return { ...presetExportPrefix, roles: [role], scope: 'functions', allow: '^\\*$' }
+}
+
 function namingOperation(role: string, file: string) {
   return { mode: 'template', file, export: `{domain}${role === 'action' ? 'Action' : 'Query'}{Name}`, placeholder: '[a-z0-9-]+', camelCase: true }
 }
@@ -77,7 +83,7 @@ export const namingGroup: PresetBuilder<'naming'> = (project, settings, owner) =
   add(
     'exports',
     frontendEntries,
-    { 'arch/naming-exports': ['error', { ...presetExportPrefix, scope: 'functions', services: true, allow: '^\\*$' }] },
+    { 'arch/naming-exports': ['error', namingFrontendPrefix] },
     testFiles,
   )
   add(
@@ -130,14 +136,14 @@ export const namingGroup: PresetBuilder<'naming'> = (project, settings, owner) =
 
     add('files', files, {
       'arch/naming-file': ['error', { pattern: `^[a-z0-9]+(?:-[a-z0-9]+)*-${role}\\.[a-z0-9]+(?:-[a-z0-9]+)*\\.ts$`, message: namingOperationMessage }],
-    })
+    }, testFiles)
     add('exports', files, {
       'arch/naming-exports': [
         'error',
-        { ...presetExportPrefix, roles: [role], scope: 'functions', allow: '^\\*$' },
+        namingOperationPrefix(role),
         namingOperation(role, `{domain}-${role}.{name}.ts`),
       ],
-    })
+    }, testFiles)
   }
 
   for (const [role, folder, separator] of [['action', 'actions', '.'], ['query', 'queries', '-']]) {
@@ -151,13 +157,13 @@ export const namingGroup: PresetBuilder<'naming'> = (project, settings, owner) =
           message: 'Use domain-action.name.ts in actions/ and domain-query-name.ts in queries/.',
         },
       ],
-    })
+    }, testFiles)
     add('exports', files, {
       'arch/naming-exports': [
         'error',
         { mode: 'template', file: `{domain}-${role}${separator}{name}.ts`, export: `make{Domain}${role === 'action' ? 'Action' : 'Query'}{Name}`, placeholder: '[a-z0-9-]+' },
       ],
-    })
+    }, testFiles)
   }
 
   for (const role of ['action', 'query']) {
@@ -172,16 +178,16 @@ export const namingGroup: PresetBuilder<'naming'> = (project, settings, owner) =
             message: 'Frontend operations retain a client, server or rsc runtime suffix.',
           },
         ],
-      })
-      add('exports', files, { 'arch/naming-exports': ['error', namingOperation(role, `{domain}-${role}.{name}.${suffix}`)] })
+      }, testFiles)
+      add('exports', files, { 'arch/naming-exports': ['error', namingOperationPrefix(role), namingOperation(role, `{domain}-${role}.{name}.${suffix}`)] }, testFiles)
     }
   }
 
   add(
     'exports',
     presetScopes(web, 'services/**/*.rsc.{ts,tsx}'),
-    { 'arch/naming-exports': ['error', { mode: 'pattern', pattern: '^[a-z][a-z0-9]*Rsc[A-Z][a-zA-Z0-9]*$' }] },
-    ['**/*-{action,query}.*.rsc.{ts,tsx}'],
+    { 'arch/naming-exports': ['error', namingFrontendPrefix, { mode: 'pattern', pattern: '^[a-z][a-z0-9]*Rsc[A-Z][a-zA-Z0-9]*$' }] },
+    ['**/*-{action,query}.*.rsc.{ts,tsx}', ...testFiles],
   )
 
   if (typeof exportsPattern === 'string') {

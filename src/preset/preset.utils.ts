@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs'
+import { readFileSync, statSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { presetExtensions, presetGeneratedFiles } from './preset.constants.ts'
 import type * as PresetTypes from '../types/preset.types.ts'
@@ -128,4 +128,28 @@ export function presetRuntime(
       }),
     ]
   })
+}
+
+export function presetManifest(root: string, directory: string): PresetTypes.PresetManifest {
+  try {
+    return JSON.parse(readFileSync(resolve(root, directory, 'package.json'), 'utf8'))
+  } catch {
+    return {}
+  }
+}
+
+export function presetIsDirectory(path: string): boolean {
+  try {
+    return statSync(path, { throwIfNoEntry: false })?.isDirectory() ?? false
+  } catch {
+    return false
+  }
+}
+
+export function presetIsFile(path: string): boolean {
+  try {
+    return statSync(path, { throwIfNoEntry: false })?.isFile() ?? false
+  } catch {
+    return false
+  }
 }

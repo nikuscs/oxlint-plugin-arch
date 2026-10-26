@@ -16,6 +16,8 @@ export const layoutGroup: PresetBuilder<'layout'> = (project, settings) => {
     ...layouts.flatMap(({ path, folder, mode }) => {
       const folders = folder === 'services' && operations.some((source) => posix.join(source, 'services') === path)
 
+      const registries = folder === 'services' ? project.registries : []
+
       const restricted = presetOverride(
         mode === 'flat' ? [`${path}/*/**/${presetExtensions}`] : [`${path}/${presetExtensions}`, `${path}/*/*/**/${presetExtensions}`],
         {
@@ -28,7 +30,7 @@ export const layoutGroup: PresetBuilder<'layout'> = (project, settings) => {
             },
           ],
         },
-        folders ? [`${path}/*/{actions,queries}/*.ts`] : [],
+        [...(folders ? [`${path}/*/{actions,queries}/*.ts`] : []), ...registries],
       )
 
       if (mode !== 'domain') {
@@ -37,24 +39,24 @@ export const layoutGroup: PresetBuilder<'layout'> = (project, settings) => {
 
       const prefix = { singularize: folder === 'components' ? 'trailing-s' : 'none', separators: ['.', '-'] }
       const naming = folder === 'hooks' ? { ...prefix, prefixes: ['use-'] } : prefix
-      const domain = [restricted, presetOverride([`${path}/*/${presetExtensions}`], { 'arch/naming-folder': ['error', naming] })]
+      const domain = [restricted, presetOverride([`${path}/*/${presetExtensions}`], { 'arch/naming-folder': ['error', naming] }, registries)]
 
       if (!settings.strict || folder !== 'services') {
         return domain
       }
 
       const strict = presetOverride(
-        [`${path}/*/${presetExtensions}`],
+        [`${path}/*/**/${presetExtensions}`],
         {
           'arch/naming-file': [
             'error',
             {
-              pattern: `^[a-z0-9]+(?:-[a-z0-9]+)*[.](?:${roles.join('|')})[.]ts$`,
+              pattern: `^[a-z0-9]+(?:-[a-z0-9]+)*(?:[.](?:${roles.join('|')})[.]ts|[.]rsc[.]tsx)$`,
               message: `Domain files use domain[-part].<role>.ts with a role from: ${roles.join(', ')}. Add new roles to layout.suffixes.`,
             },
           ],
         },
-        ['**/*-{action,query}.*.ts'],
+        ['**/*-{action,query}.*.ts', ...testFiles, ...registries],
       )
 
       return [...domain, strict]
@@ -90,6 +92,7 @@ export const layoutGroup: PresetBuilder<'layout'> = (project, settings) => {
         ...presetScopes(nextWeb, 'services/**/*.action.ts'),
         ...conceptFiles,
         ...project.colocated,
+        ...testFiles,
       ],
     ),
     presetOverride(
@@ -116,7 +119,7 @@ export const layoutGroup: PresetBuilder<'layout'> = (project, settings) => {
       { 'arch/backend-service-functions': ['error', { helpers: true, single: true, message: operationMessage }] },
       testFiles,
     ),
-    presetOverride(folderOperations, { 'arch/backend-service-functions': ['error', { helpers: true, message: operationMessage }] }, testFiles),
+    presetOverride(folderOperations, { 'arch/backend-service-functions': ['error', { helpers: true, single: true, message: operationMessage }] }, testFiles),
     presetOverride(presetScopes(serviceRoots, 'services/**/*.ts'), { 'arch/files-domain-constants': 'error' }, [...utilities, ...testFiles]),
     presetOverride(presetScopes(web, 'services/**/*.{ts,tsx}'), { 'arch/files-domain-constants': ['error', { data: true }] }, [
       '**/*.constants.ts',

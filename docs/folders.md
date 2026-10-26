@@ -33,15 +33,15 @@ export default preset({
 
 ## 🔎 Detection
 
-Unless `detect: false`, the preset reads the root `package.json` `workspaces` (or the root package when there are none) and picks a recipe for each workspace folder from its dependencies. The first match wins:
+Unless `detect: false`, the preset reads the workspaces from the root `package.json` (`workspaces`, as an array or `{ packages }`) and `pnpm-workspace.yaml`, with `*`, `**`, `{a,b}` and `!exclude` patterns, and picks a recipe for each workspace folder from its dependencies, dev dependencies and peer dependencies. A single package gets a recipe for `'.'`; a root app with `src/` keeps its recipe next to its workspaces. The first match wins:
 
 | Dependencies | Recipe |
 | --- | --- |
-| `@tanstack/react-start` | `tanstack` |
 | `next` or `vinext` | `next` |
+| `@tanstack/react-start` | `tanstack` |
 | `expo` | `expo` |
 | `electrobun`, `electron` or `@tauri-apps/*` | `desktop` |
-| `@orpc/server`, `hono`, `kysely`, `drizzle-orm`, `express`, `fastify` or `elysia`, in an app or next to a `services/` folder | `backend` |
+| `@orpc/server`, `hono`, `kysely`, `drizzle-orm`, `express`, `fastify` or `elysia`, in an app or next to a `services/` folder; or any `services/<domain>/<domain>.service.ts` | `backend` |
 | `react` with a `components/` folder | `react` (app) or `ui` (package) |
 | anything else | `library` |
 
@@ -51,17 +51,17 @@ Detection also adds conventions:
 
 | Where | Adds |
 | --- | --- |
-| Backend `services/` | Bans importing the registry, another service's `actions`/`queries`, and the backend's own package entries |
+| Backend `services/` | Bans importing the registry, another domain's `actions`/`queries` (a domain may import its own), and the backend's own package entries |
 | Backend `core/`, `rpc/`, `routes/`, `cli/` | Bans service operations or the registry; `cli/` also bans `.service` imports and names files `cli…` |
 | Backend `tests/kits/` or `test/kits/` | Kit file names; the tests import kit files, not the kit index |
-| Any `migrations/` in a backend | Numbered file names (`001_init.ts`, `20240101120000-init.ts`), unique numbers, no layout check |
-| Web app | Bans the backend's `package.json` `imports` aliases, and server `.service` files when there is a backend; `components/` and `routes/` import only the backend client entry |
+| Any `migrations/` up to 8 folders deep in a backend | Numbered file names (`001_init.ts`, `20240101120000-init.ts`), unique numbers, no layout check |
+| Web app | Bans the backend's `package.json` `imports` aliases that the app does not define itself, and server `.service` files when there is a backend; `components/` and `routes/` import only the backend client entry |
 | Package | Bans `../../apps/**` and the backend's import aliases (not its own) |
-| Backend registry | `services/service.ts`, `core/core.services.ts` or `service.ts`, see [`backend`](groups/backend.md) |
+| Backend registry | `backend.registry` when set, else `services/service.ts`, `core/core.services.ts` or `service.ts`; see [`backend`](groups/backend.md). The registry file is exempt from the domain layout |
 | Stylesheet | See [`tailwind`](groups/tailwind.md) |
 | Web `services/` | `layout.services: 'flat'` when it holds more files than folders |
 
-Your folders merge over the detected ones: a key you set wins, and objects merge (`layout: { hooks: false }` keeps the detected `services: 'flat'`). A detected key inside a folder you set as a `*` glob or a parent is left out.
+Your folders merge over the detected ones: a key you set wins, and objects merge (`layout: { hooks: false }` keeps the detected `services: 'flat'`). A detected key inside a folder you set as a `*` glob or a parent is left out, and a `*` key still gets the conventions of each folder it matches. Conventions inside a `false` folder are dropped, and a group you set to `false` on a parent stays off. Detection follows symlinked folders and skips broken links.
 
 ## 📐 Rules
 
@@ -70,9 +70,9 @@ Your folders merge over the detected ones: a key you set wins, and objects merge
 | `'.'` | The whole project. Every other folder inherits from its parent and changes only what it sets. |
 | Deepest wins | A file follows the deepest matching folder. An exact key beats a `*` glob at the same depth (`packages/ui` over `packages/*`, also when `packages/*` is `false`). |
 | Folder value | `true` inherits, `false` skips the folder, an object inherits and changes. |
-| Group value | `true` on with the inherited settings (defaults when nothing is inherited), `false` off, `'warn'` the same as warnings, an object = inherited settings plus changes. `console` and `kit` take only `true` or `false`. |
-| Paths | Paths inside settings are relative to `root`; `source` is relative to its folder. |
-| Units | Top-level keys are units (app, backend, library, CLI). When `'.'` is itself an app, backend or CLI, it stays a unit, and only top-level keys that set `tanstack`, `next`, `expo`, `backend` or `console` become units. A key inside another key only refines it. |
+| Group value | `true` on with the inherited settings (defaults when nothing is inherited), `false` off, `'warn'` the same as warnings, an object = inherited settings plus changes (an options object inside merges too; arrays replace). `console` and `kit` take only `true` or `false`. |
+| Paths | Paths inside settings are relative to `root`; `source` is relative to its folder. Keys are literal folder paths (dots allowed, `.agents` too); `apps/web/` and `./apps/web` mean `apps/web`. |
+| Units | Top-level keys are units (app, backend, library, CLI). When `'.'` is itself an app, backend or CLI, it stays a unit, and only top-level keys that set `tanstack`, `next`, `expo`, `backend` or `console`, or have their own `package.json`, become units. A folder with its own `package.json` is a unit with its own kind anywhere; another key inside a key only refines it. Output folders (`dist`, `build`, `coverage`, `.output`) are ignored at the root and at each unit's root. |
 | Errors | Unknown keys, unknown options, missing folders and keys inside a `false` folder throw. |
 
 ## 🧩 Folder keys
@@ -80,7 +80,7 @@ Your folders merge over the detected ones: a key you set wins, and objects merge
 | Key | | |
 | --- | --- | --- |
 | `severity` | `'error' \| 'warn'` | Level for every rule in the folder, inherited by its subfolders; the `correctness` category keeps the `'.'` level |
-| `source` | `string` | Source folder inside this folder: default `src`, or `.` for CLIs and for a root without `src` |
+| `source` | `string` | Source folder inside this folder: default `src`, or the folder itself for CLIs and when it has no `src` |
 | `rules` | `Record<rule, level \| [level, options]>` | Last-word overrides for single rules; options replace the rule's options in the folder |
 | any [group](#-groups) | `true \| false \| 'warn' \| options` | |
 

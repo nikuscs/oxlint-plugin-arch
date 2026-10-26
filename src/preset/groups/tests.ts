@@ -57,6 +57,11 @@ export const testsGroup: PresetBuilder<'tests'> = (project, settings) => {
 
   return [
     presetOverride(project.testFiles, rules),
+    presetOverride(
+      presetScopes(project.units.map((unit) => unit.source), '**/*.{test,spec}.{ts,tsx,mts,cts}'),
+      { 'arch/files-restricted': ['error', { message: 'Tests live in a tests/ folder, not next to the code.' }] },
+      ['**/tests/**', '**/test/**'],
+    ),
     presetOverride(presetScopes(project.backendRoots, 'tests/**/*.ts'), backendRules),
     ...allow.map((entry) =>
       presetOverride(entry.files, { 'dillon-anti-slop/no-module-mocking': entry.apis.includes('*') ? 'off' : mockingRule(entry.apis) }),

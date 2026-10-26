@@ -1,6 +1,6 @@
 # 🧪 tests
 
-Test structure, assertions and mocking. On by default.
+Test structure, assertions and mocking. On by default. Tests live in a `tests/` (or `test/`) folder: a `*.test.*` or `*.spec.*` file inside a unit's source is reported.
 
 ```ts
 folders: {

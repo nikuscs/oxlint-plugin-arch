@@ -18,6 +18,11 @@ Local behavior fixes recognize `SAFETY:` comments on exported declarations and
 export-default assertions, while retaining statement boundaries for other
 assertions.
 
+`no-shape-in-symbol-names` skips names that belong to another API: the
+property of a non-computed member access (`schema.shape`), a renamed
+destructured property or import, the right side of a qualified type name, and
+the key of a shorthand property (its variable is still reported).
+
 Local option changes let `no-module-mocking` take `deny` and `allow` API
 patterns and `checkDestructured`, so the preset can also ban stubs such as
 `vi.spyOn`. With no options it reports the same calls as before.

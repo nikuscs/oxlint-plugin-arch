@@ -1,6 +1,6 @@
-import { existsSync } from 'node:fs'
 import { posix, resolve } from 'node:path'
-import { presetRegistryFiles, presetRegistrySkip } from '../preset.constants.ts'
+import { presetRegistryFile } from '../preset-detect.ts'
+import { presetRegistrySkip } from '../preset.constants.ts'
 import { PresetError, presetOverride, presetScopes } from '../preset.utils.ts'
 import type { BackendRegistryOptions } from '../../types/backend.types.ts'
 import type { PresetBuilder, PresetRegistryOptions } from '../../types/preset.types.ts'
@@ -28,7 +28,7 @@ export const backendGroup: PresetBuilder<'backend'> = (project, settings) => {
 
   const registries = file === undefined
     ? backendUnits.flatMap((unit) => {
-      const found = presetRegistryFiles.map((path) => posix.join(unit.source, path)).find((path) => existsSync(resolve(project.root, path)))
+      const found = presetRegistryFile(project.root, unit.source, undefined)
 
       return found ? [{ file: found, unit }] : []
     })

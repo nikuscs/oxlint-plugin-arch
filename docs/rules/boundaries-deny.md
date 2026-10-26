@@ -1,6 +1,6 @@
 # arch/boundaries-deny
 
-Reports imports, re-exports, literal dynamic imports and calls that a folder bans. Import keys are globs over the whole specifier (`*` stays inside one segment, `**` crosses `/`). Call keys match the callee name, the member name or the dotted name; literal computed keys like `console['log']` count.
+Reports imports, re-exports, literal dynamic imports and calls that a folder bans. Import keys are globs over the whole specifier (`*` stays inside one segment, `**` crosses `/`, `{a,b}` is either name, `!(a|b)` is any one segment except those names). Call keys match the callee name, the member name or the dotted name; literal computed keys like `console['log']` count.
 
 ```ts
 // ❌ apps/server/src/services/order/order-query.list.ts

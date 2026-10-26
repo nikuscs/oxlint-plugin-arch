@@ -13,18 +13,25 @@
 src/
 ├── index.ts                         the arch plugin: every rule, imports and entries alphabetical
 ├── rules/<family>/<family>-<subject>.ts   one rule; helpers only it uses stay in the file
-├── rules/<family>/<family>-<subject>.test.ts   its rows: one it.each table run through testerRun
 ├── preset/
 │   ├── preset.ts                    public entry: preset(), recipes, templates, types; scopes each group to its folders
-│   ├── preset.test.ts               config resolution only: recipes, templates, groups, errors
+│   ├── preset-detect.ts             detection: workspaces, recipes from package.json, conventions
+│   ├── preset-stylesheet.ts         finds a unit's Tailwind entry stylesheet
+│   ├── preset-units.ts              which scopes are units, their kind and source
 │   ├── preset-folders.ts            resolves folders: keys, inheritance, units and the project lists groups read
 │   ├── preset-recipes.ts            recipes and templates: plain group toggles
 │   ├── preset.constants.ts          group defaults and order, rule lists, fixed values
-│   ├── preset.utils.ts              override, scope, glob intersection and severity helpers; PresetError
+│   ├── preset.utils.ts              override, scope, glob intersection, severity and file system helpers; PresetError
 │   └── groups/<group>.ts            one group: a builder returning overrides for the given settings
 ├── types/<topic>.types.ts           every type and interface, one file per topic
-├── utils/<topic>.utils.ts           logic two or more files share; tester.utils.ts runs test rows
+├── utils/<topic>.utils.ts           logic two or more files share
 └── vendor/dillon-anti-slop/         forked upstream plugin; shared/ holds its own helpers
+tests/                               every test, mirroring src/; nothing in src/ is a test
+├── rules/<family>/<family>-<subject>.test.ts   one it.each table run through testerRun
+├── preset/preset*.test.ts           config resolution and detection rows run through testerPreset
+├── vendor/dillon-anti-slop/         the vendored rules' tests
+├── utils/tester.utils.ts            runs rule and preset test rows
+└── types/tester.types.ts            the test row types
 docs/folders.md, docs/groups/<group>.md, docs/rules/<rule>.md, docs/vendor.md, docs/plugin-only.md
 examples/*.oxlint.config.ts          typechecked example configs
 scripts/docs.ts                      generates the README group and rule tables

@@ -1,5 +1,31 @@
 # Changelog
 
+## Unreleased
+
+### Changed
+
+- Preset: tests live in a `tests/` (or `test/`) folder. A `*.test.*` or `*.spec.*` file inside a unit's source is reported by `arch/files-restricted`.
+
+### Fixed
+
+- Preset detection reads `pnpm-workspace.yaml` (block or flow lists), workspace globs with `*` anywhere, `**`, `{a,b}` and `!exclude`, and peer dependencies (a UI package with React as a peer is `ui`). Packages and service domains named like output folders (`build`, `public`) are no longer skipped.
+- Preset detection keeps a root app's or backend's recipe next to its workspace packages (when the root has its own source folder), gives a single root package its recipe (`library` included), and keeps the root unit next to a detected `scripts/` CLI. A folder with its own `package.json` is a unit with its own kind, also when nested in another workspace or listed through a `*` key, instead of inheriting the root app's kind.
+- Preset: a unit without `src/` uses its own folder as source (a workspace Next app with `app/` at the package root).
+- Preset detection honors a configured `source`, `backend.registry` file or `false`, expands `*` keys (with exact keys beside them, which also inherit the wildcard's `source`) before adding conventions, and understands import maps such as `"#/*": "./src/*.ts"`, `"#/*.ts": "./src/*.ts"`, exact and conditional entries.
+- Preset detection: a service may import its own domain's operations; other domains stay banned through one `!(domain)` pattern per domain, and a ban you configure yourself is never lifted. A web app's or package's own aliases that overlap the backend's (`#/*`, `#/lib/*`) are no longer banned.
+- Preset detection skips broken symlinks, follows symlinked folders, and drops conventions inside a `false` folder or for a group a parent sets to `false` (an exact key beats a `*` key at the same depth, and an exact key that revives a unit under a `false` wildcard keeps its conventions), instead of throwing.
+- Preset: folder keys accept dots (`packages/my.lib`, `.agents`), and `apps/web/` or `./apps` match the detected `apps/web` and `apps`.
+- Preset: nested group options merge with the inherited ones (`tests.mocking: { allow: [] }` keeps the parent's `preset` and `deny`, also when the parent used the `'strict'` shorthand).
+- Preset: the registry file is exempt from the domain layout and its file and folder name checks; test files skip the domain, operation and frontend runtime file name checks (the `tests/` check below reports them once); operation files in `actions/` and `queries/` keep the single-export check; `layout.strict` accepts `.rsc.tsx`.
+- Preset: Tailwind stylesheet detection ignores comments, strings and plugins such as `tailwindcss-animate`, accepts `@import url("tailwindcss")` with or without quotes, and follows symlinked folders.
+- Preset: `dist`, `build`, `coverage` and `.output` are ignored at the project root and at each unit's root, not at any depth, so a `services/build/` domain is linted.
+- `arch/boundaries-deny` import globs accept `!(a|b)`: one path segment that is none of the names.
+- Preset: `layout.strict` checks domain file names at any depth under `services/<domain>/`, so a nested or misnamed file (`order/queries/order-query-list.ts`) is reported for its name, not only its folder. `layout.operations: 'folders'` keeps its own `actions/` and `queries/` names.
+- Preset detection: a `next` or `vinext` dependency wins over a leftover `@tanstack/react-start` one.
+- Preset detection: a package with `services/<domain>/<domain>.service.ts` gets the `backend` recipe without a backend framework dependency.
+- Preset: `services/**/*.rsc.{ts,tsx}` files and frontend operation files (`*-action.*.client.ts` and the other runtime suffixes) keep the export prefix check next to their name pattern or template. Since 0.12.0 the later override replaced it; 0.11 ran both.
+- `dillon-anti-slop/no-shape-in-symbol-names` reports only names you declare: not another API's property (`schema.shape`, `record.shape = 1`), a renamed destructured property or import, a qualified type read, a JSX member or attribute, or a renamed re-export from another module. A shorthand property reports once.
+
 ## 0.12.0
 
 ### Breaking: rebuilt package

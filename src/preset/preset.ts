@@ -262,10 +262,7 @@ export function preset(config: PresetTypes.PresetConfig): OxlintConfig {
     plugins: ['typescript', 'react', 'react-perf', 'jsx-a11y', 'import', 'unicorn', 'promise', 'vitest', 'node', 'oxc'],
     ignorePatterns: [
       '**/node_modules/**',
-      '**/dist/**',
-      '**/build/**',
-      '**/coverage/**',
-      '**/.output/**',
+      ...project.outputs,
       ...(project.nextWeb.length > 0 ? ['**/.next/**', '**/next-env.d.ts'] : []),
       ...(project.expoWeb.length > 0 ? ['**/.expo/**', '**/expo-env.d.ts'] : []),
       ...project.generated,

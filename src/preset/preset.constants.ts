@@ -319,7 +319,11 @@ export const presetBuiltinFileRoles = [
   'service', 'client', 'server', 'rsc', 'utils', 'action', 'query', 'types', 'constants', 'handler', 'test', 'spec',
 ]
 
-export const presetLiteralSegment = /^[a-zA-Z0-9][a-zA-Z0-9_-]*$/
+export const presetShorthandOptions = [['tests', 'mocking', 'preset'], ['backend', 'registry', 'file']] as const
+
+export const presetOutputFolders = ['dist', 'build', 'coverage', '.output']
+
+export const presetLiteralSegment = /^(?!\.{1,2}$)[a-zA-Z0-9._][a-zA-Z0-9._-]*$/
 
 export const presetIllustrationPalette = [
   'text-color', 'bg-color', 'gradient-from', 'gradient-via', 'gradient-to', 'border-color', 'divide-color',
@@ -390,8 +394,8 @@ export const presetTestFiles = ['**/{test,tests,e2e}/**/*.{ts,tsx,mts,cts}', '**
 export const presetBaseImports = [{ group: ['zod/v4', 'zod/v4/**'], message: 'Import from zod, not its transition entry point.' }]
 
 export const presetDetectFrameworks: ['tanstack' | 'next' | 'expo', string[]][] = [
-  ['tanstack', ['@tanstack/react-start']],
   ['next', ['next', 'vinext']],
+  ['tanstack', ['@tanstack/react-start']],
   ['expo', ['expo']],
 ]
 

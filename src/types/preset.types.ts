@@ -279,12 +279,15 @@ export interface PresetImportRestriction {
   message: string
 }
 
+export type PresetImportTarget = string | null | PresetImportTarget[] | { [condition: string]: PresetImportTarget }
+
 export interface PresetManifest {
   name?: string
   dependencies?: Record<string, string>
   devDependencies?: Record<string, string>
+  peerDependencies?: Record<string, string>
   workspaces?: string[] | { packages?: string[] }
-  imports?: Record<string, unknown>
+  imports?: Record<string, PresetImportTarget>
   exports?: unknown
 }
 
@@ -327,7 +330,9 @@ export interface PresetProject {
   publicEntrypoints: string[]
   baseImports: PresetImportRestriction[]
   css: Record<string, string>
+  registries: string[]
   ignores: string[]
+  outputs: string[]
 }
 
 export type PresetBuilder<K extends PresetGroupName> = (project: PresetProject, settings: PresetGroupSettings<K>, scope: PresetScope) => OxlintOverride[]

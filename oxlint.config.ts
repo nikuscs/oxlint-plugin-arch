@@ -20,7 +20,7 @@ const config = preset({
 })
 
 config.overrides.push({
-  files: ['src/**/*.test.ts'],
+  files: ['tests/**/*.test.ts'],
   rules: { 'max-lines': ['error', { max: 600, skipBlankLines: true, skipComments: true }] },
 })
 
