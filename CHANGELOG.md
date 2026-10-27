@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- Preset detection: a `migrations/` folder under `tests/` or `test/` keeps test file names. Migration tests can mirror their source (`tests/database/migrations/003-products.test.ts`) instead of getting the numbered migration name rule.
+
 ## 0.12.3
 
 ### Fixed

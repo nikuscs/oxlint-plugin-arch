@@ -54,7 +54,7 @@ Detection also adds conventions:
 | Backend `services/` | Bans importing the registry, another domain's `actions`/`queries` (a domain may import its own), and the backend's own package entries |
 | Backend `core/`, `rpc/`, `routes/`, `cli/` | Bans service operations or the registry; `cli/` also bans `.service` imports and names files `cli…` |
 | Backend `tests/kits/` or `test/kits/` | Kit file names; the tests import kit files, not the kit index |
-| Any `migrations/` up to 8 folders deep in a backend | Numbered file names (`001_init.ts`, `20240101120000-init.ts`), unique numbers, no layout check |
+| Any `migrations/` up to 8 folders deep in a backend, outside `tests/` and `test/` | Numbered file names (`001_init.ts`, `20240101120000-init.ts`), unique numbers, no layout check |
 | Web app | Bans the backend's `package.json` `imports` aliases that the app does not define itself, and server `.service` files when there is a backend; `components/` and `routes/` import only the backend client entry |
 | Package | Bans `../../apps/**` and the backend's import aliases (not its own) |
 | Backend registry | `backend.registry` when set, else `services/service.ts`, `core/core.services.ts` or `service.ts`; see [`backend`](groups/backend.md). The registry file is exempt from the domain layout |

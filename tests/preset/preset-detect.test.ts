@@ -201,6 +201,15 @@ describe('preset detection', () => {
       expected: ['error', { unique: '^(\\d{3,14})[-_]' }],
     },
     {
+      name: 'a migrations folder mirrored under tests keeps test names',
+      tree: ['apps/server/src/services/', 'apps/server/src/database/migrations/', 'apps/server/tests/database/migrations/'],
+      files: { 'package.json': workspaces, ...server },
+      folders: {},
+      file: 'apps/server/tests/database/migrations/003-products.test.ts',
+      rule: 'arch/naming-file',
+      expected: undefined,
+    },
+    {
       name: 'a tests/kits folder gets kit names',
       tree: ['apps/server/src/services/', 'apps/server/tests/kits/'],
       files: { 'package.json': workspaces, ...server },

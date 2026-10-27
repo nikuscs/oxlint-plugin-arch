@@ -230,7 +230,9 @@ function presetBackendConventions(
     conventions[posix.join(servicesKey, domain)] = presetDeny(Object.fromEntries(imports))
   }
 
-  for (const tests of ['tests', 'test']) {
+  const testFolders = ['tests', 'test']
+
+  for (const tests of testFolders) {
     if (exists(posix.join(tests, 'kits'))) {
       conventions[tests] = presetDeny(Object.fromEntries(PresetConstants.presetKitImports.map((pattern) => [pattern, 'Import the kit file you need.'])))
       conventions[posix.join(tests, 'kits')] = { naming: { files: PresetConstants.presetKitFiles } }
@@ -245,7 +247,7 @@ function presetBackendConventions(
     for (const child of presetDirectories(root, posix.join(key, folder)).map((path) => posix.relative(key, path))) {
       if (posix.basename(child) === 'migrations') {
         conventions[child] = { layout: false, naming: { files: PresetConstants.presetMigrationFiles, unique: PresetConstants.presetMigrationNumber } }
-      } else if (child.split('/').length < 8) {
+      } else if (child.split('/').length < 8 && !testFolders.includes(posix.basename(child))) {
         queue.push(child)
       }
     }
