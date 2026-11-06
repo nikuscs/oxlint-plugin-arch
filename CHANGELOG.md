@@ -1,10 +1,10 @@
 # Changelog
 
-## Unreleased
+## 0.12.4
 
 ### Added
 
-- `effect` preset group and `recipes.effect`: layout and code rules for Effect code, opt-in. It turns off `arch/code-trivial-functions`, which reports Effect functions written as one pipe. Options: `width` (line width for the layout rules, default `160`) `exports` (files whose exports must be traced) and `skip` (service names left untraced).
+- `effect` preset group and `recipes.effect`: layout and code rules for Effect code, opt-in. It turns off `arch/code-trivial-functions`, which reports Effect functions written as one pipe. Options: `width` (line width for the layout rules, default `160`), `exports` (files whose exports must be traced) and `skip` (service names left untraced).
 - `arch/layout-call-arguments`: `hug`, `join` and `split` options. `hug` keeps a multi-line call either hugging its last callback, object or array or one argument per line; `join` puts a short split call or parameter list on one line; `split: false` turns the `min` check off. Defaults are unchanged.
 - `arch/layout-ternary`: `branch` option reports a ternary branch longer than `max` lines; `fit: false` turns the join and split checks off. Defaults are unchanged.
 - `arch/layout-items`: a multi-line object or array puts each item on its own line.
