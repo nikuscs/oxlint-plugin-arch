@@ -9,15 +9,21 @@ import { boundariesNext } from './rules/boundaries/boundaries-next.ts'
 import { boundariesRpcDatabase } from './rules/boundaries/boundaries-rpc-database.ts'
 import { boundariesTanstack } from './rules/boundaries/boundaries-tanstack.ts'
 import { boundariesTokenOwner } from './rules/boundaries/boundaries-token-owner.ts'
+import { codeBranchOnce } from './rules/code/code-branch-once.ts'
 import { codeConstructor } from './rules/code/code-constructor.ts'
 import { codeDoubleNegation } from './rules/code/code-double-negation.ts'
+import { codeFunctionNesting } from './rules/code/code-function-nesting.ts'
+import { codeInline } from './rules/code/code-inline.ts'
+import { codeJustifiedCall } from './rules/code/code-justified-call.ts'
 import { codeLiteralIn } from './rules/code/code-literal-in.ts'
 import { codeMutableState } from './rules/code/code-mutable-state.ts'
 import { codeObjectParams } from './rules/code/code-object-params.ts'
 import { codePairedCall } from './rules/code/code-paired-call.ts'
 import { codePromiseMutation } from './rules/code/code-promise-mutation.ts'
 import { codeSwitch } from './rules/code/code-switch.ts'
+import { codeTraced } from './rules/code/code-traced.ts'
 import { codeTrivialFunctions } from './rules/code/code-trivial-functions.ts'
+import { codeYieldArgument } from './rules/code/code-yield-argument.ts'
 import { commentsCode } from './rules/comments/comments-code.ts'
 import { commentsDirectives } from './rules/comments/comments-directives.ts'
 import { copyDashes } from './rules/copy/copy-dashes.ts'
@@ -32,13 +38,17 @@ import { filesNoFunctions } from './rules/files/files-no-functions.ts'
 import { filesRestricted } from './rules/files/files-restricted.ts'
 import { filesRoute } from './rules/files/files-route.ts'
 import { filesTypesOnly } from './rules/files/files-types-only.ts'
+import { layoutArrowBody } from './rules/layout/layout-arrow-body.ts'
 import { layoutCallArguments } from './rules/layout/layout-call-arguments.ts'
 import { layoutCallArray } from './rules/layout/layout-call-array.ts'
+import { layoutCallDepth } from './rules/layout/layout-call-depth.ts'
 import { layoutChain } from './rules/layout/layout-chain.ts'
+import { layoutItems } from './rules/layout/layout-items.ts'
 import { layoutJsxAttributes } from './rules/layout/layout-jsx-attributes.ts'
 import { layoutKeyValue } from './rules/layout/layout-key-value.ts'
 import { layoutObject } from './rules/layout/layout-object.ts'
 import { layoutPadding } from './rules/layout/layout-padding.ts'
+import { layoutPipe } from './rules/layout/layout-pipe.ts'
 import { layoutTernary } from './rules/layout/layout-ternary.ts'
 import { namingDeclarations } from './rules/naming/naming-declarations.ts'
 import { namingExports } from './rules/naming/naming-exports.ts'
@@ -78,15 +88,21 @@ export default eslintCompatPlugin({
     'boundaries-rpc-database': boundariesRpcDatabase,
     'boundaries-tanstack': boundariesTanstack,
     'boundaries-token-owner': boundariesTokenOwner,
+    'code-branch-once': codeBranchOnce,
     'code-constructor': codeConstructor,
     'code-double-negation': codeDoubleNegation,
+    'code-function-nesting': codeFunctionNesting,
+    'code-inline': codeInline,
+    'code-justified-call': codeJustifiedCall,
     'code-literal-in': codeLiteralIn,
     'code-mutable-state': codeMutableState,
     'code-object-params': codeObjectParams,
     'code-paired-call': codePairedCall,
     'code-promise-mutation': codePromiseMutation,
     'code-switch': codeSwitch,
+    'code-traced': codeTraced,
     'code-trivial-functions': codeTrivialFunctions,
+    'code-yield-argument': codeYieldArgument,
     'comments-code': commentsCode,
     'comments-directives': commentsDirectives,
     'copy-dashes': copyDashes,
@@ -101,13 +117,17 @@ export default eslintCompatPlugin({
     'files-restricted': filesRestricted,
     'files-route': filesRoute,
     'files-types-only': filesTypesOnly,
+    'layout-arrow-body': layoutArrowBody,
     'layout-call-arguments': layoutCallArguments,
     'layout-call-array': layoutCallArray,
+    'layout-call-depth': layoutCallDepth,
     'layout-chain': layoutChain,
+    'layout-items': layoutItems,
     'layout-jsx-attributes': layoutJsxAttributes,
     'layout-key-value': layoutKeyValue,
     'layout-object': layoutObject,
     'layout-padding': layoutPadding,
+    'layout-pipe': layoutPipe,
     'layout-ternary': layoutTernary,
     'naming-declarations': namingDeclarations,
     'naming-exports': namingExports,

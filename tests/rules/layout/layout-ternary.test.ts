@@ -72,5 +72,15 @@ describe('arch/layout-ternary', () => {
       output: "function run() {\n  if (ready) {\n    callTool.mockResolvedValueOnce(body instanceof Error\n      ? { isError: true, content: [{ type: 'text', text: body.message }] }\n      : { content: [{ type: 'text', text: JSON.stringify(body) }] });\n  }\n}",
       errors: ['split'],
     },
+    { name: 'fit false turns the length checks off', code: 'const result = ready\n  ? yes\n  : no', options: { fit: false } },
+    { name: 'branch passes short branches', code: 'const result = ready\n  ? {\n    a,\n  }\n  : no', options: { fit: false, branch: { max: 3 } } },
+    { name: 'branch reports a long branch', code: 'const result = ready\n  ? {\n    a,\n    b,\n  }\n  : no', options: { fit: false, branch: { max: 3 } }, errors: ['long'] },
+    { name: 'branch passes a one-line yield ternary', code: 'function* run() { yield* (ready ? a : b) }', options: { fit: false, branch: { max: 3 } } },
+    {
+      name: 'branch reports a multi-line yield ternary',
+      code: 'function* run() {\n  yield* ready\n    ? a\n    : go({\n      b,\n    })\n}',
+      options: { fit: false, branch: { max: 3 } },
+      errors: ['yield'],
+    },
   ])('$name', (row) => testerRun(layoutTernary, row))
 })

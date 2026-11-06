@@ -4,6 +4,7 @@ import { basicsGroup } from './groups/basics.ts'
 import { commentsGroup } from './groups/comments.ts'
 import { consoleGroup } from './groups/console.ts'
 import { denyGroup } from './groups/deny.ts'
+import { effectGroup } from './groups/effect.ts'
 import { expoGroup } from './groups/expo.ts'
 import { externalsGroup } from './groups/externals.ts'
 import { formsGroup } from './groups/forms.ts'
@@ -96,6 +97,7 @@ const presetBuilders: PresetTypes.PresetBuilders = {
   schemas: schemasGroup,
   sql: sqlGroup,
   orpc: orpcGroup,
+  effect: effectGroup,
   react: reactGroup,
   forms: formsGroup,
   tanstack: tanstackGroup,

@@ -1,3 +1,4 @@
+import type { OptionsPattern } from './options.types.ts'
 import type { OxlintConfig, OxlintOverride } from 'oxlint'
 
 export type PresetLevel = 'error' | 'warn'
@@ -146,6 +147,11 @@ export interface PresetFormsOptions {
   resolver?: string
 }
 
+export interface PresetEffectOptions {
+  width?: number
+  exports?: OptionsPattern
+}
+
 export interface PresetSqlOptions {
   sanitizers?: string[]
 }
@@ -172,6 +178,7 @@ export interface PresetGroups {
   schemas?: PresetSwitch
   forms?: PresetSwitch | PresetFormsOptions
   sql?: PresetSwitch | PresetSqlOptions
+  effect?: PresetSwitch | PresetEffectOptions
   console?: boolean
   deny?: PresetSwitch | PresetDenyOptions
   externals?: PresetSwitch | PresetExternalsOptions
@@ -222,6 +229,7 @@ export interface PresetResolvedGroups {
   schemas: PresetEmptyOptions
   forms: Required<PresetFormsOptions>
   sql: Required<PresetSqlOptions>
+  effect: Pick<PresetEffectOptions, 'exports'> & { width: number }
   console: PresetEmptyOptions
   deny: { imports: Record<string, string>; calls: Record<string, string> }
   externals: Required<PresetExternalsOptions>

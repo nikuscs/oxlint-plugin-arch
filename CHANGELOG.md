@@ -2,6 +2,22 @@
 
 ## Unreleased
 
+### Added
+
+- `effect` preset group and `recipes.effect`: layout and code rules for Effect code, opt-in. It turns off `arch/code-trivial-functions`, which reports Effect functions written as one pipe. Options: `width` (line width for the layout rules, default `160`) and `exports` (files whose exports must be traced).
+- `arch/layout-call-arguments`: `hug`, `join` and `split` options. `hug` keeps a multi-line call either hugging its last callback, object or array or one argument per line; `join` puts a short split call or parameter list on one line; `split: false` turns the `min` check off. Defaults are unchanged.
+- `arch/layout-ternary`: `branch` option reports a ternary branch longer than `max` lines; `fit: false` turns the join and split checks off. Defaults are unchanged.
+- `arch/layout-items`: a multi-line object or array puts each item on its own line.
+- `arch/layout-call-depth`: calls nested more than `max` deep on one line.
+- `arch/layout-arrow-body`: an arrow body starts on the arrow's line when it fits.
+- `arch/layout-pipe`: no `).pipe(` after a multi-line call, and no multi-line call inside a pipe step.
+- `arch/code-inline`: a one-line const read once is inlined; a top-level const that only wraps one call or arrow is inlined at each use.
+- `arch/code-branch-once`: a member compared to strings in several ternaries in one file.
+- `arch/code-function-nesting`: functions nested more than `max` deep.
+- `arch/code-yield-argument`: a `yield*` passed straight into a call or member access.
+- `arch/code-justified-call`: listed calls need a `// SAFETY: <why>` comment on the line above.
+- `arch/code-traced`: exported functions and service methods built with an untraced helper (`Effect.fnUntraced` by default).
+
 ### Fixed
 
 - Preset detection: a `migrations/` folder under `tests/` or `test/` keeps test file names. Migration tests can mirror their source (`tests/database/migrations/003-products.test.ts`) instead of getting the numbered migration name rule.

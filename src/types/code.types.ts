@@ -66,3 +66,29 @@ export interface CodeTrivialFunctionsGuardState {
   returned: boolean
   globalArray: (node: ESTree.Node) => boolean
 }
+
+export interface CodeInlineOptions {
+  max?: number
+  nesting?: number
+  allow?: OptionsPattern
+  keep?: OptionsPattern
+  services?: string[]
+}
+
+export interface CodeFunctionNestingOptions {
+  max?: number
+}
+
+export interface CodeJustifiedCallOptions {
+  calls: string[]
+  comment?: string
+  message?: string
+}
+
+export interface CodeTracedOptions {
+  untraced?: string[]
+  exports?: OptionsPattern
+  services?: string[]
+  skip?: OptionsPattern
+  message?: string
+}

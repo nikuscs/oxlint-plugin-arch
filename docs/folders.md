@@ -99,7 +99,7 @@ Your folders merge over the detected ones: a key you set wins, and objects merge
 
 On by default: [`layout`](groups/layout.md), [`limits`](groups/limits.md), [`style`](groups/style.md), [`basics`](groups/basics.md), [`naming`](groups/naming.md), [`comments`](groups/comments.md), [`types`](groups/types.md), [`imports`](groups/imports.md), [`tests`](groups/tests.md), [`deny`](groups/deny.md), [`externals`](groups/externals.md).
 
-Opt-in: [`react`](groups/react.md), [`tanstack`](groups/tanstack.md), [`next`](groups/next.md), [`expo`](groups/expo.md), [`tailwind`](groups/tailwind.md), [`shadcn`](groups/shadcn.md), [`kit`](groups/kit.md), [`backend`](groups/backend.md), [`orpc`](groups/orpc.md), [`schemas`](groups/schemas.md), [`forms`](groups/forms.md), [`sql`](groups/sql.md), [`console`](groups/console.md).
+Opt-in: [`react`](groups/react.md), [`tanstack`](groups/tanstack.md), [`next`](groups/next.md), [`expo`](groups/expo.md), [`tailwind`](groups/tailwind.md), [`shadcn`](groups/shadcn.md), [`kit`](groups/kit.md), [`backend`](groups/backend.md), [`orpc`](groups/orpc.md), [`schemas`](groups/schemas.md), [`forms`](groups/forms.md), [`sql`](groups/sql.md), [`effect`](groups/effect.md), [`console`](groups/console.md).
 
 A folder with `tanstack`, `next` or `expo` is an app; with `backend` a backend; with `console` a CLI; anything else a library.
 
@@ -115,6 +115,7 @@ Recipes are plain objects that only toggle groups, so spreading them is safe.
 | `backend` | `backend`, `schemas`, `sql` |
 | `react` | `react`, `tailwind`, `schemas` |
 | `library` | `schemas` |
+| `effect` | `schemas`, `effect` |
 | `ui` | `react`, `kit`, `tailwind` (`kit` is the same recipe) |
 | `desktop` | `console` |
 | `cli` | `console` |

@@ -1,6 +1,6 @@
 import { defineRule } from '@oxlint/plugins'
 import { optionsFirst } from './options.utils.ts'
-import type { AstFunction } from '../types/ast.types.ts'
+import type { AstCall, AstFunction } from '../types/ast.types.ts'
 import type { ESTree } from '@oxlint/plugins'
 
 const astSkippedKeys = new Set(['parent', 'type', 'start', 'end', 'range', 'loc', 'tokens', 'comments'])
@@ -261,4 +261,48 @@ export function astSelectorRule(selector: string, message: string) {
       }
     },
   })
+}
+
+export function astIsOneLine(node: ESTree.Node): boolean {
+  return node.loc.start.line === node.loc.end.line
+}
+
+export function astIsInlineFunction(node: ESTree.Node): node is AstFunction {
+  return node.type === 'ArrowFunctionExpression' || node.type === 'FunctionExpression'
+}
+
+export function astIsCall(node: ESTree.Node): node is AstCall {
+  return node.type === 'CallExpression' || node.type === 'NewExpression'
+}
+
+export function astIsPipe(node: AstCall): boolean {
+  return node.callee.type === 'MemberExpression' && astMemberName(node.callee) === 'pipe'
+}
+
+function astChildren(node: ESTree.Node): unknown[] {
+  return Object.entries(node).filter(([key]) => !astSkippedKeys.has(key)).map(([, child]) => child)
+}
+
+export function astSome(value: unknown, test: (node: ESTree.Node) => boolean, enter: (node: ESTree.Node) => boolean = () => true): boolean {
+  if (Array.isArray(value)) {
+    return value.some((child) => astSome(child, test, enter))
+  }
+
+  return astIsNode(value) && (test(value) || (enter(value) && astChildren(value).some((child) => astSome(child, test, enter))))
+}
+
+export function astCallDepth(value: unknown): number {
+  if (Array.isArray(value)) {
+    return Math.max(0, ...value.map(astCallDepth))
+  }
+
+  if (!astIsNode(value) || astIsInlineFunction(value)) {
+    return 0
+  }
+
+  if (astIsCall(value)) {
+    return Math.max(value.arguments.length === 0 ? 0 : 1 + astCallDepth(value.arguments), astCallDepth(value.callee))
+  }
+
+  return astCallDepth(astChildren(value))
 }

@@ -1,0 +1,20 @@
+import { describe, it } from 'vitest'
+import { codeInline } from '../../../src/rules/code/code-inline.ts'
+import { testerRun } from '../../utils/tester.utils.ts'
+
+describe('arch/code-inline', () => {
+  it.each([
+    { name: 'a value read twice passes', code: 'function run() {\n  const id = load()\n  save(id)\n  send(id)\n}' },
+    { name: 'a data literal passes', code: 'function run() {\n  const user = { id }\n  save(user)\n}' },
+    { name: 'a read inside a callback passes', code: 'function run() {\n  const id = load()\n  return () => save(id)\n}' },
+    { name: 'a value read once fails', code: 'function run() {\n  const id = load()\n  save(id)\n}', errors: ['once'] },
+    { name: 'inlining past max passes', code: 'function run() {\n  const id = loadEverything()\n  save(id)\n}', options: { max: 20 } },
+    { name: 'inlining past nesting passes', code: 'function run() {\n  const id = load(parse(raw))\n  save(id)\n}', options: { nesting: 2 } },
+    { name: 'a service method passes', code: 'function run() {\n  const send = make()\n  return Mail.of({ send })\n}', options: { services: ['of'] } },
+    { name: 'a top-level value read once fails', code: 'const id = load()\nsave(id)', errors: ['once'] },
+    { name: 'an exported value passes', code: 'const id = load()\nexport { id }' },
+    { name: 'a trivial top-level wrapper fails', code: 'const send = (id) => post(id)\nsend(1)\nsend(2)', errors: ['trivial'] },
+    { name: 'keep skips the trivial check', code: 'const Send = (id) => post(id)\nSend(1)\nSend(2)', options: { keep: '^[A-Z]' } },
+    { name: 'allow skips a name', code: 'const decodeUser = load()\nsave(decodeUser)', options: { allow: '^decode' } },
+  ])('$name', (row) => testerRun(codeInline, row))
+})

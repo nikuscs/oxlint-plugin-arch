@@ -29,7 +29,7 @@ const ruleRows = Object.entries(families).map(([family, covers]) => {
   return `| \`${family}\` | ${covers} | ${links.join(', ')} |`
 })
 
-const optIn = ['react', 'tanstack', 'next', 'expo', 'tailwind', 'shadcn', 'kit', 'backend', 'orpc', 'schemas', 'forms', 'sql', 'console']
+const optIn = ['react', 'tanstack', 'next', 'expo', 'tailwind', 'shadcn', 'kit', 'backend', 'orpc', 'schemas', 'forms', 'sql', 'effect', 'console']
 const groupLinks = (names: string[]) => names.map((name) => `[\`${name}\`](docs/groups/${name}.md)`).join(', ')
 
 const generated = [

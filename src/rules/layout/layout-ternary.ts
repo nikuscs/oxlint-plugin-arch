@@ -2,6 +2,11 @@ import { defineRule } from '@oxlint/plugins'
 import { optionsFirst } from '../../utils/options.utils.ts'
 import { sourceLineIndent, sourceNewline } from '../../utils/source.utils.ts'
 import type { LayoutTernaryOptions } from '../../types/layout.types.ts'
+import type { ESTree } from '@oxlint/plugins'
+
+function layoutTernaryLines(node: ESTree.Node): number {
+  return node.loc.end.line - node.loc.start.line + 1
+}
 
 function layoutTernaryBreak(between: string, operator: '?' | ':', newline: string): string {
   const at = between.indexOf(operator)
@@ -27,10 +32,22 @@ export const layoutTernary = defineRule({
             minimum: 1,
             default: 2,
           },
+          fit: {
+            type: 'boolean',
+            default: true,
+          },
+          branch: {
+            type: 'object',
+            additionalProperties: false,
+            required: ['max'],
+            properties: { max: { type: 'integer', minimum: 1 } },
+          },
         },
       },
     ],
     messages: {
+      long: 'This ternary branch spans {{lines}} lines (max {{max}}). Name it.',
+      yield: 'A yield* ternary takes one-line operands. Name the multi-line branch.',
       join: 'Keep this conditional on one line ({{length}} columns; limit {{max}}, except in template literals).',
       split: 'This conditional does not fit on one line ({{length}} of {{max}} columns); break before `?` and `:`.',
     },
@@ -38,15 +55,45 @@ export const layoutTernary = defineRule({
   createOnce(context) {
     let maxLength = 160
     let indent = 2
+    let fit = true
+    let branchMax: number | undefined
+
+    const branch = (node: ESTree.ConditionalExpression, max: number) => {
+      const long = [node.consequent, node.alternate].filter((operand) => layoutTernaryLines(operand) > max)
+
+      for (const operand of long) {
+        context.report({
+          node: operand,
+          messageId: 'long',
+          data: { lines: String(layoutTernaryLines(operand)), max: String(max) },
+        })
+      }
+
+      const yielded = node.parent.type === 'YieldExpression' && node.parent.delegate
+
+      if (yielded && long.length === 0 && [node.test, node.consequent, node.alternate].some((operand) => layoutTernaryLines(operand) > 1)) {
+        context.report({ node, messageId: 'yield' })
+      }
+    }
 
     return {
       before() {
         const options = optionsFirst<LayoutTernaryOptions>(context, {})
         maxLength = options.max ?? 160
         indent = options.indent ?? 2
+        fit = options.fit ?? true
+        branchMax = options.branch?.max
       },
       ConditionalExpression(node) {
         const source = context.sourceCode
+
+        if (branchMax !== undefined) {
+          branch(node, branchMax)
+        }
+
+        if (!fit) {
+          return
+        }
 
         const operands = [node.test, node.consequent, node.alternate]
 

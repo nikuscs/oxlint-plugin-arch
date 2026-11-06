@@ -10,6 +10,7 @@ export const presetRecipes = {
   react: { react: true, tailwind: true, schemas: true },
   desktop: { console: true },
   library: { schemas: true },
+  effect: { schemas: true, effect: true },
   ui: presetUi,
   kit: presetUi,
   cli: { console: true },

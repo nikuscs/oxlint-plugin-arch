@@ -10,6 +10,9 @@ export interface LayoutEdit {
 export interface LayoutCallArgumentsOptions {
   min?: number
   indent?: number
+  split?: boolean
+  hug?: { max: number }
+  join?: { max: number; nesting?: number; keep?: string[] }
 }
 
 export interface LayoutCallArrayOptions {
@@ -65,4 +68,18 @@ export type LayoutPaddingKind = 'variable' | 'block' | 'control' | 'return' | 'o
 export interface LayoutTernaryOptions {
   max?: number
   indent?: number
+  fit?: boolean
+  branch?: { max: number }
+}
+
+export interface LayoutItemsOptions {
+  indent?: SourceIndent
+}
+
+export interface LayoutCallDepthOptions {
+  max?: number
+}
+
+export interface LayoutArrowBodyOptions {
+  max?: number
 }

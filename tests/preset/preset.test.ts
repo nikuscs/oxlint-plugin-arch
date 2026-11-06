@@ -11,6 +11,11 @@ describe('preset', () => {
   it.each<TesterPresetRow>([
     { name: 'an Expo app skips the DOM SVG rules', folders: { src: recipes.expo }, file: 'src/components/chart.tsx', rule: 'svg-jsx/no-style-string', expected: 'off' },
     { name: 'a web app keeps the DOM SVG rules', folders: { src: recipes.tanstack }, file: 'src/components/chart.tsx', rule: 'svg-jsx/no-style-string', expected: 'error' },
+    { name: 'the Effect recipe turns off trivial functions', folders: { src: recipes.effect }, file: 'src/mail.ts', rule: 'arch/code-trivial-functions', expected: 'off' },
+    { name: 'the Effect group sizes layout to its width', folders: { src: { effect: { width: 120 } } }, file: 'src/mail.ts', rule: 'arch/layout-arrow-body', expected: ['error', { max: 120 }] },
+    { name: 'the Effect group traces source files', folders: { src: recipes.effect }, file: 'src/mail.ts', rule: 'arch/code-traced', expected: ['error', expect.any(Object)] },
+    { name: 'the Effect group skips tracing in tests', folders: { src: recipes.effect }, file: 'src/mail.test.ts', rule: 'arch/code-traced', expected: undefined },
+    { name: 'the library recipe leaves the Effect rules off', folders: { src: recipes.library }, file: 'src/mail.ts', rule: 'arch/code-inline', expected: undefined },
     { name: 'the TanStack recipe adds route checks', folders: { src: recipes.tanstack }, file: 'src/routes/index.tsx', rule: 'arch/files-route', expected: ['error', { export: 'Route' }] },
     {
       name: 'an rsc file keeps the export prefix next to the Rsc pattern',
@@ -288,6 +293,7 @@ describe('preset', () => {
     { name: 'schemas', options: {} },
     { name: 'forms', options: { resolver: 'schemaResolver' } },
     { name: 'sql', options: { sanitizers: ['escapeSearch'] } },
+    { name: 'effect', options: { width: 120, exports: 'src/[^/]+[.]ts$' } },
     { name: 'console', options: {} },
     { name: 'deny', options: { imports: { legacy: 'Use the owner API.' }, calls: { 'legacy.run': 'Use the owner API.' } } },
     { name: 'externals', options: { packages: ['native-addon'] } },

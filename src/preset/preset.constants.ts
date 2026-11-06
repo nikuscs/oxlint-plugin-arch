@@ -333,7 +333,7 @@ export const presetIllustrationPalette = [
 ]
 
 export const presetGroupOrder: PresetTypes.PresetGroupName[] = [
-  'style', 'imports', 'types', 'layout', 'naming', 'comments', 'basics', 'console', 'tests', 'schemas', 'sql', 'orpc',
+  'style', 'imports', 'types', 'layout', 'naming', 'comments', 'basics', 'console', 'tests', 'schemas', 'sql', 'orpc', 'effect',
   'react', 'forms', 'tanstack', 'next', 'expo', 'backend', 'tailwind', 'shadcn', 'kit', 'limits', 'deny', 'externals',
 ]
 
@@ -368,6 +368,7 @@ export const presetGroupOptions: PresetTypes.PresetGroupDefaults = {
   schemas: { level: 'error' },
   forms: { level: 'error', resolver: 'standardSchemaResolver' },
   sql: { level: 'error', sanitizers: ['escapeLikeWildcards'] },
+  effect: { level: 'error', width: 160, exports: undefined },
   console: { level: 'error' },
   deny: { level: 'error', imports: {}, calls: {} },
   externals: { level: 'error', packages: presetExternals },
