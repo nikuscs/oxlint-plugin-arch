@@ -368,7 +368,7 @@ export const presetGroupOptions: PresetTypes.PresetGroupDefaults = {
   schemas: { level: 'error' },
   forms: { level: 'error', resolver: 'standardSchemaResolver' },
   sql: { level: 'error', sanitizers: ['escapeLikeWildcards'] },
-  effect: { level: 'error', width: 160, exports: undefined },
+  effect: { level: 'error', width: 160, exports: undefined, skip: undefined },
   console: { level: 'error' },
   deny: { level: 'error', imports: {}, calls: {} },
   externals: { level: 'error', packages: presetExternals },

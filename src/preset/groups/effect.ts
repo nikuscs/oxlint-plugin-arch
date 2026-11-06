@@ -12,10 +12,6 @@ export const effectGroup: PresetBuilder<'effect'> = (project, settings) => {
       'arch/code-branch-once': 'error',
       'arch/code-function-nesting': ['error', { max: 4 }],
       'arch/code-inline': ['error', { max, nesting: 2, keep: ['^[A-Z]', '^layer'], allow: '^(?:decode|encode)[A-Z]', services: ['of'] }],
-      'arch/code-justified-call': [
-        'error',
-        { calls: ['Effect.promise'], message: 'Effect.promise turns a rejection into a defect; otherwise use Effect.tryPromise with a tagged error.' },
-      ],
       'arch/code-yield-argument': 'error',
       'arch/layout-arrow-body': ['error', { max }],
       'arch/layout-call-arguments': ['error', { split: false, hug: { max }, join: { max, nesting: 2, keep: ['Layer.mergeAll'] } }],
@@ -26,7 +22,13 @@ export const effectGroup: PresetBuilder<'effect'> = (project, settings) => {
     }),
     presetOverride(
       files,
-      { 'arch/code-traced': ['error', { exports: settings.exports, message: "An exported function or service method gets a span: use Effect.fn('<name>')." }] },
+      {
+        'arch/code-justified-call': [
+          'error',
+          { calls: ['Effect.promise'], message: 'Effect.promise turns a rejection into a defect; otherwise use Effect.tryPromise with a tagged error.' },
+        ],
+        'arch/code-traced': ['error', { exports: settings.exports, skip: settings.skip, message: "An exported function or service method gets a span: use Effect.fn('<name>')." }],
+      },
       project.testFiles,
     ),
   ]

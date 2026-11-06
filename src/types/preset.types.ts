@@ -150,6 +150,7 @@ export interface PresetFormsOptions {
 export interface PresetEffectOptions {
   width?: number
   exports?: OptionsPattern
+  skip?: OptionsPattern
 }
 
 export interface PresetSqlOptions {
@@ -229,7 +230,7 @@ export interface PresetResolvedGroups {
   schemas: PresetEmptyOptions
   forms: Required<PresetFormsOptions>
   sql: Required<PresetSqlOptions>
-  effect: Pick<PresetEffectOptions, 'exports'> & { width: number }
+  effect: Pick<PresetEffectOptions, 'exports' | 'skip'> & { width: number }
   console: PresetEmptyOptions
   deny: { imports: Record<string, string>; calls: Record<string, string> }
   externals: Required<PresetExternalsOptions>
