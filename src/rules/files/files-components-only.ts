@@ -18,7 +18,7 @@ export const filesComponentsOnly = defineRule({
         type: 'object',
         additionalProperties: false,
         properties: {
-          filename: { type: 'boolean' },
+          filename: { oneOf: [{ type: 'boolean' }, { type: 'string', enum: ['each'] }] },
           roles: { type: 'array', items: { type: 'string' } },
           types: { type: 'boolean' },
           deny: optionsPatternSchema,
@@ -83,8 +83,14 @@ export const filesComponentsOnly = defineRule({
           return
         }
 
+        const names = components.map((candidate) => candidate.name.toLowerCase())
+
+        if (matchFileName !== 'each' && expectedKeys.some((key) => names.includes(key) || names.every((name) => name.startsWith(key)))) {
+          return
+        }
+
         for (const { name, node } of components) {
-          if (expectedKeys.some((key) => name.toLowerCase().startsWith(key))) {
+          if (matchFileName === 'each' && expectedKeys.some((key) => name.toLowerCase().startsWith(key))) {
             continue
           }
 

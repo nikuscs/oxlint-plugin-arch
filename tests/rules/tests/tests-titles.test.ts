@@ -16,6 +16,7 @@ describe('arch/tests-titles', () => {
 test(\`loads \${count} items\`, fn)`,
       options: { deny: '^loads' },
     },
+    { name: 'fails is skipped by default', code: "test.fails('should save', fn)", options: { deny: '^should' } },
     { name: 'unlisted modifiers are skipped', code: "test.runIf(ready)('should save', fn)", options: { deny: '^should' } },
     { name: 'modifiers replace the defaults', code: "test.skip('should skip', fn)", options: { deny: '^should', modifiers: ['only'] } },
     { name: 'an allowed tagged each title passes', code: "test.each`a | b`('saves a record', fn)", options: { deny: '^should' } },
@@ -46,7 +47,7 @@ test(\`loads \${count} items\`, fn)`,
       options: { callees: ['spec'], require: '^works$' },
       errors: ['required'],
     },
-    { name: 'a fails modifier', code: "test.fails('should save', fn)", options: { deny: '^should' }, errors: ['forbidden'] },
+    { name: 'a configured fails modifier', code: "test.fails('should save', fn)", options: { deny: '^should', modifiers: ['fails'] }, errors: ['forbidden'] },
     { name: 'a configured modifier', code: "test.only('should load', fn)", options: { deny: '^should', modifiers: ['only'] }, errors: ['forbidden'] },
   ])('$name', (row) => testerRun(testsTitles, row))
 })

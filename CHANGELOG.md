@@ -2,17 +2,6 @@
 
 ## 0.12.5
 
-### Breaking
-
-- `arch/layout-call-arguments`: with `split` on, `join` joins up to `min - 1` items instead of at most two, so it hands over to the `min` split. With the default `min: 3` nothing changes; `min: 4` now reports split three-argument calls, and `min: 2` no longer joins a two-argument call that `split` breaks again. With `split: false`, `join` still joins up to two items.
-- `arch/tests-concurrent-db`: a fixture destructured with a string key, like `({ 'db': database })`, is now reported.
-- `arch/code-paired-call`: an import alias counts only where it resolves to the import, so a local `r` that shadows `import { required as r }`, or a method `form.r()`, no longer satisfies `required`; the trigger is now reported.
-- `arch/code-traced`: an untraced value exported by name, like `export { send }` or `export { send as deliver }`, is now reported.
-- `arch/files-components-only`: every component must start with the file name; `Modal` exported beside `UserCard` from `user-card.tsx` is now reported.
-- `arch/naming-declarations`: declarations inside a loop body, like `for (;;) { const wrong = 1 }`, are now checked; only the loop header stays exempt.
-- `arch/naming-exports`: an aliased export is checked by its exported name, so `export { invoiceX as bad }` is now reported.
-- `arch/tests-titles`: `fails` joins the modifiers, so `test.fails('…')` titles are now checked.
-
 ### Added
 
 - `arch/layout-object`: `join` option (`{ max, keep? }`). A split object with fewer than `min` properties goes on one line when it fits in `max` columns, every property is one line and none holds an object, array or function, and it has no comments. `keep` lists callees (such as `object` for `z.object`) whose object arguments stay split. `join` follows `scope`. Unset, the rule is unchanged.
@@ -21,7 +10,7 @@
 - `arch/code-branch-once`: `min` option (default `2`), the smallest number of ternaries on one subject that is reported.
 - `arch/tests-concurrent-db`: `fixtures` (default `['db']`) and `callees` (default `['test.concurrent']`) options name the shared fixtures and the concurrent test callees.
 - `arch/tests-modifiers`: `modifiers` option (default `['only', 'skip', 'todo']`) replaces the reported modifiers.
-- `arch/tests-titles`: `modifiers` option (default `['only', 'skip', 'concurrent', 'sequential', 'todo', 'fails', 'each', 'for']`) replaces the modifiers whose titles are checked.
+- `arch/tests-titles`: `modifiers` option (default `['only', 'skip', 'concurrent', 'sequential', 'todo', 'each', 'for']`) replaces the modifiers whose titles are checked; add `'fails'` to check `test.fails` titles.
 - `arch/boundaries-rpc-database`: `methods` option replaces the reported query-builder methods (default `selectFrom`, `insertInto`, `updateTable`, `deleteFrom`, `mergeInto`, `executeQuery`).
 - `arch/types-service`: `suffix` (default `'Service'`) and `factory` (default `'make'`) options for the allowed `XService = ReturnType<typeof makeXService>` alias; the message names the configured suffix.
 - `arch/comments-code`: `why` also takes a string that replaces the `Why:` prefix, such as `'NOTE:'` or `'NOTE: '`; continuation lines follow it.
@@ -33,12 +22,21 @@
 - `arch/boundaries-next`: `serverHooks` option (default `['useId', 'use']`) names the hooks server and RSC modules may use.
 - `arch/backend-registry`: `file` option (default `'{folder}.service.ts'`) names the service file each domain folder needs.
 
+- `arch/layout-call-arguments`: `join.items` option (default `2`) sets how many one-line items `join` puts on one line; while `split` is on it stays below `min`.
+- `arch/files-components-only`: `filename: 'each'` checks that every component starts with the file name; the default `true` still lets one exact match or a shared prefix cover the file.
+
 ### Changed
 
 - `arch/layout-call-arguments`: `join` counts a kept trailing comma toward `max`.
 
 ### Fixed
 
+- `arch/layout-call-arguments`: with `min: 2` and `split` on, `join` no longer joins a two-argument call that `split` breaks again.
+- `arch/tests-concurrent-db`: a fixture destructured with a string key, like `({ 'db': database })`, is reported.
+- `arch/code-paired-call`: an import alias counts only where it resolves to the import, so a local `r` shadowing `import { required as r }`, or a method `form.r()`, no longer satisfies `required`.
+- `arch/code-traced`: an untraced value exported by name, like `export { send }` or `export { send as deliver }`, is reported.
+- `arch/naming-declarations`: declarations inside a loop body, like `for (;;) { const wrong = 1 }`, are checked; only the loop header stays exempt.
+- `arch/naming-exports`: an aliased export is checked by its exported name, so `export { invoiceX as bad }` is reported.
 - `arch/tests-concurrent-db`: a computed key, like `({ [db]: value })`, is no longer reported.
 - `arch/code-inline`: a const is no longer reported when a call, assignment or other side effect sits between it and its one read.
 - `arch/schemas-local`: the import check follows references to the imported binding, so a property key or a shadowing parameter named `z` no longer marks a `z.config` import as a runtime import.

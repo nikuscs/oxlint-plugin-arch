@@ -12,7 +12,7 @@ export interface LayoutCallArgumentsOptions {
   indent?: SourceIndent
   split?: boolean
   hug?: { max: number }
-  join?: { max: number; nesting?: number; keep?: string[] }
+  join?: { max: number; nesting?: number; items?: number; keep?: string[] }
 }
 
 export interface LayoutCallArrayOptions {

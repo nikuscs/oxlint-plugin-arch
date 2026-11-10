@@ -52,6 +52,7 @@ export const layoutCallArguments = defineRule({
             properties: {
               max: layoutCallArgumentsMax,
               nesting: layoutCallArgumentsMax,
+              items: layoutCallArgumentsMax,
               keep: { type: 'array', items: { type: 'string' } },
             },
           },
@@ -182,7 +183,7 @@ export const layoutCallArguments = defineRule({
         !first ||
         !open ||
         !close ||
-        items.length > (options.split === false ? 2 : minArguments - 1) ||
+        items.length > Math.min(options.join?.items ?? 2, options.split === false ? Number.POSITIVE_INFINITY : minArguments - 1) ||
         first.loc.start.line === open.loc.end.line ||
         !items.every(astIsOneLine) ||
         source.commentsExistBetween(open, close)

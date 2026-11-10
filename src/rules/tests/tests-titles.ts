@@ -9,7 +9,7 @@ import {
 } from '../../utils/options.utils.ts'
 import type { TestsTitlesOptions, TestsTitlesPattern } from '../../types/tests.types.ts'
 
-const testsTitlesModifiers = ['only', 'skip', 'concurrent', 'sequential', 'todo', 'fails', 'each', 'for']
+const testsTitlesModifiers = ['only', 'skip', 'concurrent', 'sequential', 'todo', 'each', 'for']
 
 export const testsTitles = defineRule({
   meta: {

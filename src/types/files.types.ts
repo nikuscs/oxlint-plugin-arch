@@ -3,7 +3,7 @@ import type { OptionsPattern } from './options.types.ts'
 import type { ESTree } from '@oxlint/plugins'
 
 export interface FilesComponentsOnlyOptions {
-  filename?: boolean
+  filename?: boolean | 'each'
   roles?: string[]
   types?: boolean
   deny?: OptionsPattern

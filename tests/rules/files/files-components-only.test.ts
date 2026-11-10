@@ -41,6 +41,11 @@ export const UserCardLazy = lazy(async () => import('./x'))`,
       filename: 'panel.tsx',
       code: "import type { PropsWithChildren } from 'react'\nexport function Panel({ children }: PropsWithChildren) { return children }",
     },
+    {
+      name: 'the exact name covers another component by default',
+      filename: 'user-card.tsx',
+      code: 'export function UserCard() { return <div /> }\nexport function Modal() { return <dialog /> }',
+    },
     { name: 'a component returning null passes', filename: 'user-card.tsx', code: 'export function UserCard() { return null }' },
     { name: 'a role is dropped from the name', filename: 'user.view.tsx', code: 'export function User() { return <div /> }', options: { roles: ['view'] } },
     {
@@ -130,9 +135,10 @@ export const UserCardLazy = lazy(async () => import('./x'))`,
     { name: 'a name off the file name', filename: 'user-card.tsx', code: 'export function Avatar() { return <img /> }', errors: ['nameMismatch'] },
     { name: 'the role stays without roles', filename: 'user.view.tsx', code: 'export function User() { return <div /> }', errors: ['nameMismatch'] },
     {
-      name: 'the exact name does not cover another component',
+      name: 'each does not let the exact name cover another component',
       filename: 'user-card.tsx',
       code: 'export function UserCard() { return <div /> }\nexport function Modal() { return <dialog /> }',
+      options: { filename: 'each' },
       errors: ['nameMismatch'],
     },
     {
