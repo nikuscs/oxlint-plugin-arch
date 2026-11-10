@@ -1,6 +1,6 @@
 # arch/react-props
 
-Reports components whose props are not typed as `interface <Name>Props` declared directly above them.
+Reports components whose props are not typed as `interface <Name>Props` (or `suffix`) declared directly above them.
 
 ```tsx
 // ❌
@@ -21,6 +21,7 @@ export function Button({ label }: ButtonProps) {
 | Option | Type | Default | |
 | --- | --- | --- | --- |
 | `prefix` | `boolean` | `false` | Local components must start with the file name |
+| `suffix` | `string` | `'Props'` | Ending of the props interface name, as in `<Name>Props` |
 
 ```ts
 'arch/react-props': ['error', { prefix: true }]

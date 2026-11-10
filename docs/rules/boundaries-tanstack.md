@@ -32,6 +32,7 @@ export const loadNotes = createServerFn().handler(() => readFile('notes.md', 'ut
 | `hookPackages` | `string[]` | `['react', '@tanstack/react-query', '@tanstack/react-router']` | Packages whose `use*` exports are client hooks |
 | `startPackages` | `string[]` | `['@tanstack/react-start']` | Packages that export `createServerFn` and the other boundary factories |
 | `rscPackages` | `string[]` | `['@tanstack/react-start/rsc', '@tanstack/react-start-rsc']` | Packages that export the RSC renderers |
+| `renderers` | `string[]` | `['renderServerComponent', 'renderToReadableStream']` | RSC renderer exports that need a server execution boundary. Replaces the default |
 
 ```ts
 'arch/boundaries-tanstack': ['error', {

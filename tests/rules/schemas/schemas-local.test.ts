@@ -26,6 +26,8 @@ describe('arch/schemas-local', () => {
     { name: 'custom namespaces replace defaults', code: 'const User = z.object({})', options: { namespaces: ['schema'] } },
     { name: 'an aliased inline type-only namespace passes', code: "import { type z as zod } from 'zod'\ntype User = zod.input<typeof userSchema>" },
     { name: 'global zod config passes', code: "import { z } from 'zod'\nz.config({ customError })" },
+    { name: 'a property key named like the namespace passes', code: "import { z } from 'zod'\nz.config({})\nexport const settings = { z: 1 }" },
+    { name: 'a shadowing parameter does not count as a use', code: "import { z } from 'zod'\nz.config({})\nfunction pick(z) { return z }" },
     { name: 'error formatting passes', code: "import { z } from 'zod'\nreport(z.prettifyError(error))" },
     { name: 'runtime import fails', code: "import { z } from 'zod'", errors: ['runtimeImport'] },
     {

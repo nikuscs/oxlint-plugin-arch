@@ -19,6 +19,11 @@ export interface TypesInlineOptions {
   min?: number
 }
 
+export interface TypesServiceOptions {
+  suffix?: string
+  factory?: string
+}
+
 export interface TypesNamespaceImportOptions {
   max: number
   names: Record<string, string>

@@ -24,6 +24,7 @@ export const session = async () => (await cookies()).get('session')
 | `serverPackages` | `string[]` | `['@orpc/server', 'react-dom/server', 'server-only', 'next/headers', 'next/cache', 'next/server']` | Server-only packages; a subpath or `.` suffix matches too. Replaces the default |
 | `clientPackages` | `string[]` | `['client-only', 'react-dom/client']` | Browser-only packages and their subpaths. Replaces the default |
 | `hookPackages` | `string[]` | `['react']` | Packages whose `use*` exports are client hooks |
+| `serverHooks` | `string[]` | `['useId', 'use']` | Hooks from `hookPackages` that server and RSC modules may use. Replaces the default |
 | `publicEnv` | `string` | `'NEXT_PUBLIC_'` | `process.env` prefix that browser modules may read |
 
 ```ts

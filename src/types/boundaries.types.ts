@@ -5,6 +5,7 @@ export interface BoundariesOptions {
   backend: string[]
   packages: string | string[]
   roles?: string[]
+  surfaces?: string[]
   services?: string[]
   portable?: boolean
   backendPackages: string[]
@@ -35,11 +36,13 @@ export interface BoundariesNextOptions extends Partial<Pick<BoundariesOptions, '
   clientPackages?: string[]
   hookPackages?: string[]
   publicEnv?: string
+  serverHooks?: string[]
 }
 
 export interface BoundariesTanstackOptions extends BoundariesNextOptions {
   rpc?: string[]
   startPackages?: string[]
+  renderers?: string[]
   rscPackages?: string[]
 }
 
@@ -75,6 +78,11 @@ export interface BoundariesTokenOwnerTarget {
   kind: 'token' | 'member'
   value: string
   message?: string
+}
+
+export interface BoundariesRpcDatabaseOptions {
+  message?: string
+  methods?: string[]
 }
 
 export interface BoundariesDenyOptions {

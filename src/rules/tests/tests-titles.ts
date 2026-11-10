@@ -9,7 +9,7 @@ import {
 } from '../../utils/options.utils.ts'
 import type { TestsTitlesOptions, TestsTitlesPattern } from '../../types/tests.types.ts'
 
-const testsTitlesModifiers = new Set(['only', 'skip', 'concurrent', 'sequential', 'todo', 'each', 'for'])
+const testsTitlesModifiers = ['only', 'skip', 'concurrent', 'sequential', 'todo', 'fails', 'each', 'for']
 
 export const testsTitles = defineRule({
   meta: {
@@ -20,6 +20,7 @@ export const testsTitles = defineRule({
         additionalProperties: false,
         properties: {
           callees: { type: 'array', items: { type: 'string' } },
+          modifiers: { type: 'array', items: { type: 'string', minLength: 1 }, default: testsTitlesModifiers },
           deny: optionsPatternSchema,
           require: optionsPatternSchema,
           flags: { type: 'string', pattern: '^[dgimsuvy]*$' },
@@ -39,6 +40,7 @@ export const testsTitles = defineRule({
   },
   createOnce(context) {
     let callees: string[] = []
+    let modifiers = new Set<string>()
     let forbid: TestsTitlesPattern[] = []
     let required: RegExp[] = []
     let requiredLabel = ''
@@ -48,6 +50,7 @@ export const testsTitles = defineRule({
         const options = optionsFirst<TestsTitlesOptions>(context)
         const flags = options.flags ?? ''
         callees = options.callees
+        modifiers = new Set(options.modifiers ?? testsTitlesModifiers)
         forbid = options.deny === undefined ? [] : [options.deny].flat().map((source) => ({ regex: new RegExp(source, flags), pattern: source }))
         required = optionsPatternsWithEmpty(options.require, flags)
         requiredLabel = optionsPatternLabel(options.require)
@@ -61,9 +64,9 @@ export const testsTitles = defineRule({
         const callee = node.callee
 
         const configured =
-          astMatchesCallee(astDottedName(callee), callees, testsTitlesModifiers) ||
-          (callee.type === 'CallExpression' && astMatchesCallee(astDottedName(callee.callee), callees, testsTitlesModifiers)) ||
-          (callee.type === 'TaggedTemplateExpression' && astMatchesCallee(astDottedName(callee.tag), callees, testsTitlesModifiers))
+          astMatchesCallee(astDottedName(callee), callees, modifiers) ||
+          (callee.type === 'CallExpression' && astMatchesCallee(astDottedName(callee.callee), callees, modifiers)) ||
+          (callee.type === 'TaggedTemplateExpression' && astMatchesCallee(astDottedName(callee.tag), callees, modifiers))
 
         if (!title || !configured) {
           return

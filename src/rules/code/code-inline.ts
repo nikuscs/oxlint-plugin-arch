@@ -31,6 +31,25 @@ function codeInlineEnclosingCalls(node: ESTree.Node): number {
 
 const codeInlineWrapped = new Set(['ConditionalExpression', 'LogicalExpression', 'BinaryExpression', 'ArrowFunctionExpression'])
 
+const codeInlineEffects = new Set([
+  'CallExpression',
+  'NewExpression',
+  'AssignmentExpression',
+  'UpdateExpression',
+  'AwaitExpression',
+  'YieldExpression',
+  'TaggedTemplateExpression',
+  'ImportExpression',
+])
+
+function codeInlineEffectBetween(program: ESTree.Node, start: number, end: number): boolean {
+  return astSome(
+    program,
+    (node) => node.range[0] >= start && node.range[1] <= end && (codeInlineEffects.has(node.type) || (node.type === 'UnaryExpression' && node.operator === 'delete')),
+    (node) => node.range[1] > start && node.range[0] < end && !(node.range[0] >= start && (node.type === 'FunctionDeclaration' || astIsInlineFunction(node))),
+  )
+}
+
 export const codeInline = defineRule({
   meta: {
     type: 'suggestion',
@@ -74,11 +93,16 @@ export const codeInline = defineRule({
       }
 
       if (uses.length === 1) {
+        if (init && codeInlineEffectBetween(context.sourceCode.ast, node.range[1], uses[0].identifier.range[0])) {
+          return
+        }
+
         context.report({
           node: id,
           messageId: 'once',
           data: { name: id.name },
         })
+
         return
       }
 
@@ -126,7 +150,8 @@ export const codeInline = defineRule({
         wrapped ||
         deferred ||
         codeInlineEnclosingCalls(use) + astCallDepth(init) > (options.nesting ?? 2) ||
-        line.length - id.name.length + context.sourceCode.getText(init).length > (options.max ?? 160)
+        line.length - id.name.length + context.sourceCode.getText(init).length > (options.max ?? 160) ||
+        codeInlineEffectBetween(context.sourceCode.ast, declarator.range[1], use.range[0])
       ) {
         return
       }

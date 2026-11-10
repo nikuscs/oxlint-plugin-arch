@@ -59,18 +59,19 @@ export const codeTraced = defineRule({
         message = options.message ?? `An exported function or service method gets a span: replace ${[...untraced].join(', ')} with its traced form.`
       },
       ExportNamedDeclaration(node) {
-        if (!exported || node.declaration?.type !== 'VariableDeclaration') {
+        if (!exported) {
           return
         }
 
-        for (const declarator of node.declaration.declarations) {
-          if (isUntraced(declarator.init)) {
-            context.report({
-              node: declarator,
-              messageId: 'surface',
-              data: { message },
-            })
-          }
+        const declarators = node.declaration?.type === 'VariableDeclaration' ? node.declaration.declarations.filter((declarator) => isUntraced(declarator.init)) : []
+        const specifiers = node.source ? [] : node.specifiers.filter((specifier) => resolves(specifier.local))
+
+        for (const surface of [...declarators, ...specifiers]) {
+          context.report({
+            node: surface,
+            messageId: 'surface',
+            data: { message },
+          })
         }
       },
       CallExpression(node) {

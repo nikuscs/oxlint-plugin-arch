@@ -60,6 +60,13 @@ describe('arch/layout-ternary', () => {
       errors: ['split'],
     },
     {
+      name: 'tab indent option',
+      code: '\tconst result = ready ? yes : no',
+      options: { max: 20, indent: 'tab' },
+      output: '\tconst result = ready\n\t\t? yes\n\t\t: no',
+      errors: ['split'],
+    },
+    {
       name: 'keeps CRLF line endings',
       code: 'const result = ready ? yes : no\r\n',
       options: { max: 20 },

@@ -6,6 +6,13 @@ describe('arch/naming-exports', () => {
   it.each([
     { name: 'the file prefix passes', filename: 'blog-post.client.ts', code: 'export const blogPostGet = () => null\nexport type BlogPost = {}' },
     { name: 'a default export checks its local name', filename: 'auth.client.ts', code: 'const authClient = {}\nexport default authClient' },
+    { name: 'an aliased export checks its exported name', filename: 'invoice.ts', code: 'const fooBar = 1\nexport { fooBar as invoiceFoo }' },
+    {
+      name: 'an aliased function passes the functions scope by its exported name',
+      filename: 'invoice.ts',
+      code: 'function fooBar() {}\nexport { fooBar as invoiceFoo }',
+      options: { scope: 'functions' },
+    },
     { name: 'unexported helpers pass by default', filename: 'room.utils.ts', code: 'function isOwner() {}' },
     { name: 'a role is stripped from the prefix', filename: 'ledger-utils.client.ts', code: 'export function ledgerGet() {}', options: { roles: ['utils'] } },
     {
@@ -272,5 +279,6 @@ describe('arch/naming-exports', () => {
       options: { mode: 'pattern', pattern: '^[a-z][a-z0-9]*Rsc[A-Z][a-zA-Z0-9]*$' },
       errors: ['pattern'],
     },
+    { name: 'an alias off the file prefix', filename: 'invoice.ts', code: 'const invoiceX = 1\nexport { invoiceX as bad }', errors: ['prefix'] },
   ])('$name', (row) => testerRun(namingExports, row))
 })

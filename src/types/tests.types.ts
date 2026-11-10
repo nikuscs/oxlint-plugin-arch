@@ -2,8 +2,15 @@ import type { AstFunction } from './ast.types.ts'
 import type { OptionsPattern } from './options.types.ts'
 import type { ESTree } from '@oxlint/plugins'
 
+export interface TestsConcurrentDbOptions {
+  message?: string
+  fixtures?: string[]
+  callees?: string[]
+}
+
 export interface TestsModifiersOptions {
   functions?: string[]
+  modifiers?: string[]
 }
 
 export interface TestsAssertionsOptions extends TestsModifiersOptions {
@@ -35,6 +42,7 @@ export interface TestsAssertionsState {
 
 export interface TestsTitlesOptions {
   callees: string[]
+  modifiers?: string[]
   deny?: OptionsPattern
   require?: OptionsPattern
   flags?: string

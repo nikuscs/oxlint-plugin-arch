@@ -41,6 +41,13 @@ describe('arch/files-externals', () => {
       code: "export default defineConfig({ ssr: { external: ['stripe'] } })",
     },
     {
+      name: 'files replace the default config names',
+      filename: 'vite.config.ts',
+      files: { 'package.json': '{ "dependencies": { "pg": "^8" } }' },
+      code: "export default defineConfig({ ssr: { external: ['stripe'] } })",
+      options: { files: '^app\\.config\\.ts$' },
+    },
+    {
       name: 'a dependency outside packages may be bundled',
       filename: 'vite.config.ts',
       files: { 'package.json': '{ "dependencies": { "pg": "^8", "zod": "^4" } }' },
@@ -105,6 +112,14 @@ describe('arch/files-externals', () => {
       code: 'export default { serverExternalPackages: [] }',
       options: { packages: ['@napi-rs/*'] },
       errors: ['missing', 'missing'],
+    },
+    {
+      name: 'a configured config file',
+      filename: 'app.config.ts',
+      files: { 'package.json': '{ "dependencies": { "pg": "^8" } }' },
+      code: "export default defineConfig({ ssr: { external: ['stripe'] } })",
+      options: { files: '^app\\.config\\.ts$' },
+      errors: ['undeclared'],
     },
   ])('$name', (row) => testerRun(filesExternals, row))
 })

@@ -12,11 +12,15 @@ import { optionsFirst } from '../../utils/options.utils.ts'
 import type { BoundariesImport, BoundariesOptions } from '../../types/boundaries.types.ts'
 import type { ESTree } from '@oxlint/plugins'
 
-const boundariesPublicSurface = /\.(?:service|client|server|rsc|utils)$/
+const boundariesSurfaces = ['service', 'client', 'server', 'rsc', 'utils']
 const boundariesActionOrQuery = /\/(?:[^/]+)-(?:action|query)\./
 
 function boundariesContains(directory: string, candidate: string): boolean {
   return candidate === directory || candidate.startsWith(`${directory}/`)
+}
+
+function boundariesIsSurface(options: BoundariesOptions, stem: string): boolean {
+  return (options.surfaces ?? boundariesSurfaces).some((surface) => stem.endsWith(`.${surface}`))
 }
 
 function boundariesStripExtension(path: string): string {
@@ -56,7 +60,7 @@ function boundariesPrivateDomain({ options, file, target, reExport, roots, owner
   const targetDomain = targetOwner ? boundariesDomain(target, targetOwner, boundariesServiceFolder(options, targetOwner)) : undefined
   const sameDomain = owner && owner === targetOwner && fileDomain && fileDomain === targetDomain
   const targetStem = boundariesStripExtension(target)
-  const publicSurface = boundariesPublicSurface.test(targetStem) && !boundariesActionOrQuery.test(targetStem)
+  const publicSurface = boundariesIsSurface(options, targetStem) && !boundariesActionOrQuery.test(targetStem)
 
   const privateTarget =
     roles.some((role) => targetStem.endsWith(`.${role}`)) ||
@@ -66,7 +70,7 @@ function boundariesPrivateDomain({ options, file, target, reExport, roots, owner
     return undefined
   }
 
-  if (reExport && /\.(?:service|client|server|rsc|utils)\.ts$/.test(file) && !boundariesActionOrQuery.test(file)) {
+  if (reExport && file.endsWith('.ts') && boundariesIsSurface(options, file.slice(0, -'.ts'.length)) && !boundariesActionOrQuery.test(file)) {
     return 'public service and utility surfaces must not re-export private domain internals'
   }
 
@@ -114,6 +118,7 @@ export const boundariesImports = defineRule({
           backend: { type: 'array', items: { type: 'string' } },
           packages: { anyOf: [{ type: 'string' }, { type: 'array', items: { type: 'string' } }] },
           roles: { type: 'array', items: { type: 'string' } },
+          surfaces: { type: 'array', items: { type: 'string', minLength: 1 }, default: boundariesSurfaces },
           services: { type: 'array', items: { type: 'string' } },
           portable: { type: 'boolean' },
           backendPackages: { type: 'array', items: { type: 'string' } },

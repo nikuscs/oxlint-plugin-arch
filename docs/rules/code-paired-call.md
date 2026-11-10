@@ -1,6 +1,6 @@
 # arch/code-paired-call
 
-A call to `when` in a file that never calls `require`. Names match the function or method name, after import aliases.
+A call to `when` in a file that never calls `require`. Names match the function or method name; a called name that resolves to an aliased import matches the imported name.
 
 ```ts
 // ❌

@@ -1,6 +1,6 @@
 # arch/files-components-only
 
-Reports exports that are not React components or types, and components whose name does not match the file name.
+Reports exports that are not React components or types, and each component whose name does not start with the file name.
 
 ```tsx
 // ❌ user-card.tsx

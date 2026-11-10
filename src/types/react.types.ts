@@ -4,6 +4,7 @@ import type { ESTree } from '@oxlint/plugins'
 
 export interface ReactPropsOptions {
   prefix?: boolean
+  suffix?: string
 }
 
 export interface ReactPropsComponent {

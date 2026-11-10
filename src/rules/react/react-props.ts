@@ -53,6 +53,7 @@ export const reactProps = defineRule({
         additionalProperties: false,
         properties: {
           prefix: { type: 'boolean' },
+          suffix: { type: 'string', minLength: 1, default: 'Props' },
         },
       },
     ],
@@ -66,7 +67,7 @@ export const reactProps = defineRule({
   createOnce(context) {
     return {
       Program(program) {
-        const { prefix: filePrefix = false } = optionsFirst<ReactPropsOptions>(context, {})
+        const { prefix: filePrefix = false, suffix = 'Props' } = optionsFirst<ReactPropsOptions>(context, {})
         const stem = namingFileStem(namingBasename(context.filename).replace(/\.(tsx?|jsx?)$/, ''))
         const prefix = namingNormalized(stem, 'remove-separators')
         const exported = new Set(exportsCollect(program).flatMap((binding) => (binding.typeOnly ? [] : [binding.localName])))
@@ -103,7 +104,7 @@ export const reactProps = defineRule({
           }
 
           const type = target.typeArgument ?? reactParameterType(parameter)
-          const expected = `${candidate.name}Props`
+          const expected = `${candidate.name}${suffix}`
           const data = { name: candidate.name, expected }
 
           if (filePrefix && !exported.has(candidate.name) && !candidate.name.toLowerCase().startsWith(prefix)) {

@@ -20,13 +20,14 @@ export const backendRegistry = defineRule({
           services: { type: 'string', minLength: 1 },
           skip: { type: 'array', items: { type: 'string' } },
           object: { type: 'string', minLength: 1 },
+          file: { type: 'string', minLength: 1, default: '{folder}.service.ts' },
         },
         required: ['registry', 'services'],
       },
     ],
     messages: {
       unregistered: "Register the {{folder}} service here under '{{key}}'.",
-      missing: "Domain folder '{{folder}}' needs {{folder}}.service.ts; add it, or list the folder in skip.",
+      missing: "Domain folder '{{folder}}' needs {{file}}; add it, or list the folder in skip.",
     },
   },
   createOnce(context) {
@@ -81,12 +82,13 @@ export const backendRegistry = defineRule({
 
         for (const folder of domains) {
           const key = namingCamelCase(folder)
+          const file = (options.file ?? '{folder}.service.ts').replaceAll('{folder}', folder)
 
-          if (!existsSync(join(options.services, folder, `${folder}.service.ts`))) {
+          if (!existsSync(join(options.services, folder, file))) {
             context.report({
               node: program,
               messageId: 'missing',
-              data: { folder },
+              data: { folder, file },
             })
           } else if (![key, `${key}s`, key.replace(/y$/, 'ies')].some((name) => keys.has(name))) {
             context.report({

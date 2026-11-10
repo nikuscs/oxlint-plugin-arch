@@ -9,7 +9,7 @@ export interface LayoutEdit {
 
 export interface LayoutCallArgumentsOptions {
   min?: number
-  indent?: number
+  indent?: SourceIndent
   split?: boolean
   hug?: { max: number }
   join?: { max: number; nesting?: number; keep?: string[] }
@@ -48,12 +48,14 @@ export interface LayoutChainLink {
 export interface LayoutJsxAttributesOptions {
   min?: number
   indent?: SourceIndent
+  join?: { max: number }
 }
 
 export interface LayoutObjectOptions {
   min?: number
   scope?: LayoutObjectScope
   indent?: SourceIndent
+  join?: { max: number; keep?: string[] }
 }
 
 export type LayoutObjectScope = 'call-args' | 'all'
@@ -67,7 +69,7 @@ export type LayoutPaddingKind = 'variable' | 'block' | 'control' | 'return' | 'o
 
 export interface LayoutTernaryOptions {
   max?: number
-  indent?: number
+  indent?: SourceIndent
   fit?: boolean
   branch?: { max: number }
 }

@@ -1,5 +1,6 @@
 import { defineRule } from '@oxlint/plugins'
 import { astCallName, astModuleName } from '../../utils/ast.utils.ts'
+import { boundariesDeclaredVariable } from '../../utils/boundaries.utils.ts'
 import { optionsFirst } from '../../utils/options.utils.ts'
 import type { CodePairedCallOptions, CodePairedCallState } from '../../types/code.types.ts'
 
@@ -34,7 +35,6 @@ export const codePairedCall = defineRule({
     },
   },
   createOnce(context) {
-    const aliases = new Map<string, string>()
     let pairs: CodePairedCallState[] = []
 
     return {
@@ -43,29 +43,10 @@ export const codePairedCall = defineRule({
         const all = when && require ? [{ when, require }, ...configured] : configured
         pairs = all.map((pair) => ({ ...pair, firstWhen: null, sawRequired: false }))
       },
-      Program(program) {
-        aliases.clear()
-        for (const statement of program.body) {
-          if (statement.type !== 'ImportDeclaration') {
-            continue
-          }
-
-          for (const specifier of statement.specifiers) {
-            if (specifier.type !== 'ImportSpecifier') {
-              continue
-            }
-
-            const imported = astModuleName(specifier.imported)
-
-            if (imported !== specifier.local.name) {
-              aliases.set(specifier.local.name, imported)
-            }
-          }
-        }
-      },
       CallExpression(node) {
-        const called = astCallName(node)
-        const name = called ? (aliases.get(called) ?? called) : undefined
+        const callee = node.callee
+        const binding = callee.type === 'Identifier' ? boundariesDeclaredVariable(context.sourceCode.getScope(node), callee.name)?.defs.at(0)?.node : undefined
+        const name = binding?.type === 'ImportSpecifier' ? astModuleName(binding.imported) : astCallName(node)
 
         for (const pair of pairs) {
           if (name === pair.when) {

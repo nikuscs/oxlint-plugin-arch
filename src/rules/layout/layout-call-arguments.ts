@@ -1,7 +1,7 @@
 import { defineRule } from '@oxlint/plugins'
 import { astCallDepth, astIsCall, astIsInlineFunction, astIsOneLine, astIsPipe } from '../../utils/ast.utils.ts'
 import { optionsFirst } from '../../utils/options.utils.ts'
-import { sourceItemGaps, sourceLineEnd, sourceLineIndent, sourceLineStart, sourceNewline, sourceRespace } from '../../utils/source.utils.ts'
+import { sourceIndentSchema, sourceIndentUnit, sourceItemGaps, sourceJoinedWidth, sourceLineEnd, sourceLineIndent, sourceLineStart, sourceNewline, sourceRespace } from '../../utils/source.utils.ts'
 import type { AstCall } from '../../types/ast.types.ts'
 import type { LayoutCallArgumentsOptions } from '../../types/layout.types.ts'
 import type { ESTree, Token } from '@oxlint/plugins'
@@ -34,11 +34,7 @@ export const layoutCallArguments = defineRule({
             minimum: 2,
             default: 3,
           },
-          indent: {
-            type: 'integer',
-            minimum: 1,
-            default: 2,
-          },
+          indent: { ...sourceIndentSchema, default: 2 },
           split: {
             type: 'boolean',
             default: true,
@@ -72,7 +68,7 @@ export const layoutCallArguments = defineRule({
   createOnce(context) {
     let options: LayoutCallArgumentsOptions = {}
     let minArguments = 3
-    let indent = 2
+    let indentUnit = sourceIndentUnit()
 
     const split = (node: AstCall) => {
       const args = node.arguments
@@ -113,7 +109,7 @@ export const layoutCallArguments = defineRule({
 
       const baseIndent = sourceLineIndent(text, open)
       const newline = sourceNewline(text)
-      const argumentIndent = `${baseIndent}${' '.repeat(indent)}`
+      const argumentIndent = `${baseIndent}${indentUnit}`
       context.report({
         node,
         messageId: 'multiline',
@@ -168,7 +164,7 @@ export const layoutCallArguments = defineRule({
 
       const newline = sourceNewline(text)
       const base = sourceLineIndent(text, open.range[0])
-      const inner = `${base}${' '.repeat(indent)}`
+      const inner = `${base}${indentUnit}`
 
       context.report({
         node,
@@ -186,7 +182,7 @@ export const layoutCallArguments = defineRule({
         !first ||
         !open ||
         !close ||
-        items.length > 2 ||
+        items.length > (options.split === false ? 2 : minArguments - 1) ||
         first.loc.start.line === open.loc.end.line ||
         !items.every(astIsOneLine) ||
         source.commentsExistBetween(open, close)
@@ -194,15 +190,13 @@ export const layoutCallArguments = defineRule({
         return
       }
 
-      const inside = items.map((item) => source.getText(item)).join(', ')
-      const before = text.slice(sourceLineStart(text, open.range[0]), open.range[1])
-      const after = text.slice(close.range[0], sourceLineEnd(text, close.range[0]))
+      const gaps = sourceItemGaps(open.range[1], items, close.range[0])
+      const comma = text.slice(...(gaps.at(-1) ?? [0, 0])).includes(',') ? ',' : ''
 
-      if (`${before}${inside}${after}`.length > (options.join?.max ?? 0)) {
+      if (sourceJoinedWidth(text, open.range[1], `${items.map((item) => source.getText(item)).join(', ')}${comma}`, close.range[0]) > (options.join?.max ?? 0)) {
         return
       }
 
-      const gaps = sourceItemGaps(open.range[1], items, close.range[0])
       context.report({
         node,
         messageId: 'join',
@@ -252,7 +246,7 @@ export const layoutCallArguments = defineRule({
       before() {
         options = optionsFirst<LayoutCallArgumentsOptions>(context, {})
         minArguments = options.min ?? 3
-        indent = options.indent ?? 2
+        indentUnit = sourceIndentUnit(options.indent)
       },
       CallExpression: call,
       NewExpression: call,

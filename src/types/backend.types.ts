@@ -24,4 +24,5 @@ export interface BackendRegistryOptions {
   services: string
   skip?: string[]
   object?: string
+  file?: string
 }

@@ -5,6 +5,13 @@ import { testerRun } from '../../utils/tester.utils.ts'
 describe('arch/backend-registry', () => {
   it.each([
     {
+      name: 'a configured service file passes',
+      filename: 'src/core/core.services.ts',
+      files: { 'src/services/billing/index.ts': 'export const billing = {}' },
+      code: 'export const services = { billing: makeBillingService }',
+      options: { registry: '<root>/src/core/core.services.ts', services: '<root>/src/services', file: 'index.ts' },
+    },
+    {
       name: 'registered service directory',
       filename: 'src/core/core.services.ts',
       files: { 'src/services/billing/billing.service.ts': 'export const billing = {}' },
@@ -91,6 +98,14 @@ describe('arch/backend-registry', () => {
       code: 'export const services = { nested: { billing: makeBillingService } }',
       options: { registry: '<root>/src/core/core.services.ts', services: '<root>/src/services' },
       errors: ['unregistered'],
+    },
+    {
+      name: 'the default service file is missing under a configured file',
+      filename: 'src/core/core.services.ts',
+      files: { 'src/services/billing/billing.service.ts': 'export const billing = {}' },
+      code: 'export const services = { billing: makeBillingService }',
+      options: { registry: '<root>/src/core/core.services.ts', services: '<root>/src/services', file: '{folder}.module.ts' },
+      errors: ["Domain folder 'billing' needs billing.module.ts; add it, or list the folder in skip."],
     },
   ])('$name', (row) => testerRun(backendRegistry, row))
 })

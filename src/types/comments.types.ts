@@ -1,7 +1,7 @@
 import type { ESTree } from '@oxlint/plugins'
 
 export interface CommentsOptions {
-  why?: boolean
+  why?: boolean | string
   allow?: string[]
   jsdoc?: boolean
   members?: 'off' | 'also' | 'only'

@@ -23,6 +23,18 @@ describe('arch/boundaries-imports', () => {
       options: { web: ['/project/web'], roles: ['driver'] },
     },
     {
+      name: 'configured surfaces cross domain boundaries',
+      filename: '/project/web/services/chat/chat.service.ts',
+      code: "import { users } from '../user/user.api'",
+      options: { web: ['/project/web'], roles: ['driver'], surfaces: ['api'] },
+    },
+    {
+      name: 'a file outside the default surfaces may re-export its own internals',
+      filename: '/project/web/services/chat/chat.api.ts',
+      code: "export { normalize } from './chat-driver.normalize'",
+      options: { web: ['/project/web'], roles: ['driver'] },
+    },
+    {
       name: 'lib/ as the service folder is not a portable library',
       filename: '/project/web/lib/fade.ts',
       code: "import type { Chat } from '../types/chat.types'",
@@ -141,6 +153,20 @@ describe('arch/boundaries-imports', () => {
       filename: '/project/web/services/chat/chat.service.ts',
       code: "export { normalize } from './chat-driver.normalize'",
       options: { web: ['/project/web'], roles: ['driver'] },
+      errors: ['boundary'],
+    },
+    {
+      name: 'surfaces replace the defaults',
+      filename: '/project/web/services/chat/chat.service.ts',
+      code: "import { users } from '../user/user.service'",
+      options: { web: ['/project/web'], roles: ['driver'], surfaces: ['api'] },
+      errors: ['boundary'],
+    },
+    {
+      name: 'a configured surface cannot re-export its private internals',
+      filename: '/project/web/services/chat/chat.api.ts',
+      code: "export { normalize } from './chat-driver.normalize'",
+      options: { web: ['/project/web'], roles: ['driver'], surfaces: ['api'] },
       errors: ['boundary'],
     },
     {

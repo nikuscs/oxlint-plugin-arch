@@ -73,7 +73,7 @@ export const commentsCode = defineRule({
         type: 'object',
         additionalProperties: false,
         properties: {
-          why: { type: 'boolean', default: true },
+          why: { anyOf: [{ type: 'boolean' }, { type: 'string', minLength: 1 }], default: true },
           allow: { type: 'array', items: { type: 'string' } },
           jsdoc: { type: 'boolean', default: false },
           members: { type: 'string', enum: ['off', 'also', 'only'] },
@@ -87,6 +87,7 @@ export const commentsCode = defineRule({
   },
   createOnce(context) {
     let allowWhy = true
+    let whyPrefix = 'Why: '
     let allowJsdoc = false
     let allowed: RegExp[] = []
     let members: CommentsOptions['members'] = 'off'
@@ -132,7 +133,8 @@ export const commentsCode = defineRule({
     return {
       before() {
         const options = optionsFirst<CommentsOptions>(context, {})
-        allowWhy = options.why ?? true
+        allowWhy = options.why !== false
+        whyPrefix = `${typeof options.why === 'string' ? options.why.trim() : 'Why:'} `
         allowJsdoc = options.jsdoc ?? false
         allowed = (options.allow ?? []).map((pattern) => new RegExp(pattern))
         members = options.members ?? 'off'
@@ -169,7 +171,7 @@ export const commentsCode = defineRule({
             comment.loc.start.line === previous.loc.end.line + 1 &&
             commentsLineGap.test(text.slice(previous.range[1], comment.range[0]))
 
-          const isWhy: boolean = value.startsWith('Why: ') || (comment.type === 'Line' && whyContinuation && followsPrevious)
+          const isWhy: boolean = value.startsWith(whyPrefix) || (comment.type === 'Line' && whyContinuation && followsPrevious)
 
           if (/^(?:eslint|oxlint)-disable-next-line\b/.test(value)) {
             protectedLines.push(comment.loc.end.line + 1)

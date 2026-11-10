@@ -1,6 +1,6 @@
 # arch/naming-declarations
 
-Reports declarations, exported or not, that miss the file prefix, or that miss `pattern` when it is set.
+Reports declarations, exported or not, that miss the file prefix, or that miss `pattern` when it is set. Loop header bindings such as `for (const line of lines)` are skipped; declarations in the loop body are checked.
 
 ```ts
 // ❌ invoice.utils.ts
