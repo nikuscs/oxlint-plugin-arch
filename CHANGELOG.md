@@ -14,7 +14,7 @@
 
 ### Changed
 
-- **Breaking:** the `effect` group turns on every rule from `@effect/tsgo`'s `correctness`, `antipattern`, `effectNative` and `style` presets and `@opsydyn/oxlint-effect`'s `recommended` rules, and turns off the nine oxlint-effect rules that contradict its own. It now needs both packages (optional peer dependencies) and fails with the install command when one is missing; lint runs through `effect-tsgo`.
+- **Breaking:** the `effect` group turns on every rule from `@effect/tsgo`'s `correctness`, `antipattern`, `effectNative` and `style` presets and `@opsydyn/oxlint-effect`'s `recommended` rules, and turns off the oxlint-effect rules that contradict its own or flag common Effect idioms, plus test and entry relaxations; new `entries` option (globs) for entry files that provide their own layers. It now needs both packages (optional peer dependencies) and fails with the install command when one is missing; lint runs through `effect-tsgo`.
 
 ## 0.12.5
 

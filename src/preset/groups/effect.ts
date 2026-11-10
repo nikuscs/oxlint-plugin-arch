@@ -1,6 +1,43 @@
-import { presetEffectOff, presetExtensions } from '../preset.constants.ts'
+import { presetExtensions } from '../preset.constants.ts'
 import { presetEffectPackages, presetOverride } from '../preset.utils.ts'
-import type { PresetBuilder } from '../../types/preset.types.ts'
+import type { PresetBuilder, PresetRules } from '../../types/preset.types.ts'
+
+const effectOff: PresetRules = {
+  'linteffect/no-effect-fn-generator': 'off',
+  'linteffect/prefer-extracted-concept': 'off',
+  'linteffect/no-clever-effect-expression': 'off',
+  'linteffect/no-mixed-pillar-function': 'off',
+  'linteffect/no-piped-yield-in-gen': 'off',
+  'linteffect/no-domain-logic-in-conditional': 'off',
+  'linteffect/prefer-pipe-for-behavior': 'off',
+  'linteffect/no-ternary': 'off',
+  'linteffect/no-effect-as': 'off',
+  'linteffect/no-namespace-effect-import': 'off',
+  'linteffect/no-manual-effect-channels': 'off',
+  'linteffect/no-or-die-outside-boundary': 'off',
+  'linteffect/no-call-tower': 'off',
+  'linteffect/no-pipe-ladder': 'off',
+  'linteffect/no-nested-effect-gen': 'off',
+  'linteffect/no-branch-in-object': 'off',
+  'linteffect/no-magic-domain-string': 'off',
+  'linteffect/no-return-in-arrow': 'off',
+  'linteffect/no-effect-succeed-variable': 'off',
+  'linteffect/no-match-effect-branch': 'off',
+}
+
+const effectEntryOff: PresetRules = {
+  'effecttsgo/strict-effect-provide': 'off',
+  'linteffect/no-inline-runtime-provide': 'off',
+  'linteffect/no-inline-layer-provide-in-program': 'off',
+}
+
+const effectTestOff: PresetRules = {
+  ...effectEntryOff,
+  'linteffect/no-string-sentinel-return': 'off',
+  'linteffect/no-effect-never': 'off',
+  'linteffect/no-gen-for-mapping': 'off',
+  'linteffect/no-adhoc-domain-error': 'off',
+}
 
 export const effectGroup: PresetBuilder<'effect'> = (project, settings) => {
   const files = [`**/${presetExtensions}`]
@@ -12,8 +49,10 @@ export const effectGroup: PresetBuilder<'effect'> = (project, settings) => {
     presetOverride(files, {
       ...Object.fromEntries(tsgoRules.map((rule) => [rule, 'error'])),
       ...linteffect.recommended.rules,
-      ...presetEffectOff,
+      ...effectOff,
     }),
+    presetOverride(project.testFiles, effectTestOff),
+    ...(settings.entries.length > 0 ? [presetOverride(settings.entries, effectEntryOff)] : []),
     presetOverride(files, {
       'arch/code-trivial-functions': 'off',
       'arch/code-branch-once': 'error',

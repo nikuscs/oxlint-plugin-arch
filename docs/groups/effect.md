@@ -22,6 +22,7 @@ Takes `true`, `false`, `'warn'` or an object:
 | `width` | `number` | `160` | Line width for the layout rules and `code-inline` |
 | `exports` | `string \| string[]` | | Regex for files whose exports `code-traced` checks; every non-test file when unset |
 | `skip` | `string \| string[]` | | Regex for service names `code-traced` skips, such as `Driver$` |
+| `entries` | `string[]` | `[]` | Globs for entry files (servers, Workers, scripts) that provide their own layers |
 
 It turns off [`arch/code-trivial-functions`](../rules/code-trivial-functions.md), which reports an Effect function written as one pipe.
 
@@ -38,3 +39,21 @@ Third-party rules: every rule in [`@effect/tsgo`](https://www.npmjs.com/package/
 | `linteffect/prefer-pipe-for-behavior` | `arch/layout-pipe`, which allows a data-first step around a multi-line call |
 | `linteffect/no-ternary` | `arch/layout-ternary`, which allows value ternaries |
 | `linteffect/no-effect-as` | `effecttsgo/map-const-to-as`, which asks for `Effect.as` |
+
+It also turns off the oxlint-effect rules that flag common Effect idioms:
+
+| Rule | Flags |
+| --- | --- |
+| `linteffect/no-namespace-effect-import` | `import * as Effect from 'effect/Effect'` |
+| `linteffect/no-manual-effect-channels` | Service interfaces that declare their `Effect<A, E, R>` channels |
+| `linteffect/no-or-die-outside-boundary` | `Effect.orDie` on an impossible failure |
+| `linteffect/no-call-tower` | `Effect.fn` extra arguments and `Effect.acquireRelease(Effect.sync(...))` |
+| `linteffect/no-pipe-ladder` | `Schedule.exponential(...).pipe(Schedule.jittered)` inside `Effect.retry` |
+| `linteffect/no-nested-effect-gen` | An inline program (a transaction, a fork) written as `Effect.gen` |
+| `linteffect/no-branch-in-object` | The handlers of `Option.match(x, { onNone, onSome })` |
+| `linteffect/no-magic-domain-string` | Typed literal and `_tag` checks |
+| `linteffect/no-return-in-arrow` | `it.effect(..., () => Effect.gen(function* () { return ... }))` |
+| `linteffect/no-effect-succeed-variable` | `Effect.succeed(value)` as one branch of a ternary or `Option.match` |
+| `linteffect/no-match-effect-branch` | `Option.match`, `Array.match` and `Match` branches that are effects |
+
+In test files it also turns off `linteffect/no-string-sentinel-return`, `linteffect/no-effect-never`, `linteffect/no-gen-for-mapping` and `linteffect/no-adhoc-domain-error`, so a test can fail with a plain string. In test files and `entries` it turns off `effecttsgo/strict-effect-provide`, `linteffect/no-inline-runtime-provide` and `linteffect/no-inline-layer-provide-in-program`: an entry provides its own layers.
