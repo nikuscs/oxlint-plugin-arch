@@ -1,6 +1,7 @@
 import { defineRule } from '@oxlint/plugins'
+import { astIsOneLine } from '../../utils/ast.utils.ts'
 import { optionsFirst } from '../../utils/options.utils.ts'
-import { sourceIndentSchema, sourceIndentUnit, sourceLineIndent, sourceNewline } from '../../utils/source.utils.ts'
+import { sourceIndentSchema, sourceIndentUnit, sourceItemGaps, sourceJoinedWidth, sourceLineIndent, sourceNewline } from '../../utils/source.utils.ts'
 import type { LayoutJsxAttributesOptions } from '../../types/layout.types.ts'
 
 export const layoutJsxAttributes = defineRule({
@@ -14,17 +15,25 @@ export const layoutJsxAttributes = defineRule({
         properties: {
           min: { type: 'integer', minimum: 1 },
           indent: sourceIndentSchema,
+          join: {
+            type: 'object',
+            additionalProperties: false,
+            required: ['max'],
+            properties: { max: { type: 'integer', minimum: 1 } },
+          },
         },
       },
     ],
     messages: {
       multiline: 'Put every JSX attribute and the closing token on its own line.',
+      join: 'This tag fits on one line, so keep it on one line.',
     },
   },
   createOnce(context) {
     let minAttributes = 3
     let indentUnit = sourceIndentUnit()
     let newline = '\n'
+    let joinMax: number | undefined
 
     return {
       before() {
@@ -32,33 +41,57 @@ export const layoutJsxAttributes = defineRule({
         minAttributes = options.min ?? 3
         indentUnit = sourceIndentUnit(options.indent)
         newline = sourceNewline(context.sourceCode.text)
+        joinMax = options.join?.max
       },
       JSXOpeningElement(node) {
-        if (node.attributes.length < minAttributes || node.loc.start.line !== node.loc.end.line) {
+        const source = context.sourceCode
+        const text = source.text
+        const attributes = node.attributes
+        const split = attributes.length >= minAttributes
+
+        if (split ? !astIsOneLine(node) : joinMax === undefined || astIsOneLine(node)) {
           return
         }
 
-        const source = context.sourceCode
-        const text = source.text
+        if (!split) {
+          const start = (node.typeArguments ?? node.name).range[1]
+
+          if (attributes.length === 0 || !attributes.every(astIsOneLine) || text.slice(node.range[0], start).includes('\n') || source.getCommentsInside(node).length > 0) {
+            return
+          }
+
+          const end = node.range[1] - (node.selfClosing ? 2 : 1)
+          const ranges = sourceItemGaps(start, attributes, end)
+          const closing = node.selfClosing ? ' ' : ''
+
+          if (sourceJoinedWidth(text, start, ` ${attributes.map((attribute) => source.getText(attribute)).join(' ')}${closing}`, end) > (joinMax ?? 0)) {
+            return
+          }
+
+          context.report({
+            node,
+            messageId: 'join',
+            fix: (fixer) =>
+              ranges.some((range) => !/^\s*$/.test(text.slice(...range)))
+                ? null
+                : ranges.map((range, index) => fixer.replaceTextRange(range, index === ranges.length - 1 ? closing : ' ')),
+          })
+
+          return
+        }
+
         const baseIndent = sourceLineIndent(text, node.range[0])
         const attributeIndent = baseIndent + indentUnit
-        const attributes = node.attributes
 
         context.report({
           node,
           messageId: 'multiline',
           fix: (fixer) => {
-            const last = attributes.at(-1)
-
-            if (source.getCommentsInside(node).length > 0 || !last) {
+            if (source.getCommentsInside(node).length > 0) {
               return null
             }
 
-            const ranges: [number, number][] = [
-              [(node.typeArguments ?? node.name).range[1], attributes[0].range[0]],
-              ...attributes.slice(1).map((attribute, index): [number, number] => [attributes[index].range[1], attribute.range[0]]),
-              [last.range[1], node.range[1] - (node.selfClosing ? 2 : 1)],
-            ]
+            const ranges = sourceItemGaps((node.typeArguments ?? node.name).range[1], attributes, node.range[1] - (node.selfClosing ? 2 : 1))
 
             if (ranges.some((range) => !/^\s*$/.test(text.slice(...range)))) {
               return null

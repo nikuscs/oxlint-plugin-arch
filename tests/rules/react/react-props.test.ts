@@ -16,6 +16,11 @@ describe('arch/react-props', () => {
       name: 'blank lines preserve adjacency',
       code: 'interface ButtonProps { label: string }\n\nexport const Button = (props: ButtonProps) => <button>{props.label}</button>',
     },
+    {
+      name: 'a configured suffix passes',
+      code: 'interface ButtonOptions { label: string }\nexport function Button({ label }: ButtonOptions) { return <button>{label}</button> }',
+      options: { suffix: 'Options' },
+    },
     { name: 'parameterless component passes', code: 'export function Button() { return <button /> }' },
     { name: 'noncomponent functions are ignored', code: 'export function Format(input: { id: string }) { return input.id }' },
     {
@@ -146,6 +151,12 @@ describe('arch/react-props', () => {
       code: 'interface RoomsChatToolProps { label: string }\nfunction RoomsChatTool({ label }: RoomsChatToolProps) { return <li>{label}</li> }\nfunction Badge({ tone }: { tone: string }) { return <i>{tone}</i> }\nexport function RoomsChatTools() { return <ul><RoomsChatTool label="x" /><Badge tone="y" /></ul> }',
       options: { prefix: true },
       errors: ['rename', 'rename'],
+    },
+    {
+      name: 'the default suffix fails with a configured suffix',
+      code: 'interface ButtonProps { label: string }\nexport function Button({ label }: ButtonProps) { return <button>{label}</button> }',
+      options: { suffix: 'Options' },
+      errors: ["'Button' props must use `interface ButtonOptions` declared directly above it, not 'ButtonProps'."],
     },
   ])('$name', (row) => testerRun(reactProps, row))
 })

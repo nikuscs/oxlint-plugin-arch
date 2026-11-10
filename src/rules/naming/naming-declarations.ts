@@ -41,13 +41,10 @@ export const namingDeclarations = defineRule({
       const declarator = node.type === 'VariableDeclarator'
       const kind = declarationsKindOf(node, declarator ? [node.parent] : [])
       const name = declarationsIdName(node)
-      let insideLoop = false
+      const loop = declarator ? node.parent.parent : null
+      const loopHeader = loop?.type === 'ForStatement' ? loop.init === node.parent : (loop?.type === 'ForInStatement' || loop?.type === 'ForOfStatement') && loop.left === node.parent
 
-      for (let current: ESTree.Node | null = declarator ? node.parent : null; current && !insideLoop; current = current.parent) {
-        insideLoop = current.type === 'ForStatement' || current.type === 'ForInStatement' || current.type === 'ForOfStatement'
-      }
-
-      if (!kind || !name || insideLoop || (kinds && !kinds.has(kind)) || optionsPatternsTest(allowed, name)) {
+      if (!kind || !name || loopHeader || (kinds && !kinds.has(kind)) || optionsPatternsTest(allowed, name)) {
         return
       }
 

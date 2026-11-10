@@ -1,6 +1,6 @@
 # arch/schemas-local
 
-Reports runtime imports from the schema package and any schema construction in the file. Calls that configure the package or format its errors (`z.config(...)`, `z.prettifyError(...)`) build no schema and pass.
+Reports runtime imports from the schema package and any schema construction in the file. Calls that configure the package or format its errors (`z.config(...)`, `z.prettifyError(...)`) build no schema and pass, as long as every reference to the import is one of those calls.
 
 ```ts
 // ❌

@@ -11,6 +11,8 @@ describe('arch/tests-modifiers', () => {
     { name: 'imports from other packages are ignored', code: "import { test as check } from './check'; check.only('saves', fn)" },
     { name: 'custom function passes', code: "integrationTest('saves', fn)", options: { functions: ['integrationTest'] } },
     { name: 'a conditional builder passes', code: "test.skipIf(process.env.CI)('saves', fn); test.runIf(ready).concurrent('saves', fn)" },
+    { name: 'a modifier outside modifiers passes', code: "test.todo('later'); test.skip('saves', fn)", options: { modifiers: ['only'] } },
+    { name: 'a configured modifier', code: "test.fails('saves', fn)", options: { modifiers: ['only', 'fails'] }, errors: ['modifier'] },
     { name: 'test.only', code: "test.only('saves', () => {})", errors: ['modifier'] },
     { name: 'it.skip', code: "it.skip('saves', () => {})", errors: ['modifier'] },
     { name: 'describe.todo', code: "describe.todo('users')", errors: ['modifier'] },

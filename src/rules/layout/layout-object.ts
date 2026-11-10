@@ -1,10 +1,32 @@
 import { defineRule } from '@oxlint/plugins'
+import { astDottedName, astIsInlineFunction, astIsOneLine } from '../../utils/ast.utils.ts'
 import { optionsFirst } from '../../utils/options.utils.ts'
-import { sourceIndentSchema, sourceIndentUnit, sourceLineIndent, sourceNewline } from '../../utils/source.utils.ts'
+import {
+  sourceIndentSchema,
+  sourceIndentUnit,
+  sourceItemGaps,
+  sourceJoinedWidth,
+  sourceLineIndent,
+  sourceNewline,
+  sourceRespace,
+} from '../../utils/source.utils.ts'
 import type { LayoutObjectOptions, LayoutObjectScope } from '../../types/layout.types.ts'
+import type { ESTree } from '@oxlint/plugins'
 
 function layoutObjectIsWhitespace(text: string): boolean {
   return /^[\t\n\r\f ]*$/.test(text)
+}
+
+function layoutObjectIsFlat(property: ESTree.ObjectExpression['properties'][number]): boolean {
+  const value = property.type === 'SpreadElement' ? property.argument : property.value
+
+  return (
+    astIsOneLine(property) &&
+    (property.type === 'SpreadElement' || (!property.method && property.kind === 'init')) &&
+    value.type !== 'ObjectExpression' &&
+    value.type !== 'ArrayExpression' &&
+    !astIsInlineFunction(value)
+  )
 }
 
 export const layoutObject = defineRule({
@@ -19,12 +41,22 @@ export const layoutObject = defineRule({
           min: { type: 'integer', minimum: 1, default: 3 },
           scope: { type: 'string', enum: ['call-args', 'all'], default: 'call-args' },
           indent: { ...sourceIndentSchema, default: 2 },
+          join: {
+            type: 'object',
+            additionalProperties: false,
+            required: ['max'],
+            properties: {
+              max: { type: 'integer', minimum: 1 },
+              keep: { type: 'array', items: { type: 'string' } },
+            },
+          },
         },
       },
     ],
     messages: {
       callArgs: 'Object with {{min}}+ properties in a call should have each property on its own line.',
       always: 'Object with {{min}}+ properties should have each property on its own line.',
+      join: 'This object fits on one line, so keep it on one line.',
     },
   },
   createOnce(context) {
@@ -32,6 +64,7 @@ export const layoutObject = defineRule({
     let scope: LayoutObjectScope = 'call-args'
     let indentUnit = sourceIndentUnit()
     let newline = '\n'
+    let join: LayoutObjectOptions['join']
 
     return {
       before() {
@@ -40,24 +73,53 @@ export const layoutObject = defineRule({
         scope = options.scope ?? 'call-args'
         indentUnit = sourceIndentUnit(options.indent)
         newline = sourceNewline(context.sourceCode.text)
+        join = options.join
       },
       ObjectExpression(node) {
-        if (node.properties.length < minProperties || node.loc.start.line !== node.loc.end.line) {
+        const source = context.sourceCode
+        const text = source.text
+        const properties = node.properties
+        const split = properties.length >= minProperties
+
+        if (split ? !astIsOneLine(node) : !join || astIsOneLine(node)) {
           return
         }
 
         const parent = node.parent
+        const call = (parent.type === 'CallExpression' || parent.type === 'NewExpression') && parent.arguments.includes(node) ? parent : undefined
 
-        if (scope === 'call-args' && !((parent.type === 'CallExpression' || parent.type === 'NewExpression') && parent.arguments.includes(node))) {
+        if (scope === 'call-args' && !call) {
           return
         }
 
-        const source = context.sourceCode
-        const text = source.text
+        if (!split) {
+          const callee = call ? astDottedName(call.callee) : undefined
+          const kept = callee !== undefined && (join?.keep ?? []).some((name) => callee === name || callee.endsWith(`.${name}`))
+
+          if (kept || properties.length === 0 || !properties.every(layoutObjectIsFlat) || source.getCommentsInside(node).length > 0) {
+            return
+          }
+
+          const gaps = sourceItemGaps(node.range[0] + 1, properties, node.range[1] - 1)
+          const comma = text.slice(...(gaps.at(-1) ?? [0, 0])).includes(',') ? ',' : ''
+          const joined = ` ${properties.map((property) => source.getText(property)).join(', ')}${comma} `
+
+          if (sourceJoinedWidth(text, node.range[0] + 1, joined, node.range[1] - 1) > (join?.max ?? 0)) {
+            return
+          }
+
+          context.report({
+            node,
+            messageId: 'join',
+            fix: (fixer) => sourceRespace(fixer, text, gaps, () => ' '),
+          })
+
+          return
+        }
+
         const baseIndent = sourceLineIndent(text, node.range[0])
         const propertyIndent = `${baseIndent}${indentUnit}`
         const close = node.range[1] - 1
-        const properties = node.properties
 
         context.report({
           node,

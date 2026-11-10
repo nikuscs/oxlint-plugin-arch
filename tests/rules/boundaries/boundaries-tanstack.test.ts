@@ -4,6 +4,11 @@ import { testerRun } from '../../utils/tester.utils.ts'
 
 describe('arch/boundaries-tanstack', () => {
   it.each([
+    {
+      name: 'configured renderers replace the defaults',
+      code: "import { renderServerComponent } from '@tanstack/react-start/rsc'; renderServerComponent(view)",
+      options: { renderers: ['renderPage'] },
+    },
     { name: 'server files own server dependencies', filename: 'chat.server.ts', code: "import { readFile } from 'node:fs'; readFile(process.env.FILE)" },
     { name: 'unused server imports pass in server files', filename: 'chat.server.ts', code: "import { readFile } from 'node:fs'" },
     {
@@ -210,6 +215,18 @@ describe('arch/boundaries-tanstack', () => {
       filename: 'chat.server.ts',
       code: "import { useSignal } from 'ui'",
       options: { hookPackages: ['ui'] },
+      errors: ['runtime'],
+    },
+    {
+      name: 'a configured renderer requires server ownership',
+      code: "import { renderPage } from '@tanstack/react-start/rsc'; renderPage(view)",
+      options: { renderers: ['renderPage'] },
+      errors: ['runtime'],
+    },
+    {
+      name: 'a configured namespace renderer requires server ownership',
+      code: "import * as rsc from '@tanstack/react-start/rsc'; rsc.renderPage(view)",
+      options: { renderers: ['renderPage'] },
       errors: ['runtime'],
     },
     {

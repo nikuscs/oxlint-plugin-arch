@@ -37,8 +37,6 @@ export const schemasLocal = defineRule({
     let packages = new Set<string>()
     let calls = new Set<string>()
     let pending: { node: ESTree.ImportDeclaration; locals: string[] }[] = []
-    let schemaUses = new Set<string>()
-    let callUses = new Set<string>()
     let importMessage = schemasLocalImportMessage
     let constructionMessage = schemasLocalConstructionMessage
 
@@ -84,8 +82,6 @@ export const schemasLocal = defineRule({
         packages = new Set(options.packages)
         calls = new Set(options.calls ?? schemasLocalCalls)
         pending = []
-        schemaUses = new Set()
-        callUses = new Set()
         importMessage = options.importMessage ?? options.message ?? schemasLocalImportMessage
         constructionMessage = options.constructionMessage ?? options.message ?? schemasLocalConstructionMessage
         if (
@@ -119,20 +115,17 @@ export const schemasLocal = defineRule({
 
         pending.push({ node, locals })
       },
-      Identifier(node) {
-        if (!constructors.has(node.name) || node.parent.type.startsWith('Import')) {
-          return
-        }
-
-        if (isAllowedCall(node, node.parent)) {
-          callUses.add(node.name)
-          return
-        }
-
-        schemaUses.add(node.name)
-      },
       'Program:exit'() {
-        const runtime = pending.filter(({ locals }) => locals.some((name) => schemaUses.has(name) || !callUses.has(name)))
+        const runtime = pending.filter(({ node, locals }) =>
+          context.sourceCode
+            .getDeclaredVariables(node)
+            .filter((variable) => locals.includes(variable.name))
+            .some(
+              (variable) =>
+                variable.references.length === 0 ||
+                variable.references.some((reference) => !isAllowedCall(reference.identifier, reference.identifier.parent)),
+            ),
+        )
 
         for (const { node } of runtime) {
           reportRuntimeImport(node, node.source.value)

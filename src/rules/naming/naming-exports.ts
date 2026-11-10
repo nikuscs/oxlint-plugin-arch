@@ -176,12 +176,13 @@ export const namingExports = defineRule({
 
           const names: Pick<DeclarationsNamed, 'name' | 'node'>[] = scope === 'declarations'
             ? [...(declarations ??= declarationsNamed(program))]
-            : (bindings ??= exportsCollect(program)).flatMap((binding) =>
-              options.types && binding.typeOnly ? [] : [{ name: binding.localName ?? binding.exportedName, node: binding.node }],
-            )
+            : (bindings ??= exportsCollect(program)).flatMap((binding) => {
+              const name = binding.default ? (binding.localName ?? binding.exportedName) : binding.exportedName
+              return options.types && binding.typeOnly ? [] : [{ name, node: binding.node }]
+            })
 
           if (scope === 'functions') {
-            const exported = new Set(names.map((item) => item.name))
+            const exported = new Set([...names.map((item) => item.name), ...(bindings ?? []).flatMap((binding) => binding.localName ?? [])])
             names.push(
               ...(declarations ??= declarationsNamed(program)).filter(
                 ({ name, node }) =>

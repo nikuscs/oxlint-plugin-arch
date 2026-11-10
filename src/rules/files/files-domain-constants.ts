@@ -2,7 +2,7 @@ import { defineRule } from '@oxlint/plugins'
 import { basename, dirname } from 'node:path'
 import { astUnwrap } from '../../utils/ast.utils.ts'
 import { declarationsPublicServiceMethods } from '../../utils/declarations.utils.ts'
-import { optionsFirst } from '../../utils/options.utils.ts'
+import { optionsFirst, optionsPatterns, optionsPatternSchema, optionsPatternsTest } from '../../utils/options.utils.ts'
 import type { FilesDomainConstantsOptions } from '../../types/files.types.ts'
 import type { ESTree } from '@oxlint/plugins'
 
@@ -41,7 +41,14 @@ export const filesDomainConstants = defineRule({
       {
         type: 'object',
         additionalProperties: false,
-        properties: { data: { type: 'boolean' }, services: { type: 'boolean' } },
+        properties: {
+          data: { type: 'boolean' },
+          services: { type: 'boolean' },
+          pattern: { ...optionsPatternSchema, default: '^[A-Z][A-Z0-9_]+$' },
+          folders: { type: 'array', items: { type: 'string', minLength: 1 }, default: ['services'] },
+          roles: { type: 'array', items: { type: 'string', minLength: 1 }, default: ['action', 'query'] },
+          file: { type: 'string', minLength: 1, default: '{domain}.constants.ts' },
+        },
       },
     ],
     messages: {
@@ -50,6 +57,10 @@ export const filesDomainConstants = defineRule({
   },
   createOnce(context) {
     let includeData = false
+    let names: RegExp[] = []
+    let folders: string[] = []
+    let roles: string[] = []
+    let target = ''
     let serviceObjects = new Set<ESTree.VariableDeclarator>()
 
     return {
@@ -57,6 +68,10 @@ export const filesDomainConstants = defineRule({
         const options = optionsFirst<FilesDomainConstantsOptions>(context, {})
 
         includeData = Boolean(options.data)
+        names = optionsPatterns(options.pattern ?? '^[A-Z][A-Z0-9_]+$')
+        folders = options.folders ?? ['services']
+        roles = options.roles ?? ['action', 'query']
+        target = options.file ?? '{domain}.constants.ts'
         serviceObjects = new Set(
           options.services ? declarationsPublicServiceMethods(program).map((method) => method.binding) : [],
         )
@@ -75,23 +90,21 @@ export const filesDomainConstants = defineRule({
 
         const name = node.id.type === 'Identifier' ? node.id.name : undefined
 
-        if ((!name || !/^[A-Z][A-Z0-9_]+$/.test(name)) && (!includeData || !node.init || !isData(node.init))) {
+        if ((!name || !optionsPatternsTest(names, name)) && (!includeData || !node.init || !isData(node.init))) {
           return
         }
 
         const file = context.filename.replaceAll('\\', '/')
-
-        const owner =
-          file.includes('/services/') && dirname(file).split('/').at(-1) !== 'services'
-            ? basename(dirname(file))
-            : basename(file)
-              .split('.')[0]
-              .replace(/-(?:action|query)$/, '')
+        const folder = basename(dirname(file))
+        const stem = basename(file).split('.')[0]
+        const role = roles.find((candidate) => stem.endsWith(`-${candidate}`))
+        const domain = role ? stem.slice(0, -role.length - 1) : stem
+        const owner = folders.some((candidate) => file.includes(`/${candidate}/`) && folder !== candidate) ? folder : domain
 
         context.report({
           node,
           messageId: 'forbidden',
-          data: { name: name ?? '<destructured binding>', file: `${owner}.constants.ts` },
+          data: { name: name ?? '<destructured binding>', file: target.replaceAll('{domain}', owner) },
         })
       },
     }

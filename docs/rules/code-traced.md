@@ -1,6 +1,6 @@
 # arch/code-traced
 
-An exported function or service method built with an untraced helper. Service methods are the properties of an object passed to a `services` method, such as `Mail.of({ send })`; a name is followed to its declaration.
+An exported function or service method built with an untraced helper. Service methods are the properties of an object passed to a `services` method, such as `Mail.of({ send })`; a name is followed to its declaration, and so is a name exported with `export { send }`.
 
 ```ts
 // ❌

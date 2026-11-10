@@ -20,6 +20,7 @@ describe('arch/boundaries-next', () => {
     { name: 'type-only server imports pass', filename: 'chat.client.ts', code: "import type { Chat } from './chat.server'" },
     { name: 'shadowed browser identifiers are local values', filename: 'chat.server.ts', code: 'function read(window) { return window.value }' },
     { name: 'server-compatible React hooks pass', filename: 'chat.rsc.tsx', code: "import { use, useId } from 'react'; use(resource); useId()" },
+    { name: 'configured server hooks pass', filename: 'chat.rsc.tsx', code: "import { useOptimistic } from 'react'", options: { serverHooks: ['useOptimistic'] } },
     {
       name: 'exact-file computed import exception',
       filename: '/project/web/loader.ts',
@@ -126,6 +127,20 @@ describe('arch/boundaries-next', () => {
       name: 'namespace hooks use their imported binding',
       filename: 'chat.server.ts',
       code: "import * as UI from 'react'; UI['useState'](0)",
+      errors: ['runtime'],
+    },
+    {
+      name: 'server hooks replace the defaults',
+      filename: 'chat.rsc.tsx',
+      code: "import { useId } from 'react'",
+      options: { serverHooks: ['useOptimistic'] },
+      errors: ['runtime'],
+    },
+    {
+      name: 'a namespace hook outside configured server hooks',
+      filename: 'chat.rsc.tsx',
+      code: "import * as React from 'react'; React.useId()",
+      options: { serverHooks: [] },
       errors: ['runtime'],
     },
     {

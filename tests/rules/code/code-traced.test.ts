@@ -18,6 +18,10 @@ describe('arch/code-traced', () => {
       options: { exports: '/mail[.]ts$' },
       errors: ['surface'],
     },
+    { name: 'an untraced value exported by name fails', code: 'const send = Effect.fnUntraced(function* () {})\nexport { send }', errors: ['surface'] },
+    { name: 'an untraced value exported under an alias fails', code: 'const send = Effect.fnUntraced(function* () {})\nexport { send as deliver }', errors: ['surface'] },
+    { name: 'a traced value exported by name passes', code: "const send = Effect.fn('mail.send')(function* () {})\nexport { send }" },
+    { name: 'a re-export passes', code: "export { send } from './mail.ts'" },
     { name: 'custom untraced calls', code: 'export const send = trace.off(run)', options: { untraced: ['trace.off'] }, errors: ['surface'] },
   ])('$name', (row) => testerRun(codeTraced, row))
 })

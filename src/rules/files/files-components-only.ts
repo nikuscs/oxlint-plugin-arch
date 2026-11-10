@@ -83,13 +83,11 @@ export const filesComponentsOnly = defineRule({
           return
         }
 
-        const names = components.map((candidate) => candidate.name.toLowerCase())
-
-        if (expectedKeys.some((key) => names.includes(key) || names.every((name) => name.startsWith(key)))) {
-          return
-        }
-
         for (const { name, node } of components) {
+          if (expectedKeys.some((key) => name.toLowerCase().startsWith(key))) {
+            continue
+          }
+
           context.report({
             node,
             messageId: 'nameMismatch',

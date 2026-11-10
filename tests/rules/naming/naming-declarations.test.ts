@@ -83,5 +83,7 @@ var h = 1`,
       errors: ['pattern'],
     },
     { name: 'an empty pattern entry is ignored', filename: 'accounts.ts', code: 'const badOne = 1', options: { pattern: ['', '^good'] }, errors: ['pattern'] },
+    { name: 'a declaration in a for body', filename: 'invoice.ts', code: 'for (;;) { const wrong = 1 }', errors: ['prefix'] },
+    { name: 'a declaration in a for...of body', filename: 'invoice.ts', code: 'for (const line of lines) { const wrong = line }', errors: ['prefix'] },
   ])('$name', (row) => testerRun(namingDeclarations, row))
 })

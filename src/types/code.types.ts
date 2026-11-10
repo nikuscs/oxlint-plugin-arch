@@ -3,6 +3,10 @@ import type { ESTree } from '@oxlint/plugins'
 
 export type CodeConstructorEntry = string | { name: string; message?: string }
 
+export interface CodeBranchOnceOptions {
+  min?: number
+}
+
 export interface CodeConstructorOptions {
   constructors: CodeConstructorEntry[]
   calls?: boolean

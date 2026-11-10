@@ -24,11 +24,6 @@ export function UserCard() { return <div /> }`,
       code: 'export function UserCardHeader() { return <div /> }\nexport function UserCardBody() { return <div /> }',
     },
     {
-      name: 'the exact name allows other components',
-      filename: 'user-card.tsx',
-      code: 'export function UserCard() { return <div /> }\nexport function Avatar() { return <img /> }',
-    },
-    {
       name: 'memo, forwardRef and lazy wrappers pass',
       filename: 'user-card.tsx',
       code: `import { forwardRef, lazy, memo } from 'react'
@@ -134,6 +129,12 @@ export const UserCardLazy = lazy(async () => import('./x'))`,
     { name: 'an object of components', filename: 'user-card.tsx', code: 'export const userCardParts = { div: () => <div /> }', errors: ['nonComponent'] },
     { name: 'a name off the file name', filename: 'user-card.tsx', code: 'export function Avatar() { return <img /> }', errors: ['nameMismatch'] },
     { name: 'the role stays without roles', filename: 'user.view.tsx', code: 'export function User() { return <div /> }', errors: ['nameMismatch'] },
+    {
+      name: 'the exact name does not cover another component',
+      filename: 'user-card.tsx',
+      code: 'export function UserCard() { return <div /> }\nexport function Modal() { return <dialog /> }',
+      errors: ['nameMismatch'],
+    },
     {
       name: 'one report per mismatched component',
       filename: 'user-card.tsx',

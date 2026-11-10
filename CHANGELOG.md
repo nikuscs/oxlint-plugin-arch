@@ -1,5 +1,48 @@
 # Changelog
 
+## Unreleased
+
+### Breaking
+
+- `arch/layout-call-arguments`: with `split` on, `join` joins up to `min - 1` items instead of at most two, so it hands over to the `min` split. With the default `min: 3` nothing changes; `min: 4` now reports split three-argument calls, and `min: 2` no longer joins a two-argument call that `split` breaks again. With `split: false`, `join` still joins up to two items.
+- `arch/tests-concurrent-db`: a fixture destructured with a string key, like `({ 'db': database })`, is now reported.
+- `arch/code-paired-call`: an import alias counts only where it resolves to the import, so a local `r` that shadows `import { required as r }`, or a method `form.r()`, no longer satisfies `required`; the trigger is now reported.
+- `arch/code-traced`: an untraced value exported by name, like `export { send }` or `export { send as deliver }`, is now reported.
+- `arch/files-components-only`: every component must start with the file name; `Modal` exported beside `UserCard` from `user-card.tsx` is now reported.
+- `arch/naming-declarations`: declarations inside a loop body, like `for (;;) { const wrong = 1 }`, are now checked; only the loop header stays exempt.
+- `arch/naming-exports`: an aliased export is checked by its exported name, so `export { invoiceX as bad }` is now reported.
+- `arch/tests-titles`: `fails` joins the modifiers, so `test.fails('…')` titles are now checked.
+
+### Added
+
+- `arch/layout-object`: `join` option (`{ max, keep? }`). A split object with fewer than `min` properties goes on one line when it fits in `max` columns, every property is one line and none holds an object, array or function, and it has no comments. `keep` lists callees (such as `object` for `z.object`) whose object arguments stay split. `join` follows `scope`. Unset, the rule is unchanged.
+- `arch/layout-jsx-attributes`: `join` option (`{ max }`). A split tag with fewer than `min` attributes goes on one line when it fits in `max` columns, every attribute is one line, its name and type arguments are one line and it has no comments. Unset, the rule is unchanged.
+- `arch/layout-ternary`, `arch/layout-call-arguments`: `indent` accepts `'tab'` like the other layout rules.
+- `arch/code-branch-once`: `min` option (default `2`), the smallest number of ternaries on one subject that is reported.
+- `arch/tests-concurrent-db`: `fixtures` (default `['db']`) and `callees` (default `['test.concurrent']`) options name the shared fixtures and the concurrent test callees.
+- `arch/tests-modifiers`: `modifiers` option (default `['only', 'skip', 'todo']`) replaces the reported modifiers.
+- `arch/tests-titles`: `modifiers` option (default `['only', 'skip', 'concurrent', 'sequential', 'todo', 'fails', 'each', 'for']`) replaces the modifiers whose titles are checked.
+- `arch/boundaries-rpc-database`: `methods` option replaces the reported query-builder methods (default `selectFrom`, `insertInto`, `updateTable`, `deleteFrom`, `mergeInto`, `executeQuery`).
+- `arch/types-service`: `suffix` (default `'Service'`) and `factory` (default `'make'`) options for the allowed `XService = ReturnType<typeof makeXService>` alias; the message names the configured suffix.
+- `arch/comments-code`: `why` also takes a string that replaces the `Why:` prefix, such as `'NOTE:'` or `'NOTE: '`; continuation lines follow it.
+- `arch/files-domain-constants`: `pattern` option (default `'^[A-Z][A-Z0-9_]+$'`) names the constants to report. `folders` (default `['services']`), `roles` (default `['action', 'query']`) and `file` (default `'{domain}.constants.ts'`) set the file the message points to.
+- `arch/files-externals`: `files` option (default `'^(?:vite|next)\.config\.[cm]?[jt]s$'`) names the config files that are checked.
+- `arch/react-props`: `suffix` option (default `'Props'`) for the props interface name.
+- `arch/boundaries-imports`: `surfaces` option (default `['service', 'client', 'server', 'rsc', 'utils']`) names the public surface file suffixes.
+- `arch/boundaries-tanstack`: `renderers` option (default `['renderServerComponent', 'renderToReadableStream']`) names the RSC renderers that need a server boundary.
+- `arch/boundaries-next`: `serverHooks` option (default `['useId', 'use']`) names the hooks server and RSC modules may use.
+- `arch/backend-registry`: `file` option (default `'{folder}.service.ts'`) names the service file each domain folder needs.
+
+### Changed
+
+- `arch/layout-call-arguments`: `join` counts a kept trailing comma toward `max`.
+
+### Fixed
+
+- `arch/tests-concurrent-db`: a computed key, like `({ [db]: value })`, is no longer reported.
+- `arch/code-inline`: a const is no longer reported when a call, assignment or other side effect sits between it and its one read.
+- `arch/schemas-local`: the import check follows references to the imported binding, so a property key or a shadowing parameter named `z` no longer marks a `z.config` import as a runtime import.
+
 ## 0.12.4
 
 ### Added

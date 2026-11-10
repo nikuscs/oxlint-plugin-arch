@@ -44,6 +44,10 @@ export function sourceLineEnd(text: string, offset: number): number {
   return end === -1 ? text.length : end
 }
 
+export function sourceJoinedWidth(text: string, start: number, joined: string, end: number): number {
+  return start - sourceLineStart(text, start) + joined.length + text.slice(end, sourceLineEnd(text, end)).trimEnd().length
+}
+
 export function sourceItemGaps(open: number, items: readonly PluginsTypes.Ranged[], close: number): PluginsTypes.Range[] {
   const edges = [open, ...items.flatMap((item) => item.range), close]
   return Array.from({ length: items.length + 1 }, (_, index): PluginsTypes.Range => [edges[index * 2] ?? open, edges[index * 2 + 1] ?? close])

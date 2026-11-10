@@ -8,7 +8,7 @@ const testsModifiersNames = ['test', 'it', 'describe', 'suite']
 
 const testsModifiersPackages = new Set(['vitest', 'bun:test', '@playwright/test', '@jest/globals'])
 
-const testsModifiersBanned = new Set(['only', 'skip', 'todo'])
+const testsModifiersBanned = ['only', 'skip', 'todo']
 
 const testsModifiersBuilders = new Set(['if', 'runIf', 'skipIf'])
 
@@ -37,7 +37,10 @@ export const testsModifiers = defineRule({
       {
         type: 'object',
         additionalProperties: false,
-        properties: { functions: { type: 'array', items: { type: 'string' } } },
+        properties: {
+          functions: { type: 'array', items: { type: 'string' } },
+          modifiers: { type: 'array', items: { type: 'string', minLength: 1 }, default: testsModifiersBanned },
+        },
       },
     ],
     messages: {
@@ -46,13 +49,13 @@ export const testsModifiers = defineRule({
   },
   createOnce(context) {
     let names = new Set<string>()
+    let banned = new Set<string>()
 
     return {
       before() {
-        names = new Set([
-          ...testsModifiersNames,
-          ...(optionsFirst<TestsModifiersOptions>(context, {}).functions ?? []),
-        ])
+        const options = optionsFirst<TestsModifiersOptions>(context, {})
+        names = new Set([...testsModifiersNames, ...(options.functions ?? [])])
+        banned = new Set(options.modifiers ?? testsModifiersBanned)
       },
       ImportDeclaration(node) {
         if (!testsModifiersPackages.has(node.source.value)) {
@@ -74,7 +77,7 @@ export const testsModifiers = defineRule({
       MemberExpression(node) {
         const name = modifierName(node)
 
-        if (!name || !testsModifiersBanned.has(name.split('.').at(-1) ?? '')) {
+        if (!name || !banned.has(name.split('.').at(-1) ?? '')) {
           return
         }
 

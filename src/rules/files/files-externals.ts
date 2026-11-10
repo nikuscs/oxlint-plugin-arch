@@ -4,9 +4,11 @@ import { builtinModules } from 'node:module'
 import { dirname, join } from 'node:path'
 import { declarationsPropertyName } from '../../utils/declarations.utils.ts'
 import { namingBasename } from '../../utils/naming.utils.ts'
-import { optionsFirst, optionsGlob } from '../../utils/options.utils.ts'
+import { optionsFirst, optionsGlob, optionsPatterns, optionsPatternSchema, optionsPatternsTest } from '../../utils/options.utils.ts'
 import type { FilesExternalsManifest, FilesExternalsOptions } from '../../types/files.types.ts'
 import type { ESTree } from '@oxlint/plugins'
+
+const filesExternalsConfigs = '^(?:vite|next)\\.config\\.[cm]?[jt]s$'
 
 export const filesExternals = defineRule({
   meta: {
@@ -17,6 +19,7 @@ export const filesExternals = defineRule({
         additionalProperties: false,
         properties: {
           packages: { type: 'array', items: { type: 'string', minLength: 1 } },
+          files: { ...optionsPatternSchema, default: filesExternalsConfigs },
         },
       },
     ],
@@ -85,7 +88,9 @@ export const filesExternals = defineRule({
 
     return {
       before() {
-        if (!/^(?:vite|next)\.config\.[cm]?[jt]s$/.test(namingBasename(context.filename))) {
+        const files = optionsPatterns(optionsFirst<FilesExternalsOptions>(context, {}).files ?? filesExternalsConfigs)
+
+        if (!optionsPatternsTest(files, namingBasename(context.filename))) {
           return false
         }
       },

@@ -32,10 +32,7 @@ const boundariesNextDefaults: Required<Omit<BoundariesNextOptions, 'server' | 'c
   clientPackages: ['client-only', 'react-dom/client'],
   hookPackages: ['react'],
   publicEnv: 'NEXT_PUBLIC_',
-}
-
-function boundariesIsClientHook(name: string): boolean {
-  return /^use[A-Z]/.test(name) && name !== 'useId' && name !== 'use'
+  serverHooks: ['useId', 'use'],
 }
 
 export const boundariesNext = defineRule({
@@ -45,7 +42,11 @@ export const boundariesNext = defineRule({
       {
         type: 'object',
         additionalProperties: false,
-        properties: { ...boundariesRuntimeProperties, publicEnv: { type: 'string' } },
+        properties: {
+          ...boundariesRuntimeProperties,
+          publicEnv: { type: 'string' },
+          serverHooks: { type: 'array', items: { type: 'string', minLength: 1 }, default: boundariesNextDefaults.serverHooks },
+        },
       },
     ],
     messages: {
@@ -61,6 +62,7 @@ export const boundariesNext = defineRule({
     let client = false
     let shared = false
     const reactNamespaces = new Set<ESTree.Node>()
+    const clientHook = (name: string) => /^use[A-Z]/.test(name) && !options.serverHooks.includes(name)
 
     function check(node: ESTree.Node, source: string, typeOnly: boolean): void {
       if (typeOnly) {
@@ -151,7 +153,7 @@ export const boundariesNext = defineRule({
             continue
           }
 
-          if (specifier.importKind !== 'type' && specifier.imported.type === 'Identifier' && boundariesIsClientHook(specifier.imported.name)) {
+          if (specifier.importKind !== 'type' && specifier.imported.type === 'Identifier' && clientHook(specifier.imported.name)) {
             boundariesReport(context, specifier, specifier.imported.name, boundariesClientHookReason)
           }
         }
@@ -159,7 +161,7 @@ export const boundariesNext = defineRule({
       MemberExpression(node) {
         const name = boundariesMemberName(node)
 
-        if (!name || !boundariesIsClientHook(name) || node.object.type !== 'Identifier') {
+        if (!name || !clientHook(name) || node.object.type !== 'Identifier') {
           return
         }
 

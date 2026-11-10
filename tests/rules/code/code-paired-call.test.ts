@@ -63,6 +63,18 @@ describe('arch/code-paired-call', () => {
       errors: ['paired'],
     },
     {
+      name: 'a parameter shadowing an import alias is not the partner',
+      code: "import { required as r } from 'tools'\nstart()\nfunction run(r) { r() }",
+      options: { when: 'start', require: 'required' },
+      errors: ['paired'],
+    },
+    {
+      name: 'a method named like an import alias is not the partner',
+      code: "import { required as r } from 'tools'\nstart()\nform.r()",
+      options: { when: 'start', require: 'required' },
+      errors: ['paired'],
+    },
+    {
       name: 'each unsatisfied pair reports',
       code: 'start(); track()',
       options: { pairs: [{ when: 'start', require: 'finish' }, { when: 'track', require: 'flush' }] },

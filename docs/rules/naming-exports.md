@@ -1,6 +1,6 @@
 # arch/naming-exports
 
-Reports export names that miss the file prefix (`mode: 'prefix'`), miss `pattern` (`'pattern'`), or are not the function name a `file` template expands to (`'template'`). Pass several option objects to run several checks.
+Reports export names that miss the file prefix (`mode: 'prefix'`), miss `pattern` (`'pattern'`), or are not the function name a `file` template expands to (`'template'`). An aliased export is checked by its exported name. Pass several option objects to run several checks.
 
 ```ts
 // ❌ invoice.utils.ts

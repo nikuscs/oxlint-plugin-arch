@@ -20,6 +20,7 @@ import { chatClient } from '@app/server/client'
 | `entrypoints` | `string[]` | `[]` | Backend modules the frontend may import |
 | `aliases` | `Record<string, string>` | `{}` | Import prefix to directory |
 | `roles` | `string[]` | none | Extra private file suffixes, like `prompts` |
+| `surfaces` | `string[]` | `['service', 'client', 'server', 'rsc', 'utils']` | File suffixes of a domain's public surface, like `service` in `chat.service.ts`; other domain files are private once `roles` is set |
 | `uiPackages` | `string[]` | `['react', 'react-dom']` | Packages `.client.ts` services may not import at runtime |
 | `portable` | `boolean` | `false` | `<web>/lib` may not import app services or app types |
 

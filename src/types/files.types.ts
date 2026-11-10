@@ -23,6 +23,10 @@ export interface FilesConstantsOnlyBinding {
 export interface FilesDomainConstantsOptions {
   services?: boolean
   data?: boolean
+  pattern?: OptionsPattern
+  folders?: string[]
+  roles?: string[]
+  file?: string
 }
 
 export interface FilesExportsOptions extends Pick<NamingExportsStem, 'stem' | 'roles' | 'separators'> {
@@ -94,6 +98,7 @@ export interface FilesTypesOnlyImport {
 
 export interface FilesExternalsOptions {
   packages?: string[]
+  files?: OptionsPattern
 }
 
 export interface FilesExternalsManifest {

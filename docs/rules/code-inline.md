@@ -1,6 +1,6 @@
 # arch/code-inline
 
-A one-line `const` read once is inlined where it is read. A top-level `const` that only wraps one arrow or a shallow call is inlined at each use.
+A one-line `const` read once is inlined where it is read, unless a call, assignment or other side effect runs between them. A top-level `const` that only wraps one arrow or a shallow call is inlined at each use.
 
 A local is left alone when inlining would cross a function, nest calls past `nesting`, make the line longer than `max`, or need parentheses. Data literals, values holding a `yield` and exported names are skipped.
 

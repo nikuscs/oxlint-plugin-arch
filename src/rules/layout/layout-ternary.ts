@@ -1,6 +1,6 @@
 import { defineRule } from '@oxlint/plugins'
 import { optionsFirst } from '../../utils/options.utils.ts'
-import { sourceLineIndent, sourceNewline } from '../../utils/source.utils.ts'
+import { sourceIndentSchema, sourceIndentUnit, sourceLineIndent, sourceNewline } from '../../utils/source.utils.ts'
 import type { LayoutTernaryOptions } from '../../types/layout.types.ts'
 import type { ESTree } from '@oxlint/plugins'
 
@@ -27,11 +27,7 @@ export const layoutTernary = defineRule({
             minimum: 1,
             default: 160,
           },
-          indent: {
-            type: 'integer',
-            minimum: 1,
-            default: 2,
-          },
+          indent: { ...sourceIndentSchema, default: 2 },
           fit: {
             type: 'boolean',
             default: true,
@@ -54,7 +50,7 @@ export const layoutTernary = defineRule({
   },
   createOnce(context) {
     let maxLength = 160
-    let indent = 2
+    let indentUnit = sourceIndentUnit()
     let fit = true
     let branchMax: number | undefined
 
@@ -80,7 +76,7 @@ export const layoutTernary = defineRule({
       before() {
         const options = optionsFirst<LayoutTernaryOptions>(context, {})
         maxLength = options.max ?? 160
-        indent = options.indent ?? 2
+        indentUnit = sourceIndentUnit(options.indent)
         fit = options.fit ?? true
         branchMax = options.branch?.max
       },
@@ -130,7 +126,7 @@ export const layoutTernary = defineRule({
           return
         }
 
-        const newline = `${sourceNewline(text)}${sourceLineIndent(text, node.range[0])}${' '.repeat(indent)}`
+        const newline = `${sourceNewline(text)}${sourceLineIndent(text, node.range[0])}${indentUnit}`
         const question: [number, number] = [node.test.range[1], node.consequent.range[0]]
         const colon: [number, number] = [node.consequent.range[1], node.alternate.range[0]]
         context.report({

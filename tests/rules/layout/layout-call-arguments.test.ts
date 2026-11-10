@@ -27,6 +27,7 @@ describe('arch/layout-call-arguments', () => {
       errors: ['multiline'],
     },
     { name: 'min and indent options', code: '  save(a, b)', options: { min: 2, indent: 4 }, output: '  save(\n      a,\n      b\n  )', errors: ['multiline'] },
+    { name: 'tab indent option', code: '\tsave(a, b, c)', options: { indent: 'tab' }, output: '\tsave(\n\t\ta,\n\t\tb,\n\t\tc\n\t)', errors: ['multiline'] },
     { name: 'keeps CRLF line endings', code: 'save(a, b, c)\r\n', output: 'save(\r\n  a,\r\n  b,\r\n  c\r\n)\r\n', errors: ['multiline'] },
     { name: 'a comment prevents a fix but not a report', code: 'save(a, /* keep */ b, c)', output: null, errors: ['multiline'] },
     { name: 'a parenthesized first argument reports without a fix', code: 'save((a), b, c)', output: null, errors: ['multiline'] },
@@ -67,5 +68,18 @@ describe('arch/layout-call-arguments', () => {
     { name: 'join leaves kept callees', code: 'Layer.mergeAll(\n  a,\n  b,\n)', options: { split: false, join: { max: 80, keep: ['Layer.mergeAll'] } } },
     { name: 'join leaves calls nested past nesting', code: 'save(\n  a(b(c)),\n)', options: { split: false, join: { max: 80, nesting: 2 } } },
     { name: 'join leaves a commented call', code: 'save(\n  a, // keep\n  b,\n)', options: { split: false, join: { max: 80 } } },
+    {
+      name: 'join and split join up to min - 1 arguments',
+      code: 'save(\n  a,\n  b,\n  c,\n)',
+      options: { min: 4, join: { max: 80 } },
+      output: 'save(a, b, c,)',
+      errors: ['join'],
+    },
+    { name: 'join and split leave min arguments', code: 'save(\n  a,\n  b,\n  c,\n  d,\n)', options: { min: 4, join: { max: 80 } } },
+    { name: 'join without split leaves three arguments under a higher min', code: 'save(\n  a,\n  b,\n  c,\n)', options: { split: false, min: 4, join: { max: 80 } } },
+    { name: 'join without split still joins two arguments with min 2', code: 'save(\n  a,\n  b,\n)', options: { split: false, min: 2, join: { max: 80 } }, output: 'save(a, b,)', errors: ['join'] },
+    { name: 'join and split leave min arguments split', code: 'save(\n  a,\n  b,\n)', options: { min: 2, join: { max: 80 } } },
+    { name: 'join and split join below min', code: 'save(\n  a,\n)', options: { min: 2, join: { max: 80 } }, output: 'save(a,)', errors: ['join'] },
+    { name: 'join counts the trailing comma toward max', code: 'save(\n  a,\n  b,\n)', options: { split: false, join: { max: 10 } } },
   ])('$name', (row) => testerRun(layoutCallArguments, row))
 })

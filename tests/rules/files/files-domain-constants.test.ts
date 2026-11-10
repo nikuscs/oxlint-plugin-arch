@@ -19,6 +19,8 @@ describe('arch/files-domain-constants', () => {
       code: 'export const themeService = { themeApply(value) { return value.trim() } }',
       options: { data: true, services: true },
     },
+    { name: 'a SCREAMING_CASE constant passes another pattern', code: 'const MAX_LINES = 50', options: { pattern: '^k[A-Z]' } },
+    { name: 'a constant matching a configured pattern', code: 'const kMaxLines = 50', options: { pattern: ['^k[A-Z]', '^[A-Z][A-Z0-9_]+$'] }, errors: ['forbidden'] },
     { name: 'a SCREAMING_CASE constant', code: 'const MAX_LINES = 50', errors: ['forbidden'] },
     { name: 'an exported SCREAMING_CASE constant', code: 'export const MAX_LINES = 50', errors: ['forbidden'] },
     { name: 'a SCREAMING_CASE call result', code: 'const CLIENT = clientCreate()', errors: ['forbidden'] },
@@ -75,5 +77,28 @@ describe('arch/files-domain-constants', () => {
       errors: ['forbidden'],
     },
     { name: 'one report per declarator', code: 'const A_ONE = 1, B_TWO = 2', errors: ['forbidden', 'forbidden'] },
+    { name: 'a service folder names the file', filename: '/repo/services/invoice/invoice-list.ts', code: 'const MAX_LINES = 50', errors: ["'MAX_LINES' belongs in 'invoice.constants.ts' under this module-data policy. Use a domain-prefixed name; do not invent a factory to silence the rule."] },
+    { name: 'a role is dropped from the file', filename: '/repo/invoice-action.ts', code: 'const MAX_LINES = 50', errors: ["'MAX_LINES' belongs in 'invoice.constants.ts' under this module-data policy. Use a domain-prefixed name; do not invent a factory to silence the rule."] },
+    {
+      name: 'configured folders, roles and file',
+      filename: '/repo/domains/invoice/invoice-list.ts',
+      code: 'const MAX_LINES = 50',
+      options: { folders: ['domains'], roles: ['list'], file: '{domain}.config.ts' },
+      errors: ["'MAX_LINES' belongs in 'invoice.config.ts' under this module-data policy. Use a domain-prefixed name; do not invent a factory to silence the rule."],
+    },
+    {
+      name: 'configured roles replace the defaults',
+      filename: '/repo/invoice-action.ts',
+      code: 'const MAX_LINES = 50',
+      options: { roles: ['list'] },
+      errors: ["'MAX_LINES' belongs in 'invoice-action.constants.ts' under this module-data policy. Use a domain-prefixed name; do not invent a factory to silence the rule."],
+    },
+    {
+      name: 'configured folders replace the defaults',
+      filename: '/repo/services/invoice/invoice-list.ts',
+      code: 'const MAX_LINES = 50',
+      options: { folders: ['domains'] },
+      errors: ["'MAX_LINES' belongs in 'invoice-list.constants.ts' under this module-data policy. Use a domain-prefixed name; do not invent a factory to silence the rule."],
+    },
   ])('$name', (row) => testerRun(filesDomainConstants, row))
 })

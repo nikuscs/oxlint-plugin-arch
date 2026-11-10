@@ -14,7 +14,7 @@ const user = await load(id)
 
 | Option | Type | Default | |
 | --- | --- | --- | --- |
-| `why` | `boolean` | `true` | Keep `// Why:` notes |
+| `why` | `boolean \| string` | `true` | Keep `// Why:` notes and their continuation lines; a string replaces the `Why:` prefix, such as `'NOTE:'`; a trailing space is optional |
 | `allow` | `string[]` | `[]` | Regexes for comments to keep |
 | `jsdoc` | `boolean` | `false` | Keep `/** */` blocks |
 | `members` | `'off' \| 'also' \| 'only'` | `'off'` | Also check, or only check, comments on interface, type and object members |

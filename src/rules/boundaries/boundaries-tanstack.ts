@@ -21,7 +21,6 @@ import { optionsFirst } from '../../utils/options.utils.ts'
 import type * as BoundariesTypes from '../../types/boundaries.types.ts'
 import type { ESTree } from '@oxlint/plugins'
 
-const boundariesRenderers = ['renderServerComponent', 'renderToReadableStream']
 const boundariesChainMethods = ['handler', 'server', 'client', 'middleware', 'validator', 'inputValidator']
 const boundariesSplitFactories = ['createIsomorphicFn', 'createMiddleware']
 
@@ -42,7 +41,7 @@ const boundariesRuntimeTypeWrappers = [
 
 const boundariesClientHookReason = 'client hooks do not belong in server/RSC services'
 
-const boundariesTanstackDefaults: Required<Omit<BoundariesTypes.BoundariesTanstackOptions, 'server' | 'client' | 'dynamic' | 'publicEnv'>> = {
+const boundariesTanstackDefaults: Required<Omit<BoundariesTypes.BoundariesTanstackOptions, 'server' | 'client' | 'dynamic' | 'publicEnv' | 'serverHooks'>> = {
   web: [],
   backend: [],
   aliases: {},
@@ -61,6 +60,7 @@ const boundariesTanstackDefaults: Required<Omit<BoundariesTypes.BoundariesTansta
   hookPackages: ['react', '@tanstack/react-query', '@tanstack/react-router'],
   startPackages: ['@tanstack/react-start'],
   rscPackages: ['@tanstack/react-start/rsc', '@tanstack/react-start-rsc'],
+  renderers: ['renderServerComponent', 'renderToReadableStream'],
 }
 
 function boundariesIsClientHook(name: string): boolean {
@@ -79,6 +79,7 @@ export const boundariesTanstack = defineRule({
           rpc: { type: 'array', items: { type: 'string' } },
           startPackages: { type: 'array', items: { type: 'string' } },
           rscPackages: { type: 'array', items: { type: 'string' } },
+          renderers: { type: 'array', items: { type: 'string', minLength: 1 }, default: boundariesTanstackDefaults.renderers },
         },
       },
     ],
@@ -306,7 +307,7 @@ export const boundariesTanstack = defineRule({
             specifier.type === 'ImportSpecifier' &&
             specifier.importKind !== 'type' &&
             specifier.imported.type === 'Identifier' &&
-            boundariesRenderers.includes(specifier.imported.name)
+            options.renderers.includes(specifier.imported.name)
           ) {
             check(node, node.source.value, false, false, specifier)
           }
@@ -346,7 +347,7 @@ export const boundariesTanstack = defineRule({
 
         const kind = imported(node.object)
 
-        if (kind === 'rsc-renderers' && boundariesRenderers.includes(name) && (shared || !serverPosition(node.start, true))) {
+        if (kind === 'rsc-renderers' && options.renderers.includes(name) && (shared || !serverPosition(node.start, true))) {
           boundariesReport(context, node, name, 'server renderers require a server execution boundary')
         }
 
