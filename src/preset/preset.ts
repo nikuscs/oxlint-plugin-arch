@@ -26,7 +26,7 @@ import { typesGroup } from './groups/types.ts'
 import { presetProject } from './preset-folders.ts'
 import { presetRecipes, presetTemplates } from './preset-recipes.ts'
 import { presetCommonRules, presetExternals, presetGroupOrder } from './preset.constants.ts'
-import { PresetError, presetIntersect, presetSeverity } from './preset.utils.ts'
+import { presetEffectPackages, PresetError, presetIntersect, presetSeverity } from './preset.utils.ts'
 import type * as PresetTypes from '../types/preset.types.ts'
 import type { OxlintConfig, OxlintOverride } from 'oxlint'
 
@@ -179,8 +179,9 @@ function presetEmit<K extends PresetTypes.PresetGroupName>(
   })
 }
 
-function presetPlugins(project: PresetTypes.PresetProject): Pick<OxlintConfig, 'jsPlugins' | 'settings'> {
+function presetPlugins(project: PresetTypes.PresetProject): Pick<OxlintConfig, 'plugins' | 'jsPlugins' | 'settings'> {
   const react = project.scopes.some((scope) => scope.effective.react)
+  const effect = project.scopes.some((scope) => scope.effective.effect)
   const tailwinds = project.scopes.flatMap((scope) => (scope.effective.tailwind ? [scope.effective.tailwind] : []))
   const shadcns = project.scopes.flatMap((scope) => (scope.effective.shadcn ? [scope.effective.shadcn] : []))
   const tailwind = tailwinds.at(0)
@@ -206,6 +207,15 @@ function presetPlugins(project: PresetTypes.PresetProject): Pick<OxlintConfig, '
     { name: 'dillon-anti-slop', specifier: require.resolve('oxlint-plugin-arch/dillon-anti-slop') },
   ]
 
+  const plugins: PresetTypes.PresetPlugins = ['typescript', 'react', 'react-perf', 'jsx-a11y', 'import', 'unicorn', 'promise', 'vitest', 'node', 'oxc']
+
+  if (effect) {
+    const { tsgo, linteffect } = presetEffectPackages()
+
+    plugins.push(...(tsgo.correctness.plugins ?? []))
+    jsPlugins.push(...linteffect.recommended.jsPlugins)
+  }
+
   const settings: PresetTypes.PresetSettings = {
     react: { version: '19' },
     'import/resolver': { node: { extensions: ['.js', '.jsx', '.ts', '.tsx', '.mts', '.cts'] } },
@@ -220,7 +230,7 @@ function presetPlugins(project: PresetTypes.PresetProject): Pick<OxlintConfig, '
   }
 
   if (!tailwind || Object.keys(project.css).length === 0) {
-    return { jsPlugins, settings }
+    return { plugins, jsPlugins, settings }
   }
 
   jsPlugins.push(presetOptional('oxlint-tailwindcss', 'tailwind'))
@@ -231,7 +241,7 @@ function presetPlugins(project: PresetTypes.PresetProject): Pick<OxlintConfig, '
     settings.shadcn = { ui: shadcn.ui, componentImports: shadcn.components }
   }
 
-  return { jsPlugins, settings }
+  return { plugins, jsPlugins, settings }
 }
 
 export function preset(config: PresetTypes.PresetConfig): OxlintConfig {
@@ -261,7 +271,6 @@ export function preset(config: PresetTypes.PresetConfig): OxlintConfig {
   return {
     options: { typeAware: true },
     categories: { correctness: level },
-    plugins: ['typescript', 'react', 'react-perf', 'jsx-a11y', 'import', 'unicorn', 'promise', 'vitest', 'node', 'oxc'],
     ignorePatterns: [
       '**/node_modules/**',
       ...project.outputs,

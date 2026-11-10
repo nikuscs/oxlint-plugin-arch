@@ -15,6 +15,8 @@
         "oxlint-plugin-eslint": "1.89.0",
       },
       "devDependencies": {
+        "@effect/tsgo": "0.67.1",
+        "@opsydyn/oxlint-effect": "2.0.1",
         "@shadcn/lint": "0.2.3",
         "@types/node": "26.6.5",
         "bumpp": "12.3.0",
@@ -49,6 +51,22 @@
     },
   },
   "packages": {
+    "@effect/tsgo": ["@effect/tsgo@0.67.1", "", { "optionalDependencies": { "@effect/tsgo-darwin-arm64": "0.67.1", "@effect/tsgo-darwin-x64": "0.67.1", "@effect/tsgo-linux-arm": "0.67.1", "@effect/tsgo-linux-arm64": "0.67.1", "@effect/tsgo-linux-x64": "0.67.1", "@effect/tsgo-win32-arm64": "0.67.1", "@effect/tsgo-win32-x64": "0.67.1" }, "bin": { "effect-tsgo": "dist/effect-tsgo.cjs" } }, "sha512-rQLQ3vAStYEPQX3+gCv4AM9ehhmJjWYwY9itqFKVs9NEtRQg6msKH6qo9VYebikDPUDiKOaJJwQAeRcYeybCug=="],
+
+    "@effect/tsgo-darwin-arm64": ["@effect/tsgo-darwin-arm64@0.67.1", "", { "os": "darwin", "cpu": "arm64" }, "sha512-q10xwD2s+KvZEwbY5OHGSmfAp9Is4e/a7PS4NiUVnvGnPOCbjOMEbVrYjOImy5uawPAa1CVA+55qxCv4ctaw4g=="],
+
+    "@effect/tsgo-darwin-x64": ["@effect/tsgo-darwin-x64@0.67.1", "", { "os": "darwin", "cpu": "x64" }, "sha512-6vHV1lqPTFT8mUkO6+x5qlKa7Cycs7QVR1JMLTTJdL2GeV2xrIQdj/U+JEmFH/pt0X9BJoFFYsy4tOQocF9HpQ=="],
+
+    "@effect/tsgo-linux-arm": ["@effect/tsgo-linux-arm@0.67.1", "", { "os": "linux", "cpu": "arm" }, "sha512-uAQXWk1j7ablFOIZrgA2zK8FfwGZC4jkDbSqqrWs+zn1XvaKjJ969oemZBm6XrDu/QEVl0+OgRMvNEfJNm5rTg=="],
+
+    "@effect/tsgo-linux-arm64": ["@effect/tsgo-linux-arm64@0.67.1", "", { "os": "linux", "cpu": "arm64" }, "sha512-T3Jr6KCgNazyH4D9mv4ppXNKi6omMxLrPd0TjoYpYWcR/22F2rsPNXRDNobtfviEhGXedYoaoV+emQA75mFLGA=="],
+
+    "@effect/tsgo-linux-x64": ["@effect/tsgo-linux-x64@0.67.1", "", { "os": "linux", "cpu": "x64" }, "sha512-oH4bOpPE6dFEtSmAHG/vH987Fnd+ToVc4KUFMeIhHQQKU6FPl+88Kb07v1oTAS9Ccrxx54JOQ3weyUK/ItwtdQ=="],
+
+    "@effect/tsgo-win32-arm64": ["@effect/tsgo-win32-arm64@0.67.1", "", { "os": "win32", "cpu": "arm64" }, "sha512-UnCxYSV3lucGadi5lp2L/ToO23UOibL1fus9QAw04EQKGRa6OZh14MwAQZA5QFXbusFqz6KzlRsKVgdHkWMI/w=="],
+
+    "@effect/tsgo-win32-x64": ["@effect/tsgo-win32-x64@0.67.1", "", { "os": "win32", "cpu": "x64" }, "sha512-tVRKDyrVCVpCARN/6YSBY8QAykU8VArgS854N3O/Y5Ukl9VWnatPH9r8laEHxmgEl+xHcc/tNz8VtaCzolcVJA=="],
+
     "@eslint-community/eslint-plugin-eslint-comments": ["@eslint-community/eslint-plugin-eslint-comments@4.8.1", "", { "dependencies": { "escape-string-regexp": "^4.0.0", "ignore": "^7.0.5" }, "peerDependencies": { "eslint": "^6.0.0 || ^7.0.0 || ^8.0.0 || ^9.0.0 || ^10.0.0" } }, "sha512-vafrdi15JHBFh1qWOAucyJwlEEuhdoMof28jOdKdgnwZ7bXwd6v4wzHYSmAVLwnx0yc7bqAtfJ0EZQV1WAzV/Q=="],
 
     "@eslint-community/eslint-utils": ["@eslint-community/eslint-utils@4.10.1", "", { "dependencies": { "eslint-visitor-keys": "^3.4.3" }, "peerDependencies": { "eslint": "^6.0.0 || ^7.0.0 || >=8.0.0" } }, "sha512-cuadcxVFE8sDK6iWJbs8Sn0av2Nrh2QSGQhVlBW9AaAHqHwjWsZHT8LJ4hFGPh7ASBV2deFdM7H/DPjulmh8rg=="],
@@ -108,6 +126,8 @@
     "@microsoft/tsdoc": ["@microsoft/tsdoc@0.17.1", "", {}, "sha512-VHyYyyoH63jFoO3shpw9Zfijk5v/9p/VrClW35z0/q6ooK7sSmxpzOkS4iZPxs3vO4XtBW4H38HRAKkAMIK7DA=="],
 
     "@microsoft/tsdoc-config": ["@microsoft/tsdoc-config@0.18.3", "", { "dependencies": { "@microsoft/tsdoc": "0.17.1", "ajv": "~8.18.0", "jju": "~1.4.0", "resolve": "~1.22.2" } }, "sha512-0I0rGXo1eJziw3EEErkDS9p/0RzBcyOiV+zbSDqOZTeURmhtut+WIvpih0LM5g+ZpZ9SyFxDfkhAcl/r8e2zGw=="],
+
+    "@opsydyn/oxlint-effect": ["@opsydyn/oxlint-effect@2.0.1", "", { "dependencies": { "@oxlint/plugins": "^1.71.0" } }, "sha512-vY8DwhMSbNvtFiD5b6ekcXNHzLdCS+6rYLM70ajteJoStX0mdb+bf9M6OPyG5tkbYG7Oao5f+pIHxIHTd/rPGg=="],
 
     "@oxc-parser/binding-android-arm-eabi": ["@oxc-parser/binding-android-arm-eabi@0.148.0", "", { "os": "android", "cpu": "arm" }, "sha512-pHASv9g5pASxb7akHERZNSkrEqPhFaUix98o7d9hbTpolnnFWl7UiRrcMhCsV1+iVO4/cJwKsbKRJTFNs2tdBQ=="],
 

@@ -1,18 +1,28 @@
-import { presetExtensions } from '../preset.constants.ts'
-import { presetOverride } from '../preset.utils.ts'
+import { presetEffectOff, presetExtensions } from '../preset.constants.ts'
+import { presetEffectPackages, presetOverride } from '../preset.utils.ts'
 import type { PresetBuilder } from '../../types/preset.types.ts'
 
 export const effectGroup: PresetBuilder<'effect'> = (project, settings) => {
   const files = [`**/${presetExtensions}`]
   const max = settings.width
+  const { tsgo, linteffect } = presetEffectPackages()
+  const tsgoRules = [tsgo.correctness, tsgo.antipattern, tsgo.effectNative, tsgo.style].flatMap((config) => Object.keys(config.rules ?? {}))
 
   return [
+    presetOverride(files, {
+      ...Object.fromEntries(tsgoRules.map((rule) => [rule, 'error'])),
+      ...linteffect.recommended.rules,
+      ...presetEffectOff,
+    }),
     presetOverride(files, {
       'arch/code-trivial-functions': 'off',
       'arch/code-branch-once': 'error',
       'arch/code-function-nesting': ['error', { max: 4 }],
       'arch/code-inline': ['error', { max, nesting: 2, keep: ['^[A-Z]', '^layer'], allow: '^(?:decode|encode)[A-Z]', services: ['of'] }],
       'arch/code-yield-argument': 'error',
+      'arch/effect-layers': 'error',
+      'arch/effect-merge-pipe': 'error',
+      'arch/effect-values-first': 'error',
       'arch/layout-arrow-body': ['error', { max }],
       'arch/layout-call-arguments': ['error', { split: false, hug: { max }, join: { max, nesting: 2, keep: ['Layer.mergeAll'] } }],
       'arch/layout-call-depth': ['error', { max: 2 }],

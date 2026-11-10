@@ -429,3 +429,15 @@ export const presetMigrationNumber = '^(\\d{3,14})[-_]'
 export const presetRootImports = { 'framer-motion': 'Use motion/react.' }
 
 export const presetPackageImports = { '../../apps/**': 'Packages stay app-agnostic; do not import app internals.' }
+
+export const presetEffectOff: PresetTypes.PresetRules = {
+  'linteffect/no-effect-fn-generator': 'off',
+  'linteffect/prefer-extracted-concept': 'off',
+  'linteffect/no-clever-effect-expression': 'off',
+  'linteffect/no-mixed-pillar-function': 'off',
+  'linteffect/no-piped-yield-in-gen': 'off',
+  'linteffect/no-domain-logic-in-conditional': 'off',
+  'linteffect/prefer-pipe-for-behavior': 'off',
+  'linteffect/no-ternary': 'off',
+  'linteffect/no-effect-as': 'off',
+}

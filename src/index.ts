@@ -27,6 +27,11 @@ import { codeYieldArgument } from './rules/code/code-yield-argument.ts'
 import { commentsCode } from './rules/comments/comments-code.ts'
 import { commentsDirectives } from './rules/comments/comments-directives.ts'
 import { copyDashes } from './rules/copy/copy-dashes.ts'
+import { effectLayerFile } from './rules/effect/effect-layer-file.ts'
+import { effectLayers } from './rules/effect/effect-layers.ts'
+import { effectMergePipe } from './rules/effect/effect-merge-pipe.ts'
+import { effectSchemaFirst } from './rules/effect/effect-schema-first.ts'
+import { effectValuesFirst } from './rules/effect/effect-values-first.ts'
 import { filesComponentsOnly } from './rules/files/files-components-only.ts'
 import { filesConstantsOnly } from './rules/files/files-constants-only.ts'
 import { filesDomainConstants } from './rules/files/files-domain-constants.ts'
@@ -68,6 +73,7 @@ import { testsConcurrentDb } from './rules/tests/tests-concurrent-db.ts'
 import { testsModifiers } from './rules/tests/tests-modifiers.ts'
 import { testsTitles } from './rules/tests/tests-titles.ts'
 import { typesDeclarations } from './rules/types/types-declarations.ts'
+import { typesDuplicate } from './rules/types/types-duplicate.ts'
 import { typesImportedAlias } from './rules/types/types-imported-alias.ts'
 import { typesInline } from './rules/types/types-inline.ts'
 import { typesLocalAlias } from './rules/types/types-local-alias.ts'
@@ -106,6 +112,11 @@ export default eslintCompatPlugin({
     'comments-code': commentsCode,
     'comments-directives': commentsDirectives,
     'copy-dashes': copyDashes,
+    'effect-layer-file': effectLayerFile,
+    'effect-layers': effectLayers,
+    'effect-merge-pipe': effectMergePipe,
+    'effect-schema-first': effectSchemaFirst,
+    'effect-values-first': effectValuesFirst,
     'files-components-only': filesComponentsOnly,
     'files-constants-only': filesConstantsOnly,
     'files-domain-constants': filesDomainConstants,
@@ -147,6 +158,7 @@ export default eslintCompatPlugin({
     'tests-modifiers': testsModifiers,
     'tests-titles': testsTitles,
     'types-declarations': typesDeclarations,
+    'types-duplicate': typesDuplicate,
     'types-imported-alias': typesImportedAlias,
     'types-inline': typesInline,
     'types-local-alias': typesLocalAlias,

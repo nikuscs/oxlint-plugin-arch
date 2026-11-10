@@ -91,5 +91,44 @@ describe('arch/schemas-local', () => {
       options: { packages: ['valibot'], namespaces: ['v'] },
       errors: ['runtimeImport', 'construction'],
     },
+    {
+      name: 'imports false skips the import report',
+      code: "import * as Schema from 'effect/Schema'\nconst f = (s: Schema.Codec<string>) => s",
+      options: { packages: ['effect/Schema'], namespaces: [], calls: ['decodeUnknownSync'], imports: false },
+    },
+    {
+      name: 'values keeps a construction built from a parameter',
+      code: "import * as Schema from 'effect/Schema'\nconst pick = (id) => Schema.Struct({ id: Schema.Literal(id), at: Schema.optional(Schema.String) })",
+      options: { packages: ['effect/Schema'], namespaces: [], calls: ['decodeUnknownSync'], values: true },
+    },
+    {
+      name: 'values keeps a construction built from a local',
+      code: "import * as Schema from 'effect/Schema'\nfunction pick(input) {\n  const max = input.max\n  return Schema.String.pipe(Schema.check(Schema.isMaxLength(max)))\n}",
+      options: { packages: ['effect/Schema'], namespaces: [], calls: ['decodeUnknownSync'], values: true },
+    },
+    {
+      name: 'values still reports a construction from module values',
+      code: "import * as Schema from 'effect/Schema'\nconst max = 3\nconst pick = () => Schema.Literal(max)",
+      options: { packages: ['effect/Schema'], namespaces: [], calls: ['decodeUnknownSync'], values: true },
+      errors: ['runtimeImport', 'construction'],
+    },
+    {
+      name: 'values ignores a callback parameter of the construction',
+      code: "import * as Schema from 'effect/Schema'\nconst pick = () => Schema.filter((value) => value > 0)",
+      options: { packages: ['effect/Schema'], namespaces: [], calls: ['decodeUnknownSync'], values: true },
+      errors: ['runtimeImport', 'construction'],
+    },
+    {
+      name: 'values ignores a property key named like a local',
+      code: "import * as Schema from 'effect/Schema'\nconst pick = (id) => Schema.Struct({ id: Schema.String })",
+      options: { packages: ['effect/Schema'], namespaces: [], calls: ['decodeUnknownSync'], values: true, imports: false },
+      errors: ['construction'],
+    },
+    {
+      name: 'decoding calls pass with imports false',
+      code: "import * as Schema from 'effect/Schema'\nconst user = Schema.decodeUnknownSync(User)(input)\nconst Local = Schema.Struct({})",
+      options: { packages: ['effect/Schema'], namespaces: [], calls: ['decodeUnknownSync'], imports: false },
+      errors: ['construction'],
+    },
   ])('$name', (row) => testerRun(schemasLocal, row))
 })

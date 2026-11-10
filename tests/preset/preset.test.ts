@@ -16,6 +16,10 @@ describe('preset', () => {
     { name: 'the Effect group traces source files', folders: { src: recipes.effect }, file: 'src/mail.ts', rule: 'arch/code-traced', expected: ['error', expect.any(Object)] },
     { name: 'the Effect group allows Effect.promise in tests', folders: { src: recipes.effect }, file: 'src/mail.test.ts', rule: 'arch/code-justified-call', expected: undefined },
     { name: 'the Effect group skips tracing in tests', folders: { src: recipes.effect }, file: 'src/mail.test.ts', rule: 'arch/code-traced', expected: undefined },
+    { name: 'the Effect group turns on Effect tsgo rules', folders: { src: recipes.effect }, file: 'src/mail.ts', rule: 'effecttsgo/catch-unfailable-effect', expected: 'error' },
+    { name: 'the Effect group turns on oxlint-effect rules', folders: { src: recipes.effect }, file: 'src/mail.test.ts', rule: 'linteffect/no-if-statement', expected: 'error' },
+    { name: 'the Effect group turns off oxlint-effect rules its layout rules contradict', folders: { src: recipes.effect }, file: 'src/mail.ts', rule: 'linteffect/no-ternary', expected: 'off' },
+    { name: 'the Effect group follows the folder level', folders: { src: { effect: 'warn' } }, file: 'src/mail.ts', rule: 'effecttsgo/catch-unfailable-effect', expected: 'warn' },
     { name: 'the library recipe leaves the Effect rules off', folders: { src: recipes.library }, file: 'src/mail.ts', rule: 'arch/code-inline', expected: undefined },
     { name: 'the TanStack recipe adds route checks', folders: { src: recipes.tanstack }, file: 'src/routes/index.tsx', rule: 'arch/files-route', expected: ['error', { export: 'Route' }] },
     {
@@ -302,6 +306,16 @@ describe('preset', () => {
     for (const value of [true, false, 'warn', options]) {
       expect(() => preset({ root, folders: { src: { [name]: value } } })).not.toThrow()
     }
+  })
+
+  it.each([
+    { name: 'the Effect group loads Effect tsgo and oxlint-effect', folders: { src: recipes.effect }, plugins: ['effecttsgo'], jsPlugins: ['linteffect'] },
+    { name: 'other groups load neither', folders: { src: true }, plugins: [], jsPlugins: [] },
+  ])('$name', ({ folders, plugins, jsPlugins }) => {
+    const config = preset({ root, folders })
+    const names = (config.jsPlugins ?? []).map((plugin) => (typeof plugin === 'string' ? plugin : plugin.name))
+
+    expect({ plugins: (config.plugins ?? []).map(String).filter((plugin) => plugin === 'effecttsgo'), jsPlugins: names.filter((name) => name === 'linteffect') }).toEqual({ plugins, jsPlugins })
   })
 
   it.each<{ name: string; folders: unknown; message: string }>([

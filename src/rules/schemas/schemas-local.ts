@@ -1,4 +1,6 @@
 import { defineRule } from '@oxlint/plugins'
+import { astSome } from '../../utils/ast.utils.ts'
+import { boundariesDeclaredVariable } from '../../utils/boundaries.utils.ts'
 import { optionsFirst } from '../../utils/options.utils.ts'
 import type { SchemasLocalOptions } from '../../types/schemas.types.ts'
 import type { ESTree } from '@oxlint/plugins'
@@ -20,6 +22,8 @@ export const schemasLocal = defineRule({
           calls: { type: 'array', items: { type: 'string' } },
           allow: { type: 'array', items: { type: 'string' } },
           patterns: { type: 'array', items: { type: 'string' } },
+          imports: { type: 'boolean' },
+          values: { type: 'boolean' },
           message: { type: 'string' },
           importMessage: { type: 'string' },
           constructionMessage: { type: 'string' },
@@ -39,6 +43,43 @@ export const schemasLocal = defineRule({
     let pending: { node: ESTree.ImportDeclaration; locals: string[] }[] = []
     let importMessage = schemasLocalImportMessage
     let constructionMessage = schemasLocalConstructionMessage
+    let imports = true
+    let values = false
+    let inline = new Set<ESTree.Node>()
+
+    function isInline(node: ESTree.Node): boolean {
+      if (inline.size === 0) {
+        return false
+      }
+
+      for (let parent: ESTree.Node | null = node.parent; parent; parent = parent.parent) {
+        if (inline.has(parent)) {
+          return true
+        }
+      }
+
+      return false
+    }
+
+    function readsLocal(node: ESTree.CallExpression): boolean {
+      const scope = context.sourceCode.getScope(node)
+
+      return astSome(node, (child) => {
+        if (child.type !== 'Identifier') {
+          return false
+        }
+
+        const parent = child.parent
+
+        const named =
+          (parent.type === 'MemberExpression' && parent.property === child && !parent.computed) ||
+          (parent.type === 'Property' && parent.key === child && !parent.computed && !parent.shorthand)
+
+        const type = named ? undefined : boundariesDeclaredVariable(scope, child.name)?.scope.type
+
+        return type !== undefined && type !== 'module' && type !== 'global'
+      })
+    }
 
     function isAllowedCall(node: ESTree.Node, member: ESTree.Node | null): boolean {
       return (
@@ -57,6 +98,10 @@ export const schemasLocal = defineRule({
     }
 
     function reportRuntimeImport(node: ESTree.Node, source: string) {
+      if (!imports) {
+        return
+      }
+
       context.report({
         node,
         messageId: 'runtimeImport',
@@ -84,6 +129,9 @@ export const schemasLocal = defineRule({
         pending = []
         importMessage = options.importMessage ?? options.message ?? schemasLocalImportMessage
         constructionMessage = options.constructionMessage ?? options.message ?? schemasLocalConstructionMessage
+        imports = options.imports ?? true
+        values = options.values ?? false
+        inline = new Set()
         if (
           (options.allow ?? []).some((suffix) => filename.endsWith(suffix)) ||
           (options.patterns ?? []).some((pattern) => new RegExp(pattern).test(filename))
@@ -123,7 +171,7 @@ export const schemasLocal = defineRule({
             .some(
               (variable) =>
                 variable.references.length === 0 ||
-                variable.references.some((reference) => !isAllowedCall(reference.identifier, reference.identifier.parent)),
+                variable.references.some((reference) => !isAllowedCall(reference.identifier, reference.identifier.parent) && !isInline(reference.identifier)),
             ),
         )
 
@@ -143,6 +191,12 @@ export const schemasLocal = defineRule({
         if (root.type !== 'Identifier' || !constructors.has(root.name) || (node.callee.type === 'MemberExpression' && node.callee.object === root && isAllowedCall(root, root.parent))) {
           return
         }
+
+        if (values && (isInline(node) || readsLocal(node))) {
+          inline.add(node)
+          return
+        }
+
         context.report({
           node,
           messageId: 'construction',

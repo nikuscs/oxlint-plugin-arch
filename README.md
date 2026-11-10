@@ -57,7 +57,7 @@ On by default: [`layout`](docs/groups/layout.md), [`limits`](docs/groups/limits.
 
 Opt-in: [`react`](docs/groups/react.md), [`tanstack`](docs/groups/tanstack.md), [`next`](docs/groups/next.md), [`expo`](docs/groups/expo.md), [`tailwind`](docs/groups/tailwind.md), [`shadcn`](docs/groups/shadcn.md), [`kit`](docs/groups/kit.md), [`backend`](docs/groups/backend.md), [`orpc`](docs/groups/orpc.md), [`schemas`](docs/groups/schemas.md), [`forms`](docs/groups/forms.md), [`sql`](docs/groups/sql.md), [`effect`](docs/groups/effect.md), [`console`](docs/groups/console.md).
 
-75 rules, IDs `arch/<rule>`. 🔧 = autofix.
+81 rules, IDs `arch/<rule>`. 🔧 = autofix.
 
 | Family | Covers | Rules |
 | --- | --- | --- |
@@ -72,7 +72,7 @@ Opt-in: [`react`](docs/groups/react.md), [`tanstack`](docs/groups/tanstack.md), 
 | `react` | Components, effects, class names | [`react-dynamic-classes`](docs/rules/react-dynamic-classes.md), [`react-empty-effect`](docs/rules/react-empty-effect.md), [`react-memo`](docs/rules/react-memo.md), [`react-props`](docs/rules/react-props.md) |
 | `schemas` | Schema placement | [`schemas-inline`](docs/rules/schemas-inline.md), [`schemas-local`](docs/rules/schemas-local.md), [`schemas-rederive`](docs/rules/schemas-rederive.md), [`schemas-single-use`](docs/rules/schemas-single-use.md) |
 | `tests` | Test structure | [`tests-assertions`](docs/rules/tests-assertions.md), [`tests-concurrent-db`](docs/rules/tests-concurrent-db.md), [`tests-modifiers`](docs/rules/tests-modifiers.md), [`tests-titles`](docs/rules/tests-titles.md) |
-| `types` | Type placement and shape | [`types-declarations`](docs/rules/types-declarations.md), [`types-imported-alias`](docs/rules/types-imported-alias.md), [`types-inline`](docs/rules/types-inline.md), [`types-local-alias`](docs/rules/types-local-alias.md), [`types-namespace-import`](docs/rules/types-namespace-import.md), [`types-service`](docs/rules/types-service.md), [`types-unknown`](docs/rules/types-unknown.md) |
+| `types` | Type placement and shape | [`types-declarations`](docs/rules/types-declarations.md), [`types-duplicate`](docs/rules/types-duplicate.md), [`types-imported-alias`](docs/rules/types-imported-alias.md), [`types-inline`](docs/rules/types-inline.md), [`types-local-alias`](docs/rules/types-local-alias.md), [`types-namespace-import`](docs/rules/types-namespace-import.md), [`types-service`](docs/rules/types-service.md), [`types-unknown`](docs/rules/types-unknown.md) |
 <!-- generated:end -->
 
 Also bundled: [Dillon Mulroy's anti-slop rules](docs/vendor.md) as `oxlint-plugin-arch/dillon-anti-slop`.

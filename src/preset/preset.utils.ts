@@ -6,6 +6,29 @@ import type { OxlintOverride } from 'oxlint'
 
 export class PresetError extends Error {}
 
+async function presetEffectImport<T>(load: Promise<T>): Promise<T | null> {
+  try {
+    return await load
+  } catch (error) {
+    if (error instanceof Error && 'code' in error && error.code === 'ERR_MODULE_NOT_FOUND') {
+      return null
+    }
+
+    throw error
+  }
+}
+
+const presetEffectTsgo = await presetEffectImport(import('@effect/tsgo/oxlint-presets'))
+const presetEffectLinteffect = await presetEffectImport(import('@opsydyn/oxlint-effect'))
+
+export function presetEffectPackages(): PresetTypes.PresetEffectPackages {
+  if (!presetEffectTsgo || !presetEffectLinteffect) {
+    throw new PresetError('The effect group needs @effect/tsgo and @opsydyn/oxlint-effect: bun add -d @effect/tsgo @opsydyn/oxlint-effect')
+  }
+
+  return { tsgo: presetEffectTsgo, linteffect: presetEffectLinteffect }
+}
+
 export function presetScopes(roots: string[], suffix = `**/${presetExtensions}`): string[] {
   return roots.map((root) => (root === '.' ? suffix : `${root}/${suffix}`))
 }

@@ -1,4 +1,6 @@
 import type { OptionsPattern } from './options.types.ts'
+import type * as EffectTsgo from '@effect/tsgo/oxlint-presets'
+import type * as EffectLinteffect from '@opsydyn/oxlint-effect'
 import type { OxlintConfig, OxlintOverride } from 'oxlint'
 
 export type PresetLevel = 'error' | 'warn'
@@ -153,6 +155,11 @@ export interface PresetEffectOptions {
   skip?: OptionsPattern
 }
 
+export interface PresetEffectPackages {
+  tsgo: typeof EffectTsgo
+  linteffect: typeof EffectLinteffect
+}
+
 export interface PresetSqlOptions {
   sanitizers?: string[]
 }
@@ -206,6 +213,7 @@ export type PresetRecipe = PresetGroups
 
 export type PresetRules = NonNullable<OxlintConfig['rules']>
 export type PresetJsPlugins = NonNullable<OxlintConfig['jsPlugins']>
+export type PresetPlugins = NonNullable<OxlintConfig['plugins']>
 export type PresetSettings = NonNullable<OxlintConfig['settings']>
 
 export interface PresetResolvedGroups {

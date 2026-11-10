@@ -11,6 +11,8 @@ export interface SchemasLocalOptions {
   calls?: string[]
   allow?: string[]
   patterns?: string[]
+  imports?: boolean
+  values?: boolean
   message?: string
   importMessage?: string
   constructionMessage?: string

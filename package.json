@@ -54,6 +54,8 @@
     "oxlint-plugin-eslint": "1.89.0"
   },
   "peerDependencies": {
+    "@effect/tsgo": ">=0.67.1",
+    "@opsydyn/oxlint-effect": ">=2.0.1",
     "@shadcn/lint": ">=0.2.3",
     "eslint-plugin-react": ">=7.37.5",
     "eslint-plugin-react-you-might-not-need-an-effect": ">=1.0.2",
@@ -63,6 +65,8 @@
     "oxlint-tsgolint": ">=7.0.2003"
   },
   "devDependencies": {
+    "@effect/tsgo": "0.67.1",
+    "@opsydyn/oxlint-effect": "2.0.1",
     "@shadcn/lint": "0.2.3",
     "@types/node": "26.6.5",
     "bumpp": "12.3.0",
@@ -98,6 +102,12 @@
     "plugin"
   ],
   "peerDependenciesMeta": {
+    "@effect/tsgo": {
+      "optional": true
+    },
+    "@opsydyn/oxlint-effect": {
+      "optional": true
+    },
     "@shadcn/lint": {
       "optional": true
     },

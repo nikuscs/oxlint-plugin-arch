@@ -1,5 +1,21 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- `arch/effect-layers`: one layer per line in `Layer.mergeAll(...)` and in the layer arrays of `Effect.provide`, `Layer.provide` and `Layer.provideMerge`, from `min` items (default `2`). `merge: { callees, min }` and `provide: { callees, min }` set each side; `indent` sets the fix. The fix changes only whitespace. The `effect` group enables it.
+- `arch/effect-merge-pipe`: a multi-line `Layer.mergeAll(...)` is named before it is piped: no `.pipe(` on it and not the first argument of `pipe(...)`. `merge`, `pipe` and `methods` options. Reports only. The `effect` group enables it.
+- `arch/effect-values-first`: values come before helpers and methods, at file level and inside each top-level function or Effect builder. `builders` and `pinned` options. The `effect` group enables it.
+- `arch/effect-layer-file`: a layer file exports `layer` built with Layer from one Effect named `make`; other layers are local `layer<Role>`. `layer`, `make`, `prefix`, `builders`, `layers`, `services` and `constructors` options. Not in a group; scope it to layer files.
+- `arch/effect-schema-first`: a types file declares Schemas, kept interfaces, `declare module`, then type aliases, with `typeof X.Type` aliases in Schema order and data interfaces made Schemas. `member`, `keep`, `runtime`, `rows` (off by default), `order` (the section order) and `derived` (`first`, `sorted`) options. Not in a group; scope it to types files.
+- `arch/types-duplicate`: reports an interface, object type alias or struct Schema with the same members as an earlier one. `structs` and `min` options.
+- `arch/schemas-local`: `imports: false` reports constructions only; `values: true` keeps a construction inline when it reads a parameter or local.
+
+### Changed
+
+- **Breaking:** the `effect` group turns on every rule from `@effect/tsgo`'s `correctness`, `antipattern`, `effectNative` and `style` presets and `@opsydyn/oxlint-effect`'s `recommended` rules, and turns off the nine oxlint-effect rules that contradict its own. It now needs both packages (optional peer dependencies) and fails with the install command when one is missing; lint runs through `effect-tsgo`.
+
 ## 0.12.5
 
 ### Added

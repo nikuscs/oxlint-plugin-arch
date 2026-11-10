@@ -28,3 +28,8 @@ export interface TypesNamespaceImportOptions {
   max: number
   names: Record<string, string>
 }
+
+export interface TypesDuplicateOptions {
+  structs?: string[]
+  min?: number
+}
