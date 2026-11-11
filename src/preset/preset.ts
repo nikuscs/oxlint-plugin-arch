@@ -27,8 +27,8 @@ import { testsGroup } from './groups/tests.ts'
 import { typesGroup } from './groups/types.ts'
 import { presetProject } from './preset-folders.ts'
 import { presetRecipes, presetTemplates } from './preset-recipes.ts'
-import { presetCommonRules, presetExternals, presetGroupOrder } from './preset.constants.ts'
-import { presetEffectPackages, PresetError, presetGlobEscape, presetIntersect, presetScopes, presetSeverity } from './preset.utils.ts'
+import { presetCommonRules, presetExtensions, presetExternals, presetGroupOrder } from './preset.constants.ts'
+import { presetEffectPackages, PresetError, presetGlobEscape, presetIntersect, presetSeverity } from './preset.utils.ts'
 import type * as PresetTypes from '../types/preset.types.ts'
 import type { OxlintConfig, OxlintOverride } from 'oxlint'
 
@@ -142,16 +142,21 @@ function presetEmit<K extends PresetTypes.PresetGroupName>(
   const key = (scope: PresetTypes.PresetScope) => JSON.stringify(presetSettings(scope, name))
   const breaks = project.scopes.filter((scope) => scope.parent === null || key(scope) !== key(scope.parent))
 
-  const nearest = (owner: PresetTypes.PresetScope) =>
-    breaks.filter((scope) => {
-      let current = scope.parent
+  const region = (scope: PresetTypes.PresetScope | null) => {
+    let current = scope
 
-      while (current && current !== owner && !breaks.includes(current)) {
-        current = current.parent
-      }
+    while (current && !breaks.includes(current)) {
+      current = current.parent
+    }
 
-      return scope !== owner && current === owner
-    })
+    return current
+  }
+
+  const keyed = project.fileKeys.flatMap((fileKey) =>
+    fileKey.scopes
+      .filter((scope) => scope.parent && key(scope) !== key(scope.parent))
+      .map((scope) => ({ owner: region(scope.parent), files: presetIntersect(fileKey.pattern, scope.key) })),
+  )
 
   return breaks.flatMap((owner) => {
     const settings = presetSettings(owner, name)
@@ -160,7 +165,10 @@ function presetEmit<K extends PresetTypes.PresetGroupName>(
       return []
     }
 
-    const excluded = nearest(owner).map((scope) => `${scope.key}/**`)
+    const excluded = [
+      ...breaks.filter((scope) => scope !== owner && region(scope.parent) === owner).map((scope) => `${scope.key}/**`),
+      ...keyed.filter((entry) => entry.owner === owner).flatMap((entry) => entry.files),
+    ]
 
     return builder(project, settings, owner).flatMap((override) => {
       const files = override.files.flatMap((glob) => presetIntersect(glob, owner.key))
@@ -190,36 +198,37 @@ function presetFileEmit<K extends PresetTypes.PresetGroupName>(
   return project.fileKeys.flatMap((fileKey) =>
     fileKey.scopes.flatMap((scope) => {
       const owner = scope.parent
-      const before = owner ? presetSettings(owner, name) : null
-      const after = presetSettings(scope, name)
+      const settings = presetSettings(scope, name)
 
-      if (!owner || JSON.stringify(before) === JSON.stringify(after)) {
+      if (!owner || !settings || JSON.stringify(presetSettings(owner, name)) === JSON.stringify(settings)) {
         return []
       }
 
       const reach = presetIntersect(fileKey.pattern, scope.key)
       const nested = project.scopes.filter((other) => other.parent === owner).map((other) => `${other.key}/**`)
-      const whole = [...presetScopes([scope.key]), ...presetScopes([scope.key], '**')]
-      const off = before ? builder(project, before, owner).flatMap((override) => Object.keys(override.rules ?? {})) : []
-      const cleared = off.length > 0 ? [{ files: reach, excludeFiles: nested, rules: Object.fromEntries(off.map((rule): [string, 'off'] => [rule, 'off'])) }] : []
 
-      const added = after
-        ? builder(project, after, scope).flatMap((override) => {
-          const scoped = override.files.flatMap((glob) => presetIntersect(glob, scope.key))
+      const within = (glob: string) => {
+        const prefix = glob.slice(0, -`**/${presetExtensions}`.length).replace(/\/$/, '')
 
-          const files = scoped.some((glob) => whole.includes(glob))
-            ? reach
-            : expand(fileKey).filter((path) => scoped.some((glob) => matchesGlob(path, glob))).map(presetGlobEscape)
+        return glob.endsWith(`**/${presetExtensions}`)
+          && !/[*?{[]/.test(prefix)
+          && (prefix === '' || fileKey.pattern.startsWith(`${prefix}/`))
+          && /\.(?:ts|tsx|mts|cts)$/.test(fileKey.pattern)
+      }
 
-          if (files.length === 0 || !override.rules) {
-            return []
-          }
+      return builder(project, settings, scope).flatMap((override) => {
+        const scoped = override.files.flatMap((glob) => presetIntersect(glob, scope.key))
 
-          return [{ ...override, files, excludeFiles: [...(override.excludeFiles ?? []), ...nested], rules: presetSeverity(override.rules, after.level) }]
-        })
-        : []
+        const files = scoped.some(within)
+          ? reach
+          : expand(fileKey).filter((path) => scoped.some((glob) => matchesGlob(path, glob))).map(presetGlobEscape)
 
-      return [...cleared, ...added]
+        if (files.length === 0 || !override.rules) {
+          return []
+        }
+
+        return [{ ...override, files, excludeFiles: [...(override.excludeFiles ?? []), ...nested], rules: presetSeverity(override.rules, settings.level) }]
+      })
     }),
   )
 }

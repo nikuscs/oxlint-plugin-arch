@@ -281,6 +281,10 @@ export function presetProject(config: PresetTypes.PresetConfig): PresetTypes.Pre
       throw new PresetError(`Set \`${option}\` on a folder, not on \`${key}\`.`)
     }
 
+    if (Object(folder.layout).operations !== undefined) {
+      throw new PresetError(`Set layout.operations on an app or package folder, not on \`${key}\`.`)
+    }
+
     const pattern = presetGlobEscape(key)
 
     const reached = live
