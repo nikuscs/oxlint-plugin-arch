@@ -20,13 +20,13 @@
   - After: `'apps/server/src/services/**/*-query.*.ts': { deny: { calls: { publish: 'Query files only read; move writes to an action.' } } },` (`send: false` drops a built-in call)
 - **Breaking:** the preset's `sql.sanitizers` option; setting it throws ``Unknown option `sql.sanitizers`.`` `sql` takes `true`, `false` or `'warn'`.
   - Before: `'apps/server': { sql: { sanitizers: ['escapeLike'] } },`
-  - After: `'apps/server': { rules: { 'arch/backend-sql-like': ['error', { sanitizers: ['escapeLike'] }] } },`
+  - After: `'apps/server/src/services': { rules: { 'arch/backend-sql-like': ['error', { sanitizers: ['escapeLike'] }] } },`
 - **Breaking:** the preset's `forms.resolver` option; setting it throws ``Unknown option `forms.resolver`.`` `forms` takes `true`, `false` or `'warn'`.
   - Before: `'apps/web': { forms: { resolver: 'zodResolver' } },`
-  - After: `'apps/web': { rules: { 'arch/code-paired-call': ['error', { when: 'useForm', require: 'zodResolver' }] } },`
+  - After: `'apps/web': { rules: { 'arch/code-paired-call': ['error', { when: 'useForm', require: 'zodResolver' }] } },` (it also reaches the UI files (`components/ui` and UI kits) the group skips)
 - **Breaking:** the preset's `externals.packages` option; setting it throws ``Unknown option `externals.packages`.`` `externals` takes `true`, `false` or `'warn'`; the `externals` list stays exported.
   - Before: `'apps/web': { externals: { packages: [...externals, 'ai', 'stripe'] } },`
-  - After: `'apps/web': { rules: { 'arch/files-externals': ['error', { packages: [...externals, 'ai', 'stripe'] }] } },`
+  - After: `'apps/web/vite.config.ts': { rules: { 'arch/files-externals': ['error', { packages: [...externals, 'ai', 'stripe'] }] } },`
 - **Breaking:** the preset's `orpc.composers` option; setting it throws ``Unknown option `orpc.composers`.``
   - Before: `'apps/server': { orpc: { composers: ['bulkOutput', 'rpcPaginationOutput'] } },`
   - After: delete the line: a plain function around a named schema passes by itself.

@@ -8,7 +8,7 @@ folders: {
 }
 ```
 
-Takes `true`, `false` or `'warn'`. `useForm` is paired with `standardSchemaResolver`; another resolver is a `rules` line:
+Takes `true`, `false` or `'warn'`. `useForm` is paired with `standardSchemaResolver`; another resolver is a `rules` line, which also reaches the UI files (`components/ui` and UI kits) the group skips:
 
 ```ts
 'apps/web': { rules: { 'arch/code-paired-call': ['error', { when: 'useForm', require: 'zodResolver' }] } },

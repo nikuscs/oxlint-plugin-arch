@@ -12,8 +12,8 @@ export default preset({
     'apps/web': {
       ...recipes.tanstack,
       layout: { services: 'flat' },
-      rules: { 'arch/files-externals': ['error', { packages: [...externals, 'ai'] }] },
     },
+    'apps/web/vite.config.ts': { rules: { 'arch/files-externals': ['error', { packages: [...externals, 'ai'] }] } },
     'apps/web/src/routes/handlers': { deny: { imports: { '@acme/server/client': 'Handlers call services directly.' } } },
     'apps/server': {
       ...recipes.backend,

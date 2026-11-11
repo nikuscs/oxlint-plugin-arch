@@ -6,8 +6,8 @@ Server bundle externals match `package.json`, in `vite.config.*` and `next.confi
 import { externals, preset } from 'oxlint-plugin-arch/preset'
 
 folders: {
-  'apps/web': { rules: { 'arch/files-externals': ['error', { packages: [...externals, 'ai', 'stripe'] }] } },
-  'apps/docs': { rules: { 'arch/files-externals': ['error', { packages: externals.filter((name) => name !== 'pg') }] } },
+  'apps/web/vite.config.ts': { rules: { 'arch/files-externals': ['error', { packages: [...externals, 'ai', 'stripe'] }] } },
+  'apps/docs/next.config.ts': { rules: { 'arch/files-externals': ['error', { packages: externals.filter((name) => name !== 'pg') }] } },
   'apps/spa': { externals: false },
 }
 ```
