@@ -418,8 +418,6 @@ export const presetEffectImports = {
   zod: 'Use effect/Schema.',
   'ts-pattern': 'Use effect/Match.',
   dayjs: 'Use effect/DateTime.',
-  ai: 'Use effect/ai.',
-  '@ai-sdk/**': 'Use effect/ai.',
 }
 
 export const presetRecipeMark = Symbol('recipe')

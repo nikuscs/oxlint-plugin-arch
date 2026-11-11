@@ -37,7 +37,6 @@ Every workspace that depends on `effect` (and `recipes.effect`) bans these impor
 | `zod` | Use effect/Schema. |
 | `ts-pattern` | Use effect/Match. |
 | `dayjs` | Use effect/DateTime. |
-| `ai`, `@ai-sdk/**` | Use effect/ai. |
 
 A React package or framework app that depends on `effect` keeps its own recipe and gets `effect: { code: false }`: the project style and the import bans, no Effect code rules.
 
@@ -114,7 +113,7 @@ A unit with the `effect` group that is not a server and whose source holds a `<d
 | `C/*/*.admin.*.ts` | `arch/files-exports` with `patterns: ['Admin{Domain}\\w*']` |
 | `C/*/*.schemas.ts`, `C/*/*.contract.ts` | `arch/files-no-functions` with `reexports: false`; `arch/files-constants-only` with `types: true`, `functions: true`; `arch/types-imported-alias`; `arch/schemas-single-use` with `namespaces: ['Schema']`, `methods: ['Array', 'Union', 'Record', 'Tuple']`, `structural: ['Struct', 'Array', 'Union', 'Record', 'Tuple', 'NullOr', 'UndefinedOr', 'optional', 'TaggedStruct']` |
 | `C/*/*.errors.ts`, `C/*/*.layer.types.ts` | `arch/files-no-functions` |
-| `C/shared/*.ts` | `arch/naming-file`, `arch/naming-folder` and `arch/files-exports` off; `arch/files-constants-only` with `types: true`, `functions: true` |
+| `C/shared/*.ts` | `arch/naming-file`, `arch/naming-folder`, `arch/files-exports` and `arch/files-no-functions` off; `arch/files-constants-only` with `types: true`, `functions: true` |
 | `C/contract*.ts` | `arch/files-constants-only` with `types: true`, `functions: true`; `arch/types-imported-alias`; `arch/schemas-single-use` |
 
 ```ts
@@ -142,7 +141,7 @@ folders: {
 
 ## What a frontend package gets
 
-A React package (not a framework app) with `pages/` or `link.tsx` (or `link.ts`) in its source is a frontend package. Detection lays its `services/` out flat when it holds more files than folders, and adds these keys; `F` is its source.
+A React package (not a framework app) with the `effect` group in either mode and `pages/` or `link.tsx` (or `link.ts`) in its source is a frontend package. Detection adds these keys; `F` is its source. Any React package with `pages/` or a link file, with or without `effect`, gets its `services/` laid out flat when it holds more files than folders.
 
 | Key | Sets |
 | --- | --- |

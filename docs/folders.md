@@ -143,7 +143,7 @@ Recipes are plain objects that only toggle groups, so spreading them is safe.
 | `backend` | `backend`, `schemas`, `sql`, `orpc` |
 | `react` | `react`, `tailwind`, `schemas` |
 | `library` | `schemas` |
-| `effect` | `schemas`, `effect`, and `deny.imports` for `effect`, `zod`, `ts-pattern`, `dayjs`, `ai`, `@ai-sdk/**` |
+| `effect` | `schemas`, `effect`, and `deny.imports` for `effect`, `zod`, `ts-pattern`, `dayjs` |
 | `ui` | `react`, `kit`, `tailwind` (`kit` is the same recipe) |
 | `desktop` | `console` |
 | `cli` | `console` |

@@ -160,6 +160,7 @@ function presetEffectContractKeys(at: (path: string) => string): PresetTypes.Pre
         'arch/naming-file': 'off',
         'arch/naming-folder': 'off',
         'arch/files-exports': 'off',
+        'arch/files-no-functions': 'off',
         'arch/files-constants-only': ['error', { types: true, functions: true }],
       },
     },
@@ -203,7 +204,7 @@ function presetEffectFrontend(root: string, key: string, value: PresetTypes.Pres
   const exists = presetEffectExists(root, key)
   const framework = [value.tanstack, value.next, value.expo].some(Boolean)
 
-  if (!value.react || framework || !['pages', 'link.tsx', 'link.ts'].some((path) => exists(at(path)))) {
+  if (!value.effect || !value.react || framework || !['pages', 'link.tsx', 'link.ts'].some((path) => exists(at(path)))) {
     return {}
   }
 

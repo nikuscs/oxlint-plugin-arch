@@ -22,8 +22,8 @@
 - Effect error classes: every unit with the `effect` group denies `Schema.TaggedError`, `Schema.ErrorClass`, `Data.TaggedError` and `Data.Error` outside `*.errors.ts`.
 - `effect` group: `code` option (default `true`); with `false` only the project style runs (`typescript/consistent-type-assertions`, `eslint-js/max-len`) and the two Effect packages are not needed. A React package or framework app that depends on `effect` gets `effect: { code: false }`.
 - `effect` group: loads `eslint-plugin-regexp` (`flat/recommended`), `eslint-plugin-de-morgan` (`recommended`) and `eslint-plugin-sonarjs` (`sonarjs/super-linear-regex`) when each is installed; all three are optional peer dependencies.
-- Every workspace that depends on `effect`, and `recipes.effect`, bans the `effect` root, `zod`, `ts-pattern`, `dayjs`, `ai` and `@ai-sdk/**` imports.
-- Frontend package conventions: a React package with `pages/` or `link.tsx` gets `forms`, `arch/react-query-props`, an `@orpc/*` ban, the router only through `link.tsx` (`ClientOnly` allowed), a flat `services/` when it holds more files than folders, and frontend client services. In a project with a contract package, a TanStack or Next app imports the contract's root entry as types only. A UI kit with the `effect` group bans the other workspace packages.
+- Every workspace that depends on `effect`, and `recipes.effect`, bans the `effect` root, `zod`, `ts-pattern` and `dayjs` imports.
+- Frontend package conventions: a React package with the `effect` group and `pages/` or `link.tsx` gets `forms`, `arch/react-query-props`, an `@orpc/*` ban, the router only through `link.tsx` (`ClientOnly` allowed), a flat `services/` when it holds more files than folders, and frontend client services. In a project with a contract package, a TanStack or Next app imports the contract's root entry as types only. A UI kit with the `effect` group bans the other workspace packages.
 - Effect servers document their functions: `arch/comments-code` with `jsdoc: true` on the server source.
 
 ### Changed

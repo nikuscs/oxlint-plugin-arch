@@ -404,6 +404,7 @@ describe('preset Effect server', () => {
     { name: 'an errors file may hold classes', tree: contractTree, files: contract, folders: {}, file: 'packages/contract/src/order/order.errors.ts', rule: 'arch/files-constants-only', expected: undefined },
     { name: 'a shared file has no name rule', tree: contractTree, files: contract, folders: {}, file: 'packages/contract/src/shared/shared.schemas.ts', rule: 'arch/naming-file', expected: 'off' },
     { name: 'a shared file has no export prefix', tree: contractTree, files: contract, folders: {}, file: 'packages/contract/src/shared/shared.schemas.ts', rule: 'arch/files-exports', expected: 'off' },
+    { name: 'a shared schemas file may hold local functions', tree: contractTree, files: contract, folders: {}, file: 'packages/contract/src/shared/shared.schemas.ts', rule: 'arch/files-no-functions', expected: 'off' },
     {
       name: 'a shared file may hold functions',
       tree: contractTree,

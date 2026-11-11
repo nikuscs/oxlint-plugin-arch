@@ -10,6 +10,7 @@ describe('preset recipes', () => {
   const server = { 'package.json': workspaces, 'apps/server/package.json': manifest('server', { hono: '1' }) }
   const core = { 'package.json': workspaces, 'packages/core/package.json': manifest('core', { effect: '1' }) }
   const frontend = { 'package.json': workspaces, 'packages/frontend/package.json': manifest('@app/frontend', { react: '1', effect: '1' }), 'packages/frontend/src/link.tsx': '' }
+  const pages = { 'package.json': workspaces, 'packages/frontend/package.json': manifest('@app/frontend', { react: '1' }) }
 
   const kits = {
     ...frontend,
@@ -352,8 +353,9 @@ describe('preset recipes', () => {
       folders: {},
       file: 'packages/core/src/a.ts',
       rule: 'arch/boundaries-deny',
-      expected: ['error', { imports: { effect: expect.any(String), zod: 'Use effect/Schema.', 'ts-pattern': 'Use effect/Match.', dayjs: 'Use effect/DateTime.', ai: 'Use effect/ai.', '@ai-sdk/**': 'Use effect/ai.' } }],
+      expected: ['error', { imports: { effect: expect.any(String), zod: 'Use effect/Schema.', 'ts-pattern': 'Use effect/Match.', dayjs: 'Use effect/DateTime.' } }],
     },
+    { name: 'an Effect package does not ban ai', files: core, folders: {}, file: 'packages/core/src/a.ts', rule: 'arch/boundaries-deny', expected: ['error', { imports: expect.not.objectContaining({ ai: expect.anything() }) }] },
     {
       name: 'a React package on Effect bans the non-Effect libraries',
       tree: kitTree,
@@ -419,6 +421,10 @@ describe('preset recipes', () => {
       expected: ['error', { imports: { '@orpc/*': expect.any(String) } }],
     },
     { name: 'a frontend package gets the forms rule', files: frontend, folders: {}, file: 'packages/frontend/src/components/a.tsx', rule: 'arch/code-paired-call', expected: ['error', { when: 'useForm' }] },
+    { name: 'a React package with pages and no Effect gets no query hook check', tree: ['packages/frontend/src/pages/'], files: pages, folders: {}, file: 'packages/frontend/src/components/a.tsx', rule: 'arch/react-query-props', expected: undefined },
+    { name: 'a React package with pages and no Effect gets no router rule', tree: ['packages/frontend/src/pages/'], files: pages, folders: {}, file: 'packages/frontend/src/components/a.tsx', rule: 'no-restricted-imports', expected: ['error', expect.not.objectContaining({ paths: expect.anything() })] },
+    { name: 'a React package with pages and no Effect gets no rpc client ban', tree: ['packages/frontend/src/pages/'], files: pages, folders: {}, file: 'packages/frontend/src/components/a.tsx', rule: 'arch/boundaries-deny', expected: ['error', { imports: expect.not.objectContaining({ '@orpc/*': expect.anything() }) }] },
+    { name: 'a React package with pages and no Effect gets no forms rule', tree: ['packages/frontend/src/pages/'], files: pages, folders: {}, file: 'packages/frontend/src/components/a.tsx', rule: 'arch/code-paired-call', expected: undefined },
     { name: 'a UI kit gets no query hook check', tree: kitTree, files: kits, folders: {}, file: 'packages/ui/src/components/button.tsx', rule: 'arch/react-query-props', expected: undefined },
     {
       name: 'a UI kit gets no rpc client ban',
