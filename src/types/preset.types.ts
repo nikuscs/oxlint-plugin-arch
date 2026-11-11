@@ -196,7 +196,7 @@ export interface PresetConfig {
   detect?: boolean
 }
 
-export type PresetRecipe = PresetGroups
+export type PresetRecipe = PresetGroups & Partial<Record<symbol, string>>
 
 export type PresetRules = NonNullable<OxlintConfig['rules']>
 export type PresetJsPlugins = NonNullable<OxlintConfig['jsPlugins']>

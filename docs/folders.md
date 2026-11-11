@@ -41,11 +41,13 @@ Unless `detect: false`, the preset reads the workspaces from the root `package.j
 | `@tanstack/react-start` | `tanstack` |
 | `expo` | `expo` |
 | `electrobun`, `electron` or `@tauri-apps/*` | `desktop` |
+| `effect` and a React package | `react` (an app, or a package with `pages/` or `link.tsx`) or `ui` (another package) |
+| `effect` | `effect`, whatever backend packages it has |
 | `@orpc/server`, `hono`, `kysely`, `drizzle-orm`, `express`, `fastify` or `elysia`, in an app or next to a `services/` folder; or any `services/<domain>/<domain>.service.ts` | `backend` |
-| `react` with a `components/` folder | `react` (app) or `ui` (package) |
+| A React package | `react` (an app, or a package with `pages/` or `link.tsx`) or `ui` (another package) |
 | anything else | `library` |
 
-A `scripts/` folder gets `cli`, and `'.'` bans `framer-motion`. Folders without a `package.json` (Rust, Go) are not units.
+A React package depends on `react` and has `components/`, `pages/` or `link.tsx` (or `link.ts`) in its source folder. A workspace without `effect` keeps the order backend, React package, library. A `scripts/` folder gets `cli`; a `.agents` folder gets `cli` with the default quotes and semicolons, whatever the root sets; and `'.'` bans `framer-motion`. Folders without a `package.json` (Rust, Go) are not units.
 
 Detection also adds conventions:
 
@@ -61,6 +63,16 @@ Detection also adds conventions:
 | Stylesheet | See [`tailwind`](groups/tailwind.md) |
 | Web `services/` | `layout.services: 'flat'` when it holds more files than folders |
 | App or backend without `services/` | Its `lib/` is the service folder; with `services/`, `lib/` stays portable helpers |
+
+### Forcing a recipe
+
+A folder set to a recipe, as is or spread with more settings, replaces the recipe detection picked for it; `'.'` keeps its `framer-motion` ban. Any other value you write, such as `{ backend: { registry: false } }` or `{ console: true }`, merges over detection.
+
+```ts
+'apps/server': recipes.effect,
+'packages/i18n': recipes.library,
+'tools/legacy': false,
+```
 
 Your folders merge over the detected ones: a key you set wins, and objects merge (`layout: { hooks: false }` keeps the detected `services: 'flat'`). A detected key inside a folder you set as a `*` glob or a parent is left out, and a `*` key still gets the conventions of each folder it matches. Conventions inside a `false` folder are dropped, and a group you set to `false` on a parent stays off. Detection follows symlinked folders and skips broken links.
 
@@ -127,7 +139,7 @@ Recipes are plain objects that only toggle groups, so spreading them is safe.
 | `tanstack` | `react`, `tanstack`, `tailwind`, `shadcn`, `schemas`, `forms` |
 | `next` | `react`, `next`, `tailwind`, `shadcn`, `schemas`, `forms` |
 | `expo` | `react`, `expo`, `schemas`, `forms` |
-| `backend` | `backend`, `schemas`, `sql` |
+| `backend` | `backend`, `schemas`, `sql`, `orpc` |
 | `react` | `react`, `tailwind`, `schemas` |
 | `library` | `schemas` |
 | `effect` | `schemas`, `effect` |

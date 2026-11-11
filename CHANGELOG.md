@@ -7,14 +7,27 @@
 - Preset keys: a key in `folders` can be a list of folders (`src/lib/{dgsi,dr}`), one file (`src/app/default.tsx`) or a file pattern (`apps/server/src/domains/**/*.actions.ts`). A file key takes what a folder takes, except `source`, `services`, `tanstack`, `next`, `expo`, `backend`, `console` and `kit`; it changes the settings of the files it matches on top of their folder's, the later of two file keys wins, its `rules` come after every folder's, and `false` ignores its files. A missing literal file throws; a pattern that matches nothing does not.
 - `layout.files`: the file names a folder's service layout allows, such as `['*.prompts.ts', '*.gateway.ts', '!*.utils.ts']`. The list adds to the parent folder's list, starting from the built-in names (`*.service.ts`, `*.client.ts`, `*.server.ts`, `*.rsc.ts`, `*.rsc.tsx`, `*.utils.ts`, `*.types.ts`, `*.constants.ts`, `*.handler.ts`, `*.test.ts`, `*.spec.ts`, `*-action.*.ts`, `*-query.*.ts`); `!name` removes one. A `*.<word>.ts` name that is not built-in gets every check a `layout.suffixes` word got.
 - A folder written alone and inside a folder list (`'packages/ui'` and `'packages/{ui,frontend}'`) merges in config order instead of throwing "listed twice".
+- Detection picks `effect` for a workspace that depends on `effect` and is not a framework, desktop or React package, whatever backend packages it has.
+- Detection treats a React package with `pages/` or `link.tsx` (or `link.ts`) in its source as a frontend (`react` recipe) wherever it lives; `pages/` and the link file also make a React package without `components/` count.
+- Detection gives a `.agents` folder the `cli` recipe with the default quotes and semicolons.
 
 ### Changed
 
 - **Breaking:** `arch/backend-orpc-output` has no `composers` option. `.output(X)` passes when `X` is a named schema or a plain function called with one (`paged(Order)`, `eventIterator(Order)`); a member call (`z.array(Order)`), a nested call, an inline object and no argument are reported. `'arch/backend-orpc-output': 'error'` is complete.
   - Before: `'apps/server': { orpc: { composers: ['bulkOutput', 'rpcPaginationOutput'] } },`
-  - After: delete the line: a plain function around a named schema passes by itself.
+  - After: `'apps/server': { orpc: true },` a plain function around a named schema passes by itself; the line can go where the backend recipe applies (detected, or `recipes.backend`).
 - **Breaking:** `arch/backend-sql-like` requires no option: `methods` defaults to `['like', 'ilike']`, `sanitizers` to `['escapeLikeWildcards']` and `operators` to `['where']` (was `[]`), so `'arch/backend-sql-like': 'error'` is complete and setting one option keeps the others.
 - **Breaking:** the strict layout name check follows the `layout.files` list of the folder a file is in: a name listed on `apps/server` is no longer allowed in another app. Its message is now `Domain files use one of: <names>. Add a name to layout.files.`
+- **Breaking:** a folder set to a recipe (as is or spread) no longer merges with the recipe detection picked; `'.'` keeps its `framer-motion` ban. A hand-written folder still merges.
+  - Before: `'apps/web': { ...recipes.react }` on a detected TanStack app, relying on the detected groups
+  - After: `'apps/web': recipes.tanstack`, or drop the recipe and keep only your own settings
+- **Breaking:** a workspace that depends on `effect` and is not a framework, desktop or React package is Effect code.
+  - After, to opt out: `'packages/x': recipes.library` (or another recipe)
+- **Breaking:** a package with `pages/` or `link.tsx` is a frontend, not a UI kit.
+  - After, to keep the kit: `'packages/x': recipes.ui`
+- `.agents` is detected: a `'.agents': { console: true }` line can go, and `.agents` uses the default quotes and semicolons when the root sets others.
+  - After, to keep the root's: `'.agents': { style: { quotes: 'double' } }`
+- The `backend` recipe turns on the `orpc` group; it still checks only `orpc.public`, which defaults to `<backend source>/rpc/api/**` when that folder exists. `orpc: false` turns it off.
 
 ### Removed
 
@@ -35,7 +48,7 @@
   - After: `'apps/web/vite.config.ts': { rules: { 'arch/files-externals': ['error', { packages: [...externals, 'ai', 'stripe'] }] } },`
 - **Breaking:** the preset's `orpc.composers` option; setting it throws ``Unknown option `orpc.composers`.``
   - Before: `'apps/server': { orpc: { composers: ['bulkOutput', 'rpcPaginationOutput'] } },`
-  - After: delete the line: a plain function around a named schema passes by itself.
+  - After: `'apps/server': { orpc: true },` a plain function around a named schema passes by itself; the line can go where the backend recipe applies (detected, or `recipes.backend`).
 
 ## 0.12.6
 

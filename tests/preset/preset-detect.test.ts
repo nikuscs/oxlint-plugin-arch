@@ -532,6 +532,48 @@ describe('preset detection', () => {
       rule: 'arch/files-restricted',
       expected: undefined,
     },
+    {
+      name: 'a detected .agents folder allows console',
+      tree: ['.agents/hooks/'],
+      folders: { '.agents/hooks': { severity: 'warn' } },
+      file: '.agents/hooks/a.ts',
+      rule: 'no-console',
+      expected: undefined,
+    },
+    {
+      name: 'a detected .agents folder keeps the default quotes',
+      tree: ['.agents/'],
+      folders: { '.': { style: { quotes: 'double', semicolons: false } } },
+      file: '.agents/a.ts',
+      rule: 'eslint-js/quotes',
+      expected: ['error', 'single', { avoidEscape: true }],
+    },
+    {
+      name: 'a detected .agents folder keeps the default semicolons',
+      tree: ['.agents/'],
+      folders: { '.': { style: { quotes: 'double', semicolons: false } } },
+      file: '.agents/a.ts',
+      rule: 'eslint-js/semi',
+      expected: ['error', 'always'],
+    },
+    {
+      name: 'a .agents style setting wins over the detected one',
+      tree: ['.agents/'],
+      folders: { '.agents': { style: { quotes: 'double' } } },
+      file: '.agents/a.ts',
+      rule: 'eslint-js/quotes',
+      expected: ['error', 'double', { avoidEscape: true }],
+    },
+    { name: 'a skipped .agents folder is ignored', tree: ['.agents/'], folders: { '.agents': false }, file: '.agents/a.ts', rule: 'no-console', expected: 'ignored' },
+    {
+      name: 'without detection .agents gets nothing',
+      tree: ['.agents/hooks/'],
+      folders: { '.agents/hooks': { severity: 'warn' } },
+      detect: false,
+      file: '.agents/hooks/a.ts',
+      rule: 'no-console',
+      expected: 'warn',
+    },
   ])('$name', (row) => {
     expect({ value: testerPreset(row) }).toMatchObject({ value: row.expected })
   })

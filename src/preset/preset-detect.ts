@@ -51,6 +51,9 @@ function presetRecipe(root: string, directory: string, app: boolean, folder: Pre
   const has = (names: string[]) => names.some((name) => dependencies.has(name))
   const source = presetSource(root, directory, folder.source)
   const framework = PresetConstants.presetDetectFrameworks.find(([, names]) => has(names))?.[0]
+  const frontend = presetIsDirectory(resolve(root, source, 'pages')) || ['link.tsx', 'link.ts'].some((name) => existsSync(resolve(root, source, name)))
+  const react = has(['react']) && (frontend || presetIsDirectory(resolve(root, source, 'components')))
+  const reactRecipe = app || frontend ? presetRecipes.react : presetRecipes.ui
   const servicesFolder = presetServicesFolder(root, source, folder.services, app)
   const services = resolve(root, servicesFolder)
   const entries = presetIsDirectory(services) ? readdirSync(services, { withFileTypes: true }) : []
@@ -65,12 +68,16 @@ function presetRecipe(root: string, directory: string, app: boolean, folder: Pre
     return presetRecipes.desktop
   }
 
+  if (has(['effect'])) {
+    return react ? reactRecipe : presetRecipes.effect
+  }
+
   if (presetDomains(root, servicesFolder).length > 0 || (has(PresetConstants.presetDetectBackend) && (app || presetIsDirectory(services)))) {
     return presetRecipes.backend
   }
 
-  if (has(['react']) && presetIsDirectory(resolve(root, source, 'components'))) {
-    return app ? presetRecipes.react : presetRecipes.ui
+  if (react) {
+    return reactRecipe
   }
 
   return presetRecipes.library
@@ -406,6 +413,12 @@ export function presetDetect(root: string, folders: PresetTypes.PresetFolders): 
     detected.scripts = presetRecipes.cli
   }
 
+  if (existsSync(resolve(root, '.agents'))) {
+    const { quotes, semicolons } = PresetConstants.presetGroupOptions.style
+
+    detected['.agents'] = { ...presetRecipes.cli, style: { quotes, semicolons } }
+  }
+
   const keys = Object.keys(folders)
 
   const covered = (key: string) =>
@@ -420,7 +433,10 @@ export function presetDetect(root: string, folders: PresetTypes.PresetFolders): 
   }
 
   for (const [key, value] of Object.entries(folders)) {
-    merged[key] = key in merged ? presetMerge(merged[key], value) : value
+    const forced = value instanceof Object && PresetConstants.presetRecipeMark in value
+    const kept = forced && key === '.' ? presetDeny(PresetConstants.presetRootImports) : merged[key]
+
+    merged[key] = key in merged && (!forced || key === '.') ? presetMerge(kept, value) : value
   }
 
   const length = (key: string) => key.split('/').length

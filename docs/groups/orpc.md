@@ -1,6 +1,6 @@
 # 🔌 orpc
 
-oRPC procedures declare outputs. Opt-in.
+oRPC procedures declare outputs. On in the `backend` recipe.
 
 ```ts
 folders: {

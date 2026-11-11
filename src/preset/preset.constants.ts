@@ -411,6 +411,8 @@ export const presetDetectFrameworks: ['tanstack' | 'next' | 'expo', string[]][] 
 
 export const presetDetectDesktop = ['electrobun', 'electron', '@tauri-apps/api', '@tauri-apps/cli']
 
+export const presetRecipeMark = Symbol('recipe')
+
 export const presetDetectBackend = ['@orpc/server', 'hono', 'kysely', 'drizzle-orm', 'express', 'fastify', 'elysia']
 
 export const presetDetectSkip = ['node_modules', 'dist', 'build', 'coverage', 'public', '.output', '.next', '.vinext', '.turbo', '.wrangler', 'target']
