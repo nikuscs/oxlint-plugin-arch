@@ -4,14 +4,14 @@
 
 ```ts
 folders: {
-  'apps/server': { sql: { sanitizers: ['escapeLike'] } },
+  'apps/server': { sql: true },
 }
 ```
 
-Takes `true`, `false`, `'warn'` or an object:
+Takes `true`, `false` or `'warn'`. The rule runs with its defaults: `escapeLikeWildcards` for `like` and `ilike`, and `where` operator calls. Another sanitizer is a `rules` line:
 
-| Key | Type | Default | |
-| --- | --- | --- | --- |
-| `sanitizers` | `string[]` | `['escapeLikeWildcards']` | Escape helpers |
+```ts
+'apps/server': { rules: { 'arch/backend-sql-like': ['error', { sanitizers: ['escapeLike'] }] } },
+```
 
 Rules: [`arch/backend-sql-like`](../rules/backend-sql-like.md).

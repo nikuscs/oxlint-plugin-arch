@@ -62,10 +62,7 @@ export type {
   PresetShadcnOptions,
   PresetBackendOptions,
   PresetOrpcOptions,
-  PresetFormsOptions,
-  PresetSqlOptions,
   PresetDenyOptions,
-  PresetExternalsOptions,
   PresetRegistryOptions,
   PresetOperations,
 } from '../types/preset.types.ts'

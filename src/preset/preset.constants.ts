@@ -363,16 +363,18 @@ export const presetGroupOptions: PresetTypes.PresetGroupDefaults = {
   tailwind: { level: 'error', css: undefined, rem: 16 },
   shadcn: { level: 'error', ui: '@/components/ui', components: ['^@/components/'] },
   kit: { level: 'error' },
-  backend: { level: 'error', exports: undefined, registry: undefined, writes: ['insertInto', 'updateTable', 'deleteFrom', 'mergeInto', 'replaceInto', 'dispatch', 'send'] },
+  backend: { level: 'error', exports: undefined, registry: undefined },
   orpc: { level: 'error', public: [], client: undefined },
   schemas: { level: 'error' },
-  forms: { level: 'error', resolver: 'standardSchemaResolver' },
-  sql: { level: 'error', sanitizers: ['escapeLikeWildcards'] },
+  forms: { level: 'error' },
+  sql: { level: 'error' },
   effect: { level: 'error', width: 160, exports: undefined, skip: undefined, entries: [] },
   console: { level: 'error' },
   deny: { level: 'error', imports: {}, calls: {} },
-  externals: { level: 'error', packages: presetExternals },
+  externals: { level: 'error' },
 }
+
+export const presetQueryWrites = ['insertInto', 'updateTable', 'deleteFrom', 'mergeInto', 'replaceInto', 'dispatch', 'send']
 
 export const presetFolderKeys = ['severity', 'source', 'services', 'rules']
 

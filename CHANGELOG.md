@@ -11,9 +11,22 @@
 - **Breaking:** `arch/backend-orpc-output` has no `composers` option. `.output(X)` passes when `X` is a named schema or a plain function called with one (`paged(Order)`, `eventIterator(Order)`); a member call (`z.array(Order)`), a nested call, an inline object and no argument are reported. `'arch/backend-orpc-output': 'error'` is complete.
   - Before: `'apps/server': { orpc: { composers: ['bulkOutput', 'rpcPaginationOutput'] } },`
   - After: delete the line: a plain function around a named schema passes by itself.
+- **Breaking:** `arch/backend-sql-like` requires no option: `methods` defaults to `['like', 'ilike']`, `sanitizers` to `['escapeLikeWildcards']` and `operators` to `['where']` (was `[]`), so `'arch/backend-sql-like': 'error'` is complete and setting one option keeps the others.
 
 ### Removed
 
+- **Breaking:** the preset's `backend.writes` option; setting it throws ``Unknown option `backend.writes`.`` Query files still may not call `insertInto`, `updateTable`, `deleteFrom`, `mergeInto`, `replaceInto`, `dispatch` or `send`.
+  - Before: `'apps/server': { backend: { writes: ['insertInto', 'updateTable', 'deleteFrom', 'mergeInto', 'replaceInto', 'dispatch', 'send', 'publish'] } },`
+  - After: `'apps/server/src/services/**/*-query.*.ts': { deny: { calls: { publish: 'Query files only read; move writes to an action.' } } },` (`send: false` drops a built-in call)
+- **Breaking:** the preset's `sql.sanitizers` option; setting it throws ``Unknown option `sql.sanitizers`.`` `sql` takes `true`, `false` or `'warn'`.
+  - Before: `'apps/server': { sql: { sanitizers: ['escapeLike'] } },`
+  - After: `'apps/server': { rules: { 'arch/backend-sql-like': ['error', { sanitizers: ['escapeLike'] }] } },`
+- **Breaking:** the preset's `forms.resolver` option; setting it throws ``Unknown option `forms.resolver`.`` `forms` takes `true`, `false` or `'warn'`.
+  - Before: `'apps/web': { forms: { resolver: 'zodResolver' } },`
+  - After: `'apps/web': { rules: { 'arch/code-paired-call': ['error', { when: 'useForm', require: 'zodResolver' }] } },`
+- **Breaking:** the preset's `externals.packages` option; setting it throws ``Unknown option `externals.packages`.`` `externals` takes `true`, `false` or `'warn'`; the `externals` list stays exported.
+  - Before: `'apps/web': { externals: { packages: [...externals, 'ai', 'stripe'] } },`
+  - After: `'apps/web': { rules: { 'arch/files-externals': ['error', { packages: [...externals, 'ai', 'stripe'] }] } },`
 - **Breaking:** the preset's `orpc.composers` option; setting it throws ``Unknown option `orpc.composers`.``
   - Before: `'apps/server': { orpc: { composers: ['bulkOutput', 'rpcPaginationOutput'] } },`
   - After: delete the line: a plain function around a named schema passes by itself.

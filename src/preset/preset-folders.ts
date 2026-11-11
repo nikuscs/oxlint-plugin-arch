@@ -119,14 +119,14 @@ function presetGroupValue<K extends PresetTypes.PresetGroupName>(
   return { ...base, ...merged, level: severity ?? base.level }
 }
 
-function presetDenyEntries(inherited: Record<string, string>, changes: Record<string, string | false> | undefined): Record<string, string> {
+function presetDenyEntries(inherited: Record<string, string | false>, changes: Record<string, string | false> | undefined): Record<string, string | false> {
   return Object.fromEntries(
-    Object.entries({ ...inherited, ...changes }).flatMap(([key, message]) => {
+    Object.entries({ ...inherited, ...changes }).map(([key, message]) => {
       if (message !== false && typeof message !== 'string') {
         throw new PresetError(`Deny entry \`${key}\` takes a message string or false.`)
       }
 
-      return message === false ? [] : [[key, message]]
+      return [key, message]
     }),
   )
 }
@@ -307,12 +307,6 @@ export function presetProject(config: PresetTypes.PresetConfig): PresetTypes.Pre
 
   if (misplaced) {
     throw new PresetError(`Set layout.operations on an app or package folder, not on \`${misplaced.key}\`.`)
-  }
-
-  const writes = live.find((scope) => !unitKeys.has(scope.key) && Object(scope.folder.backend).writes !== undefined)
-
-  if (writes) {
-    throw new PresetError(`Set backend.writes on a backend folder, not on \`${writes.key}\`.`)
   }
 
   const of = (kind: PresetTypes.PresetKind) => units.filter((unit) => unit.kind === kind)

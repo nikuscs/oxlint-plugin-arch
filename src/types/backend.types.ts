@@ -12,8 +12,8 @@ export interface BackendServiceFunctionsOptions {
 }
 
 export interface BackendSqlLikeOptions {
-  methods: string[]
-  sanitizers: string[]
+  methods?: string[]
+  sanitizers?: string[]
   bindings?: boolean
   operators?: string[]
 }

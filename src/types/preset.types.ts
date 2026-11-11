@@ -127,7 +127,6 @@ export interface PresetRegistryOptions {
 export interface PresetBackendOptions {
   exports?: string[]
   registry?: false | string | PresetRegistryOptions
-  writes?: string[]
 }
 
 export interface PresetDenyOptions {
@@ -135,17 +134,9 @@ export interface PresetDenyOptions {
   calls?: Record<string, string | false>
 }
 
-export interface PresetExternalsOptions {
-  packages?: string[]
-}
-
 export interface PresetOrpcOptions {
   public?: string[]
   client?: string
-}
-
-export interface PresetFormsOptions {
-  resolver?: string
 }
 
 export interface PresetEffectOptions {
@@ -158,10 +149,6 @@ export interface PresetEffectOptions {
 export interface PresetEffectPackages {
   tsgo: typeof EffectTsgo
   linteffect: typeof EffectLinteffect
-}
-
-export interface PresetSqlOptions {
-  sanitizers?: string[]
 }
 
 export interface PresetGroups {
@@ -184,12 +171,12 @@ export interface PresetGroups {
   backend?: PresetSwitch | PresetBackendOptions
   orpc?: PresetSwitch | PresetOrpcOptions
   schemas?: PresetSwitch
-  forms?: PresetSwitch | PresetFormsOptions
-  sql?: PresetSwitch | PresetSqlOptions
+  forms?: PresetSwitch
+  sql?: PresetSwitch
   effect?: PresetSwitch | PresetEffectOptions
   console?: boolean
   deny?: PresetSwitch | PresetDenyOptions
-  externals?: PresetSwitch | PresetExternalsOptions
+  externals?: PresetSwitch
 }
 
 export type PresetGroupName = keyof PresetGroups
@@ -233,15 +220,15 @@ export interface PresetResolvedGroups {
   tailwind: Pick<PresetTailwindOptions, 'css'> & { rem: number }
   shadcn: Required<PresetShadcnOptions>
   kit: PresetEmptyOptions
-  backend: PresetBackendOptions & Required<Pick<PresetBackendOptions, 'writes'>>
+  backend: PresetBackendOptions
   orpc: PresetOrpcOptions
   schemas: PresetEmptyOptions
-  forms: Required<PresetFormsOptions>
-  sql: Required<PresetSqlOptions>
+  forms: PresetEmptyOptions
+  sql: PresetEmptyOptions
   effect: Pick<PresetEffectOptions, 'exports' | 'skip'> & { width: number; entries: string[] }
   console: PresetEmptyOptions
-  deny: { imports: Record<string, string>; calls: Record<string, string> }
-  externals: Required<PresetExternalsOptions>
+  deny: { imports: Record<string, string | false>; calls: Record<string, string | false> }
+  externals: PresetEmptyOptions
 }
 
 export interface PresetEmptyOptions {

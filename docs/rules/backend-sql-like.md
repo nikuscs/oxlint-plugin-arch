@@ -12,11 +12,11 @@ export const search = (term: string) => db.selectFrom('chats').where('title', 'i
 
 | Option | Type | Default | |
 | --- | --- | --- | --- |
-| `methods` | `string[]` | required | Method names, or operator strings, to check |
-| `sanitizers` | `string[]` | required | Functions that escape wildcards |
-| `operators` | `string[]` | `[]` | Methods whose second argument is the operator, like `where` |
+| `methods` | `string[]` | `['like', 'ilike']` | Method names, or operator strings, to check |
+| `sanitizers` | `string[]` | `['escapeLikeWildcards']` | Functions that escape wildcards |
+| `operators` | `string[]` | `['where']` | Methods whose second argument is the operator |
 | `bindings` | `boolean` | `true` | Trust top-level variables that are never reassigned and hold a sanitized value |
 
 ```ts
-'arch/backend-sql-like': ['error', { methods: ['like', 'ilike'], operators: ['where'], sanitizers: ['escapeLikeWildcards'] }]
+'arch/backend-sql-like': ['error', { sanitizers: ['escapeLike'] }]
 ```
