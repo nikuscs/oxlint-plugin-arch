@@ -51,5 +51,11 @@ describe('arch/code-delegate', () => {
       errors: ['calls'],
     },
     { name: 'max zero reports the only call', code: 'os.handler(async () => { return await run() })', options: { max: 0 }, errors: ['calls'] },
+    {
+      name: 'the calls message names the limit',
+      code: 'os.handler(async () => { await first(); await second(); return await third() })',
+      options: { max: 2 },
+      errors: ["A handler's yielded or awaited calls are limited to 2; move the rest into the action it calls."],
+    },
   ])('$name', (row) => testerRun(codeDelegate, row))
 })

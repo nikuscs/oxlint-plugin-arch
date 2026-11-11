@@ -20,7 +20,7 @@ export const codeDelegate = defineRule({
     ],
     messages: {
       statement: 'A handler only delegates: read services, make one call, return. Move this to an action.',
-      calls: 'A handler makes {{max}} call; move the rest into the action it calls.',
+      calls: "A handler's yielded or awaited calls are limited to {{max}}; move the rest into the action it calls.",
       ternary: 'A handler does not branch; move the condition into the action it calls.',
       nested: 'A handler holds no function; move it into the action it calls.',
     },

@@ -279,9 +279,11 @@ export function presetProject(config: PresetTypes.PresetConfig): PresetTypes.Pre
 
   const listed = expanded
     .filter((entry) => !files.includes(entry))
-    .map(([key, value, list]): [string, boolean | PresetTypes.PresetFolder, boolean] => [presetNormalizeKey(key), value, list])
+    .map(([key, value, fromList]): [string, boolean | PresetTypes.PresetFolder, boolean] => [presetNormalizeKey(key), value, fromList])
 
-  const twice = listed.find(([key, , list], index) => listed.some(([other, , alone], at) => at < index && other === key && !list && !alone))
+  const twice = listed.find(([key, , fromList], index) =>
+    listed.some(([other, , otherFromList], at) => at < index && other === key && !fromList && !otherFromList),
+  )
 
   if (twice) {
     throw new PresetError(`Folder \`${twice[0]}\` is listed twice.`)
