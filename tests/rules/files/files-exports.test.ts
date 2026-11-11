@@ -258,5 +258,45 @@ describe('arch/files-exports', () => {
       options: { factory: 'make{Stem}', scope: 'declarations' },
       errors: ['factory'],
     },
+    {
+      name: 'a folder domain passes',
+      filename: 'domains/order/order-refund.actions.ts',
+      code: 'export const orderActionRefund = run',
+      options: { stem: 'folder', patterns: ['{domain}Action[A-Z]\\w*'] },
+    },
+    {
+      name: 'names outside the folder domain fail',
+      filename: 'domains/order/order-refund.actions.ts',
+      code: 'export const orderRefundActionCreate = run\nexport const createOrder = run\nexport const make = run',
+      options: { stem: 'folder', patterns: ['{domain}Action[A-Z]\\w*'] },
+      errors: ['extraExport', 'extraExport', 'extraExport'],
+    },
+    {
+      name: 'a kebab folder domain passes',
+      filename: 'supplier-order/supplier-order.contract.ts',
+      code: 'export const SupplierOrderContract = make',
+      options: { stem: 'folder', names: ['{Domain}Contract'] },
+    },
+    {
+      name: 'a plural folder domain drops its s',
+      filename: 'automatic-orders/automatic-orders.schemas.ts',
+      code: 'export const AutomaticOrderEntry = make',
+      options: { stem: 'folder', singularize: 'trailing-s', patterns: ['{Domain}\\w*'] },
+    },
+    {
+      name: 'a singular folder domain still needs its first word',
+      filename: 'automatic-orders/automatic-orders.schemas.ts',
+      code: 'export const AutomaticEntry = make',
+      options: { stem: 'folder', singularize: 'trailing-s', patterns: ['{Domain}\\w*'] },
+      errors: ['extraExport'],
+    },
+    { name: 'a plural file domain drops its s', filename: 'orders.schemas.ts', code: 'export const OrderList = make', options: { singularize: 'trailing-s', patterns: ['{Domain}\\w*'] } },
+    {
+      name: 'a plural folder domain keeps its s by default',
+      filename: 'automatic-orders/automatic-orders.schemas.ts',
+      code: 'export const AutomaticOrderEntry = make',
+      options: { stem: 'folder', patterns: ['{Domain}\\w*'] },
+      errors: ['extraExport'],
+    },
   ])('$name', (row) => testerRun(filesExports, row))
 })

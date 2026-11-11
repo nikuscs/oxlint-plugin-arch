@@ -1,6 +1,7 @@
 import { defineRule } from '@oxlint/plugins'
 import { optionsFirst, optionsPatterns, optionsPatternSchema, optionsPatternsTest } from '../../utils/options.utils.ts'
 import type { TypesDeclarationNode, TypesDeclarationsOptions } from '../../types/types.types.ts'
+import type { ESTree } from '@oxlint/plugins'
 
 function isValuePattern(source: string): boolean {
   return /^\^?=/.test(source)
@@ -15,6 +16,7 @@ export const typesDeclarations = defineRule({
         additionalProperties: false,
         properties: {
           allow: optionsPatternSchema,
+          modules: { type: 'boolean' },
         },
       },
     ],
@@ -25,9 +27,19 @@ export const typesDeclarations = defineRule({
   createOnce(context) {
     let allowedNames: RegExp[] = []
     let allowedValues: RegExp[] = []
+    let allowModules = false
 
     function check(node: TypesDeclarationNode) {
+      let ancestor: ESTree.Node | null = node.parent
+
+      while (allowModules && ancestor && ancestor.type !== 'TSModuleDeclaration') {
+        ancestor = ancestor.parent
+      }
+
+      const ambient = ancestor?.type === 'TSModuleDeclaration' && (ancestor.kind === 'global' || ancestor.id.type === 'Literal')
+
       if (
+        (allowModules && ambient) ||
         optionsPatternsTest(allowedNames, node.id.name) ||
         (node.type === 'TSTypeAliasDeclaration' &&
           allowedValues.length > 0 &&
@@ -44,7 +56,8 @@ export const typesDeclarations = defineRule({
 
     return {
       before() {
-        const { allow: allowPattern } = optionsFirst<TypesDeclarationsOptions>(context, {})
+        const { allow: allowPattern, modules = false } = optionsFirst<TypesDeclarationsOptions>(context, {})
+        allowModules = modules
         const sources = allowPattern === undefined ? [] : [allowPattern].flat()
         allowedNames = optionsPatterns(sources.filter((source) => !isValuePattern(source)))
         allowedValues = optionsPatterns(sources.filter(isValuePattern))

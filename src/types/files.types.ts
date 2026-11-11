@@ -1,4 +1,4 @@
-import type { NamingExportsStem } from './naming.types.ts'
+import type { NamingExportsStem, NamingStemMode } from './naming.types.ts'
 import type { OptionsPattern } from './options.types.ts'
 import type { ESTree } from '@oxlint/plugins'
 
@@ -29,7 +29,8 @@ export interface FilesDomainConstantsOptions {
   file?: string
 }
 
-export interface FilesExportsOptions extends Pick<NamingExportsStem, 'stem' | 'roles' | 'separators'> {
+export interface FilesExportsOptions extends Pick<NamingExportsStem, 'roles' | 'separators' | 'singularize'> {
+  stem?: NamingStemMode | 'folder'
   names?: string[]
   patterns?: string[]
   types?: boolean

@@ -32,5 +32,14 @@ describe('arch/types-declarations', () => {
       options: { allow: '^= ReturnType<typeof ' },
       errors: ['typeDeclaration', 'typeDeclaration'],
     },
+    { name: 'a module augmentation passes with modules', code: "declare module 'x' { interface Register { a: string } }", options: { modules: true } },
+    { name: 'a global augmentation passes with modules', code: 'declare global { interface Window { a: string } }\nexport {}', options: { modules: true } },
+    {
+      name: 'an interface outside the module block reports with modules',
+      code: "declare module 'x' { interface Register { a: string } }\ninterface Local { a: string }",
+      options: { modules: true },
+      errors: ['typeDeclaration'],
+    },
+    { name: 'a module augmentation reports by default', code: "declare module 'x' { interface Register { a: string } }", errors: ['typeDeclaration'] },
   ])('$name', (row) => testerRun(typesDeclarations, row))
 })

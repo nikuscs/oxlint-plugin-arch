@@ -1,5 +1,5 @@
 import { defineRule } from '@oxlint/plugins'
-import { basename, resolve } from 'node:path'
+import { basename, matchesGlob, resolve } from 'node:path'
 import { astIsTypeOnlyImport } from '../../utils/ast.utils.ts'
 import {
   boundariesExportVisitors,
@@ -74,7 +74,9 @@ function boundariesPrivateDomain({ options, file, target, reExport, roots, owner
     return 'public service and utility surfaces must not re-export private domain internals'
   }
 
-  return sameDomain ? undefined : 'private domain files stay in the same domain and application; use its service API or shared utilities'
+  const listed = Object.entries(options.importers ?? {}).some(([suffix, files]) => targetStem.endsWith(`.${suffix}`) && files.some((glob) => matchesGlob(file, glob)))
+
+  return sameDomain || listed ? undefined : 'private domain files stay in the same domain and application; use its service API or shared utilities'
 }
 
 function boundariesPortableLib(check: BoundariesImport): string | undefined {
@@ -118,6 +120,7 @@ export const boundariesImports = defineRule({
           backend: { type: 'array', items: { type: 'string' } },
           packages: { anyOf: [{ type: 'string' }, { type: 'array', items: { type: 'string' } }] },
           roles: { type: 'array', items: { type: 'string' } },
+          importers: { type: 'object', additionalProperties: { type: 'array', items: { type: 'string' } } },
           surfaces: { type: 'array', items: { type: 'string', minLength: 1 }, default: boundariesSurfaces },
           services: { type: 'array', items: { type: 'string' } },
           portable: { type: 'boolean' },

@@ -76,5 +76,22 @@ describe('arch/types-inline', () => {
     },
     { name: 'an inline readonly input', code: 'function save(input: Readonly<{ id: string }>) {}', errors: ['inlineType'] },
     { name: 'an inline intersection member', code: 'function save(input: Input & { extra: boolean }) {}', errors: ['inlineType'] },
+    { name: 'an inline variable annotation reports when variables are on', code: 'const input: { id: string } = value', options: { variables: true }, errors: ['inlineType'] },
+    { name: 'an inline class property reports when variables are on', code: 'class Store { state: { id: string } = make() }', options: { variables: true }, errors: ['inlineType'] },
+    { name: 'an as assertion passes by default', code: 'const input = value as { id: string }' },
+    { name: 'a satisfies assertion passes by default', code: 'const input = value satisfies { id: string }' },
+    { name: 'an as assertion reports when assertions are on', code: 'const input = value as { id: string }', options: { assertions: true }, errors: ['inlineType'] },
+    { name: 'a satisfies assertion reports when assertions are on', code: 'const input = value satisfies { id: string }', options: { assertions: true }, errors: ['inlineType'] },
+    { name: 'a type argument passes by default', code: 'const input = load<{ id: string }>()' },
+    { name: 'a type argument reports when arguments are on', code: 'const input = load<{ id: string }>()', options: { arguments: true }, errors: ['inlineType'] },
+    { name: 'a new type argument reports when arguments are on', code: 'const store = new Store<{ id: string }>()', options: { arguments: true }, errors: ['inlineType'] },
+    { name: 'min applies to variables', code: 'const input: { id: string } = value', options: { variables: true, min: 2 } },
+    { name: 'functions false applies to variables', code: 'const run: () => void = go', options: { variables: true, functions: false } },
+    {
+      name: 'variables alone still report',
+      code: 'const input: { id: string } = value',
+      options: { parameters: false, returns: false, variables: true },
+      errors: ['Use a named type instead of an inline object type in this variable annotation.'],
+    },
   ])('$name', (row) => testerRun(typesInline, row))
 })

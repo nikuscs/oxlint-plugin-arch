@@ -5,6 +5,7 @@ export interface BoundariesOptions {
   backend: string[]
   packages: string | string[]
   roles?: string[]
+  importers?: Record<string, string[]>
   surfaces?: string[]
   services?: string[]
   portable?: boolean

@@ -218,5 +218,45 @@ describe('arch/boundaries-imports', () => {
       options: { web: ['/project/web'], portable: true },
       errors: ['boundary'],
     },
+    {
+      name: 'the application imports a domain layer only when listed',
+      filename: '/project/server/application/app.ts',
+      code: "import { layer } from '../domains/order/order.layer.ts'",
+      options: { backend: ['/project/server'], services: ['/project/server/domains'], roles: ['layer', 'actions'] },
+      errors: ['boundary'],
+    },
+    {
+      name: 'a listed importer imports a domain layer',
+      filename: '/project/server/application/app.ts',
+      code: "import { layer } from '../domains/order/order.layer.ts'",
+      options: { backend: ['/project/server'], services: ['/project/server/domains'], roles: ['layer', 'actions'], importers: { layer: ['/project/server/application/app.ts'] } },
+    },
+    {
+      name: 'a listed importer still cannot import another private kind',
+      filename: '/project/server/application/app.ts',
+      code: "import { orderActionCreate } from '../domains/order/order.actions.ts'",
+      options: { backend: ['/project/server'], services: ['/project/server/domains'], roles: ['layer', 'actions'], importers: { layer: ['/project/server/application/app.ts'] } },
+      errors: ['boundary'],
+    },
+    {
+      name: 'an unlisted file still cannot import a domain layer',
+      filename: '/project/server/rpc/orders.ts',
+      code: "import { layer } from '../domains/order/order.layer.ts'",
+      options: { backend: ['/project/server'], services: ['/project/server/domains'], roles: ['layer', 'actions'], importers: { layer: ['/project/server/application/app.ts'] } },
+      errors: ['boundary'],
+    },
+    {
+      name: 'a wildcard importer matches one folder level',
+      filename: '/project/server/application/app.ts',
+      code: "import { layer } from '../domains/order/order.layer.ts'",
+      options: { backend: ['/project/server'], services: ['/project/server/domains'], roles: ['layer', 'actions'], importers: { layer: ['/project/server/application/*.ts'] } },
+    },
+    {
+      name: 'a wildcard importer does not match deeper files',
+      filename: '/project/server/application/deep/x.ts',
+      code: "import { layer } from '../../domains/order/order.layer.ts'",
+      options: { backend: ['/project/server'], services: ['/project/server/domains'], roles: ['layer', 'actions'], importers: { layer: ['/project/server/application/*.ts'] } },
+      errors: ['boundary'],
+    },
   ])('$name', (row) => testerRun(boundariesImports, row))
 })

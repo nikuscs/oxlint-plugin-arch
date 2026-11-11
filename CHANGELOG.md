@@ -12,6 +12,10 @@
 - Detection gives a `.agents` folder the `cli` recipe with the default quotes and semicolons.
 - `arch/code-delegate`: a handler (a function passed to a call ending in `methods`, default `handler` and `effect`) only reads its services, makes at most `max` (default `1`) yielded or awaited calls and returns. Any other statement, a call past `max`, a ternary and a nested function are reported. `reads` (default `['Effect.serviceOption']`) names calls that read a service. Not in a group yet.
 - `arch/react-query-props`: the data function given to a query hook (`hooks`, default `useQuery`, `useMutation`, `useInfiniteQuery`, `useSuspenseQuery`) under one of `functions` (default `queryFn`, `mutationFn`) is a prop of the enclosing component or hook, or a function that calls one; options that are not an object literal, or hold a spread, are reported. Not in a group yet.
+- `arch/files-exports`: `stem: 'folder'` reads the domain from the folder the file is in (`supplier-order/` gives `SupplierOrder`), and `singularize: 'trailing-s'` drops a trailing `s` from the domain's last word (`automatic-orders` gives `AutomaticOrder`). Defaults unchanged.
+- `arch/types-inline`: `variables` (variable and class property annotations), `assertions` (`as` and `satisfies`) and `arguments` (type arguments of calls and `new`), each default `false`; `functions` and `min` apply to them too.
+- `arch/types-declarations`: `modules` (default `false`) allows a `type` or `interface` inside `declare module '…' {}` or `declare global {}`.
+- `arch/boundaries-imports`: `importers` (default `{}`) maps a private file suffix to absolute files outside the domain that may import files of that suffix, with `*` inside one path segment: `importers: { layer: [resolve('apps/server/src/application/app.ts')] }`.
 
 ### Changed
 
