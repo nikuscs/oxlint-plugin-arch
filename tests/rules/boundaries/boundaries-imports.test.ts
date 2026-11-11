@@ -218,5 +218,12 @@ describe('arch/boundaries-imports', () => {
       options: { web: ['/project/web'], portable: true },
       errors: ['boundary'],
     },
+    {
+      name: 'the application cannot import a domain layer',
+      filename: '/project/server/application/app.ts',
+      code: "import { layer } from '../domains/order/order.layer.ts'",
+      options: { backend: ['/project/server'], services: ['/project/server/domains'], roles: ['layer', 'actions'] },
+      errors: ['boundary'],
+    },
   ])('$name', (row) => testerRun(boundariesImports, row))
 })

@@ -23,7 +23,9 @@ export function total(price: number, quantity: number) {
 | `services` | `boolean` | `false` | Also check methods of exported `const` objects |
 | `deny` | `string[]` | `[]`, or `isRecord`, `isString`, ... in `precise` | Helper names always reported |
 | `guards` | `boolean` | `true` in `precise`, else `false` | Report `typeof` and `Array.isArray` guard helpers |
+| `defaults` | `boolean` | `true` | Check the file's default export (a declaration, an anonymous function, or a name exported as default) |
 
 ```ts
 'arch/code-trivial-functions': ['error', { mode: 'precise', callees: ['^z\\.'] }]
+'arch/code-trivial-functions': ['error', { mode: 'precise', defaults: false }]
 ```

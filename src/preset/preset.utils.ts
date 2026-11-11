@@ -1,4 +1,5 @@
-import { readFileSync, statSync } from 'node:fs'
+import { existsSync, readFileSync, statSync } from 'node:fs'
+import { createRequire } from 'node:module'
 import { posix, resolve } from 'node:path'
 import { presetExtensions, presetGeneratedFiles, presetLiteralSegment } from './preset.constants.ts'
 import type * as PresetTypes from '../types/preset.types.ts'
@@ -20,6 +21,38 @@ async function presetEffectImport<T>(load: Promise<T>): Promise<T | null> {
 
 const presetEffectTsgo = await presetEffectImport(import('@effect/tsgo/oxlint-presets'))
 const presetEffectLinteffect = await presetEffectImport(import('@opsydyn/oxlint-effect'))
+const presetEffectRegexp = await presetEffectImport(import('eslint-plugin-regexp'))
+const presetEffectDeMorgan = await presetEffectImport(import('eslint-plugin-de-morgan'))
+const presetRequire = createRequire(import.meta.url)
+
+function presetResolve(name: string): string | undefined {
+  try {
+    return presetRequire.resolve(name)
+  } catch {
+    return undefined
+  }
+}
+
+export function presetEffectStyle(): PresetTypes.PresetEffectStyle {
+  const sonarjs = presetResolve('eslint-plugin-sonarjs')
+  const regexp = presetEffectRegexp ? presetResolve('eslint-plugin-regexp') : undefined
+  const deMorgan = presetEffectDeMorgan ? presetResolve('eslint-plugin-de-morgan') : undefined
+
+  const rules: PresetTypes.PresetRules = { ...presetEffectRegexp?.configs['flat/recommended'].rules, ...presetEffectDeMorgan?.configs.recommended.rules }
+
+  if (sonarjs) {
+    rules['sonarjs/super-linear-regex'] = 'error'
+  }
+
+  return {
+    rules,
+    jsPlugins: [
+      ...(regexp ? [{ name: 'regexp', specifier: regexp }] : []),
+      ...(deMorgan ? [{ name: 'de-morgan', specifier: deMorgan }] : []),
+      ...(sonarjs ? [{ name: 'sonarjs', specifier: sonarjs }] : []),
+    ],
+  }
+}
 
 export function presetEffectPackages(): PresetTypes.PresetEffectPackages {
   if (!presetEffectTsgo || !presetEffectLinteffect) {
@@ -120,6 +153,10 @@ export function presetIntersect(glob: string, scope: string): string[] {
   return [...new Set(matches)]
 }
 
+export function presetGlobEscape(path: string): string {
+  return path.replaceAll(/[[\]]/g, (bracket) => `[${bracket}]`)
+}
+
 export function presetAliases(root: string, aliases: Record<string, string> | undefined): Record<string, string> {
   return Object.fromEntries(Object.entries(aliases ?? {}).map(([alias, path]) => [alias.replace(/\/$/, ''), resolve(root, path)]))
 }
@@ -193,4 +230,51 @@ export function presetIsFile(path: string): boolean {
   } catch {
     return false
   }
+}
+
+export function presetSource(root: string, directory: string, configured?: string): string {
+  if (configured !== undefined) {
+    return posix.join(directory, configured)
+  }
+
+  return existsSync(resolve(root, directory, 'src')) ? posix.join(directory, 'src') : directory
+}
+
+export function presetFilled(conventions: PresetTypes.PresetFolders, exists: (path: string) => boolean): PresetTypes.PresetFolders {
+  return Object.fromEntries(
+    Object.entries(conventions).filter(([path, folder]) => {
+      const empty = folder instanceof Object && folder.deny instanceof Object && Object.keys(folder.deny.imports ?? {}).length === 0
+
+      return exists(path) && !empty
+    }),
+  )
+}
+
+function presetMergeObject<T extends object>(base: T, top: T, depth: number): T {
+  const merged = { ...base }
+
+  for (const [key, value] of Object.entries(top)) {
+    const previous: unknown = Reflect.get(merged, key)
+    const nested = previous instanceof Object && value instanceof Object && !Array.isArray(previous) && !Array.isArray(value)
+
+    if (nested && depth > 0) {
+      Reflect.set(merged, key, presetMergeObject<object>(previous, value, depth - 1))
+    } else if (value !== true || !(previous instanceof Object)) {
+      Reflect.set(merged, key, value)
+    }
+  }
+
+  return merged
+}
+
+export function presetMerge(base: boolean | PresetTypes.PresetFolder | undefined, top: boolean | PresetTypes.PresetFolder): boolean | PresetTypes.PresetFolder {
+  if (!(base instanceof Object) || !(top instanceof Object)) {
+    return top === true && base instanceof Object ? base : top
+  }
+
+  const merged = presetMergeObject(base, top, 2)
+  const before = base.layout instanceof Object ? base.layout.files : undefined
+  const after = top.layout instanceof Object ? top.layout.files : undefined
+
+  return before && after && merged.layout instanceof Object ? { ...merged, layout: { ...merged.layout, files: [...before, ...after] } } : merged
 }

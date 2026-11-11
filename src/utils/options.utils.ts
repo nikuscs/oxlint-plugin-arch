@@ -37,7 +37,7 @@ export function optionsGlob(pattern: string): RegExp {
 
   const source = pattern
     .replaceAll(/!\(([^()]*)\)/g, (_, options: string) => {
-      negated.push(options.split('|').map((option) => option.replaceAll(/[.+^$()|[\]\\*?{}]/g, '\\$&')).join('|'))
+      negated.push(options.split('|').map((option) => option.replaceAll(/[.+^$()|[\]\\?{}]/g, '\\$&').replaceAll('*', '[^/]*')).join('|'))
 
       return `\u0002${negated.length - 1}\u0003`
     })

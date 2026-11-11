@@ -19,6 +19,6 @@ Takes `true`, `false`, `'warn'` or an object:
 | `imports` | `Record<string, string \| false>` | `{}` | Specifier glob → hint; covers static, re-export and literal dynamic imports |
 | `calls` | `Record<string, string \| false>` | `{}` | Callee, member or dotted name → hint |
 
-Backend query files also get the `backend.writes` calls.
+Backend query files also get the built-in write calls of [`backend`](backend.md); `false` on a file key for those files drops one.
 
 Rules: [`arch/boundaries-deny`](../rules/boundaries-deny.md).

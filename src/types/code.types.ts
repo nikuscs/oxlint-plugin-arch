@@ -13,6 +13,12 @@ export interface CodeConstructorOptions {
   message?: string
 }
 
+export interface CodeDelegateOptions {
+  methods?: string[]
+  reads?: string[]
+  max?: number
+}
+
 export interface CodeLiteralInOptions {
   allow: string[]
 }
@@ -61,6 +67,7 @@ export interface CodeTrivialFunctionsOptions {
   services?: boolean
   deny?: string[]
   guards?: boolean
+  defaults?: boolean
 }
 
 export interface CodeTrivialFunctionsGuardState {

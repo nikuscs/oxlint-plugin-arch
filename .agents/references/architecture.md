@@ -15,13 +15,14 @@ src/
 ├── rules/<family>/<family>-<subject>.ts   one rule; helpers only it uses stay in the file
 ├── preset/
 │   ├── preset.ts                    public entry: preset(), recipes, templates, types; scopes each group to its folders
-│   ├── preset-detect.ts             detection: workspaces, recipes from package.json, conventions
+│   ├── preset-detect.ts             detection: workspaces, recipes from package.json, forcing, backend conventions
+│   ├── preset-effect.ts             Effect conventions as folder and file keys: server, contract, error classes, frontend, web app, UI kit
 │   ├── preset-stylesheet.ts         finds a unit's Tailwind entry stylesheet
 │   ├── preset-units.ts              which scopes are units, their kind and source
 │   ├── preset-folders.ts            resolves folders: keys, inheritance, units and the project lists groups read
-│   ├── preset-recipes.ts            recipes and templates: plain group toggles
+│   ├── preset-recipes.ts            recipes and templates: group toggles, each marked so a forced recipe replaces detection
 │   ├── preset.constants.ts          group defaults and order, rule lists, fixed values
-│   ├── preset.utils.ts              override, scope, glob intersection, severity and file system helpers; PresetError
+│   ├── preset.utils.ts              override, scope, glob intersection and escape, folder merge, severity, optional plugin and file system helpers; PresetError
 │   └── groups/<group>.ts            one group: a builder returning overrides for the given settings
 ├── types/<topic>.types.ts           every type and interface, one file per topic
 ├── utils/<topic>.utils.ts           logic two or more files share

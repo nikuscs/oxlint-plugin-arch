@@ -11,6 +11,7 @@ import { boundariesTanstack } from './rules/boundaries/boundaries-tanstack.ts'
 import { boundariesTokenOwner } from './rules/boundaries/boundaries-token-owner.ts'
 import { codeBranchOnce } from './rules/code/code-branch-once.ts'
 import { codeConstructor } from './rules/code/code-constructor.ts'
+import { codeDelegate } from './rules/code/code-delegate.ts'
 import { codeDoubleNegation } from './rules/code/code-double-negation.ts'
 import { codeFunctionNesting } from './rules/code/code-function-nesting.ts'
 import { codeInline } from './rules/code/code-inline.ts'
@@ -64,6 +65,7 @@ import { reactDynamicClasses } from './rules/react/react-dynamic-classes.ts'
 import { reactEmptyEffect } from './rules/react/react-empty-effect.ts'
 import { reactMemo } from './rules/react/react-memo.ts'
 import { reactProps } from './rules/react/react-props.ts'
+import { reactQueryProps } from './rules/react/react-query-props.ts'
 import { schemasInline } from './rules/schemas/schemas-inline.ts'
 import { schemasLocal } from './rules/schemas/schemas-local.ts'
 import { schemasRederive } from './rules/schemas/schemas-rederive.ts'
@@ -96,6 +98,7 @@ export default eslintCompatPlugin({
     'boundaries-token-owner': boundariesTokenOwner,
     'code-branch-once': codeBranchOnce,
     'code-constructor': codeConstructor,
+    'code-delegate': codeDelegate,
     'code-double-negation': codeDoubleNegation,
     'code-function-nesting': codeFunctionNesting,
     'code-inline': codeInline,
@@ -149,6 +152,7 @@ export default eslintCompatPlugin({
     'react-empty-effect': reactEmptyEffect,
     'react-memo': reactMemo,
     'react-props': reactProps,
+    'react-query-props': reactQueryProps,
     'schemas-inline': schemasInline,
     'schemas-local': schemasLocal,
     'schemas-rederive': schemasRederive,

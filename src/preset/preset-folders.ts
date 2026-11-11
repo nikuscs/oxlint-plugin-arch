@@ -4,10 +4,10 @@ import { presetDetect, presetRegistryFile } from './preset-detect.ts'
 import { presetStylesheet } from './preset-stylesheet.ts'
 import { presetUnits } from './preset-units.ts'
 import * as PresetConstants from './preset.constants.ts'
-import { PresetError, presetIsDirectory, presetManifest, presetScopes, presetServiceScopes } from './preset.utils.ts'
+import { PresetError, presetGlobEscape, presetIntersect, presetIsDirectory, presetIsFile, presetManifest, presetMerge, presetScopes, presetServiceScopes } from './preset.utils.ts'
 import type * as PresetTypes from '../types/preset.types.ts'
 
-function presetNormalizeKey(key: string): string {
+function presetPortableKey(key: string): string {
   const portable = key.replaceAll('\\', '/')
 
   if (!portable.trim() || posix.isAbsolute(portable) || /^[a-z]:/i.test(portable)) {
@@ -20,6 +20,11 @@ function presetNormalizeKey(key: string): string {
     throw new PresetError(`Folder keys must stay inside the project: ${key}`)
   }
 
+  return normalized
+}
+
+function presetNormalizeKey(key: string): string {
+  const normalized = presetPortableKey(key)
   const segments = normalized.split('/')
 
   if (normalized !== '.' && segments.some((segment) => segment !== '*' && !PresetConstants.presetLiteralSegment.test(segment))) {
@@ -31,6 +36,33 @@ function presetNormalizeKey(key: string): string {
   }
 
   return normalized
+}
+
+function presetBraces(key: string): string[] {
+  const match = /\{([^{}]*)\}/.exec(key)
+
+  if (!match) {
+    return [key]
+  }
+
+  return match[1].split(',').flatMap((option) => presetBraces(`${key.slice(0, match.index)}${option}${key.slice(match.index + match[0].length)}`))
+}
+
+function presetIsFileKey(root: string, key: string): boolean {
+  const name = key.split('/').at(-1) ?? ''
+  const pattern = key.includes('*')
+
+  if (!pattern && !existsSync(resolve(root, key)) && /[^.]\.[^.]+$/.test(name)) {
+    throw new PresetError(`File \`${key}\` does not exist.`)
+  }
+
+  const file = pattern ? name !== '*' && name.includes('.') : presetIsFile(resolve(root, key))
+
+  if (file && !key.split('/').every((segment) => PresetConstants.presetFileSegment.test(segment))) {
+    throw new PresetError(`File keys hold letters, digits, \`._-@$[]\` and \`*\` wildcards: ${key}`)
+  }
+
+  return file
 }
 
 function presetMatches(pattern: string[], path: string[]): boolean {
@@ -87,16 +119,36 @@ function presetGroupValue<K extends PresetTypes.PresetGroupName>(
   return { ...base, ...merged, level: severity ?? base.level }
 }
 
-function presetDenyEntries(inherited: Record<string, string>, changes: Record<string, string | false> | undefined): Record<string, string> {
+function presetDenyEntries(inherited: Record<string, string | false>, changes: Record<string, string | false> | undefined): Record<string, string | false> {
   return Object.fromEntries(
-    Object.entries({ ...inherited, ...changes }).flatMap(([key, message]) => {
+    Object.entries({ ...inherited, ...changes }).map(([key, message]) => {
       if (message !== false && typeof message !== 'string') {
         throw new PresetError(`Deny entry \`${key}\` takes a message string or false.`)
       }
 
-      return message === false ? [] : [[key, message]]
+      return [key, message]
     }),
   )
+}
+
+function presetLayoutNames(inherited: string[], entries: unknown): string[] {
+  if (!Array.isArray(entries) || !entries.every((entry) => typeof entry === 'string' && PresetConstants.presetLayoutFileName.test(entry))) {
+    throw new PresetError('layout.files takes file names such as `*.prompts.ts`; `!*.utils.ts` removes one.')
+  }
+
+  const names = [...inherited]
+
+  for (const entry of entries) {
+    const index = names.indexOf(entry.startsWith('!') ? entry.slice(1) : entry)
+
+    if (entry.startsWith('!') && index !== -1) {
+      names.splice(index, 1)
+    } else if (!entry.startsWith('!') && index === -1) {
+      names.push(entry)
+    }
+  }
+
+  return names
 }
 
 function presetEffective(folder: PresetTypes.PresetFolder, parent: PresetTypes.PresetEffective | null): PresetTypes.PresetEffective {
@@ -118,6 +170,14 @@ function presetEffective(folder: PresetTypes.PresetFolder, parent: PresetTypes.P
       imports: presetDenyEntries(inherited.imports, deny.imports),
       calls: presetDenyEntries(inherited.calls, deny.calls),
     }
+  }
+
+  const layout = folder.layout
+
+  if (effective.layout && layout instanceof Object && layout.files !== undefined) {
+    const inherited = (parent ? parent.layout?.files : null) ?? PresetConstants.presetGroupOptions.layout.files
+
+    effective.layout = { ...effective.layout, files: presetLayoutNames(inherited, layout.files) }
   }
 
   return effective
@@ -210,14 +270,40 @@ function presetScopesTree(root: string, folders: PresetTypes.PresetFolders): Pre
 export function presetProject(config: PresetTypes.PresetConfig): PresetTypes.PresetProject {
   const given = resolve(config.root ?? process.cwd())
   const root = existsSync(given) ? realpathSync(given) : given
-  const listed = Object.entries(config.folders ?? {}).map(([key, value]): [string, boolean | PresetTypes.PresetFolder] => [presetNormalizeKey(key), value])
-  const twice = listed.find(([key], index) => listed.findIndex(([other]) => other === key) !== index)
+
+  const expanded = Object.entries(config.folders ?? {}).flatMap(([key, value]) =>
+    presetBraces(key).map((path): [string, boolean | PresetTypes.PresetFolder, boolean] => [presetPortableKey(path), value, key.includes('{')]),
+  )
+
+  const files = expanded.filter(([key]) => presetIsFileKey(root, key))
+
+  const listed = expanded
+    .filter((entry) => !files.includes(entry))
+    .map(([key, value, fromList]): [string, boolean | PresetTypes.PresetFolder, boolean] => [presetNormalizeKey(key), value, fromList])
+
+  const twice = listed.find(([key, , fromList], index) =>
+    listed.some(([other, , otherFromList], at) => at < index && other === key && !fromList && !otherFromList),
+  )
 
   if (twice) {
     throw new PresetError(`Folder \`${twice[0]}\` is listed twice.`)
   }
 
-  const folders = config.detect === false ? Object.fromEntries(listed) : presetDetect(root, Object.fromEntries(listed))
+  const configured: PresetTypes.PresetFolders = {}
+
+  for (const [key, value] of listed) {
+    configured[key] = key in configured ? presetMerge(configured[key], value) : value
+  }
+
+  const detected = config.detect === false ? configured : presetDetect(root, configured)
+  const conventions = Object.entries(detected).filter(([key]) => !(key in configured) && presetIsFileKey(root, key))
+  const folders = Object.fromEntries(Object.entries(detected).filter(([key]) => !conventions.some(([other]) => other === key)))
+
+  const fileEntries = [
+    ...conventions.filter(([key]) => !files.some(([other]) => other === key)),
+    ...files.map(([key, value]): [string, boolean | PresetTypes.PresetFolder] => [key, key in detected ? presetMerge(detected[key], value) : value]),
+  ]
+
   const scopes = presetScopesTree(root, folders)
   const ignored = new Set(Object.entries(folders).flatMap(([key, value]) => (value === false ? [presetNormalizeKey(key)] : [])))
   const live = scopes.filter((scope) => !ignored.has(scope.key))
@@ -226,6 +312,31 @@ export function presetProject(config: PresetTypes.PresetConfig): PresetTypes.Pre
   if (dead) {
     throw new PresetError(`Folder \`${dead.key}\` sits inside the skipped folder \`${dead.parent?.key}\`.`)
   }
+
+  const fileKeys = fileEntries.flatMap(([key, value]): PresetTypes.PresetFileKey[] => {
+    if (value === false) {
+      return []
+    }
+
+    const folder = presetFolder(key, value)
+    const option = Object.keys(folder).find((name) => PresetConstants.presetFolderOnlyKeys.includes(name))
+
+    if (option) {
+      throw new PresetError(`Set \`${option}\` on a folder, not on \`${key}\`.`)
+    }
+
+    if (Object(folder.layout).operations !== undefined) {
+      throw new PresetError(`Set layout.operations on an app or package folder, not on \`${key}\`.`)
+    }
+
+    const pattern = presetGlobEscape(key)
+
+    const reached = live
+      .filter((scope) => presetIntersect(pattern, scope.key).length > 0)
+      .map((scope) => ({ key: scope.key, parent: scope, depth: scope.depth, folder, effective: presetEffective(folder, scope.effective) }))
+
+    return [{ pattern, folder, scopes: reached }]
+  })
 
   const units = presetUnits(root, scopes, ignored)
 
@@ -242,12 +353,6 @@ export function presetProject(config: PresetTypes.PresetConfig): PresetTypes.Pre
     throw new PresetError(`Set layout.operations on an app or package folder, not on \`${misplaced.key}\`.`)
   }
 
-  const writes = live.find((scope) => !unitKeys.has(scope.key) && Object(scope.folder.backend).writes !== undefined)
-
-  if (writes) {
-    throw new PresetError(`Set backend.writes on a backend folder, not on \`${writes.key}\`.`)
-  }
-
   const of = (kind: PresetTypes.PresetKind) => units.filter((unit) => unit.kind === kind)
   const webUnits = of('web')
   const web = webUnits.map((unit) => unit.source)
@@ -261,15 +366,14 @@ export function presetProject(config: PresetTypes.PresetConfig): PresetTypes.Pre
   const appFiles = presetScopes(app)
   const webFiles = presetScopes(web)
   const effective = live.map((scope) => scope.effective)
-  const suffixes = [...new Set(effective.flatMap((groups) => groups.layout?.suffixes ?? []))]
 
-  if (suffixes.some((suffix) => !/^[a-z][a-z0-9-]*$/.test(suffix))) {
-    throw new PresetError('Layout suffixes must be lowercase kebab-case names.')
-  }
-
-  if (suffixes.some((suffix) => PresetConstants.presetBuiltinFileRoles.includes(suffix))) {
-    throw new PresetError('Layout suffixes must not replace built-in file roles.')
-  }
+  const fileKinds = [
+    ...new Set(
+      [...effective, ...fileKeys.flatMap((fileKey) => fileKey.scopes.map((scope) => scope.effective))].flatMap((groups) =>
+        (groups.layout?.files ?? []).flatMap((name) => (PresetConstants.presetLayoutFiles.includes(name) ? [] : (/^\*\.([a-z][a-z0-9-]*)\.ts$/.exec(name)?.[1] ?? []))),
+      ),
+    ),
+  ]
 
   const orpcScopes = effective.flatMap((groups) => (groups.orpc ? [groups.orpc] : []))
   const listOf = (values: (string[] | undefined)[]) => [...new Set(values.flatMap((value) => value ?? []))]
@@ -359,14 +463,14 @@ export function presetProject(config: PresetTypes.PresetConfig): PresetTypes.Pre
     root,
     serviceFolders,
     scopes: live,
+    fileKeys,
     units,
-    suffixes,
+    fileKinds,
     colocated: listOf(effective.map((groups) => groups.types?.colocated)),
     orpc: {
       public: publicProcedures.length > 0
         ? publicProcedures
         : backendUnits.map((unit) => posix.join(unit.source, 'rpc/api')).filter((path) => existsSync(resolve(root, path))).map((path) => `${path}/**`),
-      composers: listOf(orpcScopes.map((settings) => settings.composers)),
       client: client ?? '',
     },
     layouts: units.flatMap((unit) =>
@@ -409,7 +513,7 @@ export function presetProject(config: PresetTypes.PresetConfig): PresetTypes.Pre
     baseImports: PresetConstants.presetBaseImports,
     css: { ...webCss, ...kitCss },
     registries: backendUnits.flatMap((unit) => presetRegistryFile(root, unit.source, unit.scope.effective.backend?.registry, unit.services) ?? []),
-    ignores: skipped.map((key) => `${key}/**`),
+    ignores: [...skipped.map((key) => `${key}/**`), ...fileEntries.flatMap(([key, value]) => (value === false ? [presetGlobEscape(key)] : []))],
     outputs: ['.', ...units.map((unit) => unit.key)].flatMap((key) => PresetConstants.presetOutputFolders.map((folder) => (key === '.' ? `${folder}/**` : `${key}/${folder}/**`))),
   }
 }

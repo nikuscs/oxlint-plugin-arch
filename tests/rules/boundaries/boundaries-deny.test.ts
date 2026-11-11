@@ -15,10 +15,21 @@ describe('arch/boundaries-deny', () => {
     { name: 'star re-export', code: "export * from 'denied'", options: { imports: { denied: '' } }, errors: ['import'] },
     { name: 'literal dynamic import', code: "import('denied')", options: { imports: { denied: '' } }, errors: ['import'] },
     { name: 'glob crosses segments', code: "import 'pkg/deep/module'", options: { imports: { 'pkg/**': '' } }, errors: ['import'] },
+    {
+      name: 'a negated wildcard lets the named kind through',
+      code: "import { layer } from '../domains/order/order.layer.ts'",
+      options: { imports: { '**/domains/*/!(*.layer.ts|*.workflows.ts)': '' } },
+    },
     { name: 'a negated segment bans other folders', code: "import '#/services/user/user-action.create'", options: { imports: { '#/services/!(order)/*-action.*': '' } }, errors: ['import'] },
     { name: 'bare callee', code: 'save(value)', options: { calls: { save: 'Read only.' } }, errors: ['call'] },
     { name: 'member name', code: "db.insertInto('orders')", options: { calls: { insertInto: '' } }, errors: ['call'] },
     { name: 'dotted callee', code: 'console.log(value)', options: { calls: { 'console.log': '' } }, errors: ['call'] },
     { name: 'computed literal callee', code: "console['log'](value)", options: { calls: { 'console.log': '' } }, errors: ['call'] },
+    {
+      name: 'a negated wildcard bans the other kinds',
+      code: "import { orderActionCreate } from '../domains/order/order.actions.ts'",
+      options: { imports: { '**/domains/*/!(*.layer.ts|*.workflows.ts)': '' } },
+      errors: ['import'],
+    },
   ])('$name', (row) => testerRun(boundariesDeny, row))
 })

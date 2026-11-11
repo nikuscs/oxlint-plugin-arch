@@ -1,4 +1,5 @@
 import { defineRule } from '@oxlint/plugins'
+import { posix } from 'node:path'
 import { declarationsFunctions } from '../../utils/declarations.utils.ts'
 import { exportsCollect, exportsFunctions } from '../../utils/exports.utils.ts'
 import { namingBasename, namingCamelCase, namingFileStem, namingPascalCase, namingStemModes } from '../../utils/naming.utils.ts'
@@ -19,7 +20,8 @@ export const filesExports = defineRule({
         properties: {
           names: { type: 'array', items: { type: 'string' } },
           patterns: { type: 'array', items: { type: 'string' } },
-          stem: { type: 'string', enum: [...namingStemModes] },
+          stem: { type: 'string', enum: [...namingStemModes, 'folder'] },
+          singularize: { type: 'string', enum: ['none', 'trailing-s'] },
           roles: { type: 'array', items: { type: 'string' } },
           separators: { type: 'array', items: { type: 'string' } },
           types: { type: 'boolean' },
@@ -67,7 +69,12 @@ export const filesExports = defineRule({
           return
         }
 
-        const domain = namingFileStem(basename, options.stem, options.roles, options.separators)
+        const read = options.stem === 'folder'
+          ? namingBasename(posix.dirname(context.filename.replaceAll('\\', '/')))
+          : namingFileStem(basename, options.stem, options.roles, options.separators)
+
+        const last = read.split(/[-_]+/).at(-1) ?? ''
+        const domain = options.singularize === 'trailing-s' && last.length > 1 && last.endsWith('s') ? read.slice(0, -1) : read
         const pascalDomain = namingPascalCase(domain)
         const camelDomain = namingCamelCase(domain)
         const allowed = (options.names ?? []).map((template) => template.replaceAll('{Domain}', pascalDomain).replaceAll('{domain}', camelDomain))

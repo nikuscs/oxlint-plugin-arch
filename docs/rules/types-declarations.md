@@ -17,7 +17,9 @@ export function load(user: User) {}
 | Option | Type | Default | |
 | --- | --- | --- | --- |
 | `allow` | `string \| string[]` | none | Regex for allowed names; a pattern starting with `=` or `^=` matches the alias's `= value` text |
+| `modules` | `boolean` | `false` | Allow declarations inside `declare module '…' {}` and `declare global {}` |
 
 ```ts
 'arch/types-declarations': ['error', { allow: 'Props$' }]
+'arch/types-declarations': ['error', { modules: true }]
 ```

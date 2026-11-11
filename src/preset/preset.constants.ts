@@ -315,9 +315,12 @@ export const presetGeneratedFiles = [
   '**/*.generated.*', '**/*.gen.*', '**/*.d.ts', '**/routes.tree.ts', '**/routeTree.gen.ts', '**/paraglide/**',
 ]
 
-export const presetBuiltinFileRoles = [
-  'service', 'client', 'server', 'rsc', 'utils', 'action', 'query', 'types', 'constants', 'handler', 'test', 'spec',
+export const presetLayoutFiles = [
+  '*.service.ts', '*.client.ts', '*.server.ts', '*.rsc.ts', '*.rsc.tsx', '*.utils.ts', '*.types.ts', '*.constants.ts', '*.handler.ts', '*.test.ts',
+  '*.spec.ts', '*-action.*.ts', '*-query.*.ts',
 ]
+
+export const presetLayoutFileName = /^!?[\w.*-]+$/
 
 export const presetShorthandOptions = [['tests', 'mocking', 'preset'], ['backend', 'registry', 'file']] as const
 
@@ -347,7 +350,7 @@ export const presetExternals = [
 ]
 
 export const presetGroupOptions: PresetTypes.PresetGroupDefaults = {
-  layout: { level: 'error', services: undefined, hooks: undefined, components: undefined, suffixes: [], strict: false, operations: 'flat', service: ['make{Domain}Service', '{Domain}Service'] },
+  layout: { level: 'error', services: undefined, hooks: undefined, components: undefined, files: presetLayoutFiles, strict: false, operations: 'flat', service: ['make{Domain}Service', '{Domain}Service'] },
   limits: { level: 'error', lines: 400, types: 1000, complexity: 32 },
   style: { level: 'error', quotes: 'single', semicolons: true, multiline: true, padding: true, dashes: true },
   basics: { level: 'error', trivial: true, state: true, switch: true, negation: true },
@@ -363,18 +366,24 @@ export const presetGroupOptions: PresetTypes.PresetGroupDefaults = {
   tailwind: { level: 'error', css: undefined, rem: 16 },
   shadcn: { level: 'error', ui: '@/components/ui', components: ['^@/components/'] },
   kit: { level: 'error' },
-  backend: { level: 'error', exports: undefined, registry: undefined, writes: ['insertInto', 'updateTable', 'deleteFrom', 'mergeInto', 'replaceInto', 'dispatch', 'send'] },
-  orpc: { level: 'error', public: [], composers: [], client: undefined },
+  backend: { level: 'error', exports: undefined, registry: undefined },
+  orpc: { level: 'error', public: [], client: undefined },
   schemas: { level: 'error' },
-  forms: { level: 'error', resolver: 'standardSchemaResolver' },
-  sql: { level: 'error', sanitizers: ['escapeLikeWildcards'] },
-  effect: { level: 'error', width: 160, exports: undefined, skip: undefined, entries: [] },
+  forms: { level: 'error' },
+  sql: { level: 'error' },
+  effect: { level: 'error', code: true, width: 140, exports: undefined, skip: undefined, entries: [] },
   console: { level: 'error' },
   deny: { level: 'error', imports: {}, calls: {} },
-  externals: { level: 'error', packages: presetExternals },
+  externals: { level: 'error' },
 }
 
+export const presetQueryWrites = ['insertInto', 'updateTable', 'deleteFrom', 'mergeInto', 'replaceInto', 'dispatch', 'send']
+
 export const presetFolderKeys = ['severity', 'source', 'services', 'rules']
+
+export const presetFolderOnlyKeys = ['source', 'services', 'tanstack', 'next', 'expo', 'backend', 'console', 'kit']
+
+export const presetFileSegment = /^(?!\.{1,2}$)[\w.@$[\]*-]+$/
 
 export const presetA11yRules = [
   'alt-text', 'anchor-has-content', 'anchor-is-valid', 'aria-activedescendant-has-tabindex', 'aria-props',
@@ -392,6 +401,8 @@ export const presetExpoRouteExports = ['ErrorBoundary', 'unstable_settings', 'ge
 
 export const presetTestFiles = ['**/{test,tests,e2e}/**/*.{ts,tsx,mts,cts}', '**/*.{test,spec}.{ts,tsx,mts,cts}']
 
+export const presetTanstackRsc = { name: '@tanstack/react-start/rsc', message: 'Render server components only in services/*.rsc.tsx files.' }
+
 export const presetBaseImports = [{ group: ['zod/v4', 'zod/v4/**'], message: 'Import from zod, not its transition entry point.' }]
 
 export const presetDetectFrameworks: ['tanstack' | 'next' | 'expo', string[]][] = [
@@ -401,6 +412,15 @@ export const presetDetectFrameworks: ['tanstack' | 'next' | 'expo', string[]][] 
 ]
 
 export const presetDetectDesktop = ['electrobun', 'electron', '@tauri-apps/api', '@tauri-apps/cli']
+
+export const presetEffectImports = {
+  effect: 'Import the module subpath, such as effect/Effect.',
+  zod: 'Use effect/Schema.',
+  'ts-pattern': 'Use effect/Match.',
+  dayjs: 'Use effect/DateTime.',
+}
+
+export const presetRecipeMark = Symbol('recipe')
 
 export const presetDetectBackend = ['@orpc/server', 'hono', 'kysely', 'drizzle-orm', 'express', 'fastify', 'elysia']
 
@@ -424,7 +444,7 @@ export const presetCliFiles = '^cli(?:-[a-z0-9]+)*(?:\\.[a-z0-9-]+)*\\.tsx?$'
 
 export const presetMigrationFiles = '^(?:\\d{3,14}[-_][a-z0-9]+(?:[-_][a-z0-9]+)*|index)\\.ts$'
 
-export const presetMigrationNumber = '^(\\d{3,14})[-_]'
+export const presetMigrationNumber = '^(\\d{4}-\\d{2}-\\d{2}(?:-\\d{2})*|\\d{3,14})[-_]'
 
 export const presetRootImports = { 'framer-motion': 'Use motion/react.' }
 

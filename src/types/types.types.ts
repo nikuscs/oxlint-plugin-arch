@@ -3,6 +3,7 @@ import type { ESTree } from '@oxlint/plugins'
 
 export interface TypesDeclarationsOptions {
   allow?: OptionsPattern
+  modules?: boolean
 }
 
 export type TypesDeclarationNode = ESTree.TSTypeAliasDeclaration | ESTree.TSInterfaceDeclaration
@@ -16,6 +17,9 @@ export interface TypesInlineOptions {
   parameters?: boolean
   returns?: boolean
   functions?: boolean
+  variables?: boolean
+  assertions?: boolean
+  arguments?: boolean
   min?: number
 }
 

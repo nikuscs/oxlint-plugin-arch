@@ -12,7 +12,7 @@ export interface PresetLayoutOptions {
   services?: PresetLayoutMode | false
   hooks?: PresetLayoutMode | false
   components?: PresetLayoutMode | false
-  suffixes?: string[]
+  files?: string[]
   strict?: boolean
   operations?: PresetOperations
   service?: string[]
@@ -127,7 +127,6 @@ export interface PresetRegistryOptions {
 export interface PresetBackendOptions {
   exports?: string[]
   registry?: false | string | PresetRegistryOptions
-  writes?: string[]
 }
 
 export interface PresetDenyOptions {
@@ -135,34 +134,27 @@ export interface PresetDenyOptions {
   calls?: Record<string, string | false>
 }
 
-export interface PresetExternalsOptions {
-  packages?: string[]
-}
-
 export interface PresetOrpcOptions {
   public?: string[]
-  composers?: string[]
   client?: string
 }
 
-export interface PresetFormsOptions {
-  resolver?: string
-}
-
 export interface PresetEffectOptions {
+  code?: boolean
   width?: number
   exports?: OptionsPattern
   skip?: OptionsPattern
   entries?: string[]
 }
 
+export interface PresetEffectStyle {
+  rules: PresetRules
+  jsPlugins: PresetJsPlugins
+}
+
 export interface PresetEffectPackages {
   tsgo: typeof EffectTsgo
   linteffect: typeof EffectLinteffect
-}
-
-export interface PresetSqlOptions {
-  sanitizers?: string[]
 }
 
 export interface PresetGroups {
@@ -185,12 +177,12 @@ export interface PresetGroups {
   backend?: PresetSwitch | PresetBackendOptions
   orpc?: PresetSwitch | PresetOrpcOptions
   schemas?: PresetSwitch
-  forms?: PresetSwitch | PresetFormsOptions
-  sql?: PresetSwitch | PresetSqlOptions
+  forms?: PresetSwitch
+  sql?: PresetSwitch
   effect?: PresetSwitch | PresetEffectOptions
   console?: boolean
   deny?: PresetSwitch | PresetDenyOptions
-  externals?: PresetSwitch | PresetExternalsOptions
+  externals?: PresetSwitch
 }
 
 export type PresetGroupName = keyof PresetGroups
@@ -204,13 +196,15 @@ export interface PresetFolder extends PresetGroups {
 
 export type PresetFolders = Record<string, boolean | PresetFolder>
 
+export type PresetEntry = [string, boolean | PresetFolder]
+
 export interface PresetConfig {
   root?: string
   folders?: PresetFolders
   detect?: boolean
 }
 
-export type PresetRecipe = PresetGroups
+export type PresetRecipe = PresetGroups & Partial<Record<symbol, string>>
 
 export type PresetRules = NonNullable<OxlintConfig['rules']>
 export type PresetJsPlugins = NonNullable<OxlintConfig['jsPlugins']>
@@ -218,7 +212,7 @@ export type PresetPlugins = NonNullable<OxlintConfig['plugins']>
 export type PresetSettings = NonNullable<OxlintConfig['settings']>
 
 export interface PresetResolvedGroups {
-  layout: PresetLayoutOptions & Required<Pick<PresetLayoutOptions, 'suffixes' | 'strict' | 'operations' | 'service'>>
+  layout: PresetLayoutOptions & Required<Pick<PresetLayoutOptions, 'files' | 'strict' | 'operations' | 'service'>>
   limits: Required<PresetLimitsOptions>
   style: Required<PresetStyleOptions>
   basics: Required<PresetBasicsOptions>
@@ -234,15 +228,15 @@ export interface PresetResolvedGroups {
   tailwind: Pick<PresetTailwindOptions, 'css'> & { rem: number }
   shadcn: Required<PresetShadcnOptions>
   kit: PresetEmptyOptions
-  backend: PresetBackendOptions & Required<Pick<PresetBackendOptions, 'writes'>>
+  backend: PresetBackendOptions
   orpc: PresetOrpcOptions
   schemas: PresetEmptyOptions
-  forms: Required<PresetFormsOptions>
-  sql: Required<PresetSqlOptions>
-  effect: Pick<PresetEffectOptions, 'exports' | 'skip'> & { width: number; entries: string[] }
+  forms: PresetEmptyOptions
+  sql: PresetEmptyOptions
+  effect: Pick<PresetEffectOptions, 'exports' | 'skip'> & { code: boolean; width: number; entries: string[] }
   console: PresetEmptyOptions
-  deny: { imports: Record<string, string>; calls: Record<string, string> }
-  externals: Required<PresetExternalsOptions>
+  deny: { imports: Record<string, string | false>; calls: Record<string, string | false> }
+  externals: PresetEmptyOptions
 }
 
 export interface PresetEmptyOptions {
@@ -265,6 +259,12 @@ export interface PresetScope {
   depth: number
   folder: PresetFolder
   effective: PresetEffective
+}
+
+export interface PresetFileKey {
+  pattern: string
+  folder: PresetFolder
+  scopes: PresetScope[]
 }
 
 export interface PresetUnit {
@@ -315,8 +315,9 @@ export interface PresetProject {
   root: string
   serviceFolders: Record<string, string>
   scopes: PresetScope[]
+  fileKeys: PresetFileKey[]
   units: PresetUnit[]
-  suffixes: string[]
+  fileKinds: string[]
   colocated: string[]
   orpc: Required<PresetOrpcOptions>
   layouts: PresetLayoutScope[]

@@ -28,6 +28,9 @@ export const typesInline = defineRule({
           parameters: { type: 'boolean' },
           returns: { type: 'boolean' },
           functions: { type: 'boolean' },
+          variables: { type: 'boolean' },
+          assertions: { type: 'boolean' },
+          arguments: { type: 'boolean' },
           min: { type: 'integer', minimum: 1 },
         },
       },
@@ -40,6 +43,9 @@ export const typesInline = defineRule({
     let checkParameters = true
     let checkReturns = true
     let checkFunctionTypes = true
+    let checkVariables = false
+    let checkAssertions = false
+    let checkArguments = false
     let minMembers = 1
 
     function isInline(node: ESTree.Node): boolean {
@@ -49,7 +55,7 @@ export const typesInline = defineRule({
       return checkFunctionTypes && (node.type === 'TSFunctionType' || node.type === 'TSConstructorType')
     }
 
-    function check(annotation: ESTree.TSTypeAnnotation | null | undefined, position: string) {
+    function check(annotation: ESTree.Node | null | undefined, position: string) {
       astVisit(annotation, [], (node, ancestors) => {
         if (!isInline(node) || ancestors.some(isInline)) {
           return
@@ -80,9 +86,42 @@ export const typesInline = defineRule({
         checkParameters = options.parameters ?? true
         checkReturns = options.returns ?? true
         checkFunctionTypes = options.functions ?? true
+        checkVariables = options.variables ?? false
+        checkAssertions = options.assertions ?? false
+        checkArguments = options.arguments ?? false
         minMembers = options.min ?? 1
-        if (!checkParameters && !checkReturns) {
+        if (!checkParameters && !checkReturns && !checkVariables && !checkAssertions && !checkArguments) {
           return false
+        }
+      },
+      VariableDeclarator(node) {
+        if (checkVariables) {
+          check(parameterAnnotation(node.id), 'variable')
+        }
+      },
+      PropertyDefinition(node) {
+        if (checkVariables) {
+          check(node.typeAnnotation, 'variable')
+        }
+      },
+      TSAsExpression(node) {
+        if (checkAssertions) {
+          check(node.typeAnnotation, 'assertion')
+        }
+      },
+      TSSatisfiesExpression(node) {
+        if (checkAssertions) {
+          check(node.typeAnnotation, 'assertion')
+        }
+      },
+      CallExpression(node) {
+        if (checkArguments) {
+          check(node.typeArguments, 'type argument')
+        }
+      },
+      NewExpression(node) {
+        if (checkArguments) {
+          check(node.typeArguments, 'type argument')
         }
       },
       FunctionDeclaration: checkFunction,

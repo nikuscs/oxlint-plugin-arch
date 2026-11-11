@@ -1,6 +1,6 @@
 import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
-import { preset, PresetError, recipes, templates } from '../../src/preset/preset.ts'
+import { externals, preset, PresetError, recipes, templates } from '../../src/preset/preset.ts'
 import { testerPreset } from '../utils/tester.utils.ts'
 import type { PresetFolders } from '../../src/types/preset.types.ts'
 import type { TesterPresetRow } from '../types/tester.types.ts'
@@ -66,6 +66,64 @@ describe('preset', () => {
       file: 'src/services/order/order-query.list.ts',
       rule: 'arch/boundaries-deny',
       expected: ['error', { calls: { insertInto: 'Query files only read; move writes to an action.' } }],
+    },
+    {
+      name: 'a query file key adds a write call to the built-in ones',
+      files: { 'apps/server/src/services/order/order-query.list.ts': '' },
+      folders: { 'apps/server': recipes.backend, 'apps/server/src/services/**/*-query.*.ts': { deny: { calls: { publish: 'Query files only read; move writes to an action.' } } } },
+      detect: false,
+      file: 'apps/server/src/services/order/order-query.list.ts',
+      rule: 'arch/boundaries-deny',
+      expected: ['error', { calls: { insertInto: 'Query files only read; move writes to an action.', publish: 'Query files only read; move writes to an action.' } }],
+    },
+    {
+      name: 'a query file key drops a built-in write call with false',
+      files: { 'apps/server/src/services/order/order-query.list.ts': '' },
+      folders: { 'apps/server': recipes.backend, 'apps/server/src/services/**/*-query.*.ts': { deny: { calls: { send: false } } } },
+      detect: false,
+      file: 'apps/server/src/services/order/order-query.list.ts',
+      rule: 'arch/boundaries-deny',
+      expected: ['error', { calls: expect.not.objectContaining({ send: expect.anything() }) }],
+    },
+    {
+      name: 'a services rules line sets the sql sanitizers',
+      tree: ['apps/server/src/services/'],
+      folders: { 'apps/server': recipes.backend, 'apps/server/src/services': { rules: { 'arch/backend-sql-like': ['error', { sanitizers: ['escapeLike'] }] } } },
+      file: 'apps/server/src/services/order/order.service.ts',
+      rule: 'arch/backend-sql-like',
+      expected: ['error', { sanitizers: ['escapeLike'] }],
+    },
+    {
+      name: 'a services rules line leaves the sql rule off outside the services',
+      tree: ['apps/server/src/services/'],
+      folders: { 'apps/server': recipes.backend, 'apps/server/src/services': { rules: { 'arch/backend-sql-like': ['error', { sanitizers: ['escapeLike'] }] } } },
+      file: 'apps/server/src/rpc/api/orders.ts',
+      rule: 'arch/backend-sql-like',
+      expected: undefined,
+    },
+    {
+      name: 'a folder rules line sets the form resolver',
+      tree: ['apps/web/src/components/'],
+      folders: { 'apps/web': { ...recipes.tanstack, rules: { 'arch/code-paired-call': ['error', { when: 'useForm', require: 'zodResolver' }] } } },
+      file: 'apps/web/src/components/order-form.tsx',
+      rule: 'arch/code-paired-call',
+      expected: ['error', { when: 'useForm', require: 'zodResolver' }],
+    },
+    {
+      name: 'a config file rules line extends the externals',
+      files: { 'apps/web/vite.config.ts': '' },
+      folders: { 'apps/web/vite.config.ts': { rules: { 'arch/files-externals': ['error', { packages: [...externals, 'ai', 'stripe'] }] } } },
+      file: 'apps/web/vite.config.ts',
+      rule: 'arch/files-externals',
+      expected: ['error', { packages: [...externals, 'ai', 'stripe'] }],
+    },
+    {
+      name: 'a config file rules line leaves the externals rule off other files',
+      files: { 'apps/web/vite.config.ts': '' },
+      folders: { 'apps/web/vite.config.ts': { rules: { 'arch/files-externals': ['error', { packages: [...externals, 'ai', 'stripe'] }] } } },
+      file: 'apps/web/src/components/order-card.tsx',
+      rule: 'arch/files-externals',
+      expected: undefined,
     },
     { name: 'the library recipe adds schema checks', folders: { src: recipes.library }, file: 'src/src/a.ts', rule: 'arch/schemas-local', expected: ['error', { packages: ['zod'] }] },
     {
@@ -278,12 +336,101 @@ describe('preset', () => {
       rule: 'arch/boundaries-imports',
       expected: ['error', { packages: [expect.not.stringContaining('-link')] }],
     },
+    {
+      name: 'the orpc group checks outputs under its public globs',
+      folders: { src: { orpc: { public: ['src/rpc/**'] } } },
+      file: 'src/rpc/order.ts',
+      rule: 'arch/backend-orpc-output',
+      expected: ['error', { handler: 'handler', output: 'output' }],
+    },
+    { name: 'a folder list gives each folder the setting', folders: { 'src/{rules,preset}': { naming: false } }, file: 'src/preset/a.ts', rule: 'unicorn/filename-case', expected: undefined },
+    { name: 'one file as a key gets its rules', folders: { 'oxlint.config.ts': { rules: { eqeqeq: 'off' } } }, file: 'oxlint.config.ts', rule: 'eqeqeq', expected: 'off' },
+    { name: 'a file pattern gets its rules', folders: { 'src/**/*.utils.ts': { rules: { eqeqeq: 'warn' } } }, file: 'src/utils/a.utils.ts', rule: 'eqeqeq', expected: 'warn' },
+    {
+      name: 'a file key rules come after its folder rules',
+      folders: { 'src/**/*.utils.ts': { rules: { eqeqeq: 'off' } }, src: { rules: { eqeqeq: 'warn' } } },
+      file: 'src/utils/a.utils.ts',
+      rule: 'eqeqeq',
+      expected: 'off',
+    },
+    {
+      name: 'the later of two file keys wins',
+      folders: { 'src/**/*.ts': { rules: { eqeqeq: 'warn' } }, 'src/**/*.utils.ts': { rules: { eqeqeq: 'off' } } },
+      file: 'src/utils/a.utils.ts',
+      rule: 'eqeqeq',
+      expected: 'off',
+    },
+    {
+      name: 'limits on a file pattern change max-lines for a matching file',
+      files: { 'src/order.actions.ts': '', 'src/order.ts': '' },
+      folders: { '.': true, 'src/**/*.actions.ts': { limits: { lines: 1500 } } },
+      detect: false,
+      file: 'src/order.actions.ts',
+      rule: 'max-lines',
+      expected: ['error', { max: 1500 }],
+    },
+    {
+      name: 'limits on a file pattern leave other files on the folder limit',
+      files: { 'src/order.actions.ts': '', 'src/order.ts': '' },
+      folders: { '.': true, 'src/**/*.actions.ts': { limits: { lines: 1500 } } },
+      detect: false,
+      file: 'src/order.ts',
+      rule: 'max-lines',
+      expected: ['error', { max: 400 }],
+    },
+    {
+      name: 'deny on a file pattern adds to the folder deny',
+      folders: { src: { deny: { calls: { legacy: 'Use the owner API.' } } }, 'src/**/*.queries.ts': { deny: { calls: { updateTable: 'A query reads only.' } } } },
+      file: 'src/order.queries.ts',
+      rule: 'arch/boundaries-deny',
+      expected: ['error', { calls: { legacy: 'Use the owner API.', updateTable: 'A query reads only.' } }],
+    },
+    {
+      name: 'deny on a file pattern leaves other files on the folder deny',
+      folders: { src: { deny: { calls: { legacy: 'Use the owner API.' } } }, 'src/**/*.queries.ts': { deny: { calls: { updateTable: 'A query reads only.' } } } },
+      file: 'src/order.ts',
+      rule: 'arch/boundaries-deny',
+      expected: ['error', { calls: expect.not.objectContaining({ updateTable: expect.any(String) }) }],
+    },
+    { name: 'a group set to false on a file pattern turns its rules off', folders: { 'src/**/*.legacy.ts': { naming: false } }, file: 'src/a.legacy.ts', rule: 'unicorn/filename-case', expected: undefined },
+    { name: 'a group set to false on a file pattern leaves other files on', folders: { 'src/**/*.legacy.ts': { naming: false } }, file: 'src/a.ts', rule: 'unicorn/filename-case', expected: ['error', { case: 'kebabCase' }] },
+    {
+      name: 'a file key leaves the rules other groups set',
+      files: { 'src/services/order/deep/order.client.ts': '' },
+      folders: { '.': recipes.tanstack, 'src/services/**/*.ts': { tests: { titles: false } } },
+      detect: false,
+      file: 'src/services/order/deep/order.client.ts',
+      rule: 'arch/files-restricted',
+      expected: ['error', expect.any(Object)],
+    },
+    {
+      name: 'limits on a file pattern apply to a file not yet on disk',
+      files: { 'src/order.ts': '' },
+      folders: { '.': true, 'src/**/*.actions.ts': { limits: { lines: 1500 } } },
+      detect: false,
+      file: 'src/order.actions.ts',
+      rule: 'max-lines',
+      expected: ['error', { max: 1500 }],
+    },
+    { name: 'a narrow group on a file pattern keeps the folder rules on a file not yet on disk', files: { 'tests/old.test.ts': '' }, folders: { 'tests/**/*.test.ts': { tests: { titles: false } } }, detect: false, file: 'tests/future.test.ts', rule: 'arch/tests-assertions', expected: ['error', expect.any(Object)] },
+    { name: 'a narrow group on a file pattern keeps the folder setting on a file not yet on disk', files: { 'tests/old.test.ts': '' }, folders: { 'tests/**/*.test.ts': { tests: { titles: false } } }, detect: false, file: 'tests/future.test.ts', rule: 'arch/tests-titles', expected: ['error', expect.any(Object)] },
+    { name: 'a narrow group on a file pattern applies to a listed file', files: { 'tests/old.test.ts': '' }, folders: { 'tests/**/*.test.ts': { tests: { titles: false } } }, detect: false, file: 'tests/old.test.ts', rule: 'arch/tests-titles', expected: undefined },
+    { name: 'a file pattern that matches nothing is accepted', folders: { 'src/**/*.missing.ts': { limits: { lines: 10 } } }, file: 'src/a.ts', rule: 'eqeqeq', expected: 'error' },
+    { name: 'false on a file pattern ignores its files', folders: { 'src/**/*.legacy.ts': false }, file: 'src/a.legacy.ts', rule: 'eqeqeq', expected: 'ignored' },
+    {
+      name: 'a key with brackets matches its file',
+      files: { 'src/routes/[...rest].tsx': '' },
+      folders: { 'src/routes/[...rest].tsx': { rules: { eqeqeq: 'off' } } },
+      file: 'src/routes/[...rest].tsx',
+      rule: 'eqeqeq',
+      expected: 'off',
+    },
   ])('$name', (row) => {
     expect({ value: testerPreset(row) }).toMatchObject({ value: row.expected })
   })
 
   it.each([
-    { name: 'layout', options: { services: 'flat', hooks: false, suffixes: ['adapter'] } },
+    { name: 'layout', options: { services: 'flat', hooks: false, files: ['*.adapter.ts'] } },
     { name: 'limits', options: { lines: 200, types: 500, complexity: 16 } },
     { name: 'style', options: { quotes: 'double', semicolons: false } },
     { name: 'basics', options: { trivial: false, state: false } },
@@ -300,14 +447,14 @@ describe('preset', () => {
     { name: 'shadcn', options: { ui: '@/ui', components: ['^@/ui/'] } },
     { name: 'kit', options: {} },
     { name: 'backend', options: { exports: ['@example/api/client'], registry: 'src/registry.ts' } },
-    { name: 'orpc', options: { public: ['publicProcedure'], composers: ['compose'], client: 'src/client.ts' } },
+    { name: 'orpc', options: { public: ['publicProcedure'], client: 'src/client.ts' } },
     { name: 'schemas', options: {} },
-    { name: 'forms', options: { resolver: 'schemaResolver' } },
-    { name: 'sql', options: { sanitizers: ['escapeSearch'] } },
+    { name: 'forms', options: {} },
+    { name: 'sql', options: {} },
     { name: 'effect', options: { width: 120, exports: 'src/[^/]+[.]ts$', skip: 'Driver$', entries: ['src/main.ts'] } },
     { name: 'console', options: {} },
     { name: 'deny', options: { imports: { legacy: 'Use the owner API.' }, calls: { 'legacy.run': 'Use the owner API.' } } },
-    { name: 'externals', options: { packages: ['native-addon'] } },
+    { name: 'externals', options: {} },
   ])('$name accepts switches and options', ({ name, options }) => {
     for (const value of [true, false, 'warn', options]) {
       expect(() => preset({ root, folders: { src: { [name]: value } } })).not.toThrow()
@@ -315,13 +462,15 @@ describe('preset', () => {
   })
 
   it.each([
-    { name: 'the Effect group loads Effect tsgo and oxlint-effect', folders: { src: recipes.effect }, plugins: ['effecttsgo'], jsPlugins: ['linteffect'] },
-    { name: 'other groups load neither', folders: { src: true }, plugins: [], jsPlugins: [] },
+    { name: 'the Effect group loads Effect tsgo, oxlint-effect and the installed style plugins', folders: { src: recipes.effect }, plugins: ['effecttsgo'], jsPlugins: ['linteffect', 'regexp', 'de-morgan'] },
+    { name: 'style only loads the installed style plugins', folders: { src: { effect: { code: false } } }, plugins: [], jsPlugins: ['regexp', 'de-morgan'] },
+    { name: 'other groups load none', folders: { src: true }, plugins: [], jsPlugins: [] },
   ])('$name', ({ folders, plugins, jsPlugins }) => {
     const config = preset({ root, folders })
     const names = (config.jsPlugins ?? []).map((plugin) => (typeof plugin === 'string' ? plugin : plugin.name))
+    const loaded = names.filter((name) => ['linteffect', 'regexp', 'de-morgan', 'sonarjs'].includes(name))
 
-    expect({ plugins: (config.plugins ?? []).map(String).filter((plugin) => plugin === 'effecttsgo'), jsPlugins: names.filter((name) => name === 'linteffect') }).toEqual({ plugins, jsPlugins })
+    expect({ plugins: (config.plugins ?? []).map(String).filter((plugin) => plugin === 'effecttsgo'), jsPlugins: loaded }).toEqual({ plugins, jsPlugins })
   })
 
   it.each<{ name: string; folders: unknown; message: string }>([
@@ -361,17 +510,10 @@ describe('preset', () => {
       folders: { src: { next: true }, 'src/rules': { layout: { operations: 'folders' } } },
       message: 'Set layout.operations on an app or package folder, not on `src/rules`.',
     },
-    {
-      name: 'query writes cannot be set below a backend folder',
-      folders: { src: { backend: true }, 'src/rules': { backend: { writes: ['dispatch'] } } },
-      message: 'Set backend.writes on a backend folder, not on `src/rules`.',
-    },
-    { name: 'an invalid suffix fails', folders: { src: { layout: { suffixes: ['Bad'] } } }, message: 'Layout suffixes must be lowercase kebab-case names.' },
-    {
-      name: 'a built-in suffix cannot be replaced',
-      folders: { src: { layout: { suffixes: ['service'] } } },
-      message: 'Layout suffixes must not replace built-in file roles.',
-    },
+    { name: 'the removed backend writes option fails', folders: { src: { backend: { writes: ['dispatch'] } } }, message: 'Unknown option `backend.writes`.' },
+    { name: 'the removed sql sanitizers option fails', folders: { src: { sql: { sanitizers: ['escapeLike'] } } }, message: 'Unknown option `sql.sanitizers`.' },
+    { name: 'the removed forms resolver option fails', folders: { src: { forms: { resolver: 'zodResolver' } } }, message: 'Unknown option `forms.resolver`.' },
+    { name: 'the removed externals packages option fails', folders: { src: { externals: { packages: ['ai'] } } }, message: 'Unknown option `externals.packages`.' },
     { name: 'a kit without a stylesheet fails', folders: { src: recipes.kit }, message: 'The UI kit src needs a Tailwind stylesheet: set tailwind.css on it.' },
     {
       name: 'folders that disagree on tailwind.rem fail',
@@ -410,6 +552,14 @@ describe('preset', () => {
       message: 'Set services on an app or package folder, not on `src/rules`.',
     },
     { name: 'a services folder must be a literal path', folders: { '.': { services: '../lib' } }, message: 'services `../lib` must be a literal relative path.' },
+    { name: 'the removed orpc composers option fails', folders: { src: { orpc: { composers: [] } } }, message: 'Unknown option `orpc.composers`.' },
+    { name: 'a unit option on a file key fails', folders: { 'src/**/*.ts': { backend: true } }, message: 'Set `backend` on a folder, not on `src/**/*.ts`.' },
+    {
+      name: 'operations on a file key fail',
+      folders: { 'src/**/*.ts': { layout: { operations: 'folders' } } },
+      message: 'Set layout.operations on an app or package folder, not on `src/**/*.ts`.',
+    },
+    { name: 'a missing literal file key fails', folders: { 'src/missing.ts': true }, message: 'File `src/missing.ts` does not exist.' },
     { name: 'an unknown mocking preset fails', folders: { src: { tests: { mocking: 'other' } } }, message: 'Unknown test mocking preset.' },
   ])('$name', ({ folders, message }) => {
     // SAFETY: these rows hold invalid folder maps on purpose; preset() validates its input at runtime.

@@ -1,5 +1,4 @@
 export interface BackendOrpcOutputOptions {
-  composers: string[]
   handler?: string
   output?: string
 }
@@ -13,8 +12,8 @@ export interface BackendServiceFunctionsOptions {
 }
 
 export interface BackendSqlLikeOptions {
-  methods: string[]
-  sanitizers: string[]
+  methods?: string[]
+  sanitizers?: string[]
   bindings?: boolean
   operators?: string[]
 }

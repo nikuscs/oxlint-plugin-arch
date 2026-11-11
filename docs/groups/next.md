@@ -16,4 +16,6 @@ Takes `true`, `false`, `'warn'` or an object:
 | `client` | `string[]` | `[]` | Extra client-only imports |
 | `dynamic` | `string[]` | `[]` | Files allowed computed imports |
 
+With [`basics`](basics.md) on, the default export of `app/**/{layout,page,default}.tsx` may be trivial (`defaults: false` on `arch/code-trivial-functions`); the other functions in those files are checked.
+
 Rules: [`arch/boundaries-next`](../rules/boundaries-next.md), [`arch/files-helpers`](../rules/files-helpers.md), [`arch/files-route`](../rules/files-route.md).

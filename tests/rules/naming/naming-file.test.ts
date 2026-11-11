@@ -91,5 +91,36 @@ describe('arch/naming-file', () => {
       options: { pattern: '^\\d{3}-', message: 'Start with NNN-.', unique: '^(\\d{3})-' },
       errors: ['duplicate'],
     },
+    {
+      name: 'two dated migrations of the same year are unique',
+      filename: 'migrations/2026-11-12-10-00-create-news-table.ts',
+      files: { 'migrations/2026-11-13-09-00-create-orders-table.ts': '' },
+      code: 'export {}',
+      options: { pattern: '^\\d', message: 'Start with a number.', unique: '^(\\d{4}-\\d{2}-\\d{2}(?:-\\d{2})*|\\d{3,14})[-_]' },
+    },
+    {
+      name: 'two migrations of the same date are duplicates',
+      filename: 'migrations/2026-11-12-a.ts',
+      files: { 'migrations/2026-11-12-b.ts': '' },
+      code: 'export {}',
+      options: { pattern: '^\\d', message: 'Start with a number.', unique: '^(\\d{4}-\\d{2}-\\d{2}(?:-\\d{2})*|\\d{3,14})[-_]' },
+      errors: ['duplicate'],
+    },
+    {
+      name: 'two numbered migrations with one number are duplicates',
+      filename: 'migrations/001-a.ts',
+      files: { 'migrations/001-b.ts': '' },
+      code: 'export {}',
+      options: { pattern: '^\\d', message: 'Start with a number.', unique: '^(\\d{4}-\\d{2}-\\d{2}(?:-\\d{2})*|\\d{3,14})[-_]' },
+      errors: ['duplicate'],
+    },
+    {
+      name: 'a number followed by digits reads only the number',
+      filename: 'migrations/001-2-factor.ts',
+      files: { 'migrations/001-3-other.ts': '' },
+      code: 'export {}',
+      options: { pattern: '^\\d', message: 'Start with a number.', unique: '^(\\d{4}-\\d{2}-\\d{2}(?:-\\d{2})*|\\d{3,14})[-_]' },
+      errors: ['duplicate'],
+    },
   ])('$name', (row) => testerRun(namingFile, row))
 })

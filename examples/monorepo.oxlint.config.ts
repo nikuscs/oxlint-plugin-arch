@@ -5,15 +5,15 @@ export default preset({
   folders: {
     ...templates.monorepo,
     '.': {
-      layout: { suffixes: ['prompts', 'driver'] },
+      layout: { files: ['*.prompts.ts', '*.driver.ts'] },
       tests: { assertions: ['arch.**.to*'] },
       deny: { imports: { 'framer-motion': 'Use motion/react.' } },
     },
     'apps/web': {
       ...recipes.tanstack,
       layout: { services: 'flat' },
-      externals: { packages: [...externals, 'ai'] },
     },
+    'apps/web/vite.config.ts': { rules: { 'arch/files-externals': ['error', { packages: [...externals, 'ai'] }] } },
     'apps/web/src/routes/handlers': { deny: { imports: { '@acme/server/client': 'Handlers call services directly.' } } },
     'apps/server': {
       ...recipes.backend,
@@ -22,7 +22,7 @@ export default preset({
         exports: ['@acme/server/client'],
         registry: { file: 'apps/server/src/core/core.services.ts', skip: ['database'] },
       },
-      orpc: { public: ['apps/server/src/rpc/api/**'], composers: ['paginatedOutput'] },
+      orpc: { public: ['apps/server/src/rpc/api/**'] },
     },
     'apps/server/src/services': { deny: { imports: { '#/core/core.services': 'Services never import the registry.' } } },
     'apps/server/src/services/database/migrations': {

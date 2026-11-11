@@ -494,5 +494,15 @@ describe('arch/code-trivial-functions', () => {
       options: { mode: 'precise' },
       errors: ['trivial'],
     },
+    { name: 'a trivial default export passes without defaults', code: 'export default function Default() { return null }', options: { defaults: false } },
+    { name: 'a trivial default export reports by default', code: 'export default function Default() { return null }', errors: ['trivial'] },
+    { name: 'a pass-through default layout passes without defaults', code: 'export default function RootLayout({ children }) { return children }', options: { defaults: false } },
+    { name: 'a function exported as default below passes without defaults', code: 'function Page() { return notFound() }\nexport default Page', options: { defaults: false } },
+    {
+      name: 'another trivial function still reports without defaults',
+      code: 'function load(id) { return repo.find(id) }\nexport default function Page() { return load(1) }',
+      options: { defaults: false },
+      errors: ['trivial'],
+    },
   ])('$name', (row) => testerRun(codeTrivialFunctions, row))
 })

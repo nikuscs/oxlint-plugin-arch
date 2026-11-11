@@ -5,6 +5,13 @@ import { optionsFirst } from '../../utils/options.utils.ts'
 import type { BackendSqlLikeOptions } from '../../types/backend.types.ts'
 import type { ESTree, Variable } from '@oxlint/plugins'
 
+const backendSqlLikeDefaults: Required<BackendSqlLikeOptions> = {
+  methods: ['like', 'ilike'],
+  sanitizers: ['escapeLikeWildcards'],
+  bindings: true,
+  operators: ['where'],
+}
+
 export const backendSqlLike = defineRule({
   meta: {
     type: 'problem',
@@ -18,17 +25,16 @@ export const backendSqlLike = defineRule({
           bindings: { type: 'boolean' },
           operators: { type: 'array', items: { type: 'string' } },
         },
-        required: ['methods', 'sanitizers'],
       },
     ],
     messages: { unescaped: '.{{method}}() values must use a configured sanitizer.' },
   },
   createOnce(context) {
-    let options: BackendSqlLikeOptions = { methods: [], sanitizers: [] }
+    let options = backendSqlLikeDefaults
     const seen = new Set<Variable>()
 
     function sanitizedBinding(identifier: ESTree.Node, name: string): boolean {
-      const variable = options.bindings === false ? null : boundariesDeclaredVariable(context.sourceCode.getScope(identifier), name)
+      const variable = options.bindings ? boundariesDeclaredVariable(context.sourceCode.getScope(identifier), name) : null
       const declarator = variable?.defs.length === 1 && variable.defs[0].type === 'Variable' ? variable.defs[0].node : undefined
       const statement = declarator?.parent?.parent
 
@@ -93,8 +99,8 @@ export const backendSqlLike = defineRule({
           return
         }
 
-        options = optionsFirst<BackendSqlLikeOptions>(context)
-        const { methods, operators: operatorMethods = [] } = options
+        options = { ...backendSqlLikeDefaults, ...optionsFirst<BackendSqlLikeOptions>(context, {}) }
+        const { methods, operators: operatorMethods } = options
         const method = astMemberName(node.callee)
 
         if (!method) {

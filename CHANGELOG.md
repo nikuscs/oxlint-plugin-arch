@@ -1,5 +1,95 @@
 # Changelog
 
+## Unreleased
+
+### Migrating from 0.12
+
+Every line an app's config may need to change. A removed option throws ``Unknown option``; the other rows change what detection adds or what a group sets, so read them against your config.
+
+| Was | Now |
+| --- | --- |
+| `'apps/server': { orpc: { composers: ['bulkOutput', 'rpcPaginationOutput'] } },` | `'apps/server': { orpc: true },` a plain function around a named schema passes by itself; the line can go where the `backend` recipe applies |
+| `'arch/backend-orpc-output': ['error', { composers: ['bulkOutput'] }]` | `'arch/backend-orpc-output': 'error'` |
+| `'apps/server': { backend: { writes: ['insertInto', 'updateTable', 'deleteFrom', 'mergeInto', 'replaceInto', 'dispatch', 'send', 'publish'] } },` | `'apps/server/src/services/**/*-query.*.ts': { deny: { calls: { publish: 'Query files only read; move writes to an action.' } } },` (`send: false` drops a built-in call) |
+| `'apps/server': { sql: { sanitizers: ['escapeLike'] } },` | `'apps/server/src/services': { rules: { 'arch/backend-sql-like': ['error', { sanitizers: ['escapeLike'] }] } },` |
+| `'apps/web': { forms: { resolver: 'zodResolver' } },` | `'apps/web': { rules: { 'arch/code-paired-call': ['error', { when: 'useForm', require: 'zodResolver' }] } },` |
+| `'apps/web': { externals: { packages: [...externals, 'ai', 'stripe'] } },` | `'apps/web/vite.config.ts': { rules: { 'arch/files-externals': ['error', { packages: [...externals, 'ai', 'stripe'] }] } },` |
+| `'.': { layout: { suffixes: ['prompts', 'driver'] } },` | `'.': { layout: { files: ['*.prompts.ts', '*.driver.ts'] } },` |
+| `'apps/server': { layout: { suffixes: ['gateway'] } },` (the strict name check allowed the name in every app) | `'.': { layout: { files: ['*.gateway.ts'] } },` for every app, or the same line on `'apps/server'` for that app only: the check follows the list of the folder a file is in |
+| `'apps/web': { ...recipes.react, layout: { services: 'flat' } },` on a detected TanStack app (merged with the detected recipe) | `'apps/web': { layout: { services: 'flat' } },` (a recipe you write replaces the detected one, so drop it or write the right one: `{ ...recipes.tanstack, layout: { services: 'flat' } }`) |
+| `'packages/core': { effect: true },` on a workspace that depends on `effect` | the line can go: it is detected, as a backend in Effect style when it has a backend package or `domains/`; `'packages/core': recipes.library` opts out |
+| a React workspace that depends on `effect`, with no `effect` line | it gets `effect: { code: false }` (type assertions, line width, the optional packages) and the four import bans; `'packages/ui': { effect: false }` turns them off |
+| `'.': { deny: { imports: { effect: '…', zod: '…', 'ts-pattern': '…', dayjs: '…' } } },` | the lines can go where the workspace depends on `effect` or uses `recipes.effect`; `deny: { imports: { dayjs: false } }` drops one |
+| `'packages/ui': { deny: { imports: { '@acme/web': '…', '@acme/web/**': '…' } } },` on an Effect UI kit | the line can go: a UI kit with the `effect` group bans every other workspace package that is not a UI kit; `deny: { imports: { '@acme/web': false } }` drops one |
+| a package with `pages/` or `link.tsx`, detected as `ui` | it is detected as `react`; `'packages/x': recipes.ui` keeps the kit |
+| `'.agents': { console: true },` | the line can go; `.agents` uses the default quotes and semicolons, and `'.agents': { style: { quotes: 'double' } }` keeps the root's |
+| `effect: true` relying on width 160 | `effect: { width: 160 }` |
+| `rules: { 'typescript/consistent-type-assertions': ['error', { assertionStyle: 'never' }], 'eslint-js/max-len': ['error', { code: 140, ignoreUrls: true, ignoreComments: true, ignoreRegExpLiterals: true }], 'arch/code-object-params': ['error', { all: true, services: true }], 'arch/code-switch': ['error', { message: 'Branch with Match.' }], 'arch/naming-exports': 'off' }` on an Effect folder | the lines can go: the `effect` group sets them; `rules: { 'typescript/consistent-type-assertions': 'off' }` turns one off |
+| `'arch/backend-sql-like': ['error', { methods: ['like', 'ilike'], operators: ['where'], sanitizers: ['escapeLikeWildcards'] }]` | `'arch/backend-sql-like': 'error'`; a line that set only `sanitizers` now also checks `where` calls, and `operators: []` keeps the old reach |
+| `deny: { imports: { '**/domains/*/!(*.layer.ts)': '…' } }` (the `*` read as a literal, so every file matched) | the same line skips `*.layer.ts`; ban those files with their own entry if you relied on it |
+
+Where a config ends up: the whole config of an Effect app with a server, a contract package, a frontend package, a UI kit and a TanStack app ([`examples/effect.oxlint.config.ts`](examples/effect.oxlint.config.ts)).
+
+```ts
+export default preset({
+  root: import.meta.dirname,
+  folders: {
+    '.': { deny: { imports: { '@acme/kit-queues': 'Workflows are the only background primitive.' } } },
+    'apps/server/src/domains': {
+      deny: { imports: { '@acme/kit-!(contracts)/!(schema|contract)': 'Never a kit driver subpath.' } },
+    },
+    'alchemy.*.ts': { rules: { 'import-extra/no-relative-packages': 'off' } },
+  },
+})
+```
+
+### Added
+
+- Preset keys: a key in `folders` can be a list of folders (`src/lib/{dgsi,dr}`), one file (`src/app/default.tsx`) or a file pattern (`apps/server/src/domains/**/*.actions.ts`). A file key takes what a folder takes, except `source`, `services`, `tanstack`, `next`, `expo`, `backend`, `console`, `kit` and `layout.operations`; it changes the settings of the files it matches on top of their folder's, the later of two file keys wins, its `rules` come after every folder's, and `false` ignores its files. A missing literal file throws; a pattern that matches nothing does not. A folder written alone and inside a folder list (`'packages/ui'` and `'packages/{ui,frontend}'`) merges in config order instead of throwing "listed twice".
+- `layout.files`: the file names a folder's service layout allows, such as `['*.prompts.ts', '*.gateway.ts', '!*.utils.ts']`. The list adds to the parent folder's list, starting from the built-in names (`*.service.ts`, `*.client.ts`, `*.server.ts`, `*.rsc.ts`, `*.rsc.tsx`, `*.utils.ts`, `*.types.ts`, `*.constants.ts`, `*.handler.ts`, `*.test.ts`, `*.spec.ts`, `*-action.*.ts`, `*-query.*.ts`); `!name` removes one. A `*.<word>.ts` name that is not built-in gets every check a `layout.suffixes` word got.
+- Detection may add file keys; an app's file key with the same key merges over it, and `layout.files` lists from a convention and the app add up.
+- Effect server conventions: a unit with the `effect` group whose source holds `domains/` gets the backend recipe's groups with `services: 'domains'`, and detection adds its conventions as folder and file keys: the domain file names, export names for actions and queries, 1,000-line actions and queries, no writes or actions imports in queries, the layer file rule on layer and driver files, no query builder or database in workflows, no types or inline object shapes (with `types: { placement: false }` on the unit, so the `types` group's placement advice stays off), no functions in constants files, no web frameworks, `effect/Config` only in `application/app.config.ts`, layers and workflows only into `application/app.ts`, JSX only in `mails/*.mail.tsx`, docblocks on functions (`arch/comments-code` with `jsdoc: true`) and delegating `rpc` handlers. Each key can be restated to extend, override or turn off.
+- Effect contract conventions: a unit with the `effect` group whose source holds a `<d>/<d>.contract.ts` gets file keys for its file names, folder-prefixed file names, domain-prefixed exports (`Admin` first in admin files, a plural folder drops its `s`), constants and types only in schemas and contract files (a function, exported or local, reported once by `arch/files-no-functions`; functions allowed in `shared/` and `contract*.ts`), no functions in errors and layer types files, `arch/types-imported-alias` and `arch/schemas-single-use` for `Schema`, and `types: { placement: false }` on the unit. Each key can be restated to extend, override or turn off.
+- Effect error classes: every unit with the `effect` group denies `Schema.TaggedError`, `Schema.ErrorClass`, `Data.TaggedError` and `Data.Error` outside `*.errors.ts`.
+- Frontend package conventions: a React package with the `effect` group and `pages/` or `link.tsx` gets `forms`, `arch/react-query-props`, an `@orpc/*` ban, the router only through `link.tsx` (`ClientOnly` allowed) and frontend client services. In a project with a contract package, a TanStack or Next app imports the contract's root entry as types only. A UI kit with the `effect` group bans the other workspace packages.
+- `effect` group: `code` option (default `true`); with `false` only the project style runs (`typescript/consistent-type-assertions`, `eslint-js/max-len`) and the two Effect packages are not needed. A React package or framework app that depends on `effect` gets `effect: { code: false }`.
+- `effect` group: loads `eslint-plugin-regexp` (`flat/recommended`), `eslint-plugin-de-morgan` (`recommended`) and `eslint-plugin-sonarjs` (`sonarjs/super-linear-regex`) when each is installed; all three are optional peer dependencies.
+- Every unit with the `effect` group on, in either mode (detected for a workspace that depends on `effect`), and `recipes.effect` ban the `effect` root, `zod`, `ts-pattern` and `dayjs` imports; `effect: false` drops them.
+- `arch/code-delegate`: a handler (a function passed to a call ending in `methods`, default `handler` and `effect`) only reads its services, makes at most `max` (default `1`) yielded or awaited calls and returns. Any other statement, a call past `max`, a ternary and a nested function are reported. `reads` (default `['Effect.serviceOption']`) names calls that read a service. The Effect server conventions turn it on for `rpc`.
+- `arch/react-query-props`: the data function given to a query hook (`hooks`, default `useQuery`, `useMutation`, `useInfiniteQuery`, `useSuspenseQuery`) under one of `functions` (default `queryFn`, `mutationFn`) is a prop of the enclosing component or hook, or a function that calls one; options that are not an object literal, or hold a spread, are reported. The frontend package conventions turn it on.
+- `arch/files-exports`: `stem: 'folder'` reads the domain from the folder the file is in (`supplier-order/` gives `SupplierOrder`), and `singularize: 'trailing-s'` drops a trailing `s` from the domain's last word (`automatic-orders` gives `AutomaticOrder`). Defaults unchanged.
+- `arch/types-inline`: `variables` (variable and class property annotations), `assertions` (`as` and `satisfies`) and `arguments` (type arguments of calls and `new`), each default `false`; `functions` and `min` apply to them too.
+- `arch/types-declarations`: `modules` (default `false`) allows a `type` or `interface` inside `declare module '…' {}` or `declare global {}`.
+- `arch/code-trivial-functions`: `defaults` (default `true`); with `false`, the file's default export is not checked, whether a named declaration, an anonymous function or a name exported as default below its declaration.
+
+### Changed
+
+- **Breaking:** `arch/backend-orpc-output` has no `composers` option. `.output(X)` passes when `X` is a named schema or a plain function called with one (`paged(Order)`, `eventIterator(Order)`); a member call (`z.array(Order)`), a nested call, an inline object and no argument are reported. `'arch/backend-orpc-output': 'error'` is complete.
+- **Breaking:** `arch/backend-sql-like` requires no option: `methods` defaults to `['like', 'ilike']`, `sanitizers` to `['escapeLikeWildcards']` and `operators` to `['where']` (was `[]`), so `'arch/backend-sql-like': 'error'` is complete and setting one option keeps the others.
+- **Breaking:** the strict layout name check follows the `layout.files` list of the folder a file is in: a name listed on `apps/server` is no longer allowed in another app. It leaves out `*-action.*.ts` and `*-query.*.ts` files only while the list holds those names. Its message is now `Domain files use one of: <names>. Add a name to layout.files.`
+- **Breaking:** a folder set to a recipe (as is or spread) no longer merges with the recipe detection picked; `'.'` keeps its `framer-motion` ban. A hand-written folder still merges.
+- **Breaking:** detection picks `effect` for a workspace that depends on `effect` and is not a framework, desktop or React package; with a backend package or a `domains/` folder it is a backend in Effect style (the `backend` recipe with `effect` over it) and keeps every backend check.
+- **Breaking:** a React package with `pages/` or `link.tsx` (or `link.ts`) in its source is detected as `react`, not `ui`, wherever it lives, and gets a flat `services/` when it holds more files than folders; `pages/` and the link file also make a React package without `components/` count.
+- `.agents` is detected: it gets the `cli` recipe with the default quotes and semicolons, whatever the root sets.
+- The `backend` recipe turns on the `orpc` group; it still checks only `orpc.public`, which defaults to `<backend source>/rpc/api/**` when that folder exists. `orpc: false` turns it off.
+- The `basics` group gives a Next app's `app/**/{layout,page,default}.tsx` files `arch/code-trivial-functions` with `defaults: false`, so their default export may be trivial. Lines like `'src/app': { rules: { 'arch/code-trivial-functions': ['error', { …, allow: '^(RootLayout|CatchAllPage)$' }] } }` and `'src/app/default.tsx': { rules: { 'arch/code-trivial-functions': 'off' } }` can go; they still win when kept.
+- **Breaking:** the `effect` group's `width` defaults to 140 (was 160).
+- **Breaking:** the `effect` group sets `typescript/consistent-type-assertions` (`assertionStyle: 'never'`), `eslint-js/max-len` at its width, `arch/code-object-params` (`all: true, services: true`), `arch/code-switch` ("Branch with Match.") and turns `arch/naming-exports` off.
+- `boundaries-deny` and `files-externals` globs: a `*` inside `!(…)` matches within the segment, so `!(*.layer.ts)` is any segment not ending in `.layer.ts`.
+
+### Removed
+
+- **Breaking:** the preset's `layout.suffixes` option; setting it throws ``Unknown option `layout.suffixes`.``
+- **Breaking:** the preset's `backend.writes` option; setting it throws ``Unknown option `backend.writes`.`` Query files still may not call `insertInto`, `updateTable`, `deleteFrom`, `mergeInto`, `replaceInto`, `dispatch` or `send`.
+- **Breaking:** the preset's `sql.sanitizers` option; setting it throws ``Unknown option `sql.sanitizers`.`` `sql` takes `true`, `false` or `'warn'`.
+- **Breaking:** the preset's `forms.resolver` option; setting it throws ``Unknown option `forms.resolver`.`` `forms` takes `true`, `false` or `'warn'`.
+- **Breaking:** the preset's `externals.packages` option; setting it throws ``Unknown option `externals.packages`.`` `externals` takes `true`, `false` or `'warn'`; the `externals` list stays exported.
+- **Breaking:** the preset's `orpc.composers` option; setting it throws ``Unknown option `orpc.composers`.``
+
+### Fixed
+
+- Migration numbers read a dated prefix whole (`2026-11-12`, with optional `-HH`, `-mm`, `-ss` parts), so two dated migrations of the same year are no longer duplicates; other names read as before.
+
 ## 0.12.6
 
 ### Added
