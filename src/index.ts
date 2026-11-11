@@ -65,6 +65,7 @@ import { reactDynamicClasses } from './rules/react/react-dynamic-classes.ts'
 import { reactEmptyEffect } from './rules/react/react-empty-effect.ts'
 import { reactMemo } from './rules/react/react-memo.ts'
 import { reactProps } from './rules/react/react-props.ts'
+import { reactQueryProps } from './rules/react/react-query-props.ts'
 import { schemasInline } from './rules/schemas/schemas-inline.ts'
 import { schemasLocal } from './rules/schemas/schemas-local.ts'
 import { schemasRederive } from './rules/schemas/schemas-rederive.ts'
@@ -151,6 +152,7 @@ export default eslintCompatPlugin({
     'react-empty-effect': reactEmptyEffect,
     'react-memo': reactMemo,
     'react-props': reactProps,
+    'react-query-props': reactQueryProps,
     'schemas-inline': schemasInline,
     'schemas-local': schemasLocal,
     'schemas-rederive': schemasRederive,
