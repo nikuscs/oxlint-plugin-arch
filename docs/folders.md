@@ -31,53 +31,7 @@ export default preset({
 })
 ```
 
-## 🔎 Detection
-
-Unless `detect: false`, the preset reads the workspaces from the root `package.json` (`workspaces`, as an array or `{ packages }`) and `pnpm-workspace.yaml`, with `*`, `**`, `{a,b}` and `!exclude` patterns, and picks a recipe for each workspace folder from its dependencies, dev dependencies and peer dependencies. A single package gets a recipe for `'.'`; a root app with `src/` keeps its recipe next to its workspaces. The first match wins:
-
-| Dependencies | Recipe |
-| --- | --- |
-| `next` or `vinext` | `next` |
-| `@tanstack/react-start` | `tanstack` |
-| `expo` | `expo` |
-| `electrobun`, `electron` or `@tauri-apps/*` | `desktop` |
-| `effect` and a React package | `react` (an app, or a package with `pages/` or `link.tsx`) or `ui` (another package), with `effect: { code: false }` and the Effect import bans |
-| `effect` with a backend package or a `domains/` folder | `backend` with `effect` over it: a backend in Effect style, see [`effect`](groups/effect.md#what-an-effect-server-gets) |
-| `effect` | `effect` |
-| `@orpc/server`, `hono`, `kysely`, `drizzle-orm`, `express`, `fastify` or `elysia`, in an app or next to a `services/` folder; or any `services/<domain>/<domain>.service.ts` | `backend` |
-| A React package | `react` (an app, or a package with `pages/` or `link.tsx`) or `ui` (another package) |
-| anything else | `library` |
-
-A React package depends on `react` and has `components/`, `pages/` or `link.tsx` (or `link.ts`) in its source folder. A workspace without `effect` keeps the order backend, React package, library. A `scripts/` folder gets `cli`; a `.agents` folder gets `cli` with the default quotes and semicolons, whatever the root sets; and `'.'` bans `framer-motion`. Folders without a `package.json` (Rust, Go) are not units.
-
-Detection also adds conventions:
-
-| Where | Adds |
-| --- | --- |
-| Backend `services/` | Bans importing the registry, another domain's `actions`/`queries` (a domain may import its own), and the backend's own package entries |
-| Backend `core/`, `rpc/`, `routes/`, `cli/` | Bans service operations or the registry; `cli/` also bans `.service` imports and names files `cli…` |
-| Backend `tests/kits/` or `test/kits/` | Kit file names; the tests import kit files, not the kit index |
-| Any `migrations/` up to 8 folders deep in a backend, outside `tests/` and `test/` | Numbered file names (`001_init.ts`, `20240101120000-init.ts`, `2026-11-12-10-00-create-news.ts`), unique numbers (a dated prefix is read whole), no layout check |
-| Web app | Bans the backend's `package.json` `imports` aliases that the app does not define itself, and server `.service` files when there is a backend; `components/` and `routes/` import only the backend client entry |
-| Package | Bans `../../apps/**` and the backend's import aliases (not its own) |
-| Backend registry | `backend.registry` when set, else `services/service.ts`, `core/core.services.ts` or `service.ts`; see [`backend`](groups/backend.md). The registry file is exempt from the domain layout |
-| Stylesheet | See [`tailwind`](groups/tailwind.md) |
-| Web `services/` | `layout.services: 'flat'` when it holds more files than folders |
-| App or backend without `services/` | Its `lib/` is the service folder; with `services/`, `lib/` stays portable helpers |
-
-### Forcing a recipe
-
-A folder set to a recipe, as is or spread with more settings, replaces the recipe detection picked for it; `'.'` keeps its `framer-motion` ban. Any other value you write, such as `{ backend: { registry: false } }` or `{ console: true }`, merges over detection.
-
-```ts
-'apps/server': recipes.effect,
-'packages/i18n': recipes.library,
-'tools/legacy': false,
-```
-
-Your folders merge over the detected ones: a key you set wins, and objects merge (`layout: { hooks: false }` keeps the detected `services: 'flat'`). A detected key inside a folder you set as a `*` glob or a parent is left out, and a `*` key still gets the conventions of each folder it matches. Conventions inside a `false` folder are dropped, and a group you set to `false` on a parent stays off. Detection follows symlinked folders and skips broken links.
-
-## 📐 Rules
+## 🔑 Keys
 
 | | |
 | --- | --- |
@@ -91,7 +45,7 @@ Your folders merge over the detected ones: a key you set wins, and objects merge
 | Units | Top-level keys are units (app, backend, library, CLI). When `'.'` is itself an app, backend or CLI, it stays a unit, and only top-level keys that set `tanstack`, `next`, `expo`, `backend` or `console`, or have their own `package.json`, become units. A folder with its own `package.json` is a unit with its own kind anywhere; another key inside a key only refines it. Output folders (`dist`, `build`, `coverage`, `.output`) are ignored at the root and at each unit's root. |
 | Errors | Unknown keys, unknown options, missing folders or files and keys inside a `false` folder throw. A file pattern that matches nothing does not. |
 
-## 🧩 Folder keys
+### 🧩 Folder keys
 
 | Key | | |
 | --- | --- | --- |
@@ -110,7 +64,7 @@ Your folders merge over the detected ones: a key you set wins, and objects merge
 },
 ```
 
-A file key takes every key above and every group, except those that say what a folder is: `source`, `services`, `tanstack`, `next`, `expo`, `backend`, `console` and `kit` throw with "set it on a folder".
+A file key takes every key above and every group, except those that say what a folder is: `source`, `services`, `tanstack`, `next`, `expo`, `backend`, `console`, `kit` and `layout.operations` throw with "set it on a folder".
 
 ```ts
 'apps/server/src/domains/**/*.actions.ts': { limits: { lines: 1500 } },
@@ -122,6 +76,69 @@ A file key takes every key above and every group, except those that say what a f
 'alchemy.*.ts': { rules: { 'import-extra/no-relative-packages': 'off' } },
 'tools/legacy/**/*.gen.ts': false,
 ```
+
+## 🏷️ Names
+
+A folder's service files take the names in [`layout.files`](groups/layout.md): the built-in ones (`*.service.ts`, `*.utils.ts`, `*-action.*.ts` and the rest), plus the ones you add; `!name` removes one. A key lists only its changes to the parent's list. A `*.<word>.ts` name that is not built-in, like `*.prompts.ts`, is a file kind across the project; [`layout`](groups/layout.md) lists what that means. `layout: { strict: true }` (the `backend` recipe sets it) reports a domain file whose name is not in the list.
+
+```ts
+'.': { layout: { files: ['*.prompts.ts'] } },
+'apps/server/src/domains': { layout: { files: ['*.gateway.ts', '!*.utils.ts'] } },
+```
+
+## 🔎 Detection
+
+Unless `detect: false`, the preset reads the workspaces from the root `package.json` (`workspaces`, as an array or `{ packages }`) and `pnpm-workspace.yaml`, with `*`, `**`, `{a,b}` and `!exclude` patterns, and picks a recipe for each workspace folder from its dependencies, dev dependencies and peer dependencies. A single package gets a recipe for `'.'`; a root app with `src/` keeps its recipe next to its workspaces. The first match wins:
+
+| Dependencies | Recipe |
+| --- | --- |
+| `next` or `vinext` | `next` |
+| `@tanstack/react-start` | `tanstack` |
+| `expo` | `expo` |
+| `electrobun`, `electron` or `@tauri-apps/*` | `desktop` |
+| `effect` and a React package | `react` (an app, or a package with `pages/` or `link.tsx`) or `ui` (another package), with `effect: { code: false }` and the Effect import bans |
+| `effect` with a backend package or a `domains/` folder | `backend` with `effect` over it: a backend in Effect style, see [`effect`](groups/effect.md#what-an-effect-server-gets) |
+| `effect` | `effect` |
+| `@orpc/server`, `hono`, `kysely`, `drizzle-orm`, `express`, `fastify` or `elysia`, in an app or next to a `services/` folder; or any `services/<domain>/<domain>.service.ts` | `backend` |
+| A React package | `react` (an app, or a package with `pages/` or `link.tsx`) or `ui` (another package) |
+| anything else | `library` |
+
+A React package depends on `react` and has `components/`, `pages/` or `link.tsx` (or `link.ts`) in its source folder. A Next, TanStack or Expo app that depends on `effect` also gets `effect: { code: false }` and the Effect import bans. A workspace without `effect` keeps the order backend, React package, library. A `scripts/` folder gets `cli`; a `.agents` folder gets `cli` with the default quotes and semicolons, whatever the root sets; and `'.'` bans `framer-motion`. Folders without a `package.json` (Rust, Go) are not units.
+
+## 🎯 Forcing a recipe
+
+A folder set to a recipe, as is or spread with more settings, replaces the recipe detection picked for it; `'.'` keeps its `framer-motion` ban. Any other value you write, such as `{ backend: { registry: false } }` or `{ console: true }`, merges over detection.
+
+```ts
+'apps/server': recipes.effect,
+'packages/i18n': recipes.library,
+'tools/legacy': false,
+```
+
+Your folders merge over the detected ones: a key you set wins, and objects merge (`layout: { hooks: false }` keeps the detected `services: 'flat'`). A detected key inside a folder you set as a `*` glob or a parent is left out, and a `*` key still gets the conventions of each folder it matches. Conventions inside a `false` folder are dropped, and a group you set to `false` on a parent stays off. Detection follows symlinked folders and skips broken links.
+
+## 🧭 Conventions
+
+Detection also adds conventions, as folder and file keys you can restate: lists add, objects merge, and `false` or `'off'` turns an entry off.
+
+| Where | Adds |
+| --- | --- |
+| Backend `services/` | Bans importing the registry, another domain's `actions`/`queries` (a domain may import its own), and the backend's own package entries |
+| Backend `core/`, `rpc/`, `routes/`, `cli/` | Bans service operations or the registry; `cli/` also bans `.service` imports and names files `cli…` |
+| Backend `tests/kits/` or `test/kits/` | Kit file names; the tests import kit files, not the kit index |
+| Any `migrations/` up to 8 folders deep in a backend, outside `tests/` and `test/` | Numbered file names (`001_init.ts`, `20240101120000-init.ts`, `2026-11-12-10-00-create-news.ts`), unique numbers (a dated prefix is read whole), no layout check |
+| Backend registry | `backend.registry` when set, else `services/service.ts`, `core/core.services.ts` or `service.ts`; see [`backend`](groups/backend.md). The registry file is exempt from the domain layout |
+| Web app | Bans the backend's `package.json` `imports` aliases that the app does not define itself, and server `.service` files when there is a backend; `components/` and `routes/` import only the backend client entry |
+| Web app, or a React package with `pages/` or `link.tsx` | `layout.services: 'flat'` when its `services/` holds more files than folders |
+| App or backend without `services/` | Its `lib/` is the service folder; with `services/`, `lib/` stays portable helpers |
+| Package | Bans `../../apps/**` and the backend's import aliases (not its own) |
+| Stylesheet | See [`tailwind`](groups/tailwind.md) |
+| Effect server | The server's file names, operations, layers, workflows and entry files; see [`effect`](groups/effect.md#what-an-effect-server-gets) |
+| Effect contract package | The contract's file names, export prefixes and constants-only files; see [`effect`](groups/effect.md#what-a-contract-package-gets) |
+| Effect unit | Tagged errors only in `*.errors.ts`; see [`effect`](groups/effect.md#error-classes) |
+| Frontend package (Effect) | Query hooks from props, no rpc client, the router only through `link.tsx`, `forms`; see [`effect`](groups/effect.md#what-a-frontend-package-gets) |
+| Web app next to a contract package | The contract's root entry as types only; see [`effect`](groups/effect.md#what-the-web-app-gets) |
+| UI kit (Effect) | No app package imports; see [`effect`](groups/effect.md#what-a-ui-kit-gets) |
 
 ## 📚 Groups
 

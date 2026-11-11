@@ -367,7 +367,7 @@ export function presetProject(config: PresetTypes.PresetConfig): PresetTypes.Pre
   const webFiles = presetScopes(web)
   const effective = live.map((scope) => scope.effective)
 
-  const suffixes = [
+  const fileKinds = [
     ...new Set(
       [...effective, ...fileKeys.flatMap((fileKey) => fileKey.scopes.map((scope) => scope.effective))].flatMap((groups) =>
         (groups.layout?.files ?? []).flatMap((name) => (PresetConstants.presetLayoutFiles.includes(name) ? [] : (/^\*\.([a-z][a-z0-9-]*)\.ts$/.exec(name)?.[1] ?? []))),
@@ -465,7 +465,7 @@ export function presetProject(config: PresetTypes.PresetConfig): PresetTypes.Pre
     scopes: live,
     fileKeys,
     units,
-    suffixes,
+    fileKinds,
     colocated: listOf(effective.map((groups) => groups.types?.colocated)),
     orpc: {
       public: publicProcedures.length > 0

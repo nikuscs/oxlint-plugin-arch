@@ -49,8 +49,8 @@ export const presetRecipes = {
     effect: true,
     deny: { imports: presetEffectImports },
   }),
-  ui: presetRecipe('ui', { ...presetUi }),
-  kit: presetRecipe('kit', { ...presetUi }),
+  ui: presetRecipe('ui', presetUi),
+  kit: presetRecipe('kit', presetUi),
   cli: presetRecipe('cli', { console: true }),
 } satisfies Record<string, PresetRecipe>
 

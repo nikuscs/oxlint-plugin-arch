@@ -17,7 +17,7 @@ export function useInvoiceQuery() {}
 | `patterns` | `string[]` | `[]` | Allowed regex sources, same placeholders |
 | `stem` | `'before-first-dot' \| 'full-basename' \| 'folder'` | `'before-first-dot'` | How the domain is read: from the file name, or with `'folder'` the name of the folder the file is in (`supplier-order/` gives `SupplierOrder`) |
 | `singularize` | `'none' \| 'trailing-s'` | `'none'` | Drop a trailing `s` from the domain's last word (`automatic-orders` gives `AutomaticOrder`) |
-| `roles` | `string[]` | `[]` | Role suffixes stripped from a domain read from the file name |
+| `roles` | `string[]` | `[]` | Role names stripped from the end of a domain read from the file name |
 | `separators` | `string[]` | `['.', '-']` | Separators before a trailing role |
 | `types` | `boolean` | `false` | Skip type-only exports |
 | `factory` | `string` | none | Required function name; `{Stem}` is the PascalCase file name, `{stem}` is raw |

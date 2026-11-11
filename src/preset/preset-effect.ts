@@ -39,21 +39,22 @@ function presetEffectExists(root: string, key: string): (path: string) => boolea
   }
 }
 
-function presetEffectCode(value: boolean | PresetTypes.PresetFolder): boolean {
+function presetEffectCode(value: boolean | PresetTypes.PresetFolder): value is PresetTypes.PresetFolder {
   return value instanceof Object && Boolean(value.effect) && !(value.effect instanceof Object && value.effect.code === false)
 }
 
 function presetEffectContract(root: string, key: string, value: boolean | PresetTypes.PresetFolder): boolean {
-  const source = value instanceof Object ? resolve(root, presetSource(root, key, value.source)) : ''
+  if (!presetEffectCode(value) || presetEffectDomains(root, key, value)) {
+    return false
+  }
 
-  return presetEffectCode(value)
-    && !presetEffectDomains(root, key, value)
-    && presetIsDirectory(source)
-    && readdirSync(source).some((name) => presetIsFile(resolve(source, name, `${name}.contract.ts`)))
+  const source = resolve(root, presetSource(root, key, value.source))
+
+  return presetIsDirectory(source) && readdirSync(source).some((name) => presetIsFile(resolve(source, name, `${name}.contract.ts`)))
 }
 
 function presetEffectDomains(root: string, key: string, value: boolean | PresetTypes.PresetFolder): boolean {
-  return presetEffectCode(value) && value instanceof Object && presetIsDirectory(resolve(root, presetSource(root, key, value.source), 'domains'))
+  return presetEffectCode(value) && presetIsDirectory(resolve(root, presetSource(root, key, value.source), 'domains'))
 }
 
 export function presetEffectServers(root: string, merged: PresetTypes.PresetFolders, units: PresetTypes.PresetEntry[]): void {
@@ -183,17 +184,14 @@ function presetEffectUnit(root: string, key: string, value: PresetTypes.PresetFo
   const at = (path: string) => (source === '.' ? path : posix.join(source, path))
 
   const contract = presetEffectContract(root, key, value)
-
   const server = presetEffectDomains(root, key, value)
-  const contractKeys = contract ? presetEffectContractKeys(at) : {}
-  const keys = presetFilled(server ? presetEffectServerKeys(at) : contractKeys, presetEffectExists(root, key))
+  const keys = server || contract ? presetFilled(server ? presetEffectServerKeys(at) : presetEffectContractKeys(at), presetEffectExists(root, key)) : {}
   const errors = Object.fromEntries(presetEffectErrors.map((name) => [name, 'Tagged errors live in <d>.errors.ts.']))
-  const unit = keys['.'] ?? {}
   const placement: PresetTypes.PresetFolder = server || contract ? { types: { placement: false } } : {}
 
   return {
     ...keys,
-    '.': unit instanceof Object ? presetMerge({ ...placement, deny: { calls: errors } }, unit) : unit,
+    '.': presetMerge({ ...placement, deny: { calls: errors } }, keys['.'] ?? {}),
     [at('**/*.errors.ts')]: { deny: { calls: Object.fromEntries(presetEffectErrors.map((name) => [name, false])) } },
   }
 }

@@ -8,7 +8,7 @@ export const layoutGroup: PresetBuilder<'layout'> = (project, settings) => {
   const folderOperations = presetServiceScopes(project.serviceFolders, operations, '*/{actions,queries}/*.ts')
   const operationMessage = "Action/query files export exactly one named operation. Keep helpers used only by this operation private inside its function; do not export them. Move a helper to the module's .utils.ts only when it is genuinely shared, not merely to satisfy lint."
   const names = settings.files.map((name) => name.split('*').map((part) => part.replaceAll('.', '[.]')).join('[a-z0-9]+(?:-[a-z0-9]+)*'))
-  const conceptFiles = project.suffixes.map((suffix) => `**/*.${suffix}.ts`)
+  const kindFiles = project.fileKinds.map((kind) => `**/*.${kind}.ts`)
   const frontendEntries = [...presetServiceScopes(project.serviceFolders, web, '**/*.{client,server,rsc}.ts'), ...presetServiceScopes(project.serviceFolders, web, '**/*.rsc.tsx')]
   const ungroupedWeb = web.filter((path) => !layouts.some((scope) => scope.path === posix.join(path, 'components')))
 
@@ -95,7 +95,7 @@ export const layoutGroup: PresetBuilder<'layout'> = (project, settings) => {
         '**/*.{client,server,rsc,utils,constants}.ts',
         '**/*.rsc.tsx',
         ...presetServiceScopes(project.serviceFolders, nextWeb, '**/*.action.ts'),
-        ...conceptFiles,
+        ...kindFiles,
         ...project.colocated,
         ...testFiles,
       ],
@@ -106,10 +106,10 @@ export const layoutGroup: PresetBuilder<'layout'> = (project, settings) => {
         'arch/backend-service-functions': 'error',
         'arch/types-inline': ['error', { parameters: true, returns: true, functions: true, min: 1 }],
       },
-      [...utilities, ...testFiles, ...conceptFiles],
+      [...utilities, ...testFiles, ...kindFiles],
     ),
     presetOverride(frontendEntries, { 'arch/backend-service-functions': ['error', { frontend: true }] }, testFiles),
-    ...conceptFiles.map((pattern) =>
+    ...kindFiles.map((pattern) =>
       presetOverride(
         presetServiceScopes(project.serviceFolders, app, pattern),
         {

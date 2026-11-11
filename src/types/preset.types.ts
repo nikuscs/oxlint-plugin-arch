@@ -317,7 +317,7 @@ export interface PresetProject {
   scopes: PresetScope[]
   fileKeys: PresetFileKey[]
   units: PresetUnit[]
-  suffixes: string[]
+  fileKinds: string[]
   colocated: string[]
   orpc: Required<PresetOrpcOptions>
   layouts: PresetLayoutScope[]

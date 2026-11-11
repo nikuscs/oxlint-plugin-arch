@@ -11,7 +11,7 @@ effect-tsgo --tsrs-lint oxlint --type-aware
 
 ```ts
 folders: {
-  'packages/core': { effect: { width: 140 } },
+  'packages/core': { effect: { width: 160 } },
 }
 ```
 
@@ -83,7 +83,7 @@ A unit with the `effect` group whose source holds `domains/` is an Effect server
 | `D` | `layout.files`: adds `*.actions.ts`, `*.queries.ts`, `*.layer.ts`, `*.workflows.ts`, `*.prompts.ts`, `*-*.driver.ts`; removes `*.service.ts`, `*.client.ts`, `*.server.ts`, `*.rsc.ts`, `*.rsc.tsx`, `*.utils.ts`, `*.types.ts`, `*.handler.ts`, `*-action.*.ts`, `*-query.*.ts`; `deny.imports`: `../*/*.constants{,.ts}` |
 | `D/*/*.actions.ts` | `limits.lines` 1000; `arch/files-exports` with `stem: 'folder'`, `patterns: ['{domain}Action[A-Z]\\w*']`, `types: true` |
 | `D/*/*.queries.ts` | `limits.lines` 1000; `arch/files-exports` with `patterns: ['{domain}Query[A-Z]\\w*']`; `deny.calls`: `insertInto`, `updateTable`, `deleteFrom`, `mergeInto`, `replaceInto`, `dispatch`, `send`; `deny.imports`: `./*.actions{,.ts}` |
-| `D/*/*.constants.ts` | `arch/files-no-functions` |
+| `D/*/*.constants.ts` | `arch/files-no-functions` with `reexports: false` |
 | `D/*/*.layer.ts`, `D/*/*.driver.ts` | [`arch/effect-layer-file`](../rules/effect-layer-file.md) |
 | `D/*/*.workflows.ts` | `deny.calls`: `selectFrom` and the write calls; `deny.imports`: `**/database`, `./*.{actions,queries}{,.ts}` |
 | `S/application/app.config.ts` | `deny.imports`: `'effect/Config': false` |
