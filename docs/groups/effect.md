@@ -64,10 +64,12 @@ A unit with the `effect` group whose source holds `domains/` is an Effect server
 
 | Key | Sets |
 | --- | --- |
-| `S` | `deny.imports`: `@tanstack/*`, `react-dom`, `react-dom/**`, `next`, `next/**`, `vite` and `effect/Config`; `rules`: `arch/types-declarations` with `modules: true`, `arch/types-inline` with `variables`, `assertions` and `arguments`, `arch/types-service` off |
+| `S` | `deny.imports`: `@tanstack/*`, `react-dom`, `react-dom/**`, `next`, `next/**`, `vite` and `effect/Config`; `rules`: `arch/types-declarations` with `modules: true`, `arch/types-inline` with `variables`, `assertions` and `arguments` |
+| the unit | `types: { placement: false }`: none of the `types` group's placement advice |
 | `D` | `layout.files`: adds `*.actions.ts`, `*.queries.ts`, `*.layer.ts`, `*.workflows.ts`, `*.prompts.ts`, `*-*.driver.ts`; removes `*.service.ts`, `*.client.ts`, `*.server.ts`, `*.rsc.ts`, `*.rsc.tsx`, `*.utils.ts`, `*.types.ts`, `*.handler.ts`, `*-action.*.ts`, `*-query.*.ts`; `deny.imports`: `../*/*.constants{,.ts}`; `rules`: `arch/naming-exports` off |
 | `D/*/*.actions.ts` | `limits.lines` 1000; `arch/files-exports` with `stem: 'folder'`, `patterns: ['{domain}Action[A-Z]\\w*']`, `types: true` |
 | `D/*/*.queries.ts` | `limits.lines` 1000; `arch/files-exports` with `patterns: ['{domain}Query[A-Z]\\w*']`; `deny.calls`: `insertInto`, `updateTable`, `deleteFrom`, `mergeInto`, `replaceInto`, `dispatch`, `send`; `deny.imports`: `./*.actions{,.ts}` |
+| `D/*/*.constants.ts` | `arch/files-no-functions` |
 | `D/*/*.layer.ts`, `D/*/*.driver.ts` | [`arch/effect-layer-file`](../rules/effect-layer-file.md) |
 | `D/*/*.workflows.ts` | `deny.calls`: `selectFrom` and the write calls; `deny.imports`: `**/database`, `./*.{actions,queries}{,.ts}` |
 | `S/application/app.config.ts` | `deny.imports`: `'effect/Config': false` |
@@ -76,12 +78,49 @@ A unit with the `effect` group whose source holds `domains/` is an Effect server
 | `S/mails/*.mail.tsx` | `arch/files-restricted` off |
 | `S/rpc` | [`arch/code-delegate`](../rules/code-delegate.md) |
 
-A domain's other files stay private through [`arch/boundaries-imports`](../rules/boundaries-imports.md), and a constants file holds no function through the `types` group's `arch/files-no-functions`.
+A domain's other files stay private through [`arch/boundaries-imports`](../rules/boundaries-imports.md).
 
 ```ts
 folders: {
   'apps/server/src/domains': { layout: { files: ['*.gateway.ts'] } },
   'apps/server/src/domains/*/*.actions.ts': { limits: { lines: 1500 } },
   'apps/server/src/rpc': { rules: { 'arch/code-delegate': 'off' } },
+}
+```
+
+## What a contract package gets
+
+A unit with the `effect` group that is not a server and whose source holds a `<d>/<d>.contract.ts` is a contract package. Detection adds these keys, relative to the unit; `C` is its source. Later keys win on the files they share.
+
+| Key | Sets |
+| --- | --- |
+| the unit | `types: { placement: false }`: a contract declares its types next to its Schemas |
+| `C/*/*.ts` | `arch/naming-file`: `<d>.schemas.ts`, `<d>-<part>.schemas.ts`, `<d>.admin.schemas.ts`, `<d>.contract.ts`, `<d>.admin.contract.ts`, `<d>.errors.ts`, `<d>.layer.types.ts`; `arch/naming-folder` with `singularize: 'none'`, `separators: ['.', '-']`; `arch/files-exports` with `stem: 'folder'`, `singularize: 'trailing-s'`, `patterns: ['{Domain}\\w*']` |
+| `C/*/*.admin.*.ts` | `arch/files-exports` with `patterns: ['Admin{Domain}\\w*']` |
+| `C/*/*.schemas.ts`, `C/*/*.contract.ts` | `arch/files-constants-only` with `types: true`; `arch/types-imported-alias`; `arch/schemas-single-use` with `namespaces: ['Schema']`, `methods: ['Array', 'Union', 'Record', 'Tuple']`, `structural: ['Struct', 'Array', 'Union', 'Record', 'Tuple', 'NullOr', 'UndefinedOr', 'optional', 'TaggedStruct']` |
+| `C/*/*.errors.ts`, `C/*/*.layer.types.ts` | `arch/files-no-functions` |
+| `C/shared/*.ts` | `arch/naming-file`, `arch/naming-folder` and `arch/files-exports` off; `arch/files-constants-only` with `types: true`, `functions: true` |
+| `C/contract*.ts` | `arch/files-constants-only` with `types: true`, `functions: true`; `arch/types-imported-alias`; `arch/schemas-single-use` |
+
+```ts
+folders: {
+  'packages/contract/src/*/*.ts': { rules: { 'arch/files-exports': ['error', { stem: 'folder', patterns: ['{Domain}[A-Z]\\w*'] }] } },
+  'packages/contract/src/*/*.layer.types.ts': { rules: { 'arch/files-exports': 'off' } },
+}
+```
+
+## Error classes
+
+Every unit with the `effect` group (server, contract or plain package) builds tagged errors only in `*.errors.ts`.
+
+| Key | Sets |
+| --- | --- |
+| the unit | `deny.calls`: `Schema.TaggedError`, `Schema.ErrorClass`, `Data.TaggedError`, `Data.Error` |
+| `<source>/**/*.errors.ts` | the four entries set to `false` |
+
+```ts
+folders: {
+  'packages/contract': { deny: { calls: { 'Data.Error': false } } },
+  'packages/contract/src/**/*.errors.ts': { rules: { 'arch/boundaries-deny': 'off' } },
 }
 ```
