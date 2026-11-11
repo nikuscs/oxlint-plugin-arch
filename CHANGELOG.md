@@ -15,7 +15,6 @@
 - `arch/files-exports`: `stem: 'folder'` reads the domain from the folder the file is in (`supplier-order/` gives `SupplierOrder`), and `singularize: 'trailing-s'` drops a trailing `s` from the domain's last word (`automatic-orders` gives `AutomaticOrder`). Defaults unchanged.
 - `arch/types-inline`: `variables` (variable and class property annotations), `assertions` (`as` and `satisfies`) and `arguments` (type arguments of calls and `new`), each default `false`; `functions` and `min` apply to them too.
 - `arch/types-declarations`: `modules` (default `false`) allows a `type` or `interface` inside `declare module '…' {}` or `declare global {}`.
-- `arch/boundaries-imports`: `importers` (default `{}`) maps a private file suffix to absolute files outside the domain that may import files of that suffix, with `*` inside one path segment: `importers: { layer: [resolve('apps/server/src/application/app.ts')] }`.
 - `arch/code-trivial-functions`: `defaults` (default `true`); with `false`, the file's default export is not checked, whether a named declaration, an anonymous function or a name exported as default below its declaration.
 
 ### Changed
