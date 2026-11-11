@@ -10,6 +10,7 @@
 - Detection picks `effect` for a workspace that depends on `effect` and is not a framework, desktop or React package, whatever backend packages it has.
 - Detection treats a React package with `pages/` or `link.tsx` (or `link.ts`) in its source as a frontend (`react` recipe) wherever it lives; `pages/` and the link file also make a React package without `components/` count.
 - Detection gives a `.agents` folder the `cli` recipe with the default quotes and semicolons.
+- `arch/code-delegate`: a handler (a function passed to a call ending in `methods`, default `handler` and `effect`) only reads its services, makes at most `max` (default `1`) yielded or awaited calls and returns. Any other statement, a call past `max`, a ternary and a nested function are reported. `reads` (default `['Effect.serviceOption']`) names calls that read a service. Not in a group yet.
 
 ### Changed
 

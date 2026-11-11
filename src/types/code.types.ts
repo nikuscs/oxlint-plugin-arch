@@ -13,6 +13,12 @@ export interface CodeConstructorOptions {
   message?: string
 }
 
+export interface CodeDelegateOptions {
+  methods?: string[]
+  reads?: string[]
+  max?: number
+}
+
 export interface CodeLiteralInOptions {
   allow: string[]
 }

@@ -11,6 +11,7 @@ import { boundariesTanstack } from './rules/boundaries/boundaries-tanstack.ts'
 import { boundariesTokenOwner } from './rules/boundaries/boundaries-token-owner.ts'
 import { codeBranchOnce } from './rules/code/code-branch-once.ts'
 import { codeConstructor } from './rules/code/code-constructor.ts'
+import { codeDelegate } from './rules/code/code-delegate.ts'
 import { codeDoubleNegation } from './rules/code/code-double-negation.ts'
 import { codeFunctionNesting } from './rules/code/code-function-nesting.ts'
 import { codeInline } from './rules/code/code-inline.ts'
@@ -96,6 +97,7 @@ export default eslintCompatPlugin({
     'boundaries-token-owner': boundariesTokenOwner,
     'code-branch-once': codeBranchOnce,
     'code-constructor': codeConstructor,
+    'code-delegate': codeDelegate,
     'code-double-negation': codeDoubleNegation,
     'code-function-nesting': codeFunctionNesting,
     'code-inline': codeInline,
