@@ -120,6 +120,10 @@ export function presetIntersect(glob: string, scope: string): string[] {
   return [...new Set(matches)]
 }
 
+export function presetGlobEscape(path: string): string {
+  return path.replaceAll(/[[\]]/g, (bracket) => `[${bracket}]`)
+}
+
 export function presetAliases(root: string, aliases: Record<string, string> | undefined): Record<string, string> {
   return Object.fromEntries(Object.entries(aliases ?? {}).map(([alias, path]) => [alias.replace(/\/$/, ''), resolve(root, path)]))
 }

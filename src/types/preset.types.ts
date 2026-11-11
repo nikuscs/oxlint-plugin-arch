@@ -267,6 +267,12 @@ export interface PresetScope {
   effective: PresetEffective
 }
 
+export interface PresetFileKey {
+  pattern: string
+  folder: PresetFolder
+  scopes: PresetScope[]
+}
+
 export interface PresetUnit {
   key: string
   scope: PresetScope
@@ -315,6 +321,7 @@ export interface PresetProject {
   root: string
   serviceFolders: Record<string, string>
   scopes: PresetScope[]
+  fileKeys: PresetFileKey[]
   units: PresetUnit[]
   suffixes: string[]
   colocated: string[]

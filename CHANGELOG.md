@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Added
+
+- Preset keys: a key in `folders` can be a list of folders (`src/lib/{dgsi,dr}`), one file (`src/app/default.tsx`) or a file pattern (`apps/server/src/domains/**/*.actions.ts`). A file key takes what a folder takes, except `source`, `services`, `tanstack`, `next`, `expo`, `backend`, `console` and `kit`; it changes the settings of the files it matches on top of their folder's, the later of two file keys wins, its `rules` come after every folder's, and `false` ignores its files. A missing literal file throws; a pattern that matches nothing does not.
+
 ## 0.12.6
 
 ### Added

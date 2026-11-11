@@ -376,6 +376,10 @@ export const presetGroupOptions: PresetTypes.PresetGroupDefaults = {
 
 export const presetFolderKeys = ['severity', 'source', 'services', 'rules']
 
+export const presetFolderOnlyKeys = ['source', 'services', 'tanstack', 'next', 'expo', 'backend', 'console', 'kit']
+
+export const presetFileSegment = /^(?!\.{1,2}$)[\w.@$[\]*-]+$/
+
 export const presetA11yRules = [
   'alt-text', 'anchor-has-content', 'anchor-is-valid', 'aria-activedescendant-has-tabindex', 'aria-props',
   'aria-proptypes', 'aria-role', 'aria-unsupported-elements', 'autocomplete-valid', 'click-events-have-key-events',

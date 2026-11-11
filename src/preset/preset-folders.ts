@@ -4,10 +4,10 @@ import { presetDetect, presetRegistryFile } from './preset-detect.ts'
 import { presetStylesheet } from './preset-stylesheet.ts'
 import { presetUnits } from './preset-units.ts'
 import * as PresetConstants from './preset.constants.ts'
-import { PresetError, presetIsDirectory, presetManifest, presetScopes, presetServiceScopes } from './preset.utils.ts'
+import { PresetError, presetGlobEscape, presetIntersect, presetIsDirectory, presetIsFile, presetManifest, presetScopes, presetServiceScopes } from './preset.utils.ts'
 import type * as PresetTypes from '../types/preset.types.ts'
 
-function presetNormalizeKey(key: string): string {
+function presetPortableKey(key: string): string {
   const portable = key.replaceAll('\\', '/')
 
   if (!portable.trim() || posix.isAbsolute(portable) || /^[a-z]:/i.test(portable)) {
@@ -20,6 +20,11 @@ function presetNormalizeKey(key: string): string {
     throw new PresetError(`Folder keys must stay inside the project: ${key}`)
   }
 
+  return normalized
+}
+
+function presetNormalizeKey(key: string): string {
+  const normalized = presetPortableKey(key)
   const segments = normalized.split('/')
 
   if (normalized !== '.' && segments.some((segment) => segment !== '*' && !PresetConstants.presetLiteralSegment.test(segment))) {
@@ -31,6 +36,33 @@ function presetNormalizeKey(key: string): string {
   }
 
   return normalized
+}
+
+function presetBraces(key: string): string[] {
+  const match = /\{([^{}]*)\}/.exec(key)
+
+  if (!match) {
+    return [key]
+  }
+
+  return match[1].split(',').flatMap((option) => presetBraces(`${key.slice(0, match.index)}${option}${key.slice(match.index + match[0].length)}`))
+}
+
+function presetIsFileKey(root: string, key: string): boolean {
+  const name = key.split('/').at(-1) ?? ''
+  const pattern = key.includes('*')
+
+  if (!pattern && !existsSync(resolve(root, key)) && /[^.]\.[^.]+$/.test(name)) {
+    throw new PresetError(`File \`${key}\` does not exist.`)
+  }
+
+  const file = pattern ? name !== '*' && name.includes('.') : presetIsFile(resolve(root, key))
+
+  if (file && !key.split('/').every((segment) => PresetConstants.presetFileSegment.test(segment))) {
+    throw new PresetError(`File keys hold letters, digits, \`._-@$[]\` and \`*\` wildcards: ${key}`)
+  }
+
+  return file
 }
 
 function presetMatches(pattern: string[], path: string[]): boolean {
@@ -210,7 +242,17 @@ function presetScopesTree(root: string, folders: PresetTypes.PresetFolders): Pre
 export function presetProject(config: PresetTypes.PresetConfig): PresetTypes.PresetProject {
   const given = resolve(config.root ?? process.cwd())
   const root = existsSync(given) ? realpathSync(given) : given
-  const listed = Object.entries(config.folders ?? {}).map(([key, value]): [string, boolean | PresetTypes.PresetFolder] => [presetNormalizeKey(key), value])
+
+  const expanded = Object.entries(config.folders ?? {}).flatMap(([key, value]) =>
+    presetBraces(key).map((path): [string, boolean | PresetTypes.PresetFolder] => [presetPortableKey(path), value]),
+  )
+
+  const files = expanded.filter(([key]) => presetIsFileKey(root, key))
+
+  const listed = expanded
+    .filter((entry) => !files.includes(entry))
+    .map(([key, value]): [string, boolean | PresetTypes.PresetFolder] => [presetNormalizeKey(key), value])
+
   const twice = listed.find(([key], index) => listed.findIndex(([other]) => other === key) !== index)
 
   if (twice) {
@@ -226,6 +268,27 @@ export function presetProject(config: PresetTypes.PresetConfig): PresetTypes.Pre
   if (dead) {
     throw new PresetError(`Folder \`${dead.key}\` sits inside the skipped folder \`${dead.parent?.key}\`.`)
   }
+
+  const fileKeys = files.flatMap(([key, value]): PresetTypes.PresetFileKey[] => {
+    if (value === false) {
+      return []
+    }
+
+    const folder = presetFolder(key, value)
+    const option = Object.keys(folder).find((name) => PresetConstants.presetFolderOnlyKeys.includes(name))
+
+    if (option) {
+      throw new PresetError(`Set \`${option}\` on a folder, not on \`${key}\`.`)
+    }
+
+    const pattern = presetGlobEscape(key)
+
+    const reached = live
+      .filter((scope) => presetIntersect(pattern, scope.key).length > 0)
+      .map((scope) => ({ key: scope.key, parent: scope, depth: scope.depth, folder, effective: presetEffective(folder, scope.effective) }))
+
+    return [{ pattern, folder, scopes: reached }]
+  })
 
   const units = presetUnits(root, scopes, ignored)
 
@@ -359,6 +422,7 @@ export function presetProject(config: PresetTypes.PresetConfig): PresetTypes.Pre
     root,
     serviceFolders,
     scopes: live,
+    fileKeys,
     units,
     suffixes,
     colocated: listOf(effective.map((groups) => groups.types?.colocated)),
@@ -409,7 +473,7 @@ export function presetProject(config: PresetTypes.PresetConfig): PresetTypes.Pre
     baseImports: PresetConstants.presetBaseImports,
     css: { ...webCss, ...kitCss },
     registries: backendUnits.flatMap((unit) => presetRegistryFile(root, unit.source, unit.scope.effective.backend?.registry, unit.services) ?? []),
-    ignores: skipped.map((key) => `${key}/**`),
+    ignores: [...skipped.map((key) => `${key}/**`), ...files.flatMap(([key, value]) => (value === false ? [presetGlobEscape(key)] : []))],
     outputs: ['.', ...units.map((unit) => unit.key)].flatMap((key) => PresetConstants.presetOutputFolders.map((folder) => (key === '.' ? `${folder}/**` : `${key}/${folder}/**`))),
   }
 }

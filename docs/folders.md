@@ -70,11 +70,13 @@ Your folders merge over the detected ones: a key you set wins, and objects merge
 | --- | --- |
 | `'.'` | The whole project. Every other folder inherits from its parent and changes only what it sets. |
 | Deepest wins | A file follows the deepest matching folder. An exact key beats a `*` glob at the same depth (`packages/ui` over `packages/*`, also when `packages/*` is `false`). |
-| Folder value | `true` inherits, `false` skips the folder, an object inherits and changes. |
+| Key forms | A folder (`apps/web`, or `packages/*` for each folder in it), a list of folders (`src/lib/{dgsi,dr}`, each as if written alone), one file (`src/app/default.tsx`) or a file pattern (`*`, `**`, `{a,b}`, ending in a file name such as `*.actions.ts`). |
+| File keys | A file key changes the settings of the files it matches on top of their folder's. When two file keys match one file, the later one wins. A group set on a file key applies to exactly the files that match both the key and the group's own files. Its `rules` come after every folder's `rules`. |
+| Folder value | `true` inherits, `false` skips the folder (or the files of a file key), an object inherits and changes. |
 | Group value | `true` on with the inherited settings (defaults when nothing is inherited), `false` off, `'warn'` the same as warnings, an object = inherited settings plus changes (an options object inside merges too; arrays replace). `console` and `kit` take only `true` or `false`. |
-| Paths | Paths inside settings are relative to `root`; `source` is relative to its folder. Keys are literal folder paths (dots allowed, `.agents` too); `apps/web/` and `./apps/web` mean `apps/web`. |
+| Paths | Paths inside settings are relative to `root`; `source` is relative to its folder. Folder keys are literal paths (dots allowed, `.agents` too); `apps/web/` and `./apps/web` mean `apps/web`. File keys may also hold `@`, `$`, `[` and `]` (`src/routes/[...rest].tsx`). |
 | Units | Top-level keys are units (app, backend, library, CLI). When `'.'` is itself an app, backend or CLI, it stays a unit, and only top-level keys that set `tanstack`, `next`, `expo`, `backend` or `console`, or have their own `package.json`, become units. A folder with its own `package.json` is a unit with its own kind anywhere; another key inside a key only refines it. Output folders (`dist`, `build`, `coverage`, `.output`) are ignored at the root and at each unit's root. |
-| Errors | Unknown keys, unknown options, missing folders and keys inside a `false` folder throw. |
+| Errors | Unknown keys, unknown options, missing folders or files and keys inside a `false` folder throw. A file pattern that matches nothing does not. |
 
 ## 🧩 Folder keys
 
@@ -93,6 +95,19 @@ Your folders merge over the detected ones: a key you set wins, and objects merge
     'eslint-js/no-restricted-syntax': ['error', { selector: "JSXAttribute[name.name='data-testid']", message: 'Select by role or label.' }],
   },
 },
+```
+
+A file key takes every key above and every group, except those that say what a folder is: `source`, `services`, `tanstack`, `next`, `expo`, `backend`, `console` and `kit` throw with "set it on a folder".
+
+```ts
+'apps/server/src/domains/**/*.actions.ts': { limits: { lines: 1500 } },
+'apps/server/src/domains/**/*.queries.ts': { deny: { calls: { updateTable: 'A query reads only.' } } },
+'apps/server/tests/**/*.test.ts': { limits: { lines: 1000 } },
+'src/app/default.tsx': { rules: { 'arch/code-trivial-functions': 'off' } },
+'src/app/@dialog/**/{default,page}.tsx': { rules: { 'arch/code-trivial-functions': 'off' } },
+'src/lib/{dgsi,dr}': pureCore,
+'alchemy.*.ts': { rules: { 'import-extra/no-relative-packages': 'off' } },
+'tools/legacy/**/*.gen.ts': false,
 ```
 
 ## 📚 Groups

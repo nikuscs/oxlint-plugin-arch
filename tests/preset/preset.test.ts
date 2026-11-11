@@ -278,6 +278,59 @@ describe('preset', () => {
       rule: 'arch/boundaries-imports',
       expected: ['error', { packages: [expect.not.stringContaining('-link')] }],
     },
+    { name: 'a folder list gives each folder the setting', folders: { 'src/{rules,preset}': { naming: false } }, file: 'src/preset/a.ts', rule: 'unicorn/filename-case', expected: undefined },
+    { name: 'one file as a key gets its rules', folders: { 'oxlint.config.ts': { rules: { eqeqeq: 'off' } } }, file: 'oxlint.config.ts', rule: 'eqeqeq', expected: 'off' },
+    { name: 'a file pattern gets its rules', folders: { 'src/**/*.utils.ts': { rules: { eqeqeq: 'warn' } } }, file: 'src/utils/a.utils.ts', rule: 'eqeqeq', expected: 'warn' },
+    {
+      name: 'a file key rules come after its folder rules',
+      folders: { 'src/**/*.utils.ts': { rules: { eqeqeq: 'off' } }, src: { rules: { eqeqeq: 'warn' } } },
+      file: 'src/utils/a.utils.ts',
+      rule: 'eqeqeq',
+      expected: 'off',
+    },
+    {
+      name: 'the later of two file keys wins',
+      folders: { 'src/**/*.ts': { rules: { eqeqeq: 'warn' } }, 'src/**/*.utils.ts': { rules: { eqeqeq: 'off' } } },
+      file: 'src/utils/a.utils.ts',
+      rule: 'eqeqeq',
+      expected: 'off',
+    },
+    {
+      name: 'limits on a file pattern change max-lines for a matching file',
+      files: { 'src/order.actions.ts': '', 'src/order.ts': '' },
+      folders: { '.': true, 'src/**/*.actions.ts': { limits: { lines: 1500 } } },
+      detect: false,
+      file: 'src/order.actions.ts',
+      rule: 'max-lines',
+      expected: ['error', { max: 1500 }],
+    },
+    {
+      name: 'limits on a file pattern leave other files on the folder limit',
+      files: { 'src/order.actions.ts': '', 'src/order.ts': '' },
+      folders: { '.': true, 'src/**/*.actions.ts': { limits: { lines: 1500 } } },
+      detect: false,
+      file: 'src/order.ts',
+      rule: 'max-lines',
+      expected: ['error', { max: 400 }],
+    },
+    {
+      name: 'deny on a file pattern adds to the folder deny',
+      folders: { src: { deny: { calls: { legacy: 'Use the owner API.' } } }, 'src/**/*.queries.ts': { deny: { calls: { updateTable: 'A query reads only.' } } } },
+      file: 'src/order.queries.ts',
+      rule: 'arch/boundaries-deny',
+      expected: ['error', { calls: { legacy: 'Use the owner API.', updateTable: 'A query reads only.' } }],
+    },
+    { name: 'a group set to false on a file pattern turns its rules off', folders: { 'src/**/*.legacy.ts': { naming: false } }, file: 'src/a.legacy.ts', rule: 'unicorn/filename-case', expected: 'off' },
+    { name: 'a file pattern that matches nothing is accepted', folders: { 'src/**/*.missing.ts': { limits: { lines: 10 } } }, file: 'src/a.ts', rule: 'eqeqeq', expected: 'error' },
+    { name: 'false on a file pattern ignores its files', folders: { 'src/**/*.legacy.ts': false }, file: 'src/a.legacy.ts', rule: 'eqeqeq', expected: 'ignored' },
+    {
+      name: 'a key with brackets matches its file',
+      files: { 'src/routes/[...rest].tsx': '' },
+      folders: { 'src/routes/[...rest].tsx': { rules: { eqeqeq: 'off' } } },
+      file: 'src/routes/[...rest].tsx',
+      rule: 'eqeqeq',
+      expected: 'off',
+    },
   ])('$name', (row) => {
     expect({ value: testerPreset(row) }).toMatchObject({ value: row.expected })
   })
@@ -410,6 +463,8 @@ describe('preset', () => {
       message: 'Set services on an app or package folder, not on `src/rules`.',
     },
     { name: 'a services folder must be a literal path', folders: { '.': { services: '../lib' } }, message: 'services `../lib` must be a literal relative path.' },
+    { name: 'a unit option on a file key fails', folders: { 'src/**/*.ts': { backend: true } }, message: 'Set `backend` on a folder, not on `src/**/*.ts`.' },
+    { name: 'a missing literal file key fails', folders: { 'src/missing.ts': true }, message: 'File `src/missing.ts` does not exist.' },
     { name: 'an unknown mocking preset fails', folders: { src: { tests: { mocking: 'other' } } }, message: 'Unknown test mocking preset.' },
   ])('$name', ({ folders, message }) => {
     // SAFETY: these rows hold invalid folder maps on purpose; preset() validates its input at runtime.

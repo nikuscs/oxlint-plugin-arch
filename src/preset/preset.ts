@@ -1,4 +1,6 @@
+import { globSync } from 'node:fs'
 import { createRequire } from 'node:module'
+import { matchesGlob, posix } from 'node:path'
 import { backendGroup } from './groups/backend.ts'
 import { basicsGroup } from './groups/basics.ts'
 import { commentsGroup } from './groups/comments.ts'
@@ -26,7 +28,7 @@ import { typesGroup } from './groups/types.ts'
 import { presetProject } from './preset-folders.ts'
 import { presetRecipes, presetTemplates } from './preset-recipes.ts'
 import { presetCommonRules, presetExternals, presetGroupOrder } from './preset.constants.ts'
-import { presetEffectPackages, PresetError, presetIntersect, presetSeverity } from './preset.utils.ts'
+import { presetEffectPackages, PresetError, presetGlobEscape, presetIntersect, presetScopes, presetSeverity } from './preset.utils.ts'
 import type * as PresetTypes from '../types/preset.types.ts'
 import type { OxlintConfig, OxlintOverride } from 'oxlint'
 
@@ -179,6 +181,49 @@ function presetEmit<K extends PresetTypes.PresetGroupName>(
   })
 }
 
+function presetFileEmit<K extends PresetTypes.PresetGroupName>(
+  project: PresetTypes.PresetProject,
+  name: K,
+  builder: PresetTypes.PresetBuilder<K>,
+  expand: (fileKey: PresetTypes.PresetFileKey) => string[],
+): OxlintOverride[] {
+  return project.fileKeys.flatMap((fileKey) =>
+    fileKey.scopes.flatMap((scope) => {
+      const owner = scope.parent
+      const before = owner ? presetSettings(owner, name) : null
+      const after = presetSettings(scope, name)
+
+      if (!owner || JSON.stringify(before) === JSON.stringify(after)) {
+        return []
+      }
+
+      const reach = presetIntersect(fileKey.pattern, scope.key)
+      const nested = project.scopes.filter((other) => other.parent === owner).map((other) => `${other.key}/**`)
+      const whole = [...presetScopes([scope.key]), ...presetScopes([scope.key], '**')]
+      const off = before ? builder(project, before, owner).flatMap((override) => Object.keys(override.rules ?? {})) : []
+      const cleared = off.length > 0 ? [{ files: reach, excludeFiles: nested, rules: Object.fromEntries(off.map((rule): [string, 'off'] => [rule, 'off'])) }] : []
+
+      const added = after
+        ? builder(project, after, scope).flatMap((override) => {
+          const scoped = override.files.flatMap((glob) => presetIntersect(glob, scope.key))
+
+          const files = scoped.some((glob) => whole.includes(glob))
+            ? reach
+            : expand(fileKey).filter((path) => scoped.some((glob) => matchesGlob(path, glob))).map(presetGlobEscape)
+
+          if (files.length === 0 || !override.rules) {
+            return []
+          }
+
+          return [{ ...override, files, excludeFiles: [...(override.excludeFiles ?? []), ...nested], rules: presetSeverity(override.rules, after.level) }]
+        })
+        : []
+
+      return [...cleared, ...added]
+    }),
+  )
+}
+
 function presetPlugins(project: PresetTypes.PresetProject): Pick<OxlintConfig, 'plugins' | 'jsPlugins' | 'settings'> {
   const react = project.scopes.some((scope) => scope.effective.react)
   const effect = project.scopes.some((scope) => scope.effective.effect)
@@ -249,10 +294,20 @@ export function preset(config: PresetTypes.PresetConfig): OxlintConfig {
   const [root] = project.scopes
   const level = presetLevel(root)
 
+  const expanded = new Map<string, string[]>()
+
+  const expand = (fileKey: PresetTypes.PresetFileKey) => {
+    const paths = expanded.get(fileKey.pattern) ?? globSync(fileKey.pattern, { cwd: project.root, exclude: (path) => posix.basename(path) === 'node_modules' })
+
+    expanded.set(fileKey.pattern, paths)
+
+    return paths
+  }
+
   const emitGroup = <K extends PresetTypes.PresetGroupName>(name: K) => {
     const builder: PresetTypes.PresetBuilders[K] = presetBuilders[name]
 
-    return builder ? presetEmit(project, name, builder) : []
+    return builder ? [...presetEmit(project, name, builder), ...presetFileEmit(project, name, builder, expand)] : []
   }
 
   const severities = project.scopes
@@ -260,11 +315,21 @@ export function preset(config: PresetTypes.PresetConfig): OxlintConfig {
     .toSorted((left, right) => left.depth - right.depth)
     .map((scope) => ({ files: [`${scope.key}/**`], rules: presetSeverity(presetCommonRules, presetLevel(scope)) }))
 
-  const overrides = [...severities, ...presetGroupOrder.flatMap(emitGroup)]
+  const fileSeverities = project.fileKeys.flatMap((fileKey) =>
+    fileKey.folder.severity ? [{ files: [fileKey.pattern], rules: presetSeverity(presetCommonRules, fileKey.folder.severity) }] : [],
+  )
+
+  const overrides = [...severities, ...fileSeverities, ...presetGroupOrder.flatMap(emitGroup)]
 
   for (const scope of project.scopes.toSorted((left, right) => left.depth - right.depth)) {
     if (scope.folder.rules) {
       overrides.push({ files: [scope.key === '.' ? '**' : `${scope.key}/**`], rules: scope.folder.rules })
+    }
+  }
+
+  for (const fileKey of project.fileKeys) {
+    if (fileKey.folder.rules) {
+      overrides.push({ files: [fileKey.pattern], rules: fileKey.folder.rules })
     }
   }
 
