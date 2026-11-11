@@ -1,6 +1,6 @@
 # arch/backend-orpc-output
 
-Reports a `.handler()` chain without `.output()`, and an `.output()` whose schema is not an identifier or a configured composer called with one.
+Reports a `.handler()` chain without `.output()`, and an `.output()` whose schema is not an identifier or a plain function called with one. A member call (`z.array(Order)`), a nested call and an inline object are reported.
 
 ```ts
 // ❌
@@ -13,10 +13,9 @@ export const listChats = os.output(paged(Chat)).handler(() => chats.list())
 
 | Option | Type | Default | |
 | --- | --- | --- | --- |
-| `composers` | `string[]` | required | Functions that wrap a named schema, like `paged` |
 | `handler` | `string` | `'handler'` | Method that ends a procedure |
 | `output` | `string` | `'output'` | Method that declares the output |
 
 ```ts
-'arch/backend-orpc-output': ['error', { composers: ['paged'] }]
+'arch/backend-orpc-output': 'error'
 ```

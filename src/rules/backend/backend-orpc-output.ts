@@ -28,16 +28,14 @@ export const backendOrpcOutput = defineRule({
         type: 'object',
         additionalProperties: false,
         properties: {
-          composers: { type: 'array', items: { type: 'string' } },
           handler: { type: 'string' },
           output: { type: 'string' },
         },
-        required: ['composers'],
       },
     ],
     messages: {
       missing: 'oRPC procedures must declare .output() before .handler().',
-      invalid: 'oRPC .output() must use a named schema or configured composer with a named schema.',
+      invalid: 'oRPC .output() must use a named schema or a plain function called with a named schema.',
     },
   },
   createOnce(context) {
@@ -47,7 +45,7 @@ export const backendOrpcOutput = defineRule({
           return
         }
 
-        const { composers, handler: handlerMethod = 'handler', output: outputMethod = 'output' } = optionsFirst<BackendOrpcOutputOptions>(context)
+        const { handler: handlerMethod = 'handler', output: outputMethod = 'output' } = optionsFirst<BackendOrpcOutputOptions>(context, {})
 
         if (astMemberName(node.callee) !== handlerMethod) {
           return
@@ -66,7 +64,6 @@ export const backendOrpcOutput = defineRule({
           schema?.type === 'Identifier' ||
           (schema?.type === 'CallExpression' &&
             schema.callee.type === 'Identifier' &&
-            composers.includes(schema.callee.name) &&
             schema.arguments[0]?.type === 'Identifier')
 
         if (!named) {

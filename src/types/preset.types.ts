@@ -141,7 +141,6 @@ export interface PresetExternalsOptions {
 
 export interface PresetOrpcOptions {
   public?: string[]
-  composers?: string[]
   client?: string
 }
 

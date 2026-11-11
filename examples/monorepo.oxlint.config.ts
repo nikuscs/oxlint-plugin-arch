@@ -22,7 +22,7 @@ export default preset({
         exports: ['@acme/server/client'],
         registry: { file: 'apps/server/src/core/core.services.ts', skip: ['database'] },
       },
-      orpc: { public: ['apps/server/src/rpc/api/**'], composers: ['paginatedOutput'] },
+      orpc: { public: ['apps/server/src/rpc/api/**'] },
     },
     'apps/server/src/services': { deny: { imports: { '#/core/core.services': 'Services never import the registry.' } } },
     'apps/server/src/services/database/migrations': {

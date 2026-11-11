@@ -6,6 +6,18 @@
 
 - Preset keys: a key in `folders` can be a list of folders (`src/lib/{dgsi,dr}`), one file (`src/app/default.tsx`) or a file pattern (`apps/server/src/domains/**/*.actions.ts`). A file key takes what a folder takes, except `source`, `services`, `tanstack`, `next`, `expo`, `backend`, `console` and `kit`; it changes the settings of the files it matches on top of their folder's, the later of two file keys wins, its `rules` come after every folder's, and `false` ignores its files. A missing literal file throws; a pattern that matches nothing does not.
 
+### Changed
+
+- **Breaking:** `arch/backend-orpc-output` has no `composers` option. `.output(X)` passes when `X` is a named schema or a plain function called with one (`paged(Order)`, `eventIterator(Order)`); a member call (`z.array(Order)`), a nested call, an inline object and no argument are reported. `'arch/backend-orpc-output': 'error'` is complete.
+  - Before: `'apps/server': { orpc: { composers: ['bulkOutput', 'rpcPaginationOutput'] } },`
+  - After: delete the line: a plain function around a named schema passes by itself.
+
+### Removed
+
+- **Breaking:** the preset's `orpc.composers` option; setting it throws ``Unknown option `orpc.composers`.``
+  - Before: `'apps/server': { orpc: { composers: ['bulkOutput', 'rpcPaginationOutput'] } },`
+  - After: delete the line: a plain function around a named schema passes by itself.
+
 ## 0.12.6
 
 ### Added

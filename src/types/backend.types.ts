@@ -1,5 +1,4 @@
 export interface BackendOrpcOutputOptions {
-  composers: string[]
   handler?: string
   output?: string
 }

@@ -434,7 +434,6 @@ export function presetProject(config: PresetTypes.PresetConfig): PresetTypes.Pre
       public: publicProcedures.length > 0
         ? publicProcedures
         : backendUnits.map((unit) => posix.join(unit.source, 'rpc/api')).filter((path) => existsSync(resolve(root, path))).map((path) => `${path}/**`),
-      composers: listOf(orpcScopes.map((settings) => settings.composers)),
       client: client ?? '',
     },
     layouts: units.flatMap((unit) =>

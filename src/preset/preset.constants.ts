@@ -364,7 +364,7 @@ export const presetGroupOptions: PresetTypes.PresetGroupDefaults = {
   shadcn: { level: 'error', ui: '@/components/ui', components: ['^@/components/'] },
   kit: { level: 'error' },
   backend: { level: 'error', exports: undefined, registry: undefined, writes: ['insertInto', 'updateTable', 'deleteFrom', 'mergeInto', 'replaceInto', 'dispatch', 'send'] },
-  orpc: { level: 'error', public: [], composers: [], client: undefined },
+  orpc: { level: 'error', public: [], client: undefined },
   schemas: { level: 'error' },
   forms: { level: 'error', resolver: 'standardSchemaResolver' },
   sql: { level: 'error', sanitizers: ['escapeLikeWildcards'] },
