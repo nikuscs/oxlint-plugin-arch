@@ -427,7 +427,7 @@ describe('preset', () => {
   })
 
   it.each([
-    { name: 'layout', options: { services: 'flat', hooks: false, suffixes: ['adapter'] } },
+    { name: 'layout', options: { services: 'flat', hooks: false, files: ['*.adapter.ts'] } },
     { name: 'limits', options: { lines: 200, types: 500, complexity: 16 } },
     { name: 'style', options: { quotes: 'double', semicolons: false } },
     { name: 'basics', options: { trivial: false, state: false } },
@@ -509,12 +509,6 @@ describe('preset', () => {
     { name: 'the removed sql sanitizers option fails', folders: { src: { sql: { sanitizers: ['escapeLike'] } } }, message: 'Unknown option `sql.sanitizers`.' },
     { name: 'the removed forms resolver option fails', folders: { src: { forms: { resolver: 'zodResolver' } } }, message: 'Unknown option `forms.resolver`.' },
     { name: 'the removed externals packages option fails', folders: { src: { externals: { packages: ['ai'] } } }, message: 'Unknown option `externals.packages`.' },
-    { name: 'an invalid suffix fails', folders: { src: { layout: { suffixes: ['Bad'] } } }, message: 'Layout suffixes must be lowercase kebab-case names.' },
-    {
-      name: 'a built-in suffix cannot be replaced',
-      folders: { src: { layout: { suffixes: ['service'] } } },
-      message: 'Layout suffixes must not replace built-in file roles.',
-    },
     { name: 'a kit without a stylesheet fails', folders: { src: recipes.kit }, message: 'The UI kit src needs a Tailwind stylesheet: set tailwind.css on it.' },
     {
       name: 'folders that disagree on tailwind.rem fail',

@@ -5,6 +5,8 @@
 ### Added
 
 - Preset keys: a key in `folders` can be a list of folders (`src/lib/{dgsi,dr}`), one file (`src/app/default.tsx`) or a file pattern (`apps/server/src/domains/**/*.actions.ts`). A file key takes what a folder takes, except `source`, `services`, `tanstack`, `next`, `expo`, `backend`, `console` and `kit`; it changes the settings of the files it matches on top of their folder's, the later of two file keys wins, its `rules` come after every folder's, and `false` ignores its files. A missing literal file throws; a pattern that matches nothing does not.
+- `layout.files`: the file names a folder's service layout allows, such as `['*.prompts.ts', '*.gateway.ts', '!*.utils.ts']`. The list adds to the parent folder's list, starting from the built-in names (`*.service.ts`, `*.client.ts`, `*.server.ts`, `*.rsc.ts`, `*.rsc.tsx`, `*.utils.ts`, `*.types.ts`, `*.constants.ts`, `*.handler.ts`, `*.test.ts`, `*.spec.ts`, `*-action.*.ts`, `*-query.*.ts`); `!name` removes one. A `*.<word>.ts` name that is not built-in gets every check a `layout.suffixes` word got.
+- A folder written alone and inside a folder list (`'packages/ui'` and `'packages/{ui,frontend}'`) merges in config order instead of throwing "listed twice".
 
 ### Changed
 
@@ -12,9 +14,13 @@
   - Before: `'apps/server': { orpc: { composers: ['bulkOutput', 'rpcPaginationOutput'] } },`
   - After: delete the line: a plain function around a named schema passes by itself.
 - **Breaking:** `arch/backend-sql-like` requires no option: `methods` defaults to `['like', 'ilike']`, `sanitizers` to `['escapeLikeWildcards']` and `operators` to `['where']` (was `[]`), so `'arch/backend-sql-like': 'error'` is complete and setting one option keeps the others.
+- **Breaking:** the strict layout name check follows the `layout.files` list of the folder a file is in: a name listed on `apps/server` is no longer allowed in another app. Its message is now `Domain files use one of: <names>. Add a name to layout.files.`
 
 ### Removed
 
+- **Breaking:** the preset's `layout.suffixes` option; setting it throws ``Unknown option `layout.suffixes`.``
+  - Before: `'.': { layout: { suffixes: ['prompts', 'driver'] } },`
+  - After: `'.': { layout: { files: ['*.prompts.ts', '*.driver.ts'] } },`
 - **Breaking:** the preset's `backend.writes` option; setting it throws ``Unknown option `backend.writes`.`` Query files still may not call `insertInto`, `updateTable`, `deleteFrom`, `mergeInto`, `replaceInto`, `dispatch` or `send`.
   - Before: `'apps/server': { backend: { writes: ['insertInto', 'updateTable', 'deleteFrom', 'mergeInto', 'replaceInto', 'dispatch', 'send', 'publish'] } },`
   - After: `'apps/server/src/services/**/*-query.*.ts': { deny: { calls: { publish: 'Query files only read; move writes to an action.' } } },` (`send: false` drops a built-in call)

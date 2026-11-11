@@ -1,5 +1,5 @@
 import { posix } from 'node:path'
-import { presetBuiltinFileRoles, presetExtensions } from '../preset.constants.ts'
+import { presetExtensions } from '../preset.constants.ts'
 import { presetOverride, presetScopes, presetServiceScopes } from '../preset.utils.ts'
 import type { PresetBuilder } from '../../types/preset.types.ts'
 
@@ -7,7 +7,7 @@ export const layoutGroup: PresetBuilder<'layout'> = (project, settings) => {
   const { web, nextWeb, serviceRoots, app, services, utilities, ui, testFiles, layouts, operations } = project
   const folderOperations = presetServiceScopes(project.serviceFolders, operations, '*/{actions,queries}/*.ts')
   const operationMessage = "Action/query files export exactly one named operation. Keep helpers used only by this operation private inside its function; do not export them. Move a helper to the module's .utils.ts only when it is genuinely shared, not merely to satisfy lint."
-  const roles = [...presetBuiltinFileRoles.filter((role) => role !== 'action' && role !== 'query'), ...project.suffixes]
+  const names = settings.files.map((name) => name.split('*').map((part) => part.replaceAll('.', '[.]')).join('[a-z0-9]+(?:-[a-z0-9]+)*'))
   const conceptFiles = project.suffixes.map((suffix) => `**/*.${suffix}.ts`)
   const frontendEntries = [...presetServiceScopes(project.serviceFolders, web, '**/*.{client,server,rsc}.ts'), ...presetServiceScopes(project.serviceFolders, web, '**/*.rsc.tsx')]
   const ungroupedWeb = web.filter((path) => !layouts.some((scope) => scope.path === posix.join(path, 'components')))
@@ -51,8 +51,8 @@ export const layoutGroup: PresetBuilder<'layout'> = (project, settings) => {
           'arch/naming-file': [
             'error',
             {
-              pattern: `^[a-z0-9]+(?:-[a-z0-9]+)*(?:[.](?:${roles.join('|')})[.]ts|[.]rsc[.]tsx)$`,
-              message: `Domain files use domain[-part].<role>.ts with a role from: ${roles.join(', ')}. Add new roles to layout.suffixes.`,
+              pattern: `^(?:${names.join('|')})$`,
+              message: `Domain files use one of: ${settings.files.join(', ')}. Add a name to layout.files.`,
             },
           ],
         },

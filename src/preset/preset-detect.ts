@@ -93,7 +93,7 @@ function presetMergeObject<T extends object>(base: T, top: T, depth: number): T 
   return merged
 }
 
-function presetMerge(base: boolean | PresetTypes.PresetFolder | undefined, top: boolean | PresetTypes.PresetFolder): boolean | PresetTypes.PresetFolder {
+export function presetMerge(base: boolean | PresetTypes.PresetFolder | undefined, top: boolean | PresetTypes.PresetFolder): boolean | PresetTypes.PresetFolder {
   if (!(base instanceof Object) || !(top instanceof Object)) {
     return top === true && base instanceof Object ? base : top
   }

@@ -12,7 +12,7 @@ export interface PresetLayoutOptions {
   services?: PresetLayoutMode | false
   hooks?: PresetLayoutMode | false
   components?: PresetLayoutMode | false
-  suffixes?: string[]
+  files?: string[]
   strict?: boolean
   operations?: PresetOperations
   service?: string[]
@@ -204,7 +204,7 @@ export type PresetPlugins = NonNullable<OxlintConfig['plugins']>
 export type PresetSettings = NonNullable<OxlintConfig['settings']>
 
 export interface PresetResolvedGroups {
-  layout: PresetLayoutOptions & Required<Pick<PresetLayoutOptions, 'suffixes' | 'strict' | 'operations' | 'service'>>
+  layout: PresetLayoutOptions & Required<Pick<PresetLayoutOptions, 'files' | 'strict' | 'operations' | 'service'>>
   limits: Required<PresetLimitsOptions>
   style: Required<PresetStyleOptions>
   basics: Required<PresetBasicsOptions>

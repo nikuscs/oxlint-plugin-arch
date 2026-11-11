@@ -315,9 +315,12 @@ export const presetGeneratedFiles = [
   '**/*.generated.*', '**/*.gen.*', '**/*.d.ts', '**/routes.tree.ts', '**/routeTree.gen.ts', '**/paraglide/**',
 ]
 
-export const presetBuiltinFileRoles = [
-  'service', 'client', 'server', 'rsc', 'utils', 'action', 'query', 'types', 'constants', 'handler', 'test', 'spec',
+export const presetLayoutFiles = [
+  '*.service.ts', '*.client.ts', '*.server.ts', '*.rsc.ts', '*.rsc.tsx', '*.utils.ts', '*.types.ts', '*.constants.ts', '*.handler.ts', '*.test.ts',
+  '*.spec.ts', '*-action.*.ts', '*-query.*.ts',
 ]
+
+export const presetLayoutFileName = /^!?[\w.*-]+$/
 
 export const presetShorthandOptions = [['tests', 'mocking', 'preset'], ['backend', 'registry', 'file']] as const
 
@@ -347,7 +350,7 @@ export const presetExternals = [
 ]
 
 export const presetGroupOptions: PresetTypes.PresetGroupDefaults = {
-  layout: { level: 'error', services: undefined, hooks: undefined, components: undefined, suffixes: [], strict: false, operations: 'flat', service: ['make{Domain}Service', '{Domain}Service'] },
+  layout: { level: 'error', services: undefined, hooks: undefined, components: undefined, files: presetLayoutFiles, strict: false, operations: 'flat', service: ['make{Domain}Service', '{Domain}Service'] },
   limits: { level: 'error', lines: 400, types: 1000, complexity: 32 },
   style: { level: 'error', quotes: 'single', semicolons: true, multiline: true, padding: true, dashes: true },
   basics: { level: 'error', trivial: true, state: true, switch: true, negation: true },

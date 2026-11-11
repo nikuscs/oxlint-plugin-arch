@@ -5,7 +5,7 @@ export default preset({
   folders: {
     ...templates.monorepo,
     '.': {
-      layout: { suffixes: ['prompts', 'driver'] },
+      layout: { files: ['*.prompts.ts', '*.driver.ts'] },
       tests: { assertions: ['arch.**.to*'] },
       deny: { imports: { 'framer-motion': 'Use motion/react.' } },
     },
