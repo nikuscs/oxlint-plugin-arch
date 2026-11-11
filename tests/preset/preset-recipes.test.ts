@@ -355,6 +355,9 @@ describe('preset recipes', () => {
       rule: 'arch/boundaries-deny',
       expected: ['error', { imports: { effect: expect.any(String), zod: 'Use effect/Schema.', 'ts-pattern': 'Use effect/Match.', dayjs: 'Use effect/DateTime.' } }],
     },
+    { name: 'effect false on a React package on Effect drops the bans', tree: kitTree, files: kits, folders: { 'packages/ui': { effect: false } }, file: 'packages/ui/src/components/button.tsx', rule: 'arch/boundaries-deny', expected: ['error', { imports: expect.not.objectContaining({ zod: expect.anything() }) }] },
+    { name: 'effect false on a detected Effect package drops the bans', files: core, folders: { 'packages/core': { effect: false } }, file: 'packages/core/src/a.ts', rule: 'arch/boundaries-deny', expected: ['error', { imports: expect.not.objectContaining({ zod: expect.anything() }) }] },
+    { name: 'the Effect recipe bans the four imports without detection', tree: ['packages/x/'], folders: { 'packages/x': recipes.effect }, detect: false, file: 'packages/x/a.ts', rule: 'arch/boundaries-deny', expected: ['error', { imports: { effect: expect.any(String), zod: 'Use effect/Schema.', 'ts-pattern': 'Use effect/Match.', dayjs: 'Use effect/DateTime.' } }] },
     { name: 'an Effect package does not ban ai', files: core, folders: {}, file: 'packages/core/src/a.ts', rule: 'arch/boundaries-deny', expected: ['error', { imports: expect.not.objectContaining({ ai: expect.anything() }) }] },
     {
       name: 'a React package on Effect bans the non-Effect libraries',

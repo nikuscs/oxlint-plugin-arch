@@ -131,10 +131,33 @@ function presetSettings<K extends PresetTypes.PresetGroupName>(scope: PresetType
   return settings ? null : ({ level: presetLevel(scope) } as PresetTypes.PresetGroupSettings<K>)
 }
 
+function presetKeyFiles(
+  fileKey: PresetTypes.PresetFileKey,
+  scope: PresetTypes.PresetScope,
+  globs: string[],
+  expand: (fileKey: PresetTypes.PresetFileKey) => string[],
+): string[] {
+  const scoped = globs.flatMap((glob) => presetIntersect(glob, scope.key))
+
+  const within = (glob: string) => {
+    const prefix = glob.slice(0, -`**/${presetExtensions}`.length).replace(/\/$/, '')
+
+    return glob.endsWith(`**/${presetExtensions}`)
+      && !/[*?{[]/.test(prefix)
+      && (prefix === '' || fileKey.pattern.startsWith(`${prefix}/`))
+      && /\.(?:ts|tsx|mts|cts)$/.test(fileKey.pattern)
+  }
+
+  return scoped.some(within)
+    ? presetIntersect(fileKey.pattern, scope.key)
+    : expand(fileKey).filter((path) => scoped.some((glob) => matchesGlob(path, glob))).map(presetGlobEscape)
+}
+
 function presetEmit<K extends PresetTypes.PresetGroupName>(
   project: PresetTypes.PresetProject,
   name: K,
   builder: PresetTypes.PresetBuilder<K>,
+  expand: (fileKey: PresetTypes.PresetFileKey) => string[],
 ): OxlintOverride[] {
   const key = (scope: PresetTypes.PresetScope) => JSON.stringify(presetSettings(scope, name))
   const breaks = project.scopes.filter((scope) => scope.parent === null || key(scope) !== key(scope.parent))
@@ -152,7 +175,7 @@ function presetEmit<K extends PresetTypes.PresetGroupName>(
   const keyed = project.fileKeys.flatMap((fileKey) =>
     fileKey.scopes
       .filter((scope) => scope.parent && key(scope) !== key(scope.parent))
-      .map((scope) => ({ owner: region(scope.parent), files: presetIntersect(fileKey.pattern, scope.key) })),
+      .map((scope) => ({ owner: region(scope.parent), fileKey, scope })),
   )
 
   return breaks.flatMap((owner) => {
@@ -162,10 +185,8 @@ function presetEmit<K extends PresetTypes.PresetGroupName>(
       return []
     }
 
-    const excluded = [
-      ...breaks.filter((scope) => scope !== owner && region(scope.parent) === owner).map((scope) => `${scope.key}/**`),
-      ...keyed.filter((entry) => entry.owner === owner).flatMap((entry) => entry.files),
-    ]
+    const nested = breaks.filter((scope) => scope !== owner && region(scope.parent) === owner).map((scope) => `${scope.key}/**`)
+    const owned = keyed.filter((entry) => entry.owner === owner)
 
     return builder(project, settings, owner).flatMap((override) => {
       const files = override.files.flatMap((glob) => presetIntersect(glob, owner.key))
@@ -174,11 +195,13 @@ function presetEmit<K extends PresetTypes.PresetGroupName>(
         return []
       }
 
+      const replaced = owned.flatMap((entry) => presetKeyFiles(entry.fileKey, entry.scope, override.files, expand))
+
       return [
         {
           ...override,
           files,
-          excludeFiles: [...(override.excludeFiles ?? []), ...excluded],
+          excludeFiles: [...(override.excludeFiles ?? []), ...nested, ...replaced],
           rules: presetSeverity(override.rules, settings.level),
         },
       ]
@@ -201,24 +224,10 @@ function presetFileEmit<K extends PresetTypes.PresetGroupName>(
         return []
       }
 
-      const reach = presetIntersect(fileKey.pattern, scope.key)
       const nested = project.scopes.filter((other) => other.parent === owner).map((other) => `${other.key}/**`)
 
-      const within = (glob: string) => {
-        const prefix = glob.slice(0, -`**/${presetExtensions}`.length).replace(/\/$/, '')
-
-        return glob.endsWith(`**/${presetExtensions}`)
-          && !/[*?{[]/.test(prefix)
-          && (prefix === '' || fileKey.pattern.startsWith(`${prefix}/`))
-          && /\.(?:ts|tsx|mts|cts)$/.test(fileKey.pattern)
-      }
-
       return builder(project, settings, scope).flatMap((override) => {
-        const scoped = override.files.flatMap((glob) => presetIntersect(glob, scope.key))
-
-        const files = scoped.some(within)
-          ? reach
-          : expand(fileKey).filter((path) => scoped.some((glob) => matchesGlob(path, glob))).map(presetGlobEscape)
+        const files = presetKeyFiles(fileKey, scope, override.files, expand)
 
         if (files.length === 0 || !override.rules) {
           return []
@@ -318,7 +327,7 @@ export function preset(config: PresetTypes.PresetConfig): OxlintConfig {
   const emitGroup = <K extends PresetTypes.PresetGroupName>(name: K) => {
     const builder: PresetTypes.PresetBuilders[K] = presetBuilders[name]
 
-    return builder ? [...presetEmit(project, name, builder), ...presetFileEmit(project, name, builder, expand)] : []
+    return builder ? [...presetEmit(project, name, builder, expand), ...presetFileEmit(project, name, builder, expand)] : []
   }
 
   const severities = project.scopes

@@ -412,6 +412,9 @@ describe('preset', () => {
       rule: 'max-lines',
       expected: ['error', { max: 1500 }],
     },
+    { name: 'a narrow group on a file pattern keeps the folder rules on a file not yet on disk', files: { 'tests/old.test.ts': '' }, folders: { 'tests/**/*.test.ts': { tests: { titles: false } } }, detect: false, file: 'tests/future.test.ts', rule: 'arch/tests-assertions', expected: ['error', expect.any(Object)] },
+    { name: 'a narrow group on a file pattern keeps the folder setting on a file not yet on disk', files: { 'tests/old.test.ts': '' }, folders: { 'tests/**/*.test.ts': { tests: { titles: false } } }, detect: false, file: 'tests/future.test.ts', rule: 'arch/tests-titles', expected: ['error', expect.any(Object)] },
+    { name: 'a narrow group on a file pattern applies to a listed file', files: { 'tests/old.test.ts': '' }, folders: { 'tests/**/*.test.ts': { tests: { titles: false } } }, detect: false, file: 'tests/old.test.ts', rule: 'arch/tests-titles', expected: undefined },
     { name: 'a file pattern that matches nothing is accepted', folders: { 'src/**/*.missing.ts': { limits: { lines: 10 } } }, file: 'src/a.ts', rule: 'eqeqeq', expected: 'error' },
     { name: 'false on a file pattern ignores its files', folders: { 'src/**/*.legacy.ts': false }, file: 'src/a.legacy.ts', rule: 'eqeqeq', expected: 'ignored' },
     {

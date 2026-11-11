@@ -54,7 +54,8 @@ function presetRecipe(root: string, directory: string, app: boolean, folder: Pre
   const flat = entries.filter((entry) => entry.isFile() && /\.tsx?$/.test(entry.name)).length > folders
   const backend = presetDomains(root, servicesFolder).length > 0 || (has(PresetConstants.presetDetectBackend) && (app || presetIsDirectory(services)))
   const layout: PresetTypes.PresetFolder = flat ? { layout: { services: 'flat' } } : {}
-  const style: PresetTypes.PresetFolder = has(['effect']) ? { effect: { code: false }, deny: { imports: PresetConstants.presetEffectImports } } : {}
+  const style: PresetTypes.PresetFolder = has(['effect']) ? { effect: { code: false } } : {}
+  const { deny: _bans, ...effect } = presetRecipes.effect
 
   if (framework) {
     return { ...presetRecipes[framework], ...layout, ...style }
@@ -71,7 +72,7 @@ function presetRecipe(root: string, directory: string, app: boolean, folder: Pre
   }
 
   if (has(['effect'])) {
-    return backend || presetIsDirectory(resolve(root, source, 'domains')) ? { ...presetRecipes.backend, ...presetRecipes.effect } : presetRecipes.effect
+    return backend || presetIsDirectory(resolve(root, source, 'domains')) ? { ...presetRecipes.backend, ...effect } : effect
   }
 
   if (backend) {

@@ -29,7 +29,7 @@ Project style, in both modes: `typescript/consistent-type-assertions` with `asse
 
 Effect code, with `code` on: the rules below, plus [`arch/code-object-params`](../rules/code-object-params.md) with `all: true, services: true`, [`arch/code-switch`](../rules/code-switch.md) with "Branch with Match." and `arch/naming-exports` off. It turns off [`arch/code-trivial-functions`](../rules/code-trivial-functions.md), which reports an Effect function written as one pipe.
 
-Every workspace that depends on `effect` (and `recipes.effect`) bans these imports; an app drops one with `false` under `deny.imports`:
+Every unit with the `effect` group on, in either mode (detected for a workspace that depends on `effect`), and `recipes.effect` ban these imports; `effect: false` drops them all, and `false` under `deny.imports` drops one:
 
 | Import | Message |
 | --- | --- |

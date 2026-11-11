@@ -1,7 +1,7 @@
 import { existsSync, readdirSync } from 'node:fs'
 import { posix, resolve } from 'node:path'
 import { presetRecipes } from './preset-recipes.ts'
-import { presetBaseImports, presetQueryWrites, presetTanstackRsc } from './preset.constants.ts'
+import { presetBaseImports, presetEffectImports, presetQueryWrites, presetTanstackRsc } from './preset.constants.ts'
 import { presetFilled, presetIsDirectory, presetIsFile, presetManifest, presetMerge, presetSource } from './preset.utils.ts'
 import type * as PresetTypes from '../types/preset.types.ts'
 
@@ -37,6 +37,12 @@ function presetEffectExists(root: string, key: string): (path: string) => boolea
 
     return existsSync(resolve(root, key, ...(wildcard === -1 ? segments : segments.slice(0, wildcard))))
   }
+}
+
+function presetEffectAt(root: string, key: string, value: PresetTypes.PresetFolder): (path: string) => string {
+  const source = posix.relative(key, presetSource(root, key, value.source)) || '.'
+
+  return (path) => (source === '.' ? path : posix.join(source, path))
 }
 
 function presetEffectCode(value: boolean | PresetTypes.PresetFolder): value is PresetTypes.PresetFolder {
@@ -180,8 +186,7 @@ function presetEffectUnit(root: string, key: string, value: PresetTypes.PresetFo
     return {}
   }
 
-  const source = posix.relative(key, presetSource(root, key, value.source)) || '.'
-  const at = (path: string) => (source === '.' ? path : posix.join(source, path))
+  const at = presetEffectAt(root, key, value)
 
   const contract = presetEffectContract(root, key, value)
   const server = presetEffectDomains(root, key, value)
@@ -191,14 +196,13 @@ function presetEffectUnit(root: string, key: string, value: PresetTypes.PresetFo
 
   return {
     ...keys,
-    '.': presetMerge({ ...placement, deny: { calls: errors } }, keys['.'] ?? {}),
+    '.': presetMerge({ ...placement, deny: { imports: presetEffectImports, calls: errors } }, keys['.'] ?? {}),
     [at('**/*.errors.ts')]: { deny: { calls: Object.fromEntries(presetEffectErrors.map((name) => [name, false])) } },
   }
 }
 
 function presetEffectFrontend(root: string, key: string, value: PresetTypes.PresetFolder): PresetTypes.PresetFolders {
-  const source = posix.relative(key, presetSource(root, key, value.source)) || '.'
-  const at = (path: string) => (source === '.' ? path : posix.join(source, path))
+  const at = presetEffectAt(root, key, value)
   const exists = presetEffectExists(root, key)
   const framework = [value.tanstack, value.next, value.expo].some(Boolean)
 
@@ -228,8 +232,7 @@ function presetEffectFrontend(root: string, key: string, value: PresetTypes.Pres
 }
 
 function presetEffectWeb(root: string, key: string, value: PresetTypes.PresetFolder, contracts: string[]): PresetTypes.PresetFolders {
-  const source = posix.relative(key, presetSource(root, key, value.source)) || '.'
-  const at = (path: string) => (source === '.' ? path : posix.join(source, path))
+  const at = presetEffectAt(root, key, value)
 
   if (contracts.length === 0 || !(value.tanstack || value.next)) {
     return {}
