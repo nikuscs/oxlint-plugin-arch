@@ -41,7 +41,7 @@ Unless `detect: false`, the preset reads the workspaces from the root `package.j
 | `@tanstack/react-start` | `tanstack` |
 | `expo` | `expo` |
 | `electrobun`, `electron` or `@tauri-apps/*` | `desktop` |
-| `effect` and a React package | `react` (an app, or a package with `pages/` or `link.tsx`) or `ui` (another package) |
+| `effect` and a React package | `react` (an app, or a package with `pages/` or `link.tsx`) or `ui` (another package), with `effect: { code: false }` and the Effect import bans |
 | `effect` with a backend package or a `domains/` folder | `backend` with `effect` over it: a backend in Effect style, see [`effect`](groups/effect.md#what-an-effect-server-gets) |
 | `effect` | `effect` |
 | `@orpc/server`, `hono`, `kysely`, `drizzle-orm`, `express`, `fastify` or `elysia`, in an app or next to a `services/` folder; or any `services/<domain>/<domain>.service.ts` | `backend` |
@@ -143,7 +143,7 @@ Recipes are plain objects that only toggle groups, so spreading them is safe.
 | `backend` | `backend`, `schemas`, `sql`, `orpc` |
 | `react` | `react`, `tailwind`, `schemas` |
 | `library` | `schemas` |
-| `effect` | `schemas`, `effect` |
+| `effect` | `schemas`, `effect`, and `deny.imports` for `effect`, `zod`, `ts-pattern`, `dayjs`, `ai`, `@ai-sdk/**` |
 | `ui` | `react`, `kit`, `tailwind` (`kit` is the same recipe) |
 | `desktop` | `console` |
 | `cli` | `console` |

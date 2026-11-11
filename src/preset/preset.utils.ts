@@ -1,4 +1,5 @@
 import { existsSync, readFileSync, statSync } from 'node:fs'
+import { createRequire } from 'node:module'
 import { posix, resolve } from 'node:path'
 import { presetExtensions, presetGeneratedFiles, presetLiteralSegment } from './preset.constants.ts'
 import type * as PresetTypes from '../types/preset.types.ts'
@@ -20,6 +21,38 @@ async function presetEffectImport<T>(load: Promise<T>): Promise<T | null> {
 
 const presetEffectTsgo = await presetEffectImport(import('@effect/tsgo/oxlint-presets'))
 const presetEffectLinteffect = await presetEffectImport(import('@opsydyn/oxlint-effect'))
+const presetEffectRegexp = await presetEffectImport(import('eslint-plugin-regexp'))
+const presetEffectDeMorgan = await presetEffectImport(import('eslint-plugin-de-morgan'))
+const presetRequire = createRequire(import.meta.url)
+
+function presetResolve(name: string): string | undefined {
+  try {
+    return presetRequire.resolve(name)
+  } catch {
+    return undefined
+  }
+}
+
+export function presetEffectStyle(): PresetTypes.PresetEffectStyle {
+  const sonarjs = presetResolve('eslint-plugin-sonarjs')
+  const regexp = presetEffectRegexp ? presetResolve('eslint-plugin-regexp') : undefined
+  const deMorgan = presetEffectDeMorgan ? presetResolve('eslint-plugin-de-morgan') : undefined
+
+  const rules: PresetTypes.PresetRules = { ...presetEffectRegexp?.configs['flat/recommended'].rules, ...presetEffectDeMorgan?.configs.recommended.rules }
+
+  if (sonarjs) {
+    rules['sonarjs/super-linear-regex'] = 'error'
+  }
+
+  return {
+    rules,
+    jsPlugins: [
+      ...(regexp ? [{ name: 'regexp', specifier: regexp }] : []),
+      ...(deMorgan ? [{ name: 'de-morgan', specifier: deMorgan }] : []),
+      ...(sonarjs ? [{ name: 'sonarjs', specifier: sonarjs }] : []),
+    ],
+  }
+}
 
 export function presetEffectPackages(): PresetTypes.PresetEffectPackages {
   if (!presetEffectTsgo || !presetEffectLinteffect) {

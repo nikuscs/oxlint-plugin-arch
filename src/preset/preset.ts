@@ -28,7 +28,7 @@ import { typesGroup } from './groups/types.ts'
 import { presetProject } from './preset-folders.ts'
 import { presetRecipes, presetTemplates } from './preset-recipes.ts'
 import { presetCommonRules, presetExtensions, presetExternals, presetGroupOrder } from './preset.constants.ts'
-import { presetEffectPackages, PresetError, presetGlobEscape, presetIntersect, presetSeverity } from './preset.utils.ts'
+import { presetEffectPackages, presetEffectStyle, PresetError, presetGlobEscape, presetIntersect, presetSeverity } from './preset.utils.ts'
 import type * as PresetTypes from '../types/preset.types.ts'
 import type { OxlintConfig, OxlintOverride } from 'oxlint'
 
@@ -233,6 +233,7 @@ function presetFileEmit<K extends PresetTypes.PresetGroupName>(
 function presetPlugins(project: PresetTypes.PresetProject): Pick<OxlintConfig, 'plugins' | 'jsPlugins' | 'settings'> {
   const react = project.scopes.some((scope) => scope.effective.react)
   const effect = project.scopes.some((scope) => scope.effective.effect)
+  const effectCode = project.scopes.some((scope) => scope.effective.effect?.code)
   const tailwinds = project.scopes.flatMap((scope) => (scope.effective.tailwind ? [scope.effective.tailwind] : []))
   const shadcns = project.scopes.flatMap((scope) => (scope.effective.shadcn ? [scope.effective.shadcn] : []))
   const tailwind = tailwinds.at(0)
@@ -260,11 +261,15 @@ function presetPlugins(project: PresetTypes.PresetProject): Pick<OxlintConfig, '
 
   const plugins: PresetTypes.PresetPlugins = ['typescript', 'react', 'react-perf', 'jsx-a11y', 'import', 'unicorn', 'promise', 'vitest', 'node', 'oxc']
 
-  if (effect) {
+  if (effectCode) {
     const { tsgo, linteffect } = presetEffectPackages()
 
     plugins.push(...(tsgo.correctness.plugins ?? []))
     jsPlugins.push(...linteffect.recommended.jsPlugins)
+  }
+
+  if (effect) {
+    jsPlugins.push(...presetEffectStyle().jsPlugins)
   }
 
   const settings: PresetTypes.PresetSettings = {

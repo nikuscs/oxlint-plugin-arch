@@ -459,13 +459,15 @@ describe('preset', () => {
   })
 
   it.each([
-    { name: 'the Effect group loads Effect tsgo and oxlint-effect', folders: { src: recipes.effect }, plugins: ['effecttsgo'], jsPlugins: ['linteffect'] },
-    { name: 'other groups load neither', folders: { src: true }, plugins: [], jsPlugins: [] },
+    { name: 'the Effect group loads Effect tsgo, oxlint-effect and the installed style plugins', folders: { src: recipes.effect }, plugins: ['effecttsgo'], jsPlugins: ['linteffect', 'regexp', 'de-morgan'] },
+    { name: 'style only loads the installed style plugins', folders: { src: { effect: { code: false } } }, plugins: [], jsPlugins: ['regexp', 'de-morgan'] },
+    { name: 'other groups load none', folders: { src: true }, plugins: [], jsPlugins: [] },
   ])('$name', ({ folders, plugins, jsPlugins }) => {
     const config = preset({ root, folders })
     const names = (config.jsPlugins ?? []).map((plugin) => (typeof plugin === 'string' ? plugin : plugin.name))
+    const loaded = names.filter((name) => ['linteffect', 'regexp', 'de-morgan', 'sonarjs'].includes(name))
 
-    expect({ plugins: (config.plugins ?? []).map(String).filter((plugin) => plugin === 'effecttsgo'), jsPlugins: names.filter((name) => name === 'linteffect') }).toEqual({ plugins, jsPlugins })
+    expect({ plugins: (config.plugins ?? []).map(String).filter((plugin) => plugin === 'effecttsgo'), jsPlugins: loaded }).toEqual({ plugins, jsPlugins })
   })
 
   it.each<{ name: string; folders: unknown; message: string }>([

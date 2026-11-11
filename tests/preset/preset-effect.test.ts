@@ -251,7 +251,7 @@ describe('preset Effect server', () => {
       folders: {},
       file: 'apps/server/src/application/app.ts',
       rule: 'arch/boundaries-deny',
-      expected: ['error', { imports: { '**/domains/*/*.{actions,queries,prompts,constants,driver}{,.ts}': expect.any(String) } }],
+      expected: ['error', { imports: { '**/domains/*/!(*.layer|*.layer.ts|*.workflows|*.workflows.ts)': expect.any(String) } }],
     },
     {
       name: 'other application files keep the import boundaries',
@@ -387,8 +387,9 @@ describe('preset Effect server', () => {
       folders: {},
       file: 'packages/contract/src/order/order.schemas.ts',
       rule: 'arch/files-constants-only',
-      expected: ['error', { types: true }],
+      expected: ['error', { types: true, functions: true }],
     },
+    { name: 'a schemas file holds no function, exported or local', tree: contractTree, files: contract, folders: {}, file: 'packages/contract/src/order/order.schemas.ts', rule: 'arch/files-no-functions', expected: ['error', { reexports: false }] },
     { name: 'a schemas file aliases no imported type', tree: contractTree, files: contract, folders: {}, file: 'packages/contract/src/order/order.schemas.ts', rule: 'arch/types-imported-alias', expected: 'error' },
     {
       name: 'a schemas file inlines single-use schemas',
@@ -542,6 +543,8 @@ describe('preset Effect server', () => {
       rule: 'arch/files-restricted',
       expected: ['error', { message: 'Domain types belong in src/types.' }],
     },
+    { name: 'a server documents its functions', tree, files: server, folders: {}, file: 'apps/server/src/rpc/app/orders.ts', rule: 'arch/comments-code', expected: ['error', { why: false, jsdoc: true }] },
+    { name: 'a contract package has no docblock rule', tree: contractTree, files: contract, folders: {}, file: 'packages/contract/src/order/order.schemas.ts', rule: 'arch/comments-code', expected: expect.not.arrayContaining([expect.objectContaining({ jsdoc: true })]) },
   ])('$name', (row) => {
     expect({ value: testerPreset(row) }).toMatchObject({ value: row.expected })
   })

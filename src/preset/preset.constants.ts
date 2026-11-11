@@ -371,7 +371,7 @@ export const presetGroupOptions: PresetTypes.PresetGroupDefaults = {
   schemas: { level: 'error' },
   forms: { level: 'error' },
   sql: { level: 'error' },
-  effect: { level: 'error', width: 160, exports: undefined, skip: undefined, entries: [] },
+  effect: { level: 'error', code: true, width: 140, exports: undefined, skip: undefined, entries: [] },
   console: { level: 'error' },
   deny: { level: 'error', imports: {}, calls: {} },
   externals: { level: 'error' },
@@ -401,6 +401,8 @@ export const presetExpoRouteExports = ['ErrorBoundary', 'unstable_settings', 'ge
 
 export const presetTestFiles = ['**/{test,tests,e2e}/**/*.{ts,tsx,mts,cts}', '**/*.{test,spec}.{ts,tsx,mts,cts}']
 
+export const presetTanstackRsc = { name: '@tanstack/react-start/rsc', message: 'Render server components only in services/*.rsc.tsx files.' }
+
 export const presetBaseImports = [{ group: ['zod/v4', 'zod/v4/**'], message: 'Import from zod, not its transition entry point.' }]
 
 export const presetDetectFrameworks: ['tanstack' | 'next' | 'expo', string[]][] = [
@@ -410,6 +412,15 @@ export const presetDetectFrameworks: ['tanstack' | 'next' | 'expo', string[]][] 
 ]
 
 export const presetDetectDesktop = ['electrobun', 'electron', '@tauri-apps/api', '@tauri-apps/cli']
+
+export const presetEffectImports = {
+  effect: 'Import the module subpath, such as effect/Effect.',
+  zod: 'Use effect/Schema.',
+  'ts-pattern': 'Use effect/Match.',
+  dayjs: 'Use effect/DateTime.',
+  ai: 'Use effect/ai.',
+  '@ai-sdk/**': 'Use effect/ai.',
+}
 
 export const presetRecipeMark = Symbol('recipe')
 

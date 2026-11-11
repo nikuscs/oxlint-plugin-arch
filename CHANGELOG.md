@@ -20,6 +20,11 @@
 - `arch/code-trivial-functions`: `defaults` (default `true`); with `false`, the file's default export is not checked, whether a named declaration, an anonymous function or a name exported as default below its declaration.
 - Effect contract conventions: a unit with the `effect` group whose source holds a `<d>/<d>.contract.ts` gets file keys for its file names, folder-prefixed file names, domain-prefixed exports (`Admin` first in admin files, a plural folder drops its `s`), constants and types only in schemas and contract files (functions allowed in `shared/` and `contract*.ts`), no functions in errors and layer types files, `arch/types-imported-alias` and `arch/schemas-single-use` for `Schema`, and `types: { placement: false }` on the unit. Each key can be restated to extend, override or turn off.
 - Effect error classes: every unit with the `effect` group denies `Schema.TaggedError`, `Schema.ErrorClass`, `Data.TaggedError` and `Data.Error` outside `*.errors.ts`.
+- `effect` group: `code` option (default `true`); with `false` only the project style runs (`typescript/consistent-type-assertions`, `eslint-js/max-len`) and the two Effect packages are not needed. A React package or framework app that depends on `effect` gets `effect: { code: false }`.
+- `effect` group: loads `eslint-plugin-regexp` (`flat/recommended`), `eslint-plugin-de-morgan` (`recommended`) and `eslint-plugin-sonarjs` (`sonarjs/super-linear-regex`) when each is installed; all three are optional peer dependencies.
+- Every workspace that depends on `effect`, and `recipes.effect`, bans the `effect` root, `zod`, `ts-pattern`, `dayjs`, `ai` and `@ai-sdk/**` imports.
+- Frontend package conventions: a React package with `pages/` or `link.tsx` gets `forms`, `arch/react-query-props`, an `@orpc/*` ban, the router only through `link.tsx` (`ClientOnly` allowed), a flat `services/` when it holds more files than folders, and frontend client services. In a project with a contract package, a TanStack or Next app imports the contract's root entry as types only. A UI kit with the `effect` group bans the other workspace packages.
+- Effect servers document their functions: `arch/comments-code` with `jsdoc: true` on the server source.
 
 ### Changed
 
@@ -40,6 +45,10 @@
   - After, to keep the root's: `'.agents': { style: { quotes: 'double' } }`
 - The `backend` recipe turns on the `orpc` group; it still checks only `orpc.public`, which defaults to `<backend source>/rpc/api/**` when that folder exists. `orpc: false` turns it off.
 - The `basics` group gives a Next app's `app/**/{layout,page,default}.tsx` files `arch/code-trivial-functions` with `defaults: false`, so their default export may be trivial. Lines like `'src/app': { rules: { 'arch/code-trivial-functions': ['error', { …, allow: '^(RootLayout|CatchAllPage)$' }] } }` and `'src/app/default.tsx': { rules: { 'arch/code-trivial-functions': 'off' } }` can go; they still win when kept.
+- **Breaking:** the `effect` group's `width` defaults to 140 (was 160). Restore with `effect: { width: 160 }`.
+- **Breaking:** the `effect` group sets `typescript/consistent-type-assertions` (`assertionStyle: 'never'`), `eslint-js/max-len` at its width, `arch/code-object-params` (`all: true, services: true`), `arch/code-switch` ("Branch with Match.") and turns `arch/naming-exports` off. Turn one back with a `rules` line, such as `rules: { 'typescript/consistent-type-assertions': 'off' }`.
+- `boundaries-deny` globs: a `*` inside `!(…)` matches within the segment, so `!(*.layer.ts)` is any segment not ending in `.layer.ts`.
+- The Effect contract's schemas and contract files report a function, exported or local, through `arch/files-no-functions`; `arch/files-constants-only` there allows functions so each offence is reported once.
 
 ### Removed
 

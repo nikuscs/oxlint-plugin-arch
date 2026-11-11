@@ -53,17 +53,21 @@ function presetRecipe(root: string, directory: string, app: boolean, folder: Pre
   const folders = entries.filter((entry) => presetIsDirectory(resolve(services, entry.name))).length
   const flat = entries.filter((entry) => entry.isFile() && /\.tsx?$/.test(entry.name)).length > folders
   const backend = presetDomains(root, servicesFolder).length > 0 || (has(PresetConstants.presetDetectBackend) && (app || presetIsDirectory(services)))
+  const layout: PresetTypes.PresetFolder = flat ? { layout: { services: 'flat' } } : {}
+  const style: PresetTypes.PresetFolder = has(['effect']) ? { effect: { code: false }, deny: { imports: PresetConstants.presetEffectImports } } : {}
 
   if (framework) {
-    return flat ? { ...presetRecipes[framework], layout: { services: 'flat' } } : presetRecipes[framework]
+    return { ...presetRecipes[framework], ...layout, ...style }
   }
 
   if (has(PresetConstants.presetDetectDesktop)) {
     return presetRecipes.desktop
   }
 
+  const reactLayout = frontend ? { ...reactRecipe, ...layout } : reactRecipe
+
   if (has(['effect']) && react) {
-    return reactRecipe
+    return { ...reactLayout, ...style }
   }
 
   if (has(['effect'])) {
@@ -75,7 +79,7 @@ function presetRecipe(root: string, directory: string, app: boolean, folder: Pre
   }
 
   if (react) {
-    return reactRecipe
+    return reactLayout
   }
 
   return presetRecipes.library
@@ -469,7 +473,7 @@ export function presetDetect(root: string, folders: PresetTypes.PresetFolders): 
       add(key, presetDeny({ ...PresetConstants.presetPackageImports, ...Object.fromEntries(appImports) }))
     }
 
-    for (const [path, folder] of Object.entries(presetEffectConventions(root, key, value))) {
+    for (const [path, folder] of presetEffectConventions(root, key, value, units)) {
       add(path === '.' ? key : posix.join(key, path), folder)
     }
   }

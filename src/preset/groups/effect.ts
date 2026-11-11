@@ -1,5 +1,5 @@
 import { presetExtensions } from '../preset.constants.ts'
-import { presetEffectPackages, presetOverride } from '../preset.utils.ts'
+import { presetEffectPackages, presetEffectStyle, presetOverride } from '../preset.utils.ts'
 import type { PresetBuilder, PresetRules } from '../../types/preset.types.ts'
 
 const effectOff: PresetRules = {
@@ -42,10 +42,22 @@ const effectTestOff: PresetRules = {
 export const effectGroup: PresetBuilder<'effect'> = (project, settings) => {
   const files = [`**/${presetExtensions}`]
   const max = settings.width
+
+  const style = presetOverride(files, {
+    'typescript/consistent-type-assertions': ['error', { assertionStyle: 'never' }],
+    'eslint-js/max-len': ['error', { code: max, ignoreUrls: true, ignoreComments: true, ignoreRegExpLiterals: true }],
+    ...presetEffectStyle().rules,
+  })
+
+  if (!settings.code) {
+    return [style]
+  }
+
   const { tsgo, linteffect } = presetEffectPackages()
   const tsgoRules = [tsgo.correctness, tsgo.antipattern, tsgo.effectNative, tsgo.style].flatMap((config) => Object.keys(config.rules ?? {}))
 
   return [
+    style,
     presetOverride(files, {
       ...Object.fromEntries(tsgoRules.map((rule) => [rule, 'error'])),
       ...linteffect.recommended.rules,
@@ -56,6 +68,9 @@ export const effectGroup: PresetBuilder<'effect'> = (project, settings) => {
     presetOverride(files, {
       'arch/code-trivial-functions': 'off',
       'arch/code-branch-once': 'error',
+      'arch/code-object-params': ['error', { all: true, services: true }],
+      'arch/code-switch': ['error', { message: 'Branch with Match.' }],
+      'arch/naming-exports': 'off',
       'arch/code-function-nesting': ['error', { max: 4 }],
       'arch/code-inline': ['error', { max, nesting: 2, keep: ['^[A-Z]', '^layer'], allow: '^(?:decode|encode)[A-Z]', services: ['of'] }],
       'arch/code-yield-argument': 'error',

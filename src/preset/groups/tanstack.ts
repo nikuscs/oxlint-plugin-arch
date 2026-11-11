@@ -1,3 +1,4 @@
+import { presetTanstackRsc } from '../preset.constants.ts'
 import { presetOverride, presetRuntime, presetScopes, presetServiceScopes } from '../preset.utils.ts'
 import type { PresetBuilder } from '../../types/preset.types.ts'
 
@@ -25,7 +26,7 @@ export const tanstackGroup: PresetBuilder<'tanstack'> = (project, settings) => {
         'no-restricted-imports': [
           'error',
           {
-            paths: [{ name: '@tanstack/react-start/rsc', message: 'Render server components only in services/*.rsc.tsx files.' }],
+            paths: [presetTanstackRsc],
             patterns: project.baseImports,
           },
         ],

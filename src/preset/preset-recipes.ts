@@ -1,4 +1,4 @@
-import { presetRecipeMark } from './preset.constants.ts'
+import { presetEffectImports, presetRecipeMark } from './preset.constants.ts'
 import type { PresetFolders, PresetRecipe } from '../types/preset.types.ts'
 
 const presetUi = { react: true, kit: true, tailwind: true }
@@ -44,7 +44,11 @@ export const presetRecipes = {
   }),
   desktop: presetRecipe('desktop', { console: true }),
   library: presetRecipe('library', { schemas: true }),
-  effect: presetRecipe('effect', { schemas: true, effect: true }),
+  effect: presetRecipe('effect', {
+    schemas: true,
+    effect: true,
+    deny: { imports: presetEffectImports },
+  }),
   ui: presetRecipe('ui', { ...presetUi }),
   kit: presetRecipe('kit', { ...presetUi }),
   cli: presetRecipe('cli', { console: true }),
