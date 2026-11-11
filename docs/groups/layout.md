@@ -27,6 +27,8 @@ Built-in names: `*.service.ts`, `*.client.ts`, `*.server.ts`, `*.rsc.ts`, `*.rsc
 
 A name of the form `*.<word>.ts` that is not built-in, like `*.prompts.ts`, is a file kind across the project: its exports start with the full file name, it is exempt from the service-function and inline-type checks, frontend services may hold it, and other domains may not import it ([`arch/boundaries-imports`](../rules/boundaries-imports.md) `roles`). Other names, like `*-tool.*.ts`, only pass the strict check.
 
+`*-action.*.ts` and `*-query.*.ts` files are left out of the strict check while the folder's list holds those names; remove them with `!` and the check applies.
+
 | `operations` | Action | Query |
 | --- | --- | --- |
 | `'flat'` | `order/order-action.create.ts` → `orderActionCreate` | `order/order-query.list.ts` → `orderQueryList` |

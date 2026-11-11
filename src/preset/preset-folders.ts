@@ -1,10 +1,10 @@
 import { existsSync, readdirSync, realpathSync } from 'node:fs'
 import { posix, resolve } from 'node:path'
-import { presetDetect, presetMerge, presetRegistryFile } from './preset-detect.ts'
+import { presetDetect, presetRegistryFile } from './preset-detect.ts'
 import { presetStylesheet } from './preset-stylesheet.ts'
 import { presetUnits } from './preset-units.ts'
 import * as PresetConstants from './preset.constants.ts'
-import { PresetError, presetGlobEscape, presetIntersect, presetIsDirectory, presetIsFile, presetManifest, presetScopes, presetServiceScopes } from './preset.utils.ts'
+import { PresetError, presetGlobEscape, presetIntersect, presetIsDirectory, presetIsFile, presetManifest, presetMerge, presetScopes, presetServiceScopes } from './preset.utils.ts'
 import type * as PresetTypes from '../types/preset.types.ts'
 
 function presetPortableKey(key: string): string {
@@ -295,7 +295,15 @@ export function presetProject(config: PresetTypes.PresetConfig): PresetTypes.Pre
     configured[key] = key in configured ? presetMerge(configured[key], value) : value
   }
 
-  const folders = config.detect === false ? configured : presetDetect(root, configured)
+  const detected = config.detect === false ? configured : presetDetect(root, configured)
+  const conventions = Object.entries(detected).filter(([key]) => !(key in configured) && presetIsFileKey(root, key))
+  const folders = Object.fromEntries(Object.entries(detected).filter(([key]) => !conventions.some(([other]) => other === key)))
+
+  const fileEntries = [
+    ...conventions.filter(([key]) => !files.some(([other]) => other === key)),
+    ...files.map(([key, value]): [string, boolean | PresetTypes.PresetFolder] => [key, key in detected ? presetMerge(detected[key], value) : value]),
+  ]
+
   const scopes = presetScopesTree(root, folders)
   const ignored = new Set(Object.entries(folders).flatMap(([key, value]) => (value === false ? [presetNormalizeKey(key)] : [])))
   const live = scopes.filter((scope) => !ignored.has(scope.key))
@@ -305,7 +313,7 @@ export function presetProject(config: PresetTypes.PresetConfig): PresetTypes.Pre
     throw new PresetError(`Folder \`${dead.key}\` sits inside the skipped folder \`${dead.parent?.key}\`.`)
   }
 
-  const fileKeys = files.flatMap(([key, value]): PresetTypes.PresetFileKey[] => {
+  const fileKeys = fileEntries.flatMap(([key, value]): PresetTypes.PresetFileKey[] => {
     if (value === false) {
       return []
     }
@@ -505,7 +513,7 @@ export function presetProject(config: PresetTypes.PresetConfig): PresetTypes.Pre
     baseImports: PresetConstants.presetBaseImports,
     css: { ...webCss, ...kitCss },
     registries: backendUnits.flatMap((unit) => presetRegistryFile(root, unit.source, unit.scope.effective.backend?.registry, unit.services) ?? []),
-    ignores: [...skipped.map((key) => `${key}/**`), ...files.flatMap(([key, value]) => (value === false ? [presetGlobEscape(key)] : []))],
+    ignores: [...skipped.map((key) => `${key}/**`), ...fileEntries.flatMap(([key, value]) => (value === false ? [presetGlobEscape(key)] : []))],
     outputs: ['.', ...units.map((unit) => unit.key)].flatMap((key) => PresetConstants.presetOutputFolders.map((folder) => (key === '.' ? `${folder}/**` : `${key}/${folder}/**`))),
   }
 }

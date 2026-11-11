@@ -1,8 +1,9 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs'
 import { matchesGlob, posix, resolve } from 'node:path'
+import { presetEffectConventions, presetEffectServers } from './preset-effect.ts'
 import { presetRecipes } from './preset-recipes.ts'
 import * as PresetConstants from './preset.constants.ts'
-import { presetIsDirectory, presetManifest, presetServicesFolder } from './preset.utils.ts'
+import { presetFilled, presetIsDirectory, presetManifest, presetMerge, presetServicesFolder, presetSource } from './preset.utils.ts'
 import type * as PresetTypes from '../types/preset.types.ts'
 
 function presetDirectories(root: string, base: string, skip = PresetConstants.presetDetectSkip): string[] {
@@ -16,14 +17,6 @@ function presetDirectories(root: string, base: string, skip = PresetConstants.pr
 }
 
 const presetNamedSkip = ['node_modules']
-
-function presetSource(root: string, directory: string, configured?: string): string {
-  if (configured !== undefined) {
-    return posix.join(directory, configured)
-  }
-
-  return existsSync(resolve(root, directory, 'src')) ? posix.join(directory, 'src') : directory
-}
 
 export function presetRegistryFile(root: string, source: string, configured: PresetTypes.PresetBackendOptions['registry'], services: string): string | undefined {
   if (configured === false) {
@@ -59,6 +52,7 @@ function presetRecipe(root: string, directory: string, app: boolean, folder: Pre
   const entries = presetIsDirectory(services) ? readdirSync(services, { withFileTypes: true }) : []
   const folders = entries.filter((entry) => presetIsDirectory(resolve(services, entry.name))).length
   const flat = entries.filter((entry) => entry.isFile() && /\.tsx?$/.test(entry.name)).length > folders
+  const backend = presetDomains(root, servicesFolder).length > 0 || (has(PresetConstants.presetDetectBackend) && (app || presetIsDirectory(services)))
 
   if (framework) {
     return flat ? { ...presetRecipes[framework], layout: { services: 'flat' } } : presetRecipes[framework]
@@ -68,11 +62,15 @@ function presetRecipe(root: string, directory: string, app: boolean, folder: Pre
     return presetRecipes.desktop
   }
 
-  if (has(['effect'])) {
-    return react ? reactRecipe : presetRecipes.effect
+  if (has(['effect']) && react) {
+    return reactRecipe
   }
 
-  if (presetDomains(root, servicesFolder).length > 0 || (has(PresetConstants.presetDetectBackend) && (app || presetIsDirectory(services)))) {
+  if (has(['effect'])) {
+    return backend || presetIsDirectory(resolve(root, source, 'domains')) ? { ...presetRecipes.backend, ...presetRecipes.effect } : presetRecipes.effect
+  }
+
+  if (backend) {
     return presetRecipes.backend
   }
 
@@ -81,31 +79,6 @@ function presetRecipe(root: string, directory: string, app: boolean, folder: Pre
   }
 
   return presetRecipes.library
-}
-
-function presetMergeObject<T extends object>(base: T, top: T, depth: number): T {
-  const merged = { ...base }
-
-  for (const [key, value] of Object.entries(top)) {
-    const previous: unknown = Reflect.get(merged, key)
-    const nested = previous instanceof Object && value instanceof Object && !Array.isArray(previous) && !Array.isArray(value)
-
-    if (nested && depth > 0) {
-      Reflect.set(merged, key, presetMergeObject<object>(previous, value, depth - 1))
-    } else if (value !== true || !(previous instanceof Object)) {
-      Reflect.set(merged, key, value)
-    }
-  }
-
-  return merged
-}
-
-export function presetMerge(base: boolean | PresetTypes.PresetFolder | undefined, top: boolean | PresetTypes.PresetFolder): boolean | PresetTypes.PresetFolder {
-  if (!(base instanceof Object) || !(top instanceof Object)) {
-    return top === true && base instanceof Object ? base : top
-  }
-
-  return presetMergeObject(base, top, 2)
 }
 
 function presetImportTargets(value: unknown): string[] {
@@ -162,16 +135,6 @@ function presetOverlaps(left: string, right: string): boolean {
 
 function presetDeny(imports: Record<string, string | false>): PresetTypes.PresetFolder {
   return { deny: { imports } }
-}
-
-function presetFilled(conventions: PresetTypes.PresetFolders, exists: (path: string) => boolean): PresetTypes.PresetFolders {
-  return Object.fromEntries(
-    Object.entries(conventions).filter(([path, folder]) => {
-      const empty = folder instanceof Object && folder.deny instanceof Object && Object.keys(folder.deny.imports ?? {}).length === 0
-
-      return exists(path) && !empty
-    }),
-  )
 }
 
 function presetBackendConventions(
@@ -458,6 +421,8 @@ export function presetDetect(root: string, folders: PresetTypes.PresetFolders): 
     return [[key, siblings.reduce<boolean | PresetTypes.PresetFolder>((inherited, [, sibling]) => presetMerge(sibling, inherited), value)]]
   })
 
+  presetEffectServers(root, merged, units)
+
   const denied = new Set(
     Object.values(folders).flatMap((folder) =>
       folder instanceof Object && folder.deny instanceof Object
@@ -502,6 +467,10 @@ export function presetDetect(root: string, folders: PresetTypes.PresetFolders): 
       const appImports = internals.filter((specifier) => !own.some((mine) => presetOverlaps(mine, specifier))).map((specifier) => [specifier, message])
 
       add(key, presetDeny({ ...PresetConstants.presetPackageImports, ...Object.fromEntries(appImports) }))
+    }
+
+    for (const [path, folder] of Object.entries(presetEffectConventions(root, key, value))) {
+      add(path === '.' ? key : posix.join(key, path), folder)
     }
   }
 

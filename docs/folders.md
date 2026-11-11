@@ -42,7 +42,8 @@ Unless `detect: false`, the preset reads the workspaces from the root `package.j
 | `expo` | `expo` |
 | `electrobun`, `electron` or `@tauri-apps/*` | `desktop` |
 | `effect` and a React package | `react` (an app, or a package with `pages/` or `link.tsx`) or `ui` (another package) |
-| `effect` | `effect`, whatever backend packages it has |
+| `effect` with a backend package or a `domains/` folder | `backend` with `effect` over it: a backend in Effect style, see [`effect`](groups/effect.md#what-an-effect-server-gets) |
+| `effect` | `effect` |
 | `@orpc/server`, `hono`, `kysely`, `drizzle-orm`, `express`, `fastify` or `elysia`, in an app or next to a `services/` folder; or any `services/<domain>/<domain>.service.ts` | `backend` |
 | A React package | `react` (an app, or a package with `pages/` or `link.tsx`) or `ui` (another package) |
 | anything else | `library` |

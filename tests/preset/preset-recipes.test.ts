@@ -35,7 +35,7 @@ describe('preset recipes', () => {
       expected: ['error', expect.any(Object)],
     },
     {
-      name: 'an Effect app with backend packages gets no backend rule',
+      name: 'an Effect app with backend packages gets the backend rules',
       tree: ['apps/server/src/rpc/'],
       files: {
         'package.json': workspaces,
@@ -48,7 +48,7 @@ describe('preset recipes', () => {
       folders: {},
       file: 'apps/server/src/rpc/a.ts',
       rule: 'arch/boundaries-rpc-database',
-      expected: undefined,
+      expected: 'error',
     },
     {
       name: 'an Effect package with React components is a UI kit',

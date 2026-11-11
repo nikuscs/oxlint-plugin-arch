@@ -56,7 +56,12 @@ export const layoutGroup: PresetBuilder<'layout'> = (project, settings) => {
             },
           ],
         },
-        ['**/*-{action,query}.*.ts', ...testFiles, ...registries],
+        [
+          ...(settings.files.includes('*-action.*.ts') ? ['**/*-action.*.ts'] : []),
+          ...(settings.files.includes('*-query.*.ts') ? ['**/*-query.*.ts'] : []),
+          ...testFiles,
+          ...registries,
+        ],
       )
 
       return [...domain, strict]

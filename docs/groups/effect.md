@@ -57,3 +57,31 @@ It also turns off the oxlint-effect rules that flag common Effect idioms:
 | `linteffect/no-match-effect-branch` | `Option.match`, `Array.match` and `Match` branches that are effects |
 
 In test files it also turns off `linteffect/no-string-sentinel-return`, `linteffect/no-effect-never`, `linteffect/no-gen-for-mapping` and `linteffect/no-adhoc-domain-error`, so a test can fail with a plain string. In test files and `entries` it turns off `effecttsgo/strict-effect-provide`, `linteffect/no-inline-runtime-provide` and `linteffect/no-inline-layer-provide-in-program`: an entry provides its own layers.
+
+## What an Effect server gets
+
+A unit with the `effect` group whose source holds `domains/` is an Effect server: it gets the `backend` recipe's groups under your own settings, with `services: 'domains'`, so the backend conventions (migrations, `tests/kits`, the web and package bans on server internals) apply. Detection adds these keys too, relative to the unit; `S` is its source and `D` is `S/domains`. Write the same key to change one: lists add, objects merge, `false` and `'off'` turn an entry off.
+
+| Key | Sets |
+| --- | --- |
+| `S` | `deny.imports`: `@tanstack/*`, `react-dom`, `react-dom/**`, `next`, `next/**`, `vite` and `effect/Config`; `rules`: `arch/types-declarations` with `modules: true`, `arch/types-inline` with `variables`, `assertions` and `arguments`, `arch/types-service` off |
+| `D` | `layout.files`: adds `*.actions.ts`, `*.queries.ts`, `*.layer.ts`, `*.workflows.ts`, `*.prompts.ts`, `*-*.driver.ts`; removes `*.service.ts`, `*.client.ts`, `*.server.ts`, `*.rsc.ts`, `*.rsc.tsx`, `*.utils.ts`, `*.types.ts`, `*.handler.ts`, `*-action.*.ts`, `*-query.*.ts`; `deny.imports`: `../*/*.constants{,.ts}`; `rules`: `arch/naming-exports` off |
+| `D/*/*.actions.ts` | `limits.lines` 1000; `arch/files-exports` with `stem: 'folder'`, `patterns: ['{domain}Action[A-Z]\\w*']`, `types: true` |
+| `D/*/*.queries.ts` | `limits.lines` 1000; `arch/files-exports` with `patterns: ['{domain}Query[A-Z]\\w*']`; `deny.calls`: `insertInto`, `updateTable`, `deleteFrom`, `mergeInto`, `replaceInto`, `dispatch`, `send`; `deny.imports`: `./*.actions{,.ts}` |
+| `D/*/*.layer.ts`, `D/*/*.driver.ts` | [`arch/effect-layer-file`](../rules/effect-layer-file.md) |
+| `D/*/*.workflows.ts` | `deny.calls`: `selectFrom` and the write calls; `deny.imports`: `**/database`, `./*.{actions,queries}{,.ts}` |
+| `S/application/app.config.ts` | `deny.imports`: `'effect/Config': false` |
+| `S/application/app.ts` | `arch/boundaries-imports` off; `deny.imports`: `**/domains/*/*.{actions,queries,prompts,constants,driver}{,.ts}` |
+| `S/**/*.tsx` | `arch/files-restricted`: mail templates are the only JSX on a server |
+| `S/mails/*.mail.tsx` | `arch/files-restricted` off |
+| `S/rpc` | [`arch/code-delegate`](../rules/code-delegate.md) |
+
+A domain's other files stay private through [`arch/boundaries-imports`](../rules/boundaries-imports.md), and a constants file holds no function through the `types` group's `arch/files-no-functions`.
+
+```ts
+folders: {
+  'apps/server/src/domains': { layout: { files: ['*.gateway.ts'] } },
+  'apps/server/src/domains/*/*.actions.ts': { limits: { lines: 1500 } },
+  'apps/server/src/rpc': { rules: { 'arch/code-delegate': 'off' } },
+}
+```
