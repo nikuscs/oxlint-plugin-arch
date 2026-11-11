@@ -67,6 +67,7 @@ export interface CodeTrivialFunctionsOptions {
   services?: boolean
   deny?: string[]
   guards?: boolean
+  defaults?: boolean
 }
 
 export interface CodeTrivialFunctionsGuardState {

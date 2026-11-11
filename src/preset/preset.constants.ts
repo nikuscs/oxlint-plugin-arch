@@ -435,7 +435,7 @@ export const presetCliFiles = '^cli(?:-[a-z0-9]+)*(?:\\.[a-z0-9-]+)*\\.tsx?$'
 
 export const presetMigrationFiles = '^(?:\\d{3,14}[-_][a-z0-9]+(?:[-_][a-z0-9]+)*|index)\\.ts$'
 
-export const presetMigrationNumber = '^(\\d{3,14})[-_]'
+export const presetMigrationNumber = '^(\\d{4}-\\d{2}-\\d{2}(?:-\\d{2})*|\\d{3,14})[-_]'
 
 export const presetRootImports = { 'framer-motion': 'Use motion/react.' }
 

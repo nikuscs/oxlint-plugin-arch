@@ -180,7 +180,7 @@ describe('preset detection', () => {
       folders: {},
       file: 'apps/server/src/migrations/001_init.ts',
       rule: 'arch/naming-file',
-      expected: ['error', { unique: '^(\\d{3,14})[-_]' }],
+      expected: ['error', { unique: '^(\\d{4}-\\d{2}-\\d{2}(?:-\\d{2})*|\\d{3,14})[-_]' }],
     },
     {
       name: 'a database/migrations folder gets numbered names',
@@ -189,7 +189,7 @@ describe('preset detection', () => {
       folders: {},
       file: 'apps/server/src/database/migrations/20240101120000-init.ts',
       rule: 'arch/naming-file',
-      expected: ['error', { unique: '^(\\d{3,14})[-_]' }],
+      expected: ['error', { unique: '^(\\d{4}-\\d{2}-\\d{2}(?:-\\d{2})*|\\d{3,14})[-_]' }],
     },
     {
       name: 'a migrations folder beside src gets numbered names',
@@ -198,7 +198,7 @@ describe('preset detection', () => {
       folders: {},
       file: 'apps/server/migrations/001_init.ts',
       rule: 'arch/naming-file',
-      expected: ['error', { unique: '^(\\d{3,14})[-_]' }],
+      expected: ['error', { unique: '^(\\d{4}-\\d{2}-\\d{2}(?:-\\d{2})*|\\d{3,14})[-_]' }],
     },
     {
       name: 'a migrations folder mirrored under tests keeps test names',
@@ -262,7 +262,7 @@ describe('preset detection', () => {
       folders: { 'apps/*': recipes.backend, 'apps/server': { severity: 'warn' } },
       file: 'apps/server/src/migrations/001_init.ts',
       rule: 'arch/naming-file',
-      expected: ['warn', { unique: '^(\\d{3,14})[-_]' }],
+      expected: ['warn', { unique: '^(\\d{4}-\\d{2}-\\d{2}(?:-\\d{2})*|\\d{3,14})[-_]' }],
     },
     {
       name: 'an exact key that revives a skipped wildcard keeps the conventions',
@@ -271,7 +271,7 @@ describe('preset detection', () => {
       folders: { 'apps/*': false, 'apps/server': recipes.backend },
       file: 'apps/server/src/migrations/001_init.ts',
       rule: 'arch/naming-file',
-      expected: ['error', { unique: '^(\\d{3,14})[-_]' }],
+      expected: ['error', { unique: '^(\\d{4}-\\d{2}-\\d{2}(?:-\\d{2})*|\\d{3,14})[-_]' }],
     },
     {
       name: 'an exact key inherits the source of its wildcard',
@@ -425,7 +425,7 @@ describe('preset detection', () => {
       folders: { 'apps/*': recipes.backend },
       file: 'apps/server/src/migrations/001_init.ts',
       rule: 'arch/naming-file',
-      expected: ['error', { unique: '^(\\d{3,14})[-_]' }],
+      expected: ['error', { unique: '^(\\d{4}-\\d{2}-\\d{2}(?:-\\d{2})*|\\d{3,14})[-_]' }],
     },
     {
       name: 'a service bans the operations of every other domain',
@@ -573,6 +573,15 @@ describe('preset detection', () => {
       file: '.agents/hooks/a.ts',
       rule: 'no-console',
       expected: 'warn',
+    },
+    {
+      name: 'a migrations folder reads a dated number whole',
+      tree: ['apps/server/src/services/', 'apps/server/src/migrations/'],
+      files: { 'package.json': workspaces, ...server },
+      folders: {},
+      file: 'apps/server/src/migrations/2026-11-12-10-00-create-news-table.ts',
+      rule: 'arch/naming-file',
+      expected: ['error', { unique: '^(\\d{4}-\\d{2}-\\d{2}(?:-\\d{2})*|\\d{3,14})[-_]' }],
     },
   ])('$name', (row) => {
     expect({ value: testerPreset(row) }).toMatchObject({ value: row.expected })

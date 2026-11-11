@@ -16,6 +16,7 @@
 - `arch/types-inline`: `variables` (variable and class property annotations), `assertions` (`as` and `satisfies`) and `arguments` (type arguments of calls and `new`), each default `false`; `functions` and `min` apply to them too.
 - `arch/types-declarations`: `modules` (default `false`) allows a `type` or `interface` inside `declare module '…' {}` or `declare global {}`.
 - `arch/boundaries-imports`: `importers` (default `{}`) maps a private file suffix to absolute files outside the domain that may import files of that suffix, with `*` inside one path segment: `importers: { layer: [resolve('apps/server/src/application/app.ts')] }`.
+- `arch/code-trivial-functions`: `defaults` (default `true`); with `false`, the file's default export is not checked, whether a named declaration, an anonymous function or a name exported as default below its declaration.
 
 ### Changed
 
@@ -34,6 +35,7 @@
 - `.agents` is detected: a `'.agents': { console: true }` line can go, and `.agents` uses the default quotes and semicolons when the root sets others.
   - After, to keep the root's: `'.agents': { style: { quotes: 'double' } }`
 - The `backend` recipe turns on the `orpc` group; it still checks only `orpc.public`, which defaults to `<backend source>/rpc/api/**` when that folder exists. `orpc: false` turns it off.
+- The `basics` group gives a Next app's `app/**/{layout,page,default}.tsx` files `arch/code-trivial-functions` with `defaults: false`, so their default export may be trivial. Lines like `'src/app': { rules: { 'arch/code-trivial-functions': ['error', { …, allow: '^(RootLayout|CatchAllPage)$' }] } }` and `'src/app/default.tsx': { rules: { 'arch/code-trivial-functions': 'off' } }` can go; they still win when kept.
 
 ### Removed
 
@@ -55,6 +57,10 @@
 - **Breaking:** the preset's `orpc.composers` option; setting it throws ``Unknown option `orpc.composers`.``
   - Before: `'apps/server': { orpc: { composers: ['bulkOutput', 'rpcPaginationOutput'] } },`
   - After: `'apps/server': { orpc: true },` a plain function around a named schema passes by itself; the line can go where the backend recipe applies (detected, or `recipes.backend`).
+
+### Fixed
+
+- Migration numbers read a dated prefix whole (`2026-11-12`, with optional `-HH`, `-mm`, `-ss` parts), so two dated migrations of the same year are no longer duplicates; other names read as before.
 
 ## 0.12.6
 

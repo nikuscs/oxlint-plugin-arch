@@ -12,7 +12,7 @@ Takes `true`, `false`, `'warn'` or an object:
 
 | Key | Type | Default | |
 | --- | --- | --- | --- |
-| `trivial` | `boolean` | `true` | Pass-through helpers |
+| `trivial` | `boolean` | `true` | Pass-through helpers; a Next app's `app/**/{layout,page,default}.tsx` files keep a trivial default export |
 | `state` | `boolean` | `true` | Module-level `let`/`var` |
 | `switch` | `boolean` | `true` | `switch` in backend code |
 | `negation` | `boolean` | `true` | `!!value` |

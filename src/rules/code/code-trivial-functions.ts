@@ -1,5 +1,5 @@
 import { defineRule } from '@oxlint/plugins'
-import { astDottedName, astIsForwarder, astSingleExpression, astUnwrap } from '../../utils/ast.utils.ts'
+import { astDottedName, astIsForwarder, astIsInlineFunction, astModuleName, astSingleExpression, astUnwrap } from '../../utils/ast.utils.ts'
 import { exportsCheckedFunctions } from '../../utils/exports.utils.ts'
 import { optionsFirst, optionsPatterns, optionsPatternSchema, optionsPatternsTest } from '../../utils/options.utils.ts'
 import type { AstFunction } from '../../types/ast.types.ts'
@@ -240,6 +240,41 @@ function guardStatement(node: ESTree.Statement, state: CodeTrivialFunctionsGuard
   )
 }
 
+function codeTrivialFunctionsDefaults(program: ESTree.Program): number[] {
+  const starts: number[] = []
+  const names = new Set<string>()
+
+  for (const statement of program.body) {
+    const declaration = statement.type === 'ExportDefaultDeclaration' ? statement.declaration : undefined
+
+    if (declaration?.type === 'FunctionDeclaration' || (declaration && astIsInlineFunction(declaration))) {
+      starts.push(declaration.start)
+    } else if (declaration?.type === 'Identifier') {
+      names.add(declaration.name)
+    } else if (statement.type === 'ExportNamedDeclaration' && !statement.source) {
+      const specifier = statement.specifiers.find((item) => astModuleName(item.exported) === 'default')
+
+      if (specifier) {
+        names.add(astModuleName(specifier.local))
+      }
+    }
+  }
+
+  for (const statement of program.body) {
+    if (statement.type === 'FunctionDeclaration' && statement.id && names.has(statement.id.name)) {
+      starts.push(statement.start)
+    }
+
+    for (const declarator of statement.type === 'VariableDeclaration' ? statement.declarations : []) {
+      if (declarator.id.type === 'Identifier' && names.has(declarator.id.name) && declarator.init && astIsInlineFunction(declarator.init)) {
+        starts.push(declarator.init.start)
+      }
+    }
+  }
+
+  return starts
+}
+
 export const codeTrivialFunctions = defineRule({
   meta: {
     type: 'problem',
@@ -255,6 +290,7 @@ export const codeTrivialFunctions = defineRule({
           mode: { type: 'string', enum: ['legacy', 'precise'] },
           deny: { type: 'array', items: { type: 'string' }, uniqueItems: true },
           guards: { type: 'boolean' },
+          defaults: { type: 'boolean' },
         },
       },
     ],
@@ -274,9 +310,11 @@ export const codeTrivialFunctions = defineRule({
     let checkServiceMethods = false
     const reported = new Set<number>()
     const checked = new Set<number>()
+    const defaults = new Set<number>()
+    let checkDefaults = true
 
     function checkHelper(node: AstFunction): void {
-      if ((bannedNames.size === 0 && !checkGenericGuards) || checked.has(node.start)) {
+      if ((bannedNames.size === 0 && !checkGenericGuards) || checked.has(node.start) || defaults.has(node.start)) {
         return
       }
       checked.add(node.start)
@@ -354,12 +392,22 @@ export const codeTrivialFunctions = defineRule({
         allowAsync = options.async ?? false
         reported.clear()
         checked.clear()
+        defaults.clear()
+        checkDefaults = options.defaults ?? true
       },
       FunctionDeclaration: checkHelper,
       FunctionExpression: checkHelper,
       ArrowFunctionExpression: checkHelper,
       Program(program) {
+        for (const start of checkDefaults ? [] : codeTrivialFunctionsDefaults(program)) {
+          defaults.add(start)
+        }
+
         for (const { name, node } of exportsCheckedFunctions(program, true, checkServiceMethods, allowed)) {
+          if (defaults.has(node.start)) {
+            continue
+          }
+
           checkHelper(node)
           if (reported.has(node.start) || node.returnType?.typeAnnotation.type === 'TSTypePredicate') {
             continue
