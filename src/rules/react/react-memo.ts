@@ -1,6 +1,6 @@
 import { defineRule } from '@oxlint/plugins'
-import { astMemberName, astModuleName } from '../../utils/ast.utils.ts'
-import { boundariesDeclaredVariable } from '../../utils/boundaries.utils.ts'
+import { astModuleName } from '../../utils/ast.utils.ts'
+import { boundariesDeclaredVariable, boundariesMemberName } from '../../utils/boundaries.utils.ts'
 import { optionsFirst } from '../../utils/options.utils.ts'
 import type { ReactMemoOptions } from '../../types/react.types.ts'
 
@@ -50,14 +50,14 @@ export const reactMemo = defineRule({
         }
       },
       MemberExpression(node) {
-        if (node.object.type !== 'Identifier' || !names.includes(astMemberName(node) ?? '')) {
+        if (node.object.type !== 'Identifier' || !names.includes(boundariesMemberName(node) ?? '')) {
           return
         }
 
         const variable = boundariesDeclaredVariable(context.sourceCode.getScope(node), node.object.name)
 
         const isReact = variable
-          ? variable.defs.some((def) => def.type === 'ImportBinding' && def.node.type !== 'ImportSpecifier' && def.parent?.type === 'ImportDeclaration' && sources.includes(def.parent.source.value))
+          ? variable.defs.some((def) => def.type === 'ImportBinding' && (def.node.type !== 'ImportSpecifier' || astModuleName(def.node.imported) === 'default') && def.parent?.type === 'ImportDeclaration' && sources.includes(def.parent.source.value))
           : node.object.name === 'React' && sources.includes('react')
 
         if (isReact) {

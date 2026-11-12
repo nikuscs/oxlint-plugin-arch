@@ -25,7 +25,7 @@ export const requireSafetyCommentForTypeAssertionRule = defineRule({
   },
   createOnce(context) {
     let comment = 'SAFETY:'
-    let marker = /\bSAFETY\s*:/u
+    let marker = /(?<![\p{L}\p{N}_])SAFETY\s*:/u
 
     const checkAssertion = (node: DillonAntiSlopTypeAssertion) => {
       if (expressionsIsConstAssertion(node)) {
@@ -67,7 +67,7 @@ export const requireSafetyCommentForTypeAssertionRule = defineRule({
       before() {
         comment = optionsFirst<DillonAntiSlopSafetyCommentOptions>(context, {}).comment ?? 'SAFETY:'
         const word = optionsEscape(comment.replace(/:\s*$/, ''))
-        marker = new RegExp(`\\b${word}\\s*:`, 'u')
+        marker = new RegExp(`(?<![\\p{L}\\p{N}_])${word}\\s*:`, 'u')
       },
       TSAsExpression: checkAssertion,
       TSTypeAssertion: checkAssertion,

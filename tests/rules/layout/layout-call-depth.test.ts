@@ -19,5 +19,6 @@ describe('arch/layout-call-depth', () => {
     },
     { name: 'callbacks report only the outermost call', code: 'save(run((item) => load(read(item))))', options: { callbacks: true }, errors: ['deep'] },
     { name: 'callbacks pass a shallow callback', code: 'items.map((item) => load(item))', options: { callbacks: true } },
+    { name: 'callbacks report a block callback once', code: 'x(() => { return y(z(q(1))) })', options: { callbacks: true }, errors: ['deep'] },
   ])('$name', (row) => testerRun(layoutCallDepth, row))
 })

@@ -79,7 +79,7 @@ function presetEffectServerKeys(at: (path: string) => string): PresetTypes.Prese
       rules: {
         'arch/types-declarations': ['error', { modules: true }],
         'arch/types-inline': ['error', { variables: true, assertions: true, arguments: true }],
-        'arch/comments-code': ['error', { why: false, jsdoc: true, allow: ['^\\s*SAFETY: '] }],
+        'arch/comments-code': ['error', { why: false, jsdoc: true, allow: ['^\\s*SAFETY: '], steps: true }],
       },
     },
     [at('domains')]: {
@@ -115,8 +115,8 @@ function presetEffectServerKeys(at: (path: string) => string): PresetTypes.Prese
       rules: { 'arch/files-exports': ['error', { stem: 'folder', patterns: ['{domain}Query[A-Z]\\w*'], types: true }] },
     },
     [at('domains/*/*.constants.ts')]: { rules: { 'arch/files-no-functions': ['error', { reexports: false }] } },
-    [at('domains/*/*.layer.ts')]: { rules: { 'arch/effect-layer-file': 'error' } },
-    [at('domains/*/*.driver.ts')]: { rules: { 'arch/effect-layer-file': 'error' } },
+    [at('domains/*/*.layer.ts')]: { rules: { 'arch/effect-layer-file': ['error', { suffix: 'Layer' }] } },
+    [at('domains/*/*.driver.ts')]: { rules: { 'arch/effect-layer-file': ['error', { suffix: 'Layer' }] } },
     [at('domains/*/*.workflows.ts')]: {
       deny: {
         calls: presetEffectWorkflowCalls,

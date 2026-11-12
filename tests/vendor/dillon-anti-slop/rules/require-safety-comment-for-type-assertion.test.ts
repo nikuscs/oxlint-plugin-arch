@@ -36,5 +36,7 @@ describe('dillon-anti-slop/require-safety-comment-for-type-assertion', () => {
       options: { comment: 'INVARIANT:' },
       errors: ['This type assertion has no `INVARIANT:` justification. State the checked invariant immediately before the assertion or its containing statement.'],
     },
+    { name: 'a non-ASCII comment prefix passes', code: '// ÉTAT: only inputs\nconst input = target as HTMLInputElement', options: { comment: 'ÉTAT:' } },
+    { name: 'a prefix inside a word does not count', code: '// UNSAFETY: no\nconst input = target as HTMLInputElement', errors: ['missingSafetyComment'] },
   ])('$name', (row) => testerRun(requireSafetyCommentForTypeAssertionRule, row))
 })

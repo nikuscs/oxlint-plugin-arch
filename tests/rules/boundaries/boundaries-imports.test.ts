@@ -314,5 +314,12 @@ describe('arch/boundaries-imports', () => {
       code: "import { data } from '../services/chat/data'",
       options: { web: ['/project/web'], conventions: { implementations: [], operations: [], operationFolders: [] } },
     },
+    {
+      name: 'a services prefix with a parent segment still reaches the registry',
+      filename: '/project/web/services/chat/chat.service.ts',
+      code: "import { services } from '#services/chat/../service'",
+      options: { web: ['/project/web'] },
+      errors: ['boundary'],
+    },
   ])('$name', (row) => testerRun(boundariesImports, row))
 })

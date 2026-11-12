@@ -24,5 +24,7 @@ describe('arch/react-memo', () => {
     { name: 'custom sources', code: "import { memo } from 'preact/compat'", options: { sources: ['preact/compat'] }, errors: ['memo'] },
     { name: 'custom message', code: "import { memo } from 'react'", options: { message: 'No memo.' }, errors: ['No memo.'] },
     { name: 'sources without react skip the React global', code: 'React.memo(Component)', options: { sources: ['preact/compat'] } },
+    { name: 'a computed member fails', code: "import * as R from 'react'\nR['memo'](Component)", errors: ['memo'] },
+    { name: 'a named default import is tracked', code: "import { default as R } from 'react'\nR.memo(Component)", errors: ['memo'] },
   ])('$name', (row) => testerRun(reactMemo, row))
 })

@@ -226,15 +226,15 @@ export function boundariesResolveTarget(
   }
 
   if (source.startsWith('@/') && web) {
-    return `${web}/${source.slice(2)}`
+    return resolve(web, source.slice(2)).replaceAll('\\', '/')
   }
 
   if (source.startsWith('#/') && owner) {
-    return `${owner}/${source.slice(2)}`
+    return resolve(owner, source.slice(2)).replaceAll('\\', '/')
   }
 
   if (source.startsWith('#services/') && owner) {
-    return `${owner}/${services}/${source.slice('#services/'.length)}`
+    return resolve(owner, services, source.slice('#services/'.length)).replaceAll('\\', '/')
   }
 
   return source

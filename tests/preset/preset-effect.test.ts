@@ -175,8 +175,11 @@ describe('preset Effect server', () => {
       rule: 'arch/boundaries-deny',
       expected: ['error', { calls: expect.not.objectContaining({ updateTable: expect.anything() }) }],
     },
-    { name: 'a layer file follows the layer file rule', tree, files: server, folders: {}, file: 'apps/server/src/domains/order/order.layer.ts', rule: 'arch/effect-layer-file', expected: 'error' },
-    { name: 'a driver file follows the layer file rule', tree, files: server, folders: {}, file: 'apps/server/src/domains/order/order-paypal.driver.ts', rule: 'arch/effect-layer-file', expected: 'error' },
+    { name: 'a layer file follows the layer file rule', tree, files: server, folders: {}, file: 'apps/server/src/domains/order/order.layer.ts', rule: 'arch/effect-layer-file', expected: ['error', { suffix: 'Layer' }] },
+    { name: 'a driver file follows the layer file rule', tree, files: server, folders: {}, file: 'apps/server/src/domains/order/order-paypal.driver.ts', rule: 'arch/effect-layer-file', expected: ['error', { suffix: 'Layer' }] },
+    { name: 'a server keeps one-line step comments', tree, files: server, folders: {}, file: 'apps/server/src/domains/order/order.actions.ts', rule: 'arch/comments-code', expected: ['error', { why: false, jsdoc: true, allow: ['^\\s*SAFETY: '], steps: true }] },
+    { name: 'a server breaks Kysely chains', tree, files: server, folders: {}, file: 'apps/server/src/domains/order/order.queries.ts', rule: 'arch/layout-chain', expected: ['error', { groups: [{ min: 3, methods: ['selectFrom', 'insertInto', 'updateTable', 'deleteFrom', 'mergeInto', 'with'] }] }] },
+    { name: 'a server splits union type arguments', tree, files: server, folders: {}, file: 'apps/server/src/domains/order/order.actions.ts', rule: 'arch/layout-type-arguments', expected: ['error', { min: 3 }] },
     { name: 'an actions file has no layer file rule', tree, files: server, folders: {}, file: 'apps/server/src/domains/order/order.actions.ts', rule: 'arch/effect-layer-file', expected: undefined },
     {
       name: 'a workflows file calls no query builder and imports no database',

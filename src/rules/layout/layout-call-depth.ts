@@ -1,5 +1,5 @@
 import { defineRule } from '@oxlint/plugins'
-import { astCallDepth, astIsCall, astIsOneLine } from '../../utils/ast.utils.ts'
+import { astCallDepth, astIsCall, astIsInlineFunction, astIsOneLine } from '../../utils/ast.utils.ts'
 import { optionsFirst } from '../../utils/options.utils.ts'
 import type { AstCall } from '../../types/ast.types.ts'
 import type { LayoutCallDepthOptions } from '../../types/layout.types.ts'
@@ -8,8 +8,18 @@ import type { ESTree } from '@oxlint/plugins'
 function layoutCallDepthOuter(node: ESTree.Node, callbacks: boolean): AstCall | undefined {
   const parent = node.parent
 
-  if (!parent || (!callbacks && (parent.type === 'ArrowFunctionExpression' || parent.type === 'FunctionExpression')) || parent.type.endsWith('Statement')) {
+  if (!parent || (!callbacks && (parent.type === 'ArrowFunctionExpression' || parent.type === 'FunctionExpression'))) {
     return undefined
+  }
+
+  if (parent.type.endsWith('Statement')) {
+    let owner: ESTree.Node | null = parent
+
+    while (owner?.type.endsWith('Statement')) {
+      owner = owner.parent
+    }
+
+    return callbacks && owner && astIsInlineFunction(owner) ? layoutCallDepthOuter(owner, callbacks) : undefined
   }
 
   return astIsCall(parent) && parent.arguments.some((argument) => argument === node) ? parent : layoutCallDepthOuter(parent, callbacks)

@@ -133,7 +133,7 @@ Detection also adds conventions, as folder and file keys you can restate: lists 
 | App or backend without `services/` | Its `lib/` is the service folder; with `services/`, `lib/` stays portable helpers |
 | Package | Bans `../../apps/**` and the backend's import aliases (not its own) |
 | Stylesheet | See [`tailwind`](groups/tailwind.md) |
-| Effect server | The server's file names, operations, layers, workflows and entry files; see [`effect`](groups/effect.md#what-an-effect-server-gets) |
+| Effect server | The server's file names, operations, layers (local layers named `<Role>Layer`), one-line step comments, workflows and entry files; with `sql`, Kysely chains one call per line; see [`effect`](groups/effect.md#what-an-effect-server-gets) |
 | Effect contract package | The contract's file names, export prefixes and constants-only files; see [`effect`](groups/effect.md#what-a-contract-package-gets) |
 | Effect unit | Tagged errors only in `*.errors.ts`; see [`effect`](groups/effect.md#error-classes) |
 | Frontend package (Effect) | Query hooks from props, no rpc client, the router only through `link.tsx`, `forms`; see [`effect`](groups/effect.md#what-a-frontend-package-gets) |

@@ -78,6 +78,7 @@ export const layoutObject = defineRule({
     let nested = false
     let siblings = false
     let inner: number | undefined
+    const splitCounts = new WeakMap<ESTree.ArrayExpression, Map<string, number>>()
 
     function holdsNested(node: ESTree.ObjectExpression): boolean {
       return (
@@ -116,38 +117,61 @@ export const layoutObject = defineRule({
       return false
     }
 
-    function splitInner(node: ESTree.ObjectExpression): boolean {
+    function keptByInner(node: ESTree.ObjectExpression): boolean {
       const parent = node.parent
 
       return (
         inner !== undefined &&
         node.properties.length >= inner &&
-        astIsOneLine(node) &&
         parent.type === 'Property' &&
         parent.value === node &&
         !astIsOneLine(parent.parent)
       )
     }
 
-    function splitSibling(node: ESTree.ObjectExpression): boolean {
+    function splitSiblings(node: ESTree.ObjectExpression): number {
       const call = node.parent
       const list = call.parent
 
-      if (!siblings || !astIsOneLine(node) || !astIsCall(call) || list?.type !== 'ArrayExpression') {
-        return false
+      if (!siblings || node.properties.length === 0 || !astIsCall(call) || list?.type !== 'ArrayExpression') {
+        return 0
       }
 
-      const index = call.arguments.indexOf(node)
-      const callee = context.sourceCode.getText(call.callee)
+      let counts = splitCounts.get(list)
 
-      return list.elements.some(
-        (element) =>
-          element !== call &&
-          element !== null &&
-          astIsCall(element) &&
-          context.sourceCode.getText(element.callee) === callee &&
-          element.arguments[index]?.type === 'ObjectExpression' &&
-          !astIsOneLine(element.arguments[index]),
+      if (!counts) {
+        counts = new Map()
+
+        for (const element of list.elements) {
+          if (!element || !astIsCall(element)) {
+            continue
+          }
+
+          for (const [index, argument] of element.arguments.entries()) {
+            if (argument.type === 'ObjectExpression' && !astIsOneLine(argument)) {
+              const key = `${context.sourceCode.getText(element.callee)}#${index}`
+              counts.set(key, (counts.get(key) ?? 0) + 1)
+            }
+          }
+        }
+
+        splitCounts.set(list, counts)
+      }
+
+      return counts.get(`${context.sourceCode.getText(call.callee)}#${call.arguments.indexOf(node)}`) ?? 0
+    }
+
+    function joinBlocked(node: ESTree.ObjectExpression, call: ESTree.Node | undefined): boolean {
+      const callee = call && astIsCall(call) ? astDottedName(call.callee) : undefined
+      const kept = callee !== undefined && (join?.keep ?? []).some((name) => callee === name || callee.endsWith(`.${name}`))
+
+      return (
+        kept ||
+        keptByInner(node) ||
+        splitSiblings(node) > 1 ||
+        node.properties.length === 0 ||
+        !node.properties.every(layoutObjectIsFlat) ||
+        context.sourceCode.getCommentsInside(node).length > 0
       )
     }
 
@@ -168,7 +192,7 @@ export const layoutObject = defineRule({
         messageId,
         data: { min: String(minProperties), inner: String(inner ?? '') },
         fix: (fixer) => {
-          if (messageId === 'nestedName' || source.getCommentsInside(node).length > 0 || !layoutObjectIsWhitespace(text.slice(open + 1, properties[0].range[0]))) {
+          if (messageId === 'nestedName' || properties.length === 0 || source.getCommentsInside(node).length > 0 || !layoutObjectIsWhitespace(text.slice(open + 1, properties[0].range[0]))) {
             return null
           }
 
@@ -248,12 +272,12 @@ export const layoutObject = defineRule({
 
         const holds = !full && holdsNested(node)
 
-        if (!full && !holds && splitSibling(node)) {
+        if (!full && !holds && astIsOneLine(node) && splitSiblings(node) > 0) {
           reportSplit(node, properties, node.range[0], node.range[1] - 1, 'siblings')
           return
         }
 
-        if (splitInner(node)) {
+        if (astIsOneLine(node) && keptByInner(node)) {
           reportSplit(node, properties, node.range[0], node.range[1] - 1, 'inner')
           return
         }
@@ -271,10 +295,7 @@ export const layoutObject = defineRule({
         }
 
         if (!split) {
-          const callee = call ? astDottedName(call.callee) : undefined
-          const kept = callee !== undefined && (join?.keep ?? []).some((name) => callee === name || callee.endsWith(`.${name}`))
-
-          if (kept || properties.length === 0 || !properties.every(layoutObjectIsFlat) || source.getCommentsInside(node).length > 0) {
+          if (joinBlocked(node, call)) {
             return
           }
 

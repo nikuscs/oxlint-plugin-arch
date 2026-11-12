@@ -2,6 +2,17 @@
 
 ## Unreleased
 
+Preset defaults that change what an app reports:
+
+- `effect` group: `layout-call-arguments` adds `pipe: { min: 2 }`; `layout-call-depth` counts through callbacks; `layout-object` adds `params`, `nested`, `siblings` and `inner: 2`; `layout-ternary` splits a one-line ternary over 100 columns (was `fit: false`); `layout-type-arguments` is on with `min: 3`.
+- Effect servers: `comments-code` keeps one-line step comments (`steps: true`); `effect-layer-file` names local layers `<Role>Layer` (`suffix: 'Layer'`). An app that keeps `layer<Role>` writes `'apps/server/src/domains/*/*.layer.ts': { rules: { 'arch/effect-layer-file': 'error' } }`.
+- `sql` group: `layout-chain` breaks Kysely chains of 3+ calls.
+
+Rules and options:
+
+- `boundaries-*`: the `@/`, `#/` and `#services/` prefixes resolve `..` segments, so `#services/chat/../service` reaches the registry check.
+- `react-memo` also reports `R['memo']` and a `{ default as R }` import.
+- Vendored `require-safety-comment-for-type-assertion` matches a `comment` that starts with a non-ASCII letter.
 - `effect-layer-file` takes `suffix`, such as `'Layer'`, to name local layers `<Role>Layer`; it also recognises those names as Layers.
 - `comments-code` takes `steps`: a single `//` line directly above a statement in a function, or above a property in an object literal, stays.
 - `layout-object` takes `params`, which splits a one-line destructured parameter with `min` properties, and `nested`, which splits a one-line object holding an object or function.

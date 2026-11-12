@@ -39,7 +39,7 @@ export const session = async () => (await cookies()).get('session')
 | `clientOnly` | `['client-only']` | Browser-only file suffixes |
 | `hooks` | `['hooks']` | Folders whose files are browser-only |
 | `shared` | `['utils', 'constants']` | Shared module suffixes that may hold no server import |
-| `lib` | `'lib'` | Shared folder under each `web` root |
+| `lib` | `'lib'` | Shared folder under each `web` root; its files may hold no server import unless they are server modules themselves (`.server`, `.rsc`, an action or `'use server'`) |
 
 ```ts
 'arch/boundaries-next': ['error', {

@@ -183,5 +183,8 @@ describe('arch/layout-object', () => {
       output: 'save({\n  body: {\n    owner: {\n      type,\n      id\n    },\n  },\n})',
       errors: ['inner'],
     },
+    { name: 'siblings skip an empty object', code: 'const list = [\n  item({}),\n  item({\n    a: 1,\n  }),\n]', options: { siblings: true } },
+    { name: 'join keeps an object inner splits', code: 'save({\n  body: {\n    a,\n    b,\n  },\n})', options: { inner: 2, join: { max: 100 }, scope: 'all' } },
+    { name: 'join keeps a sibling that siblings split', code: 'const list = [\n  item({\n    a: 1,\n  }),\n  item({\n    a: 2,\n  }),\n]', options: { siblings: true, join: { max: 100 } } },
   ])('$name', (row) => testerRun(layoutObject, row))
 })
