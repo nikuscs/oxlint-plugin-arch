@@ -5,14 +5,14 @@ import type { AstCall } from '../../types/ast.types.ts'
 import type { LayoutCallDepthOptions } from '../../types/layout.types.ts'
 import type { ESTree } from '@oxlint/plugins'
 
-function layoutCallDepthOuter(node: ESTree.Node): AstCall | undefined {
+function layoutCallDepthOuter(node: ESTree.Node, callbacks: boolean): AstCall | undefined {
   const parent = node.parent
 
-  if (!parent || parent.type === 'ArrowFunctionExpression' || parent.type === 'FunctionExpression' || parent.type.endsWith('Statement')) {
+  if (!parent || (!callbacks && (parent.type === 'ArrowFunctionExpression' || parent.type === 'FunctionExpression')) || parent.type.endsWith('Statement')) {
     return undefined
   }
 
-  return astIsCall(parent) && parent.arguments.some((argument) => argument === node) ? parent : layoutCallDepthOuter(parent)
+  return astIsCall(parent) && parent.arguments.some((argument) => argument === node) ? parent : layoutCallDepthOuter(parent, callbacks)
 }
 
 export const layoutCallDepth = defineRule({
@@ -22,7 +22,7 @@ export const layoutCallDepth = defineRule({
       {
         type: 'object',
         additionalProperties: false,
-        properties: { max: { type: 'integer', minimum: 1, default: 2 } },
+        properties: { max: { type: 'integer', minimum: 1, default: 2 }, callbacks: { type: 'boolean', default: false } },
       },
     ],
     messages: {
@@ -31,12 +31,13 @@ export const layoutCallDepth = defineRule({
   },
   createOnce(context) {
     let max = 2
+    let callbacks = false
 
     const check = (node: AstCall) => {
-      const depth = astCallDepth(node)
-      const outer = layoutCallDepthOuter(node)
+      const depth = astCallDepth(node, callbacks)
+      const outer = layoutCallDepthOuter(node, callbacks)
 
-      if (!astIsOneLine(node) || depth <= max || (outer !== undefined && astIsOneLine(outer) && astCallDepth(outer) > max)) {
+      if (!astIsOneLine(node) || depth <= max || (outer !== undefined && astIsOneLine(outer) && astCallDepth(outer, callbacks) > max)) {
         return
       }
 
@@ -49,7 +50,9 @@ export const layoutCallDepth = defineRule({
 
     return {
       before() {
-        max = optionsFirst<LayoutCallDepthOptions>(context, {}).max ?? 2
+        const options = optionsFirst<LayoutCallDepthOptions>(context, {})
+        max = options.max ?? 2
+        callbacks = options.callbacks ?? false
       },
       CallExpression: check,
       NewExpression: check,

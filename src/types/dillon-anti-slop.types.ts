@@ -83,3 +83,11 @@ export interface DillonAntiSlopConstBinding {
   readonly declarator: ESTree.VariableDeclarator
   readonly init: ESTree.Expression
 }
+
+export interface DillonAntiSlopSymbolNamesOptions {
+  terms?: string[]
+}
+
+export interface DillonAntiSlopSafetyCommentOptions {
+  comment?: string
+}

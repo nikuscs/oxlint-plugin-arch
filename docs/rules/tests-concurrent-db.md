@@ -1,6 +1,6 @@
 # arch/tests-concurrent-db
 
-Reports a `db` fixture (or any name in `fixtures`) destructured from a `test.concurrent` callback's context (or any callee in `callees`), in its parameter or its body, by identifier or string key.
+Reports a `db` fixture (or any name in `fixtures`) destructured from a `test.concurrent` callback's context (or any callee in `callees`), in its parameter or its body, by identifier or string key. A computed key is ignored.
 
 ```ts
 // ❌
@@ -17,8 +17,8 @@ test.concurrent('saves the user', async ({ isolatedDb }) => {
 | Option | Type | Default | |
 | --- | --- | --- | --- |
 | `message` | `string` | built-in text | Report text |
-| `fixtures` | `string[]` | `['db']` | Shared fixture names a concurrent test must not destructure |
-| `callees` | `string[]` | `['test.concurrent']` | Dotted callees that run their callback concurrently |
+| `fixtures` | `string[]` | `['db']` | Shared fixture names a concurrent test must not destructure; replaces the default list |
+| `callees` | `string[]` | `['test.concurrent']` | Dotted callees that run their callback concurrently; replaces the default list |
 
 ```ts
 'arch/tests-concurrent-db': ['error', { message: 'Obtain an isolated database fixture for concurrent tests.' }]

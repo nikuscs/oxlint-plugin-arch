@@ -1,6 +1,6 @@
 # arch/code-literal-in
 
-An `in` check whose left side is a static string.
+An `in` check whose left side is a string literal or a template without expressions.
 
 ```ts
 // ❌
@@ -12,7 +12,7 @@ if (Object.hasOwn(user, 'email')) send(user)
 
 | Option | Type | Default | |
 | --- | --- | --- | --- |
-| `allow` | `string[]` | `[]` | Keys that may appear before `in` |
+| `allow` | `string[]` | `[]` | Keys that may appear before `in` (exact match) |
 
 ```ts
 'arch/code-literal-in': ['error', { allow: ['window'] }]

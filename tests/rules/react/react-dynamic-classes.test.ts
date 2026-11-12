@@ -32,5 +32,7 @@ describe('arch/react-dynamic-classes', () => {
       options: { message: 'Use complete classes.' },
       errors: ['Use complete classes.'],
     },
+    { name: 'custom attributes are checked', code: '<div class={"btn-" + size} />', options: { attributes: ['class'] }, errors: ['forbidden'] },
+    { name: 'custom attributes replace className', code: '<button className={"btn-" + size} />', options: { attributes: ['class'] } },
   ])('$name', (row) => testerRun(reactDynamicClasses, row))
 })

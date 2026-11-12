@@ -82,5 +82,27 @@ describe('arch/layout-call-arguments', () => {
     { name: 'join and split leave min arguments split', code: 'save(\n  a,\n  b,\n)', options: { min: 2, join: { max: 80 } } },
     { name: 'join and split join below min', code: 'save(\n  a,\n)', options: { min: 2, join: { max: 80 } }, output: 'save(a,)', errors: ['join'] },
     { name: 'join counts the trailing comma toward max', code: 'save(\n  a,\n  b,\n)', options: { split: false, join: { max: 10 } } },
+    { name: 'pipe passes below min', code: 'value.pipe(a, b)', options: { split: false, pipe: { min: 3 } } },
+    { name: 'pipe leaves other calls to split', code: 'save(a, b, c)', options: { split: false, pipe: { min: 3 } } },
+    { name: 'pipe passes when already split', code: 'Function.pipe(\n  a,\n  b,\n  c,\n)', options: { split: false, pipe: { min: 3 } } },
+    {
+      name: 'pipe splits a data-first pipe while split is off',
+      code: 'const parts = Function.pipe(search, split, trim, filter)',
+      options: { split: false, pipe: { min: 3 } },
+      output: 'const parts = Function.pipe(\n  search,\n  split,\n  trim,\n  filter\n)',
+      errors: ['pipe'],
+    },
+    {
+      name: 'pipe splits a method pipe and keeps the comma style',
+      code: 'run.pipe(retry, timeout, log,)',
+      options: { split: false, pipe: { min: 3 } },
+      output: 'run.pipe(\n  retry,\n  timeout,\n  log,\n)',
+      errors: ['A pipe with 3+ steps puts each step on its own line.'],
+    },
+    { name: 'pipe min wins over min', code: 'run.pipe(a, b)', options: { min: 3, pipe: { min: 2 } }, output: 'run.pipe(\n  a,\n  b\n)', errors: ['pipe'] },
+    { name: 'pipe reports a comment without a fix', code: 'run.pipe(a, /* x */ b, c)', options: { split: false, pipe: { min: 3 } }, output: null, errors: ['pipe'] },
+    { name: 'pipe methods are configurable', code: 'run.chain(a, b, c)', options: { split: false, pipe: { min: 3, methods: ['chain'] } }, output: 'run.chain(\n  a,\n  b,\n  c\n)', errors: ['pipe'] },
+    { name: 'pipe keeps a split one-step pipe from join', code: 'change.pipe(\n  mapError(f),\n)', options: { split: false, pipe: { min: 2 }, join: { max: 140 } } },
+    { name: 'join still joins a one-step pipe without pipe', code: 'change.pipe(\n  mapError(f),\n)', options: { split: false, join: { max: 140 } }, output: 'change.pipe(mapError(f),)', errors: ['join'] },
   ])('$name', (row) => testerRun(layoutCallArguments, row))
 })

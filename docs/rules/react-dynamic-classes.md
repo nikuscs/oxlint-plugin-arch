@@ -1,6 +1,6 @@
 # arch/react-dynamic-classes
 
-Reports template literals with expressions and `+` concatenation inside `className`.
+Reports template literals with expressions and `+` concatenation inside `className`, or the attributes in `attributes`, anywhere inside the attribute value, including inside `clsx(...)`.
 
 ```tsx
 // ❌
@@ -12,8 +12,9 @@ Reports template literals with expressions and `+` concatenation inside `classNa
 
 | Option | Type | Default | |
 | --- | --- | --- | --- |
-| `message` | `string` | built-in text | Report text |
+| `attributes` | `string[]` | `['className']` | JSX attributes to check; replaces the default |
+| `message` | `string` | `'Write complete class names instead of constructing them dynamically.'` | Report text |
 
 ```ts
-'arch/react-dynamic-classes': ['error', { message: 'Write complete class names instead of constructing them...' }]
+'arch/react-dynamic-classes': ['error', { attributes: ['className', 'class'] }]
 ```

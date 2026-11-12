@@ -2,6 +2,8 @@
 
 Reports imports, re-exports, literal dynamic imports and calls that a folder bans. Import keys are globs over the whole specifier (`*` stays inside one segment, `**` crosses `/`, `{a,b}` is either name, `!(a|b)` is any one segment except those names, where `*` in a name stays inside the segment, so `!(*.layer.ts)` is any segment not ending in `.layer.ts`). Call keys match the callee name, the member name or the dotted name; literal computed keys like `console['log']` count.
 
+`import type` and `export type` are banned like runtime imports. The first matching import key wins; `?` is one character; `**/` also matches zero folders. `new X()` is not a call.
+
 ```ts
 // ❌ apps/server/src/services/order/order-query.list.ts
 import { motion } from 'framer-motion'
@@ -21,4 +23,5 @@ const orders = await db.selectFrom('orders').selectAll().execute()
   imports: { 'framer-motion': 'Use motion/react.', '**/kits': 'Import the kit file.' },
   calls: { insertInto: 'Queries only read.', 'console.log': 'Use the logger.' },
 }]
+'arch/boundaries-deny': ['error', { imports: { '**/domains/*/!(*.layer.ts|*.workflows.ts)': 'Import the layer file.' } }]
 ```

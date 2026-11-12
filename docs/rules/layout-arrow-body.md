@@ -1,6 +1,8 @@
 # arch/layout-arrow-body
 
-An expression body starts on the same line as `=>` when its head fits in `max` columns. The head is the body up to its first `(` for a one-line call, or its chain root for a one-line chain.
+An expression body starts on the same line as `=>` when its head fits in `max` columns. The head is the body up to its first `(` for a one-line call, or its chain root for a one-line chain. For any other body, the head is its first line.
+
+The fix joins the body onto the `=>` line. A comment after `=>` leaves it alone, and so does a block body.
 
 ```ts
 // ❌

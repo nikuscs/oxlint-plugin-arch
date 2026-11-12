@@ -59,6 +59,6 @@ Families: `backend`, `boundaries`, `code`, `comments`, `copy`, `effect`, `files`
 
 - No comments; the only exception is `oxlint-disable-next-line <rule> -- <reason>`.
 - A function used once is inlined unless that breaks a lint limit (complexity 32, 400 lines).
-- Autofixes change only whitespace or remove comments; anything unproven reports without a fix.
+- Autofixes change only whitespace or remove comments, and may add the optional leading `|` of a type union; anything unproven reports without a fix.
 - Rules are generic: library names appear only as documented default option values.
 - Option changes stay backward compatible unless the change is a declared breaking release.

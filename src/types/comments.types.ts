@@ -5,6 +5,7 @@ export interface CommentsOptions {
   allow?: string[]
   jsdoc?: boolean
   members?: 'off' | 'also' | 'only'
+  steps?: boolean
 }
 
 export interface CommentsLines {

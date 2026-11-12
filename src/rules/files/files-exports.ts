@@ -3,12 +3,8 @@ import { posix } from 'node:path'
 import { declarationsFunctions } from '../../utils/declarations.utils.ts'
 import { exportsCollect, exportsFunctions } from '../../utils/exports.utils.ts'
 import { namingBasename, namingCamelCase, namingFileStem, namingPascalCase, namingStemModes } from '../../utils/naming.utils.ts'
-import { optionsFirst } from '../../utils/options.utils.ts'
+import { optionsEscape, optionsFirst } from '../../utils/options.utils.ts'
 import type { FilesExportsOptions } from '../../types/files.types.ts'
-
-function escapeRegExp(value: string): string {
-  return value.replaceAll(/[.*+?^${}()|[\]\\]/g, '\\$&')
-}
 
 export const filesExports = defineRule({
   meta: {
@@ -81,8 +77,8 @@ export const filesExports = defineRule({
 
         const patterns = (options.patterns ?? []).map((template) => {
           const source = template
-            .replaceAll('{Domain}', escapeRegExp(pascalDomain))
-            .replaceAll('{domain}', escapeRegExp(camelDomain))
+            .replaceAll('{Domain}', optionsEscape(pascalDomain))
+            .replaceAll('{domain}', optionsEscape(camelDomain))
 
           return new RegExp(`^(?:${source})$`)
         })

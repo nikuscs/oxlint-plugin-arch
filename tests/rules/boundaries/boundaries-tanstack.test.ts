@@ -403,5 +403,17 @@ describe('arch/boundaries-tanstack', () => {
       options: { web: ['/repo/web/src', '/repo/admin/src'], backend: ['/repo/api/src'], aliases: { '@web': '/repo/web/src', '@api': '/repo/api/src' }, backendPackages: ['@app/server'], rpc: ['/repo/web/src/services/rpc/rpc.client.ts'] },
       errors: ['computed'],
     },
+    { name: 'conventions rename server files', filename: 'chat.backend.ts', code: "import { readFile } from 'node:fs'; readFile(process.env.FILE)", options: { conventions: { server: ['backend'] } } },
+    { name: 'conventions rename RSC files', filename: 'chat.view.tsx', code: "import { useState } from 'react'; useState(0)", options: { conventions: { rsc: ['view'] } }, errors: ['runtime'] },
+    { name: 'conventions rename the hooks folder', filename: 'chat.server.ts', code: "import { useChat } from './composables/use-chat'; useChat()", options: { conventions: { hooks: ['composables'] } }, errors: ['runtime'] },
+    {
+      name: 'conventions rename shared files',
+      filename: 'chat.helpers.ts',
+      code: "import { readFile } from 'node:fs'",
+      options: { conventions: { shared: ['helpers'] } },
+      errors: ['node:fs is not valid here: shared utilities/constants/lib cannot import runtime server dependencies.'],
+    },
+    { name: 'server hooks are configurable', filename: 'chat.server.ts', code: "import { useOptimistic } from 'react'; useOptimistic(0)", options: { serverHooks: ['useId', 'useOptimistic'] } },
+    { name: 'server hooks replace useId', filename: 'chat.server.ts', code: "import { useId } from 'react'; useId()", options: { serverHooks: [] }, errors: ['runtime'] },
   ])('$name', (row) => testerRun(boundariesTanstack, row))
 })

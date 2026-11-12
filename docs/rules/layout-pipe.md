@@ -1,6 +1,6 @@
 # arch/layout-pipe
 
-No `).pipe(` after a call that spans lines, and no multi-line call passed to a pipe step. A step may still span lines through a callback, object or array.
+No `).pipe(` after a call that spans lines, and no multi-line call passed to a pipe step. A step may still span lines through a callback, object or array. No fix.
 
 ```ts
 // ❌
@@ -20,8 +20,11 @@ const policy = schedule({
 user.pipe(retry(policy))
 ```
 
-No options.
+| Option | Type | Default | |
+| --- | --- | --- | --- |
+| `methods` | `string[]` | `['pipe']` | Method names that count as a pipe. Replaces the default |
 
 ```ts
 'arch/layout-pipe': 'error'
+'arch/layout-pipe': ['error', { methods: ['pipe', 'chain'] }]
 ```

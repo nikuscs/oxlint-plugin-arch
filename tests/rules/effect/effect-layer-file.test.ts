@@ -60,6 +60,21 @@ describe('arch/effect-layer-file', () => {
       options: { layer: 'live', make: 'build', prefix: 'live', layers: ['^Layer\\.', '(?:^|\\.)live[^.]*$'] },
     },
     {
+      name: 'a suffix names local layers <Role>Layer',
+      code: 'const make = Effect.gen(function* () {\n  return Users.of({})\n})\nconst UsersLayer = Layer.effect(Users, make)\nexport const layer = UsersLayer.pipe(Layer.provide(Db.layer))',
+      options: { suffix: 'Layer' },
+    },
+    { name: 'a suffix recognises a service layer call', code: 'const AuthLayer = Auth.layer({})\nexport const layer = Layer.provide(AuthLayer, Db.layer)', options: { suffix: 'Layer' } },
+    {
+      name: 'a suffix rejects layer<Role>',
+      code: 'const layerAuth = Auth.layer({})\nexport const layer = Layer.provide(layerAuth, Db.layer)',
+      options: { suffix: 'Layer' },
+      errors: ['A Layer other than `layer` is named <Role>Layer and is not exported.'],
+    },
+    { name: 'a suffix rejects a plain name', code: 'const auth = Auth.layer({})\nexport const layer = Layer.provide(auth, Db.layer)', options: { suffix: 'Layer' }, errors: ['localLayer'] },
+    { name: 'a suffix rejects a lowercase role', code: 'const authLayer = Auth.layer({})\nexport const layer = authLayer', options: { suffix: 'Layer' }, errors: ['localLayer'] },
+    { name: 'a suffix rejects an exported local layer', code: 'export const AuthLayer = Auth.layer({})\nexport const layer = AuthLayer', options: { suffix: 'Layer' }, errors: ['localLayer'] },
+    {
       name: 'custom builders',
       code: 'const make = Task.make(function* () {\n  return Users.of({})\n})\nexport const layer = Layer.effect(Users, make)',
       options: { builders: ['Task.make'] },

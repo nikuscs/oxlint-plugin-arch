@@ -13,8 +13,8 @@ function a() { return () => inner }
 
 | Option | Type | Default | |
 | --- | --- | --- | --- |
-| `max` | `number` | `4` | Deepest nesting allowed |
+| `max` | `number` | `4` | Deepest nesting allowed (at least 1) |
 
 ```ts
-'arch/code-function-nesting': ['error', { max: 4 }]
+'arch/code-function-nesting': ['error', { max: 3 }]
 ```

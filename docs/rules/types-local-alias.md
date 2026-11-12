@@ -14,8 +14,9 @@ interface ButtonProps {
 
 | Option | Type | Default | |
 | --- | --- | --- | --- |
-| `message` | `string` | built-in text | Report text |
+| `allow` | `string \| string[]` | none | Regexes tested against the alias name; a match may stay |
+| `message` | `string` | `'Local component/hook contracts use interfaces named for their owner. Derived or reusable aliases belong in domain types; do not substitute an empty interface.'` | Report text |
 
 ```ts
-'arch/types-local-alias': ['error', { message: 'Local component/hook contracts use interfaces named for...' }]
+'arch/types-local-alias': ['error', { allow: 'Variant$' }]
 ```

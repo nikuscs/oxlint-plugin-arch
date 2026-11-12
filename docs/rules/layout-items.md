@@ -1,6 +1,6 @@
 # arch/layout-items
 
-A multi-line object or array puts each item on its own line.
+A multi-line object or array puts each item on its own line. Needs at least two items. Destructuring patterns and type literals are not checked.
 
 The fix changes only whitespace and keeps commas as written. Arrays with holes and items separated by comments are reported without a fix.
 

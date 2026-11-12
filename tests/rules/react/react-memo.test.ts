@@ -20,5 +20,9 @@ describe('arch/react-memo', () => {
     { name: 'default import alias is tracked', code: "import R from 'react'\nR.useMemo(work)", errors: ['memo'] },
     { name: 'namespace import alias is tracked', code: "import * as R from 'react'\nR.useCallback(work)", errors: ['memo'] },
     { name: 'member reference need not be called', code: 'const wrap = React.memo', errors: ['memo'] },
+    { name: 'custom names', code: "import { useMemo, useTransition } from 'react'", options: { names: ['useTransition'] }, errors: ['memo'] },
+    { name: 'custom sources', code: "import { memo } from 'preact/compat'", options: { sources: ['preact/compat'] }, errors: ['memo'] },
+    { name: 'custom message', code: "import { memo } from 'react'", options: { message: 'No memo.' }, errors: ['No memo.'] },
+    { name: 'sources without react skip the React global', code: 'React.memo(Component)', options: { sources: ['preact/compat'] } },
   ])('$name', (row) => testerRun(reactMemo, row))
 })

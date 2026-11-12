@@ -12,6 +12,10 @@ run(input as never)
 run(input as never)
 ```
 
+Covers `oxlint-disable`, `eslint-disable` and their `-line` and `-next-line` forms in line and block comments. The reason may contain `--`. TypeScript directives are not checked.
+
+No options.
+
 ```ts
 'arch/comments-directives': 'error'
 ```

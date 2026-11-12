@@ -1,6 +1,6 @@
 # arch/code-object-params
 
-An exported function with more than `max` parameters, or a parameter not typed as an object. A default value does not hide the parameter type, and an `export default` function expression is checked as `default`.
+An exported function, including `export const f = () => {}`, with more than `max` parameters, or a parameter that is not an object: a destructured pattern, an untyped parameter, a type reference, a type literal or an intersection counts as an object; primitives, unions, arrays and function types do not. A default value does not hide the parameter type, and an `export default` function expression is checked as `default`.
 
 ```ts
 // ❌
@@ -16,7 +16,7 @@ export function createUser({ name, email }: CreateUserInput) {
 
 | Option | Type | Default | |
 | --- | --- | --- | --- |
-| `max` | `number` | `1` | Most object parameters allowed |
+| `max` | `number` | `1` | Most object parameters allowed (at least 1) |
 | `all` | `boolean` | `false` | Also check unexported top-level functions |
 | `services` | `boolean` | `false` | Also check methods of exported `const` objects |
 | `allow` | `string \| string[]` | | Regex for function names to skip |

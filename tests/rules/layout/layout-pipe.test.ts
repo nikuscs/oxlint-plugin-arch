@@ -9,5 +9,13 @@ describe('arch/layout-pipe', () => {
     { name: 'a step hugging a callback passes', code: 'value.pipe(map((item) => {\n  go(item)\n}))' },
     { name: 'a pipe after a multi-line call fails', code: 'load({\n  id,\n}).pipe(map(f))', errors: ['after'] },
     { name: 'a step with a multi-line call fails', code: 'value.pipe(retry(schedule({\n  times,\n})))', errors: ['step'] },
+    { name: 'custom methods are checked', code: 'load({\n  id,\n}).chain(map(f))', options: { methods: ['chain'] }, errors: ['after'] },
+    { name: 'custom methods replace pipe', code: 'load({\n  id,\n}).pipe(map(f))', options: { methods: ['chain'] } },
+    {
+      name: 'the message names the custom method',
+      code: 'load({\n  id,\n}).chain(map(f))',
+      options: { methods: ['chain'] },
+      errors: ['No ).chain( after a call that spans lines. Name the value and pipe the name, or pass the call to the step data-first.'],
+    },
   ])('$name', (row) => testerRun(layoutPipe, row))
 })

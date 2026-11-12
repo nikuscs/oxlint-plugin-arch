@@ -8,12 +8,33 @@ import {
   boundariesResolveTarget,
 } from '../../utils/boundaries.utils.ts'
 import { exportsCollect } from '../../utils/exports.utils.ts'
-import { optionsFirst } from '../../utils/options.utils.ts'
-import type { BoundariesImport, BoundariesOptions } from '../../types/boundaries.types.ts'
+import { optionsEscape, optionsFirst } from '../../utils/options.utils.ts'
+import type { BoundariesConventions, BoundariesImport, BoundariesOptions } from '../../types/boundaries.types.ts'
 import type { ESTree } from '@oxlint/plugins'
 
 const boundariesSurfaces = ['service', 'client', 'server', 'rsc', 'utils']
-const boundariesActionOrQuery = /\/(?:[^/]+)-(?:action|query)\./
+
+const boundariesConventions: Required<BoundariesConventions> = {
+  services: 'services',
+  registry: 'service',
+  types: 'types',
+  lib: 'lib',
+  contracts: ['types', 'constants'],
+  implementations: ['service', 'utils'],
+  implementationFolders: ['core'],
+  operations: ['action', 'query'],
+  operationFolders: ['actions', 'queries'],
+  domainFiles: ['action', 'query', 'driver'],
+  clients: ['client'],
+}
+
+function boundariesAny(values: readonly string[]): string {
+  return values.length === 0 ? '(?!)' : `(?:${values.map(optionsEscape).join('|')})`
+}
+
+function boundariesIsOperation(conventions: Required<BoundariesConventions>, path: string): boolean {
+  return new RegExp(`/[^/]+-${boundariesAny(conventions.operations)}\\.`).test(path)
+}
 
 function boundariesContains(directory: string, candidate: string): boolean {
   return candidate === directory || candidate.startsWith(`${directory}/`)
@@ -27,17 +48,24 @@ function boundariesStripExtension(path: string): string {
   return path.replace(/\.[cm]?[jt]sx?$/, '')
 }
 
+function boundariesConventionsOf(options: BoundariesOptions): Required<BoundariesConventions> {
+  return { ...boundariesConventions, ...options.conventions }
+}
+
 function boundariesServiceFolder(options: BoundariesOptions, root: string): string {
   const nested = [...options.web, ...options.backend].filter((other) => other.length > root.length && boundariesContains(root, other))
 
-  return options.services?.find((folder) => folder.startsWith(`${root}/`) && !nested.some((other) => boundariesContains(other, folder))) ?? `${root}/services`
+  return (
+    options.services?.find((folder) => folder.startsWith(`${root}/`) && !nested.some((other) => boundariesContains(other, folder))) ??
+    `${root}/${boundariesConventionsOf(options).services}`
+  )
 }
 
-function boundariesDomain(path: string, appRoot: string, services: string): string | undefined {
+function boundariesDomain(conventions: Required<BoundariesConventions>, path: string, appRoot: string, services: string): string | undefined {
   const relative = path.slice(appRoot.length + 1)
 
-  if (relative.startsWith('types/') && relative.endsWith('.types.ts')) {
-    return relative.slice('types/'.length).split('.')[0]
+  if (relative.startsWith(`${conventions.types}/`) && relative.endsWith(`.${conventions.types}.ts`)) {
+    return relative.slice(conventions.types.length + 1).split('.')[0]
   }
 
   if (!boundariesContains(services, path) || path === services) {
@@ -45,42 +73,53 @@ function boundariesDomain(path: string, appRoot: string, services: string): stri
   }
 
   const parts = path.slice(services.length + 1).split('/')
-  return parts.length > 1 ? parts[0] : parts[0].split('.')[0].replace(/-(?:action|query|driver)$/, '')
+  return parts.length > 1 ? parts[0] : parts[0].split('.')[0].replace(new RegExp(`-${boundariesAny(conventions.domainFiles)}$`), '')
 }
 
 function boundariesPrivateDomain({ options, file, target, reExport, roots, owner }: BoundariesImport): string | undefined {
   const roles = options.roles
+  const conventions = boundariesConventionsOf(options)
 
   if (!roles?.length) {
     return undefined
   }
 
   const targetOwner = roots.find((path) => boundariesContains(path, target))
-  const fileDomain = owner ? boundariesDomain(file, owner, boundariesServiceFolder(options, owner)) : undefined
-  const targetDomain = targetOwner ? boundariesDomain(target, targetOwner, boundariesServiceFolder(options, targetOwner)) : undefined
+  const fileDomain = owner ? boundariesDomain(conventions, file, owner, boundariesServiceFolder(options, owner)) : undefined
+  const targetDomain = targetOwner ? boundariesDomain(conventions, target, targetOwner, boundariesServiceFolder(options, targetOwner)) : undefined
   const sameDomain = owner && owner === targetOwner && fileDomain && fileDomain === targetDomain
   const targetStem = boundariesStripExtension(target)
-  const publicSurface = boundariesIsSurface(options, targetStem) && !boundariesActionOrQuery.test(targetStem)
+  const publicSurface = boundariesIsSurface(options, targetStem) && !boundariesIsOperation(conventions, targetStem)
 
   const privateTarget =
     roles.some((role) => targetStem.endsWith(`.${role}`)) ||
-    (targetDomain && !publicSurface && !/\.(?:types|constants)$/.test(targetStem))
+    (targetDomain && !publicSurface && !new RegExp(`\\.${boundariesAny(conventions.contracts)}$`).test(targetStem))
 
   if (!privateTarget) {
     return undefined
   }
 
-  if (reExport && file.endsWith('.ts') && boundariesIsSurface(options, file.slice(0, -'.ts'.length)) && !boundariesActionOrQuery.test(file)) {
+  if (reExport && file.endsWith('.ts') && boundariesIsSurface(options, file.slice(0, -'.ts'.length)) && !boundariesIsOperation(conventions, file)) {
     return 'public service and utility surfaces must not re-export private domain internals'
   }
 
   return sameDomain ? undefined : 'private domain files stay in the same domain and application; use its service API or shared utilities'
 }
 
+function boundariesPortableFolder(options: BoundariesOptions): string | undefined {
+  if (!options.portable) {
+    return undefined
+  }
+
+  return typeof options.portable === 'string' ? options.portable : boundariesConventionsOf(options).lib
+}
+
 function boundariesPortableLib(check: BoundariesImport): string | undefined {
   const { options, file, source, target, typeOnly, reExport, roots, web, backendImport } = check
+  const { types } = boundariesConventionsOf(options)
+  const lib = boundariesPortableFolder(options)
 
-  if (!options.portable || !web || !boundariesContains(`${web}/lib`, file) || boundariesServiceFolder(options, web) === `${web}/lib`) {
+  if (!lib || !web || !boundariesContains(`${web}/${lib}`, file) || boundariesServiceFolder(options, web) === `${web}/${lib}`) {
     return undefined
   }
 
@@ -93,12 +132,12 @@ function boundariesPortableLib(check: BoundariesImport): string | undefined {
     return 'portable frontend lib does not import application services or application APIs'
   }
 
-  const appType = roots.some((path) => boundariesContains(`${path}/types`, portableTarget))
+  const appType = roots.some((path) => boundariesContains(`${path}/${types}`, portableTarget))
   const stem = boundariesStripExtension(basename(file)).replace(/\.utils$/, '')
-  const ownType = typeOnly && !reExport && boundariesStripExtension(portableTarget) === `${web}/types/${stem}.types`
+  const ownType = typeOnly && !reExport && boundariesStripExtension(portableTarget) === `${web}/${types}/${stem}.${types}`
 
   if (appType && !ownType) {
-    return `portable frontend lib may only type-import its own contract '${web}/types/${stem}.types.ts'; app type re-exports are forbidden`
+    return `portable frontend lib may only type-import its own contract '${web}/${types}/${stem}.${types}.ts'; app type re-exports are forbidden`
   }
 
   return undefined
@@ -120,7 +159,24 @@ export const boundariesImports = defineRule({
           roles: { type: 'array', items: { type: 'string' } },
           surfaces: { type: 'array', items: { type: 'string', minLength: 1 }, default: boundariesSurfaces },
           services: { type: 'array', items: { type: 'string' } },
-          portable: { type: 'boolean' },
+          portable: { anyOf: [{ type: 'boolean' }, { type: 'string', minLength: 1 }] },
+          conventions: {
+            type: 'object',
+            additionalProperties: false,
+            properties: {
+              services: { type: 'string', minLength: 1 },
+              registry: { type: 'string', minLength: 1 },
+              types: { type: 'string', minLength: 1 },
+              lib: { type: 'string', minLength: 1 },
+              contracts: { type: 'array', items: { type: 'string', minLength: 1 } },
+              implementations: { type: 'array', items: { type: 'string', minLength: 1 } },
+              implementationFolders: { type: 'array', items: { type: 'string', minLength: 1 } },
+              operations: { type: 'array', items: { type: 'string', minLength: 1 } },
+              operationFolders: { type: 'array', items: { type: 'string', minLength: 1 } },
+              domainFiles: { type: 'array', items: { type: 'string', minLength: 1 } },
+              clients: { type: 'array', items: { type: 'string', minLength: 1 } },
+            },
+          },
           backendPackages: { type: 'array', items: { type: 'string' } },
           entrypoints: { type: 'array', items: { type: 'string' } },
           appPackages: { type: 'array', items: { type: 'string' } },
@@ -139,7 +195,8 @@ export const boundariesImports = defineRule({
       const file = context.filename.replaceAll('\\', '/')
       const roots = [...options.web, ...options.backend].sort((a, b) => b.length - a.length)
       const owner = roots.find((path) => boundariesContains(path, file))
-      const target = boundariesResolveTarget(options, file, source)
+      const conventions = boundariesConventionsOf(options)
+      const target = boundariesResolveTarget(options, file, source, conventions.services)
       const web = owner && options.web.includes(owner) ? owner : undefined
 
       const backendImport =
@@ -155,22 +212,27 @@ export const boundariesImports = defineRule({
       const serviceTarget = serviceFolders.find((folder) => boundariesContains(folder, target))
       const serviceFile = serviceFolders.find((folder) => boundariesContains(folder, file))
 
+      const implementation = `(?:\\.${boundariesAny(conventions.implementations)}|-${boundariesAny(conventions.operations)}\\.|/${boundariesAny(conventions.operationFolders)}/)`
+      const services = optionsEscape(conventions.services)
+
       const domainContract =
-        /\.(?:types|constants)\.ts$/.test(file) &&
+        new RegExp(`\\.${boundariesAny(conventions.contracts)}\\.ts$`).test(file) &&
         !typeOnly &&
-        (/\/(?:core\/|services\/.*(?:\.(?:service|utils)|-(?:action|query)\.|\/(?:actions|queries)\/))/.test(target) ||
-          (serviceTarget !== undefined && /\/.*(?:\.(?:service|utils)|-(?:action|query)\.|\/(?:actions|queries)\/)/.test(target.slice(serviceTarget.length))))
+        (new RegExp(`/(?:${boundariesAny(conventions.implementationFolders)}/|${services}/.*${implementation})`).test(target) ||
+          (serviceTarget !== undefined && new RegExp(`/.*${implementation}`).test(target.slice(serviceTarget.length))))
+
+      const registry = `/${optionsEscape(conventions.registry)}(?:\\.ts)?$`
 
       const reason = [
         web && backendImport && !options.entrypoints.includes(source) ? 'frontend code uses only public backend entry points' : undefined,
         inPackage && appTarget ? 'shared packages do not import app internals' : undefined,
-        ((file.includes('/services/') && /\/services\/service(?:\.ts)?$/.test(target)) ||
-          (serviceFile !== undefined && /^\/service(?:\.ts)?$/.test(target.slice(serviceFile.length)))) &&
+        ((file.includes(`/${conventions.services}/`) && new RegExp(`/${services}${registry}`).test(target)) ||
+          (serviceFile !== undefined && new RegExp(`^${registry}`).test(target.slice(serviceFile.length)))) &&
         !typeOnly
           ? 'service dependencies are injected rather than read from the registry'
           : undefined,
         domainContract ? 'domain types/constants use type-only imports from implementations' : undefined,
-        file.endsWith('.client.ts') && !typeOnly && boundariesMatchesImport(options.uiPackages ?? ['react', 'react-dom'], source)
+        conventions.clients.some((client) => file.endsWith(`.${client}.ts`)) && !typeOnly && boundariesMatchesImport(options.uiPackages ?? ['react', 'react-dom'], source)
           ? 'client services are React-free; use hooks for React behavior'
           : undefined,
         boundariesPrivateDomain(imported),
@@ -224,7 +286,9 @@ export const boundariesImports = defineRule({
         const options = { ...boundariesImportsDefaults, ...optionsFirst<Partial<BoundariesOptions>>(context) }
         const file = context.filename.replaceAll('\\', '/')
 
-        if (options.portable && options.web.some((path) => file.startsWith(`${path}/lib/`) && boundariesServiceFolder(options, path) !== `${path}/lib`)) {
+        const lib = boundariesPortableFolder(options)
+
+        if (lib && options.web.some((path) => file.startsWith(`${path}/${lib}/`) && boundariesServiceFolder(options, path) !== `${path}/${lib}`)) {
           check(node, node.source.value, true)
         }
       },

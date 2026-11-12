@@ -14,6 +14,9 @@ The TanStack preset selects the enabled rules; this directory implements them
 and is not a separate preset. Upstream intentionally distributes source for
 vendoring and does not publish an official npm package.
 
+Local options: `terms` on `no-shape-in-symbol-names` and `comment` on
+`require-safety-comment-for-type-assertion`; their defaults keep upstream behavior.
+
 Local behavior fixes recognize `SAFETY:` comments on exported declarations and
 export-default assertions, while retaining statement boundaries for other
 assertions.

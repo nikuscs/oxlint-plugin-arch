@@ -29,5 +29,12 @@ describe('dillon-anti-slop/require-safety-comment-for-type-assertion', () => {
       code: '// SAFETY: Cannot justify an assertion inside a function.\nexport function value() { return input as string; }',
       errors: ['missingSafetyComment'],
     },
+    { name: 'a custom comment passes', code: '// INVARIANT: only inputs\nconst input = target as HTMLInputElement', options: { comment: 'INVARIANT:' } },
+    {
+      name: 'a custom comment replaces SAFETY',
+      code: '// SAFETY: only inputs\nconst input = target as HTMLInputElement',
+      options: { comment: 'INVARIANT:' },
+      errors: ['This type assertion has no `INVARIANT:` justification. State the checked invariant immediately before the assertion or its containing statement.'],
+    },
   ])('$name', (row) => testerRun(requireSafetyCommentForTypeAssertionRule, row))
 })

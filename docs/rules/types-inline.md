@@ -1,6 +1,6 @@
 # arch/types-inline
 
-Reports inline object and function types in parameter and return annotations, and optionally in variable annotations, assertions and type arguments.
+Reports inline object and function types in parameter and return annotations, and optionally in variable annotations, assertions and type arguments. Only the outermost inline type reports. Type aliases and interfaces are skipped.
 
 ```ts
 // ❌
@@ -18,7 +18,7 @@ function save(user: User): SaveResult {}
 | `variables` | `boolean` | `false` | Check variable and class property annotations |
 | `assertions` | `boolean` | `false` | Check `as` and `satisfies` types |
 | `arguments` | `boolean` | `false` | Check type arguments of calls and `new` |
-| `min` | `number` | `1` | Smallest object literal type to report |
+| `min` | `number` | `1` | Smallest object literal type to report, counting that object or one nested in it; never applies to function types |
 
 ```ts
 'arch/types-inline': ['error', { min: 2, functions: false }]

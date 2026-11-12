@@ -1,5 +1,5 @@
 import { defineRule } from '@oxlint/plugins'
-import { astCallDepth, astIsCall, astIsInlineFunction, astIsOneLine, astIsPipe } from '../../utils/ast.utils.ts'
+import { astCallDepth, astIsCall, astIsInlineFunction, astIsOneLine, astMemberName } from '../../utils/ast.utils.ts'
 import { optionsFirst } from '../../utils/options.utils.ts'
 import { sourceIndentSchema, sourceIndentUnit, sourceItemGaps, sourceJoinedWidth, sourceLineEnd, sourceLineIndent, sourceLineStart, sourceNewline, sourceRespace } from '../../utils/source.utils.ts'
 import type { AstCall } from '../../types/ast.types.ts'
@@ -39,6 +39,12 @@ export const layoutCallArguments = defineRule({
             type: 'boolean',
             default: true,
           },
+          pipe: {
+            type: 'object',
+            additionalProperties: false,
+            required: ['min'],
+            properties: { min: { type: 'integer', minimum: 2 }, methods: { type: 'array', items: { type: 'string' } } },
+          },
           hug: {
             type: 'object',
             additionalProperties: false,
@@ -61,6 +67,7 @@ export const layoutCallArguments = defineRule({
     ],
     messages: {
       multiline: 'A call with {{min}}+ arguments puts each argument on its own line.',
+      pipe: 'A pipe with {{min}}+ steps puts each step on its own line.',
       hug: 'Put every argument on its own line. Only a last callback, object or array may hug the call, after simple arguments.',
       prefer: 'Hug the last argument: it is a callback, object or array after simple arguments.',
       join: 'This fits on one line, so keep it on one line.',
@@ -70,14 +77,17 @@ export const layoutCallArguments = defineRule({
     let options: LayoutCallArgumentsOptions = {}
     let minArguments = 3
     let indentUnit = sourceIndentUnit()
+    let pipeMethods = new Set<string>()
 
-    const split = (node: AstCall) => {
+    const isPipe = (node: AstCall) => node.callee.type === 'MemberExpression' && pipeMethods.has(astMemberName(node.callee) ?? '')
+
+    const split = (node: AstCall, min: number, messageId: 'multiline' | 'pipe') => {
       const args = node.arguments
       const last = args.at(-1)
       const source = context.sourceCode
 
       if (
-        args.length < minArguments ||
+        args.length < min ||
         !last ||
         args.some((arg) => (arg.type === 'ArrowFunctionExpression' || arg.type === 'FunctionExpression') && arg.loc.start.line !== arg.loc.end.line)
       ) {
@@ -113,8 +123,8 @@ export const layoutCallArguments = defineRule({
       const argumentIndent = `${baseIndent}${indentUnit}`
       context.report({
         node,
-        messageId: 'multiline',
-        data: { min: String(minArguments) },
+        messageId,
+        data: { min: String(min) },
         fix: unsafe ? undefined : (fixer) =>
           gaps.map((gap, index) => {
             if (index === 0) {
@@ -141,7 +151,7 @@ export const layoutCallArguments = defineRule({
       }
 
       const leading = args.slice(0, -1)
-      const canHug = !astIsPipe(node) && leading.every((arg) => astIsOneLine(arg) && astCallDepth(arg) <= 1) && layoutCallArgumentsHuggable(last)
+      const canHug = !isPipe(node) && leading.every((arg) => astIsOneLine(arg) && astCallDepth(arg) <= 1) && layoutCallArgumentsHuggable(last)
       const gaps = sourceItemGaps(open.range[1], args, close.range[0])
 
       if (first.loc.start.line > open.loc.end.line) {
@@ -208,8 +218,10 @@ export const layoutCallArguments = defineRule({
     const call = (node: AstCall) => {
       const source = context.sourceCode
 
-      if (options.split !== false) {
-        split(node)
+      if (options.pipe && isPipe(node)) {
+        split(node, options.pipe.min, 'pipe')
+      } else if (options.split !== false) {
+        split(node, minArguments, 'multiline')
       }
 
       if (options.hug) {
@@ -219,7 +231,7 @@ export const layoutCallArguments = defineRule({
       if (
         options.join &&
         !(options.join.keep ?? []).includes(source.getText(node.callee)) &&
-        !(astIsPipe(node) && node.arguments.length > 1) &&
+        !(isPipe(node) && (node.arguments.length > 1 || options.pipe)) &&
         astCallDepth(node) <= (options.join.nesting ?? Number.POSITIVE_INFINITY)
       ) {
         join(node, node.arguments, source.getTokenAfter(node.typeArguments ?? node.callee), source.getLastToken(node))
@@ -248,6 +260,7 @@ export const layoutCallArguments = defineRule({
         options = optionsFirst<LayoutCallArgumentsOptions>(context, {})
         minArguments = options.min ?? 3
         indentUnit = sourceIndentUnit(options.indent)
+        pipeMethods = new Set(options.pipe?.methods ?? ['pipe'])
       },
       CallExpression: call,
       NewExpression: call,

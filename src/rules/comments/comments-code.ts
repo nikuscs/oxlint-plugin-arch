@@ -77,6 +77,7 @@ export const commentsCode = defineRule({
           allow: { type: 'array', items: { type: 'string' } },
           jsdoc: { type: 'boolean', default: false },
           members: { type: 'string', enum: ['off', 'also', 'only'] },
+          steps: { type: 'boolean', default: false },
         },
       },
     ],
@@ -91,14 +92,51 @@ export const commentsCode = defineRule({
     let allowJsdoc = false
     let allowed: RegExp[] = []
     let members: CommentsOptions['members'] = 'off'
+    let steps = false
+    let functionDepth = 0
     const memberComments = new Set<number>()
+    const stepStarts = new Set<number>()
+
+    function enterFunction() {
+      functionDepth++
+    }
+
+    function exitFunction() {
+      functionDepth--
+    }
+
+    function addSteps(nodes: readonly ESTree.Node[], inFunction: boolean) {
+      if (steps && inFunction) {
+        for (const node of nodes) {
+          stepStarts.add(node.range[0])
+        }
+      }
+    }
+
+    function isStep(comment: ESTree.Comment): boolean {
+      const source = context.sourceCode
+      const before = source.getTokenBefore(comment, { includeComments: true })
+      const after = source.getTokenAfter(comment, { includeComments: true })
+
+      return (
+        comment.type === 'Line' &&
+        before?.loc.end.line !== comment.loc.start.line &&
+        !(before && (before.type === 'Line' || before.type === 'Block') && before.loc.end.line === comment.loc.start.line - 1) &&
+        after !== null &&
+        after.type !== 'Line' &&
+        after.type !== 'Block' &&
+        after.loc.start.line === comment.loc.end.line + 1 &&
+        stepStarts.has(after.range[0])
+      )
+    }
 
     function keepComment(comment: ESTree.Comment, value: string, isWhy: boolean): boolean {
       return (
         (allowWhy && isWhy) ||
         sourceIsDirective(value) ||
         (allowJsdoc && comment.type === 'Block' && context.sourceCode.text.startsWith('/**', comment.range[0])) ||
-        allowed.some((pattern) => pattern.test(value.trim()))
+        allowed.some((pattern) => pattern.test(value.trim())) ||
+        (steps && isStep(comment))
       )
     }
 
@@ -138,7 +176,10 @@ export const commentsCode = defineRule({
         allowJsdoc = options.jsdoc ?? false
         allowed = (options.allow ?? []).map((pattern) => new RegExp(pattern))
         members = options.members ?? 'off'
+        steps = options.steps ?? false
+        functionDepth = 0
         memberComments.clear()
+        stepStarts.clear()
       },
       TSPropertySignature: checkMember,
       TSMethodSignature: checkMember,
@@ -147,6 +188,19 @@ export const commentsCode = defineRule({
       TSConstructSignatureDeclaration: checkMember,
       Property: checkMember,
       SpreadElement: checkMember,
+      FunctionDeclaration: enterFunction,
+      'FunctionDeclaration:exit': exitFunction,
+      FunctionExpression: enterFunction,
+      'FunctionExpression:exit': exitFunction,
+      ArrowFunctionExpression: enterFunction,
+      'ArrowFunctionExpression:exit': exitFunction,
+      BlockStatement: (node) => addSteps(node.body, functionDepth > 0),
+      SwitchCase: (node) => addSteps(node.consequent, functionDepth > 0),
+      IfStatement: (node) => addSteps([node.consequent, ...(node.alternate ? [node.alternate] : [])], functionDepth > 0),
+      'ForStatement, ForInStatement, ForOfStatement, WhileStatement, DoWhileStatement, LabeledStatement': (
+        node: ESTree.ForStatement | ESTree.ForInStatement | ESTree.ForOfStatement | ESTree.WhileStatement | ESTree.DoWhileStatement | ESTree.LabeledStatement,
+      ) => addSteps([node.body], functionDepth > 0),
+      ObjectExpression: (node) => addSteps(node.properties, true),
       'Program:exit'(program) {
         const text = context.sourceCode.text
         const found: ESTree.Comment[] = []

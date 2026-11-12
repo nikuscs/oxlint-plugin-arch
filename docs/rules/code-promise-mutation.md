@@ -18,6 +18,8 @@ const users = await Promise.all(ids.map((id) => load(id)))
 | `methods` | `string[]` | `['push', 'unshift', 'splice', 'set', 'add']` | Mutating method names |
 | `assignments` | `boolean` | `true` | Also report `=`, `+=` and `++` |
 
+`combinators` and `methods` replace their defaults, so repeat the defaults you want to keep. Bindings declared inside the arguments are fine.
+
 ```ts
 'arch/code-promise-mutation': ['error', { methods: ['push', 'unshift', 'splice', 'set', 'add', 'delete'] }]
 ```

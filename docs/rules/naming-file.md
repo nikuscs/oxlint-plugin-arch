@@ -8,7 +8,15 @@ Reports files whose name does not match `pattern`. With `unique`, also reports f
 
 // ✅
 // components/user-card.tsx
+
+// ❌ unique: '^(\\d{3})-', with 001-users.ts in the same folder
+// migrations/001-posts.ts
+
+// ✅
+// migrations/002-posts.ts
 ```
+
+`message` is only the pattern report; `unique` has no flags and reads the folder from disk.
 
 | Option | Type | Default | |
 | --- | --- | --- | --- |

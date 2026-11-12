@@ -1,5 +1,21 @@
 # Changelog
 
+## Unreleased
+
+- `effect-layer-file` takes `suffix`, such as `'Layer'`, to name local layers `<Role>Layer`; it also recognises those names as Layers.
+- `comments-code` takes `steps`: a single `//` line directly above a statement in a function, or above a property in an object literal, stays.
+- `layout-object` takes `params`, which splits a one-line destructured parameter with `min` properties, and `nested`, which splits a one-line object holding an object or function.
+- `layout-call-arguments` takes `pipe: { min }`, which splits a one-line pipe with `min` steps even while `split` is off.
+- `layout-pipe` takes `methods`, and `layout-call-arguments` `pipe.methods`, for pipe methods other than `pipe`.
+- `naming-types` takes `pattern`; `types-local-alias` takes `allow`.
+- `react-dynamic-classes` takes `attributes`; `react-empty-effect` takes `hooks`; `react-memo` takes `names`, `sources` and `message`.
+- Vendored `no-shape-in-symbol-names` takes `terms`; `require-safety-comment-for-type-assertion` takes `comment`.
+- `boundaries-imports`, `boundaries-next` and `boundaries-tanstack` take `conventions` for every file and folder name they read; `boundaries-imports` `portable` also takes a folder name, and `boundaries-tanstack` takes `serverHooks`. The `#services/` prefix follows the services folder.
+- New `layout-type-arguments`: a one-line type argument list holding a union of `min` types puts each type on its own line, each after a leading `|`.
+- `layout-object` `nested` reports without a fix inside a ternary or before a chained call; new `inner` splits an object with `inner` or more entries inside a split object, at every depth; new `siblings` splits an object argument to match a split sibling call in the same array.
+- With `layout-call-arguments` `pipe` set, `join` leaves every pipe as written.
+- `layout-call-depth` takes `callbacks`, which counts nesting through inline callbacks.
+
 ## 0.13.0
 
 ### Migrating from 0.12

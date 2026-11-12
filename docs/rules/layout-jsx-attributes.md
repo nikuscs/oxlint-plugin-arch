@@ -2,6 +2,8 @@
 
 Every attribute and the closing `>` or `/>` on its own line once a single-line JSX tag has `min` attributes. With `join`, a split tag with fewer than `min` attributes goes back on one line.
 
+The fix changes only whitespace and does not add parentheses around the tag. A tag with a comment is reported without a fix. Spread attributes count toward `min`.
+
 ```tsx
 // ❌
 const button = <Button size="sm" variant="ghost" onClick={close} />

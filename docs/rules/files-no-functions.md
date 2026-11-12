@@ -16,7 +16,7 @@ export const CENTS_PER_UNIT = 100
 | Option | Type | Default | |
 | --- | --- | --- | --- |
 | `reexports` | `boolean` | `true` | Also report `export ... from` |
-| `allow` | `string \| string[]` | none | Function names to allow |
+| `allow` | `string \| string[]` | none | Regexes on function names to allow |
 
 ```ts
 'arch/files-no-functions': ['error', { allow: '^is[A-Z]' }]

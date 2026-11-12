@@ -37,3 +37,8 @@ export interface TypesDuplicateOptions {
   structs?: string[]
   min?: number
 }
+
+export interface TypesLocalAliasOptions {
+  allow?: OptionsPattern
+  message?: string
+}

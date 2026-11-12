@@ -2,16 +2,18 @@ import { defineRule } from '@oxlint/plugins'
 import { astIsTypeOnlyImport, astMemberName, astModuleName, astVisit } from '../../utils/ast.utils.ts'
 import {
   boundariesBrowserGlobals,
+  boundariesConventionsFor,
   boundariesDeclaredVariable,
-  boundariesExportVisitors,
-  boundariesImportExpression,
+  boundariesHasSuffix,
   boundariesIsBackendImport,
+  boundariesIsClientOnly,
   boundariesIsServerPlatformImport,
   boundariesIsSharedFile,
   boundariesMatchesImport,
   boundariesMemberName,
   boundariesReport,
   boundariesResolveTarget,
+  boundariesRuntimeImportVisitors,
   boundariesRuntimeMessages,
   boundariesRuntimeProperties,
   boundariesServerGlobals,
@@ -41,7 +43,7 @@ const boundariesRuntimeTypeWrappers = [
 
 const boundariesClientHookReason = 'client hooks do not belong in server/RSC services'
 
-const boundariesTanstackDefaults: Required<Omit<BoundariesTypes.BoundariesTanstackOptions, 'server' | 'client' | 'dynamic' | 'publicEnv' | 'serverHooks'>> = {
+const boundariesTanstackDefaults: Required<Omit<BoundariesTypes.BoundariesTanstackOptions, 'server' | 'client' | 'dynamic' | 'publicEnv' | 'conventions'>> = {
   web: [],
   backend: [],
   aliases: {},
@@ -61,10 +63,7 @@ const boundariesTanstackDefaults: Required<Omit<BoundariesTypes.BoundariesTansta
   startPackages: ['@tanstack/react-start'],
   rscPackages: ['@tanstack/react-start/rsc', '@tanstack/react-start-rsc'],
   renderers: ['renderServerComponent', 'renderToReadableStream'],
-}
-
-function boundariesIsClientHook(name: string): boolean {
-  return /^use[A-Z]/.test(name) && name !== 'useId'
+  serverHooks: ['useId'],
 }
 
 export const boundariesTanstack = defineRule({
@@ -80,6 +79,7 @@ export const boundariesTanstack = defineRule({
           startPackages: { type: 'array', items: { type: 'string' } },
           rscPackages: { type: 'array', items: { type: 'string' } },
           renderers: { type: 'array', items: { type: 'string', minLength: 1 }, default: boundariesTanstackDefaults.renderers },
+          serverHooks: { type: 'array', items: { type: 'string', minLength: 1 }, default: boundariesTanstackDefaults.serverHooks },
         },
       },
     ],
@@ -87,6 +87,7 @@ export const boundariesTanstack = defineRule({
   },
   createOnce(context) {
     let options: BoundariesTypes.BoundariesTanstackOptions & typeof boundariesTanstackDefaults
+    let conventions = boundariesConventionsFor({})
     let file = ''
     let serverFile = false
     let rscFile = false
@@ -95,6 +96,7 @@ export const boundariesTanstack = defineRule({
     let referenced: Set<number> | undefined
     let imports = new Map<string, BoundariesTypes.BoundariesTanstackImport>()
     const boundaries: BoundariesTypes.BoundariesTanstackBoundary[] = []
+    const clientHook = (name: string) => /^use[A-Z]/.test(name) && !options.serverHooks.includes(name)
 
     function imported(node: BoundariesTypes.BoundariesIdentifier): string | undefined {
       const entry = imports.get(node.name)
@@ -161,7 +163,7 @@ export const boundariesTanstack = defineRule({
       const target = boundariesResolveTarget(options, file, source)
 
       const clientImport =
-        /(?:\/hooks\/|\.client-only(?:\.|$))/.test(target) ||
+        boundariesIsClientOnly(conventions, target) ||
         boundariesMatchesImport(options.clientPackages, source) ||
         boundariesMatchesImport(options.client, source)
 
@@ -178,7 +180,7 @@ export const boundariesTanstack = defineRule({
       const serverImport =
         boundariesIsServerPlatformImport(source, options.serverPackages) ||
         boundariesIsBackendImport(options, target, source) ||
-        /\.server(?:\.[cm]?[jt]sx?)?$/.test(target) ||
+        boundariesHasSuffix(conventions.server, target, true) ||
         boundariesMatchesImport(options.server, source)
 
       if (!renderer && !serverImport) {
@@ -219,10 +221,11 @@ export const boundariesTanstack = defineRule({
     return {
       Program(program) {
         options = { ...boundariesTanstackDefaults, ...optionsFirst<BoundariesTypes.BoundariesTanstackOptions>(context) }
+        conventions = boundariesConventionsFor(options)
         file = context.filename.replaceAll('\\', '/')
-        serverFile = /\.server\.[cm]?[jt]sx?$/.test(file)
-        rscFile = /\.rsc\.[cm]?[jt]sx?$/.test(file)
-        shared = boundariesIsSharedFile(options, file)
+        serverFile = boundariesHasSuffix(conventions.server, file)
+        rscFile = boundariesHasSuffix(conventions.rsc, file)
+        shared = boundariesIsSharedFile(options, conventions, file)
         runtimeIdentifiers.clear()
         referenced = undefined
         boundaries.length = 0
@@ -322,7 +325,7 @@ export const boundariesTanstack = defineRule({
             specifier.type !== 'ImportSpecifier' ||
             specifier.importKind === 'type' ||
             specifier.imported.type !== 'Identifier' ||
-            !boundariesIsClientHook(specifier.imported.name)
+            !clientHook(specifier.imported.name)
           ) {
             continue
           }
@@ -334,10 +337,7 @@ export const boundariesTanstack = defineRule({
           }
         }
       },
-      ...boundariesExportVisitors(check),
-      ImportExpression(node) {
-        boundariesImportExpression(context, node, Boolean(options.dynamic?.includes(file)), (source) => check(node, source, false))
-      },
+      ...boundariesRuntimeImportVisitors(context, check, () => Boolean(options.dynamic?.includes(file))),
       MemberExpression(node) {
         const name = boundariesMemberName(node)
 
@@ -351,7 +351,7 @@ export const boundariesTanstack = defineRule({
           boundariesReport(context, node, name, 'server renderers require a server execution boundary')
         }
 
-        if ((serverFile || rscFile) && kind === 'client-hooks' && boundariesIsClientHook(name) && !clientSide(node.start)) {
+        if ((serverFile || rscFile) && kind === 'client-hooks' && clientHook(name) && !clientSide(node.start)) {
           boundariesReport(context, node, name, boundariesClientHookReason)
         }
       },

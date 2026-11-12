@@ -23,5 +23,7 @@ describe('dillon-anti-slop/no-shape-in-symbol-names', () => {
     { name: 'matching is case insensitive', code: 'const SHAPE = 1', errors: ['forbiddenSymbolName'] },
     { name: 'private names are checked', code: 'class User { #shape = 1 }', errors: ['forbiddenSymbolName'] },
     { name: 'JSX names are checked', code: 'const icon = <Shape />', errors: ['forbiddenSymbolName'] },
+    { name: 'custom terms report', code: 'interface UserDto { id: string }', options: { terms: ['dto'] }, errors: ['Rename symbol "UserDto" for its domain role; "dto" describes structure rather than ownership.'] },
+    { name: 'custom terms replace shape', code: 'interface UserShape { id: string }', options: { terms: ['dto'] } },
   ])('$name', (row) => testerRun(noForbiddenTermInSymbolNamesRule, row))
 })

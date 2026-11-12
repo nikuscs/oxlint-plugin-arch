@@ -1,7 +1,7 @@
 import { defineRule } from '@oxlint/plugins'
+import { optionsFirst } from '../../../utils/options.utils.ts'
+import type { DillonAntiSlopSymbolNamesOptions } from '../../../types/dillon-anti-slop.types.ts'
 import type { ESTree } from '@oxlint/plugins'
-
-const FORBIDDEN_SYMBOL_NAME = 'shape'
 
 function namesForeignApi(node: ESTree.Node): boolean {
   const parent = node.parent
@@ -43,23 +43,32 @@ export const noForbiddenTermInSymbolNamesRule = defineRule({
     docs: {
       description: 'Disallow the case-insensitive substring "shape" in JavaScript, TypeScript, private, and JSX symbol names.',
     },
+    schema: [{ type: 'object', additionalProperties: false, properties: { terms: { type: 'array', items: { type: 'string', minLength: 1 }, minItems: 1 } } }],
     messages: {
-      forbiddenSymbolName: 'Rename symbol "{{name}}" for its domain role; "shape" describes structure rather than ownership.',
+      forbiddenSymbolName: 'Rename symbol "{{name}}" for its domain role; "{{term}}" describes structure rather than ownership.',
     },
   },
   createOnce(context) {
+    let terms: string[] = []
+
     const reportForbiddenSymbolName = (node: ESTree.Node & { name: string }) => {
-      if (!node.name.toLowerCase().includes(FORBIDDEN_SYMBOL_NAME) || namesForeignApi(node)) {
+      const lower = node.name.toLowerCase()
+      const term = terms.find((candidate) => lower.includes(candidate))
+
+      if (term === undefined || namesForeignApi(node)) {
         return
       }
       context.report({
         node,
         messageId: 'forbiddenSymbolName',
-        data: { name: node.name },
+        data: { name: node.name, term },
       })
     }
 
     return {
+      before() {
+        terms = (optionsFirst<DillonAntiSlopSymbolNamesOptions>(context, {}).terms ?? ['shape']).map((term) => term.toLowerCase())
+      },
       Identifier: reportForbiddenSymbolName,
       PrivateIdentifier: reportForbiddenSymbolName,
       JSXIdentifier: reportForbiddenSymbolName,

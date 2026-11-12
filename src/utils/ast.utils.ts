@@ -275,10 +275,6 @@ export function astIsCall(node: ESTree.Node): node is AstCall {
   return node.type === 'CallExpression' || node.type === 'NewExpression'
 }
 
-export function astIsPipe(node: AstCall): boolean {
-  return node.callee.type === 'MemberExpression' && astMemberName(node.callee) === 'pipe'
-}
-
 function astChildren(node: ESTree.Node): unknown[] {
   return Object.entries(node).filter(([key]) => !astSkippedKeys.has(key)).map(([, child]) => child)
 }
@@ -291,18 +287,22 @@ export function astSome(value: unknown, test: (node: ESTree.Node) => boolean, en
   return astIsNode(value) && (test(value) || (enter(value) && astChildren(value).some((child) => astSome(child, test, enter))))
 }
 
-export function astCallDepth(value: unknown): number {
+export function astCallDepth(value: unknown, callbacks = false): number {
   if (Array.isArray(value)) {
-    return Math.max(0, ...value.map(astCallDepth))
+    return Math.max(0, ...value.map((item) => astCallDepth(item, callbacks)))
   }
 
-  if (!astIsNode(value) || astIsInlineFunction(value)) {
+  if (!astIsNode(value)) {
     return 0
   }
 
-  if (astIsCall(value)) {
-    return Math.max(value.arguments.length === 0 ? 0 : 1 + astCallDepth(value.arguments), astCallDepth(value.callee))
+  if (astIsInlineFunction(value)) {
+    return callbacks ? astCallDepth(value.body, callbacks) : 0
   }
 
-  return astCallDepth(astChildren(value))
+  if (astIsCall(value)) {
+    return Math.max(value.arguments.length === 0 ? 0 : 1 + astCallDepth(value.arguments, callbacks), astCallDepth(value.callee, callbacks))
+  }
+
+  return astCallDepth(astChildren(value), callbacks)
 }

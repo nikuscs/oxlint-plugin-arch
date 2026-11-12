@@ -56,6 +56,7 @@ import { layoutObject } from './rules/layout/layout-object.ts'
 import { layoutPadding } from './rules/layout/layout-padding.ts'
 import { layoutPipe } from './rules/layout/layout-pipe.ts'
 import { layoutTernary } from './rules/layout/layout-ternary.ts'
+import { layoutTypeArguments } from './rules/layout/layout-type-arguments.ts'
 import { namingDeclarations } from './rules/naming/naming-declarations.ts'
 import { namingExports } from './rules/naming/naming-exports.ts'
 import { namingFile } from './rules/naming/naming-file.ts'
@@ -143,6 +144,7 @@ export default eslintCompatPlugin({
     'layout-padding': layoutPadding,
     'layout-pipe': layoutPipe,
     'layout-ternary': layoutTernary,
+    'layout-type-arguments': layoutTypeArguments,
     'naming-declarations': namingDeclarations,
     'naming-exports': namingExports,
     'naming-file': namingFile,

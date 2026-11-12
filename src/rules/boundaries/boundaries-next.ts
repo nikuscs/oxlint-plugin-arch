@@ -2,16 +2,18 @@ import { defineRule } from '@oxlint/plugins'
 import { astIsTypeOnlyImport } from '../../utils/ast.utils.ts'
 import {
   boundariesBrowserGlobals,
+  boundariesConventionsFor,
   boundariesDeclaredVariable,
-  boundariesExportVisitors,
-  boundariesImportExpression,
+  boundariesHasSuffix,
   boundariesIsBackendImport,
+  boundariesIsClientOnly,
   boundariesIsServerPlatformImport,
   boundariesIsSharedFile,
   boundariesMatchesImport,
   boundariesMemberName,
   boundariesReport,
   boundariesResolveTarget,
+  boundariesRuntimeImportVisitors,
   boundariesRuntimeMessages,
   boundariesRuntimeProperties,
   boundariesServerGlobals,
@@ -23,7 +25,7 @@ import type { ESTree } from '@oxlint/plugins'
 
 const boundariesClientHookReason = 'client hooks do not belong in server, RSC or shared modules'
 
-const boundariesNextDefaults: Required<Omit<BoundariesNextOptions, 'server' | 'client' | 'dynamic'>> = {
+const boundariesNextDefaults: Required<Omit<BoundariesNextOptions, 'server' | 'client' | 'dynamic' | 'conventions'>> = {
   web: [],
   backend: [],
   aliases: {},
@@ -57,6 +59,7 @@ export const boundariesNext = defineRule({
   },
   createOnce(context) {
     let options: BoundariesNextOptions & typeof boundariesNextDefaults
+    let conventions = boundariesConventionsFor({})
     let file = ''
     let server = false
     let client = false
@@ -72,7 +75,7 @@ export const boundariesNext = defineRule({
       const target = boundariesResolveTarget(options, file, source)
 
       const clientOnly =
-        /(?:\/hooks\/|\.client-only(?:\.|$))/.test(target) ||
+        boundariesIsClientOnly(conventions, target) ||
         boundariesMatchesImport(options.clientPackages, source) ||
         boundariesMatchesImport(options.client, source)
 
@@ -84,7 +87,7 @@ export const boundariesNext = defineRule({
       const serverOnly =
         boundariesIsServerPlatformImport(source, options.serverPackages) ||
         boundariesIsBackendImport(options, target, source) ||
-        /\.(?:server|rsc)(?:\.[cm]?[jt]sx?)?$/.test(target) ||
+        boundariesHasSuffix([...conventions.server, ...conventions.rsc], target, true) ||
         boundariesMatchesImport(options.server, source)
 
       if (!serverOnly || server) {
@@ -103,6 +106,7 @@ export const boundariesNext = defineRule({
     return {
       Program(program) {
         options = { ...boundariesNextDefaults, ...optionsFirst<BoundariesNextOptions>(context) }
+        conventions = boundariesConventionsFor(options)
         reactNamespaces.clear()
         file = context.filename.replaceAll('\\', '/')
         const directives = new Map<string, ESTree.Node>()
@@ -115,9 +119,9 @@ export const boundariesNext = defineRule({
 
         const useServer = directives.get('use server')
         const useClient = directives.get('use client')
-        const serverName = /\.(?:server|rsc|action)\.[cm]?[jt]sx?$/.test(file)
-        const clientName = /\.client\.[cm]?[jt]sx?$/.test(file)
-        shared = boundariesIsSharedFile(options, file)
+        const serverName = boundariesHasSuffix([...conventions.server, ...conventions.rsc, ...conventions.actions], file)
+        const clientName = boundariesHasSuffix(conventions.client, file)
+        shared = boundariesIsSharedFile(options, conventions, file)
         server = !useClient && (serverName || Boolean(useServer))
         client = clientName || Boolean(useClient)
         if (useClient && serverName) {
@@ -136,7 +140,7 @@ export const boundariesNext = defineRule({
           })
         }
 
-        if (/\.action\.[cm]?[jt]sx?$/.test(file) && !useServer) {
+        if (boundariesHasSuffix(conventions.actions, file) && !useServer) {
           context.report({ node: program, messageId: 'action' })
         }
       },
@@ -171,10 +175,7 @@ export const boundariesNext = defineRule({
           boundariesReport(context, node, `${node.object.name}.${name}`, boundariesClientHookReason)
         }
       },
-      ...boundariesExportVisitors(check),
-      ImportExpression(node) {
-        boundariesImportExpression(context, node, Boolean(options.dynamic?.includes(file)), (source) => check(node, source, false))
-      },
+      ...boundariesRuntimeImportVisitors(context, check, () => Boolean(options.dynamic?.includes(file))),
       'Program:exit'() {
         const scope = context.sourceCode.scopeManager.scopes.at(0)
 

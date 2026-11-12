@@ -21,3 +21,19 @@ export interface ReactPropsTarget {
   fn: AstFunction
   typeArgument?: ESTree.TSType
 }
+
+export interface ReactDynamicClassesOptions {
+  attributes?: string[]
+  message?: string
+}
+
+export interface ReactEmptyEffectOptions {
+  hooks?: string[]
+  message?: string
+}
+
+export interface ReactMemoOptions {
+  names?: string[]
+  sources?: string[]
+  message?: string
+}

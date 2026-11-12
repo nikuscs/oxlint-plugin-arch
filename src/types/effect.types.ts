@@ -27,6 +27,7 @@ export interface EffectLayerFileOptions {
   layer?: string;
   make?: string;
   prefix?: string;
+  suffix?: string;
   builders?: string[];
   layers?: OptionsPattern;
   services?: OptionsPattern;

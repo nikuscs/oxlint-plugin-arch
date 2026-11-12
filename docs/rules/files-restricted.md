@@ -15,5 +15,5 @@ export const api = {}
 | `message` | `string` | required | Report text |
 
 ```ts
-'arch/files-restricted': ['error', { message: 'Legacy code is frozen; add new code under src/api.' }]
+{ files: ['src/legacy/**'], rules: { 'arch/files-restricted': ['error', { message: 'Legacy code is frozen; add new code under src/api.' }] } }
 ```

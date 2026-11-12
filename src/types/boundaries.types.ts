@@ -7,12 +7,27 @@ export interface BoundariesOptions {
   roles?: string[]
   surfaces?: string[]
   services?: string[]
-  portable?: boolean
+  portable?: boolean | string
+  conventions?: BoundariesConventions
   backendPackages: string[]
   appPackages: string[]
   aliases: Record<string, string>
   entrypoints: string[]
   uiPackages?: string[]
+}
+
+export interface BoundariesConventions {
+  services?: string
+  registry?: string
+  types?: string
+  lib?: string
+  contracts?: string[]
+  implementations?: string[]
+  implementationFolders?: string[]
+  operations?: string[]
+  operationFolders?: string[]
+  domainFiles?: string[]
+  clients?: string[]
 }
 
 export interface BoundariesImport {
@@ -28,7 +43,19 @@ export interface BoundariesImport {
   backendImport: boolean
 }
 
+export interface BoundariesRuntimeConventions {
+  server?: string[]
+  rsc?: string[]
+  actions?: string[]
+  client?: string[]
+  clientOnly?: string[]
+  hooks?: string[]
+  shared?: string[]
+  lib?: string
+}
+
 export interface BoundariesNextOptions extends Partial<Pick<BoundariesOptions, 'web' | 'backend' | 'aliases' | 'backendPackages'>> {
+  conventions?: BoundariesRuntimeConventions
   server?: string[]
   client?: string[]
   dynamic?: string[]

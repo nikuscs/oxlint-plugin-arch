@@ -17,5 +17,7 @@ describe('arch/react-empty-effect', () => {
     { name: 'React namespace layout effect fails', code: 'React.useLayoutEffect(function () {}, [])', errors: ['forbidden'] },
     { name: 'comment does not count as work', code: 'useEffect(() => { /* reserved */ }, [])', errors: ['forbidden'] },
     { name: 'custom message is reported', code: 'useEffect(() => {}, [])', options: { message: 'Delete unused effects.' }, errors: ['Delete unused effects.'] },
+    { name: 'custom hooks are checked', code: 'createEffect(() => {})', options: { hooks: ['createEffect'] }, errors: ['forbidden'] },
+    { name: 'custom hooks replace the defaults', code: 'useEffect(() => {}, [])', options: { hooks: ['createEffect'] } },
   ])('$name', (row) => testerRun(reactEmptyEffect, row))
 })

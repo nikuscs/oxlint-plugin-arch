@@ -285,5 +285,25 @@ describe('arch/boundaries-next', () => {
       options: { web: ['/repo/web/src'], backend: ['/repo/api/src'], aliases: { '@api': '/repo/api/src' }, backendPackages: ['@app/server'] },
       errors: ['computed'],
     },
+    { name: 'conventions rename server modules', filename: 'session.backend.ts', code: "import 'next/headers'", options: { conventions: { server: ['backend'] } } },
+    { name: 'conventions replace the server suffix', filename: 'session.server.ts', code: "import 'next/headers'", options: { conventions: { server: ['backend'] } }, errors: ['runtime'] },
+    { name: 'conventions rename action modules', filename: 'chat.mutation.ts', code: 'export const save = () => 1', options: { conventions: { actions: ['mutation'] } }, errors: ['action'] },
+    { name: 'conventions rename client modules', filename: 'chat.browser.ts', code: "'use server'", options: { conventions: { client: ['browser'] } }, errors: ['directive'] },
+    { name: 'conventions rename the hooks folder', filename: 'chat.server.ts', code: "import { useChat } from './composables/use-chat'", options: { conventions: { hooks: ['composables'] } }, errors: ['runtime'] },
+    { name: 'conventions rename client-only files', filename: 'chat.server.ts', code: "import { track } from './chat.browser-only'", options: { conventions: { clientOnly: ['browser-only'] } }, errors: ['runtime'] },
+    {
+      name: 'conventions rename shared files',
+      filename: 'chat.helpers.ts',
+      code: "import 'next/headers'",
+      options: { conventions: { shared: ['helpers'] } },
+      errors: ['next/headers is not valid here: shared utilities/constants/lib cannot import server-only dependencies.'],
+    },
+    {
+      name: 'conventions rename the shared lib folder',
+      filename: '/project/web/common/format.ts',
+      code: "import 'next/headers'",
+      options: { web: ['/project/web'], conventions: { lib: 'common' } },
+      errors: ['next/headers is not valid here: shared utilities/constants/lib cannot import server-only dependencies.'],
+    },
   ])('$name', (row) => testerRun(boundariesNext, row))
 })

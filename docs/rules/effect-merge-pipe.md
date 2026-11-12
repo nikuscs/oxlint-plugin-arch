@@ -2,7 +2,7 @@
 
 A merge that spans lines is never piped: name it first, then pipe the name.
 
-It reports a `methods` call such as `.pipe(` on the merge, on its closing line or the next, and the merge as the first argument of a data-first `pipe(...)`.
+It reports a `methods` call such as `.pipe(` made directly on the merge, and the merge as the first argument of a data-first `pipe(...)`. A merge on one line may still be piped.
 
 ```ts
 // ❌

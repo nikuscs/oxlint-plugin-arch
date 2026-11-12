@@ -59,3 +59,8 @@ export interface NamingFolderOptions {
   prefixes?: string[]
   after?: string
 }
+
+export interface NamingTypesOptions {
+  pattern?: OptionsPattern
+  message?: string
+}

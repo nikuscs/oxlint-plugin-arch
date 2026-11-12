@@ -1,43 +1,71 @@
 import { defineRule } from '@oxlint/plugins'
 import { astMemberName, astModuleName } from '../../utils/ast.utils.ts'
 import { boundariesDeclaredVariable } from '../../utils/boundaries.utils.ts'
-
-const reactMemoNames = ['memo', 'useMemo', 'useCallback']
+import { optionsFirst } from '../../utils/options.utils.ts'
+import type { ReactMemoOptions } from '../../types/react.types.ts'
 
 export const reactMemo = defineRule({
   meta: {
     type: 'problem',
-    schema: [],
+    schema: [
+      {
+        type: 'object',
+        additionalProperties: false,
+        properties: {
+          names: { type: 'array', items: { type: 'string' } },
+          sources: { type: 'array', items: { type: 'string' } },
+          message: { type: 'string' },
+        },
+      },
+    ],
     messages: {
-      memo: 'Use the React Compiler rather than manual memoization.',
+      memo: '{{message}}',
     },
   },
   createOnce(context) {
+    let names: string[] = []
+    let sources: string[] = []
+    let message = ''
+
     return {
+      before() {
+        const options = optionsFirst<ReactMemoOptions>(context, {})
+        names = options.names ?? ['memo', 'useMemo', 'useCallback']
+        sources = options.sources ?? ['react']
+        message = options.message ?? 'Use the React Compiler rather than manual memoization.'
+      },
       ImportDeclaration(node) {
-        if (node.source.value !== 'react') {
+        if (!sources.includes(node.source.value)) {
           return
         }
 
         for (const specifier of node.specifiers) {
-          if (specifier.type === 'ImportSpecifier' && reactMemoNames.includes(astModuleName(specifier.imported))) {
-            context.report({ node: specifier, messageId: 'memo' })
+          if (specifier.type === 'ImportSpecifier' && names.includes(astModuleName(specifier.imported))) {
+            context.report({
+              node: specifier,
+              messageId: 'memo',
+              data: { message },
+            })
           }
         }
       },
       MemberExpression(node) {
-        if (node.object.type !== 'Identifier' || !reactMemoNames.includes(astMemberName(node) ?? '')) {
+        if (node.object.type !== 'Identifier' || !names.includes(astMemberName(node) ?? '')) {
           return
         }
 
         const variable = boundariesDeclaredVariable(context.sourceCode.getScope(node), node.object.name)
 
         const isReact = variable
-          ? variable.defs.some((def) => def.type === 'ImportBinding' && def.node.type !== 'ImportSpecifier' && def.parent?.type === 'ImportDeclaration' && def.parent.source.value === 'react')
-          : node.object.name === 'React'
+          ? variable.defs.some((def) => def.type === 'ImportBinding' && def.node.type !== 'ImportSpecifier' && def.parent?.type === 'ImportDeclaration' && sources.includes(def.parent.source.value))
+          : node.object.name === 'React' && sources.includes('react')
 
         if (isReact) {
-          context.report({ node, messageId: 'memo' })
+          context.report({
+            node,
+            messageId: 'memo',
+            data: { message },
+          })
         }
       },
     }

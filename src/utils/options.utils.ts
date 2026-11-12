@@ -62,3 +62,7 @@ export function optionsAssertMockingApis(patterns: string[]): void {
     throw new OptionsError('Test mocking APIs must be `*` or `<vi|jest|*>.<method|*>`.')
   }
 }
+
+export function optionsEscape(value: string): string {
+  return value.replaceAll(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}

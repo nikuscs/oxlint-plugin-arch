@@ -1,6 +1,8 @@
 # arch/backend-orpc-output
 
-Reports a `.handler()` chain without `.output()`, and an `.output()` whose schema is not an identifier or a plain function called with one. A member call (`z.array(Order)`), a nested call and an inline object are reported.
+Reports a `.handler()` chain without `.output()`, and an `.output()` whose schema is not an identifier or a plain function whose first argument is an identifier. A member call (`z.array(Order)`), a nested call and an inline object are reported.
+
+Any call to a method named `handler` counts as a procedure end, so enable the rule only for files that hold oRPC procedures.
 
 ```ts
 // ❌
@@ -18,4 +20,5 @@ export const listChats = os.output(paged(Chat)).handler(() => chats.list())
 
 ```ts
 'arch/backend-orpc-output': 'error'
+'arch/backend-orpc-output': ['error', { handler: 'handle', output: 'returns' }]
 ```

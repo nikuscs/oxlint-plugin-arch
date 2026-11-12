@@ -11,6 +11,7 @@ export interface LayoutCallArgumentsOptions {
   min?: number
   indent?: SourceIndent
   split?: boolean
+  pipe?: { min: number; methods?: string[] }
   hug?: { max: number }
   join?: { max: number; nesting?: number; items?: number; keep?: string[] }
 }
@@ -55,6 +56,10 @@ export interface LayoutObjectOptions {
   min?: number
   scope?: LayoutObjectScope
   indent?: SourceIndent
+  params?: boolean
+  nested?: boolean
+  siblings?: boolean
+  inner?: number
   join?: { max: number; keep?: string[] }
 }
 
@@ -66,6 +71,15 @@ export interface LayoutPaddingOptions {
 }
 
 export type LayoutPaddingKind = 'variable' | 'block' | 'control' | 'return' | 'other'
+
+export interface LayoutPipeOptions {
+  methods?: string[]
+}
+
+export interface LayoutTypeArgumentsOptions {
+  min?: number
+  indent?: SourceIndent
+}
 
 export interface LayoutTernaryOptions {
   max?: number
@@ -80,6 +94,7 @@ export interface LayoutItemsOptions {
 
 export interface LayoutCallDepthOptions {
   max?: number
+  callbacks?: boolean
 }
 
 export interface LayoutArrowBodyOptions {

@@ -1,7 +1,7 @@
 import { defineRule } from '@oxlint/plugins'
 import { astDeclaration, astDottedName, astIsInlineFunction, astUnwrap, astVisit } from '../../utils/ast.utils.ts'
 import { effectBuilders, effectGenerator, effectIsBuilder, effectMatches } from '../../utils/effect.utils.ts'
-import { optionsFirst, optionsPatterns, optionsPatternSchema, optionsPatternsTest } from '../../utils/options.utils.ts'
+import { optionsEscape, optionsFirst, optionsPatterns, optionsPatternSchema, optionsPatternsTest } from '../../utils/options.utils.ts'
 import type { EffectLayerFileOptions } from '../../types/effect.types.ts'
 import type { ESTree } from '@oxlint/plugins'
 
@@ -31,6 +31,7 @@ export const effectLayerFile = defineRule({
           layer: { type: 'string' },
           make: { type: 'string' },
           prefix: { type: 'string' },
+          suffix: { type: 'string' },
           builders: { type: 'array', items: { type: 'string' } },
           layers: optionsPatternSchema,
           services: optionsPatternSchema,
@@ -43,8 +44,8 @@ export const effectLayerFile = defineRule({
       notLayer: '`{{layer}}` is built with Layer: a Layer call, a Layer pipe, or a function returning one.',
       builderName: 'The Effect that builds the service is named `{{make}}`, one per layer file.',
       moduleMethod: 'Only `{{make}}` is an Effect at module level; move this into `{{make}}`, or into a utils file if two files use it.',
-      moduleHelper: 'A layer file holds only `{{make}}`, {{prefix}}<Role> layers and `{{layer}}`; move this into `{{make}}`, or into a utils file if two files use it.',
-      localLayer: 'A Layer other than `{{layer}}` is named {{prefix}}<Role> and is not exported.',
+      moduleHelper: 'A layer file holds only `{{make}}`, {{prefix}}<Role>{{suffix}} layers and `{{layer}}`; move this into `{{make}}`, or into a utils file if two files use it.',
+      localLayer: 'A Layer other than `{{layer}}` is named {{prefix}}<Role>{{suffix}} and is not exported.',
       makeReturn: '`{{make}}` returns the service through its tag (Tag.of({ … })), a Context, or a Layer.',
       inlineBuilder: 'Build this layer from `{{make}}`, not an inline Effect: Layer.effect(Tag, {{make}}). One built layer per file.',
     },
@@ -53,6 +54,7 @@ export const effectLayerFile = defineRule({
     let layer = 'layer'
     let make = 'make'
     let prefix = 'layer'
+    let suffix = ''
     let builders = new Set(effectBuilders)
     let layers: RegExp[] = []
     let services: RegExp[] = []
@@ -75,14 +77,17 @@ export const effectLayerFile = defineRule({
         const options = optionsFirst<EffectLayerFileOptions>(context, {})
         layer = options.layer ?? 'layer'
         make = options.make ?? 'make'
-        prefix = options.prefix ?? 'layer'
+        suffix = options.suffix ?? ''
+        prefix = options.prefix ?? (suffix ? '' : 'layer')
         builders = new Set(options.builders ?? effectBuilders)
         constructors = new Set(options.constructors ?? effectLayerFileDefaultConstructors)
-        layers = optionsPatterns(options.layers ?? effectLayerFileDefaultLayers)
+        layers = optionsPatterns(
+          options.layers ?? [...effectLayerFileDefaultLayers, ...(suffix ? [`(?:^|\\.)\\w+${optionsEscape(suffix)}$`] : [])],
+        )
         services = [...optionsPatterns(options.services ?? effectLayerFileDefaultServices), ...layers]
       },
       Program(program) {
-        const data = { layer, make, prefix }
+        const data = { layer, make, prefix, suffix }
 
         const declarators = program.body.flatMap((statement) => {
           const declaration = astDeclaration(statement)
@@ -158,7 +163,9 @@ export const effectLayerFile = defineRule({
             })
           }
 
-          if (isLayer && name !== layer && (exported || !name.startsWith(prefix) || !/^[A-Z]\w*$/.test(name.slice(prefix.length)))) {
+          const role = name.endsWith(suffix) ? name.slice(prefix.length, name.length - suffix.length) : ''
+
+          if (isLayer && name !== layer && (exported || !name.startsWith(prefix) || !/^[A-Z]\w*$/.test(role))) {
             context.report({
               node,
               messageId: 'localLayer',
@@ -199,7 +206,7 @@ export const effectLayerFile = defineRule({
             context.report({
               node: argument,
               messageId: 'inlineBuilder',
-              data: { layer, make, prefix },
+              data: { layer, make, prefix, suffix },
             })
           }
         }
