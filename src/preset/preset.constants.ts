@@ -420,6 +420,11 @@ export const presetEffectImports = {
   dayjs: 'Use effect/DateTime.',
 }
 
+export const presetEffectServerImports = {
+  ai: 'Use effect/ai.',
+  '@ai-sdk/**': 'Use effect/ai.',
+}
+
 export const presetRecipeMark = Symbol('recipe')
 
 export const presetDetectBackend = ['@orpc/server', 'hono', 'kysely', 'drizzle-orm', 'express', 'fastify', 'elysia']

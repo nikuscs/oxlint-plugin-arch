@@ -1,7 +1,7 @@
 import { existsSync, readdirSync } from 'node:fs'
 import { posix, resolve } from 'node:path'
 import { presetRecipes } from './preset-recipes.ts'
-import { presetBaseImports, presetEffectImports, presetQueryWrites, presetTanstackRsc } from './preset.constants.ts'
+import { presetBaseImports, presetEffectImports, presetEffectServerImports, presetQueryWrites, presetTanstackRsc } from './preset.constants.ts'
 import { presetFilled, presetIsDirectory, presetIsFile, presetManifest, presetMerge, presetSource } from './preset.utils.ts'
 import type * as PresetTypes from '../types/preset.types.ts'
 
@@ -193,10 +193,11 @@ function presetEffectUnit(root: string, key: string, value: PresetTypes.PresetFo
   const keys = server || contract ? presetFilled(server ? presetEffectServerKeys(at) : presetEffectContractKeys(at), presetEffectExists(root, key)) : {}
   const errors = Object.fromEntries(presetEffectErrors.map((name) => [name, 'Tagged errors live in <d>.errors.ts.']))
   const placement: PresetTypes.PresetFolder = server || contract ? { types: { placement: false } } : {}
+  const imports = server || contract ? { ...presetEffectImports, ...presetEffectServerImports } : presetEffectImports
 
   return {
     ...keys,
-    '.': presetMerge({ ...placement, deny: { imports: presetEffectImports, calls: errors } }, keys['.'] ?? {}),
+    '.': presetMerge({ ...placement, deny: { imports, calls: errors } }, keys['.'] ?? {}),
     [at('**/*.errors.ts')]: { deny: { calls: Object.fromEntries(presetEffectErrors.map((name) => [name, false])) } },
   }
 }

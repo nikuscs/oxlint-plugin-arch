@@ -72,7 +72,7 @@ export const effectGroup: PresetBuilder<'effect'> = (project, settings) => {
       'arch/code-switch': ['error', { message: 'Branch with Match.' }],
       'arch/naming-exports': 'off',
       'arch/code-function-nesting': ['error', { max: 4 }],
-      'arch/code-inline': ['error', { max, nesting: 2, keep: ['^[A-Z]', '^layer'], allow: '^(?:decode|encode)[A-Z]', services: ['of'] }],
+      'arch/code-inline': ['error', { max, nesting: 2, callbacks: true, keep: ['^[A-Z]', '^layer'], allow: '^(?:decode|encode)[A-Z]', services: ['of'] }],
       'arch/code-yield-argument': 'error',
       'arch/effect-layers': 'error',
       'arch/effect-merge-pipe': 'error',

@@ -4,7 +4,7 @@ import { presetDetect, presetRegistryFile } from './preset-detect.ts'
 import { presetStylesheet } from './preset-stylesheet.ts'
 import { presetUnits } from './preset-units.ts'
 import * as PresetConstants from './preset.constants.ts'
-import { PresetError, presetGlobEscape, presetIntersect, presetIsDirectory, presetIsFile, presetManifest, presetMerge, presetScopes, presetServiceScopes } from './preset.utils.ts'
+import { PresetError, presetFileOverlaps, presetGlobEscape, presetIntersect, presetIsDirectory, presetIsFile, presetManifest, presetMerge, presetScopes, presetServiceScopes } from './preset.utils.ts'
 import type * as PresetTypes from '../types/preset.types.ts'
 
 function presetPortableKey(key: string): string {
@@ -313,7 +313,15 @@ export function presetProject(config: PresetTypes.PresetConfig): PresetTypes.Pre
     throw new PresetError(`Folder \`${dead.key}\` sits inside the skipped folder \`${dead.parent?.key}\`.`)
   }
 
-  const fileKeys = fileEntries.flatMap(([key, value]): PresetTypes.PresetFileKey[] => {
+  const keyFor = (pattern: string, folder: PresetTypes.PresetFolder): PresetTypes.PresetFileKey => {
+    const reached = live
+      .filter((scope) => presetIntersect(pattern, scope.key).length > 0)
+      .map((scope) => ({ key: scope.key, parent: scope, depth: scope.depth, folder, effective: presetEffective(folder, scope.effective) }))
+
+    return { pattern, folder, scopes: reached }
+  }
+
+  const fileKeys = presetFileOverlaps(root, keyFor, fileEntries.flatMap(([key, value]): PresetTypes.PresetFileKey[] => {
     if (value === false) {
       return []
     }
@@ -329,14 +337,8 @@ export function presetProject(config: PresetTypes.PresetConfig): PresetTypes.Pre
       throw new PresetError(`Set layout.operations on an app or package folder, not on \`${key}\`.`)
     }
 
-    const pattern = presetGlobEscape(key)
-
-    const reached = live
-      .filter((scope) => presetIntersect(pattern, scope.key).length > 0)
-      .map((scope) => ({ key: scope.key, parent: scope, depth: scope.depth, folder, effective: presetEffective(folder, scope.effective) }))
-
-    return [{ pattern, folder, scopes: reached }]
-  })
+    return [keyFor(presetGlobEscape(key), folder)]
+  }))
 
   const units = presetUnits(root, scopes, ignored)
 

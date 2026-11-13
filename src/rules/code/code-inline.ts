@@ -60,6 +60,7 @@ export const codeInline = defineRule({
         properties: {
           max: { type: 'integer', minimum: 1, default: 160 },
           nesting: { type: 'integer', minimum: 1, default: 2 },
+          callbacks: { type: 'boolean', default: false },
           allow: optionsPatternSchema,
           keep: optionsPatternSchema,
           services: { type: 'array', items: { type: 'string' } },
@@ -93,7 +94,13 @@ export const codeInline = defineRule({
       }
 
       if (uses.length === 1) {
-        if (init && codeInlineEffectBetween(context.sourceCode.ast, node.range[1], uses[0].identifier.range[0])) {
+        const use = uses[0].identifier
+
+        if (
+          init &&
+          (codeInlineEffectBetween(context.sourceCode.ast, node.range[1], use.range[0]) ||
+            codeInlineEnclosingCalls(use) + astCallDepth(init, options.callbacks ?? false) > (options.nesting ?? 2))
+        ) {
           return
         }
 
@@ -108,8 +115,20 @@ export const codeInline = defineRule({
 
       const arrow = init?.type === 'ArrowFunctionExpression' && init.body.type !== 'BlockStatement' && !astSome(init.body, astIsInlineFunction)
       const call = init?.type === 'CallExpression' && !astSome(init.arguments, astIsInlineFunction) && astCallDepth(init) <= 2
+      const text = context.sourceCode.text
 
-      if (!optionsPatternsTest(kept, id.name) && (arrow || call)) {
+      const fits =
+        init !== null &&
+        uses.every(({ identifier }) => {
+          const line = text.slice(sourceLineStart(text, identifier.range[0]), sourceLineEnd(text, identifier.range[0]))
+
+          return (
+            line.length - id.name.length + context.sourceCode.getText(init).length <= (options.max ?? 160) &&
+            codeInlineEnclosingCalls(identifier) + astCallDepth(init, options.callbacks ?? false) <= (options.nesting ?? 2)
+          )
+        })
+
+      if (!optionsPatternsTest(kept, id.name) && (arrow || call) && fits) {
         context.report({
           node: id,
           messageId: 'trivial',
@@ -149,7 +168,7 @@ export const codeInline = defineRule({
         service ||
         wrapped ||
         deferred ||
-        codeInlineEnclosingCalls(use) + astCallDepth(init) > (options.nesting ?? 2) ||
+        codeInlineEnclosingCalls(use) + astCallDepth(init, options.callbacks ?? false) > (options.nesting ?? 2) ||
         line.length - id.name.length + context.sourceCode.getText(init).length > (options.max ?? 160) ||
         codeInlineEffectBetween(context.sourceCode.ast, declarator.range[1], use.range[0])
       ) {

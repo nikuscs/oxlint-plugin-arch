@@ -104,5 +104,14 @@ describe('arch/layout-call-arguments', () => {
     { name: 'pipe methods are configurable', code: 'run.chain(a, b, c)', options: { split: false, pipe: { min: 3, methods: ['chain'] } }, output: 'run.chain(\n  a,\n  b,\n  c\n)', errors: ['pipe'] },
     { name: 'pipe keeps a split one-step pipe from join', code: 'change.pipe(\n  mapError(f),\n)', options: { split: false, pipe: { min: 2 }, join: { max: 140 } } },
     { name: 'join still joins a one-step pipe without pipe', code: 'change.pipe(\n  mapError(f),\n)', options: { split: false, join: { max: 140 } }, output: 'change.pipe(mapError(f),)', errors: ['join'] },
+    {
+      name: 'hug splits a call whose argument drops to the next line but not its close',
+      code: 'const posts = optional(\n  schema.check(isInt(), isPositive()))',
+      options: { split: false, hug: { max: 140 } },
+      output: 'const posts = optional(\n  schema.check(isInt(), isPositive())\n)',
+      errors: ['hug'],
+    },
+    { name: 'hug passes a fully split call', code: 'const posts = optional(\n  schema.check(isInt(), isPositive()),\n)', options: { split: false, hug: { max: 140 } } },
+    { name: 'hug reports a parenthesized argument without a fix', code: 'const posts = optional(\n  (schema.check(isInt())))', options: { split: false, hug: { max: 140 } }, output: null, errors: ['hug'] },
   ])('$name', (row) => testerRun(layoutCallArguments, row))
 })

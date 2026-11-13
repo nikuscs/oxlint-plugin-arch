@@ -20,5 +20,17 @@ describe('arch/code-inline', () => {
     { name: 'a trivial top-level wrapper fails', code: 'const send = (id) => post(id)\nsend(1)\nsend(2)', errors: ['trivial'] },
     { name: 'keep skips the trivial check', code: 'const Send = (id) => post(id)\nSend(1)\nSend(2)', options: { keep: '^[A-Z]' } },
     { name: 'allow skips a name', code: 'const decodeUser = load()\nsave(decodeUser)', options: { allow: '^decode' } },
+    {
+      name: 'callbacks keep a value named for depth',
+      code: 'const urlFilter = makeFilter((value) => URL.canParse(value))\nexport const Url = check(urlFilter)',
+      options: { callbacks: true },
+    },
+    { name: 'callbacks off still inlines the filter', code: 'const urlFilter = makeFilter((value) => URL.canParse(value))\nexport const Url = check(urlFilter)', errors: ['once'] },
+    { name: 'a top-level value that would nest too deep stays named', code: 'const parsed = parse(read(input))\nexport const value = save(parsed)' },
+    {
+      name: 'a wrapper that would make a use too long stays named',
+      code: 'const count = Schema.Union([Schema.Int, Schema.FiniteFromString]).check(Schema.isInt(), Schema.isGreaterThanOrEqualTo(0))\nconst numbers = { posts: Schema.optional(count), old: Schema.optional(count) }',
+      options: { max: 120 },
+    },
   ])('$name', (row) => testerRun(codeInline, row))
 })

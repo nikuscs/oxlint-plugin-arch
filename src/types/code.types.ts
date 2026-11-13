@@ -81,6 +81,7 @@ export interface CodeTrivialFunctionsGuardState {
 export interface CodeInlineOptions {
   max?: number
   nesting?: number
+  callbacks?: boolean
   allow?: OptionsPattern
   keep?: OptionsPattern
   services?: string[]

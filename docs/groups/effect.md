@@ -38,6 +38,8 @@ Every unit with the `effect` group on, in either mode (detected for a workspace 
 | `ts-pattern` | Use effect/Match. |
 | `dayjs` | Use effect/DateTime. |
 
+An Effect server or contract package also bans `ai` and `@ai-sdk/**` with "Use effect/ai."; frontend packages keep them.
+
 A React package or framework app that depends on `effect` keeps its own recipe and gets `effect: { code: false }`: the project style and the import bans, no Effect code rules.
 
 [`arch/effect-layer-file`](../rules/effect-layer-file.md) and [`arch/effect-schema-first`](../rules/effect-schema-first.md) need your layer and types file globs, so the group leaves them off.

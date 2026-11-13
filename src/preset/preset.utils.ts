@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, statSync } from 'node:fs'
+import { existsSync, globSync, readFileSync, statSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { posix, resolve } from 'node:path'
 import { presetExtensions, presetGeneratedFiles, presetLiteralSegment } from './preset.constants.ts'
@@ -155,6 +155,34 @@ export function presetIntersect(glob: string, scope: string): string[] {
 
 export function presetGlobEscape(path: string): string {
   return path.replaceAll(/[[\]]/g, (bracket) => `[${bracket}]`)
+}
+
+export function presetFileOverlaps(
+  root: string,
+  build: (pattern: string, folder: PresetTypes.PresetFolder) => PresetTypes.PresetFileKey,
+  keys: PresetTypes.PresetFileKey[],
+): PresetTypes.PresetFileKey[] {
+  const matched = new Map<string, PresetTypes.PresetFileKey[]>()
+
+  for (const key of keys) {
+    for (const path of globSync(key.pattern, { cwd: root, exclude: (name) => posix.basename(name) === 'node_modules' })) {
+      matched.set(path, [...(matched.get(path) ?? []), key])
+    }
+  }
+
+  const reach = new Map(keys.map((key) => [key, [...matched.values()].filter((found) => found.includes(key)).length]))
+
+  const merged = [...matched].flatMap(([path, found]) => {
+    if (found.length < 2) {
+      return []
+    }
+
+    const ordered = found.toSorted((left, right) => (reach.get(right) ?? 0) - (reach.get(left) ?? 0))
+
+    return [build(presetGlobEscape(path), ordered.reduce<PresetTypes.PresetFolder>((folder, key) => Object(presetMerge(folder, key.folder)), {}))]
+  })
+
+  return [...keys, ...merged]
 }
 
 export function presetAliases(root: string, aliases: Record<string, string> | undefined): Record<string, string> {

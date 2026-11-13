@@ -7,9 +7,11 @@ Preset defaults that change what an app reports:
 - `effect` group: `layout-call-arguments` adds `pipe: { min: 2 }`; `layout-call-depth` counts through callbacks; `layout-object` adds `params`, `nested`, `siblings` and `inner: 2`; `layout-ternary` splits a one-line ternary over 100 columns (was `fit: false`); `layout-type-arguments` is on with `min: 3`.
 - Effect servers: `comments-code` keeps one-line step comments (`steps: true`); `effect-layer-file` names local layers `<Role>Layer` (`suffix: 'Layer'`). An app that keeps `layer<Role>` writes `'apps/server/src/domains/*/*.layer.ts': { rules: { 'arch/effect-layer-file': 'error' } }`.
 - `sql` group: `layout-chain` breaks Kysely chains of 3+ calls.
+- Effect servers and contract packages ban `ai` and `@ai-sdk/**` ("Use effect/ai.").
 
 Rules and options:
 
+- Preset: when several file keys match one file, their settings merge on it, broadest key first; before, the later key's group or `rules` replaced the earlier one's, so a broad key could undo a convention's exception.
 - `boundaries-*`: the `@/`, `#/` and `#services/` prefixes resolve `..` segments, so `#services/chat/../service` reaches the registry check.
 - `react-memo` also reports `R['memo']` and a `{ default as R }` import.
 - Vendored `require-safety-comment-for-type-assertion` matches a `comment` that starts with a non-ASCII letter.
@@ -25,7 +27,9 @@ Rules and options:
 - New `layout-type-arguments`: a one-line type argument list holding a union of `min` types puts each type on its own line, each after a leading `|`.
 - `layout-object` `nested` reports without a fix inside a ternary or before a chained call; new `inner` splits an object with `inner` or more entries inside a split object, at every depth; new `siblings` splits an object argument to match a split sibling call in the same array.
 - With `layout-call-arguments` `pipe` set, `join` leaves every pipe as written.
-- `layout-call-depth` takes `callbacks`, which counts nesting through inline callbacks.
+- `layout-call-arguments` `hug` also reports a call whose argument drops to the next line while `)` stays on it, and splits it fully.
+- `code-inline` no longer asks to inline a top-level value when the result would pass `max` columns or `nesting`.
+- `layout-call-depth` takes `callbacks`, which counts nesting through inline callbacks; `code-inline` takes the same `callbacks`, and the `effect` group sets both.
 
 ## 0.13.0
 

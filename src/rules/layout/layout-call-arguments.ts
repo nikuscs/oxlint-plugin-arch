@@ -146,7 +146,22 @@ export const layoutCallArguments = defineRule({
       const open = source.getTokenAfter(node.typeArguments ?? node.callee)
       const close = source.getLastToken(node)
 
-      if (!first || !last || !open || !close || args.every(astIsOneLine) || source.getCommentsInside(node).length > 0) {
+      if (!first || !last || !open || !close || source.getCommentsInside(node).length > 0) {
+        return
+      }
+
+      if (args.every(astIsOneLine)) {
+        if (first.loc.start.line > open.loc.end.line && close.loc.start.line === last.loc.end.line) {
+          const newline = sourceNewline(text)
+          const base = sourceLineIndent(text, open.range[0])
+
+          context.report({
+            node,
+            messageId: 'hug',
+            fix: (fixer) => sourceRespace(fixer, text, sourceItemGaps(open.range[1], args, close.range[0]), (_, end) => `${newline}${end ? base : `${base}${indentUnit}`}`),
+          })
+        }
+
         return
       }
 

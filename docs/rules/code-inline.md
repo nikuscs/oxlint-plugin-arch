@@ -17,11 +17,12 @@ save(load())
 | --- | --- | --- | --- |
 | `max` | `number` | `160` | Longest line the inlined value may produce (at least 1) |
 | `nesting` | `number` | `2` | Deepest call nesting the inlined value may produce (at least 1) |
+| `callbacks` | `boolean` | `false` | Count nesting through inline callbacks, as [`layout-call-depth`](layout-call-depth.md) does with `callbacks`; pair the two so a value that rule asks you to name is not inlined back |
 | `allow` | `string \| string[]` | | Regex for names never reported |
 | `keep` | `string \| string[]` | | Regex for top-level names skipped by the wrapper check |
 | `services` | `string[]` | `[]` | Methods whose object argument names service members; a value passed there is kept, such as `send` in `Mail.of({ send })` |
 
-`max`, `nesting` and `services` apply to locals; `keep` only to the top-level wrapper check; `allow` to both.
+`max`, `nesting` and `callbacks` apply everywhere: nothing is inlined where the result would pass `max` columns or `nesting`. `services` applies to locals, `keep` only to the top-level wrapper check, and `allow` to both.
 
 ```ts
 'arch/code-inline': ['error', { max: 140, keep: '^[A-Z]', services: ['of'] }]
