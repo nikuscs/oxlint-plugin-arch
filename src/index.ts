@@ -43,6 +43,7 @@ import { filesHelpers } from './rules/files/files-helpers.ts'
 import { filesNoFunctions } from './rules/files/files-no-functions.ts'
 import { filesRestricted } from './rules/files/files-restricted.ts'
 import { filesRoute } from './rules/files/files-route.ts'
+import { filesTopLevel } from './rules/files/files-top-level.ts'
 import { filesTypesOnly } from './rules/files/files-types-only.ts'
 import { layoutArrowBody } from './rules/layout/layout-arrow-body.ts'
 import { layoutCallArguments } from './rules/layout/layout-call-arguments.ts'
@@ -61,6 +62,7 @@ import { namingDeclarations } from './rules/naming/naming-declarations.ts'
 import { namingExports } from './rules/naming/naming-exports.ts'
 import { namingFile } from './rules/naming/naming-file.ts'
 import { namingFolder } from './rules/naming/naming-folder.ts'
+import { namingImports } from './rules/naming/naming-imports.ts'
 import { namingTypes } from './rules/naming/naming-types.ts'
 import { reactDynamicClasses } from './rules/react/react-dynamic-classes.ts'
 import { reactEmptyEffect } from './rules/react/react-empty-effect.ts'
@@ -131,6 +133,7 @@ export default eslintCompatPlugin({
     'files-no-functions': filesNoFunctions,
     'files-restricted': filesRestricted,
     'files-route': filesRoute,
+    'files-top-level': filesTopLevel,
     'files-types-only': filesTypesOnly,
     'layout-arrow-body': layoutArrowBody,
     'layout-call-arguments': layoutCallArguments,
@@ -149,6 +152,7 @@ export default eslintCompatPlugin({
     'naming-exports': namingExports,
     'naming-file': namingFile,
     'naming-folder': namingFolder,
+    'naming-imports': namingImports,
     'naming-types': namingTypes,
     'react-dynamic-classes': reactDynamicClasses,
     'react-empty-effect': reactEmptyEffect,

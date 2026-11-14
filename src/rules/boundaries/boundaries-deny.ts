@@ -1,6 +1,6 @@
 import { defineRule } from '@oxlint/plugins'
 import { boundariesLiteralSource, boundariesMemberName } from '../../utils/boundaries.utils.ts'
-import { optionsFirst, optionsGlob } from '../../utils/options.utils.ts'
+import { optionsFirst, optionsGlob, optionsPatternSchema } from '../../utils/options.utils.ts'
 import type { BoundariesDenyOptions } from '../../types/boundaries.types.ts'
 import type { ESTree } from '@oxlint/plugins'
 
@@ -25,6 +25,16 @@ export const boundariesDeny = defineRule({
         properties: {
           imports: { type: 'object', additionalProperties: { type: 'string' } },
           calls: { type: 'object', additionalProperties: { type: 'string' } },
+          only: {
+            type: 'array',
+            items: {
+              type: 'object',
+              additionalProperties: false,
+              properties: { imports: optionsPatternSchema, calls: optionsPatternSchema, in: optionsPatternSchema, message: { type: 'string' } },
+              required: ['in'],
+              anyOf: [{ required: ['imports'] }, { required: ['calls'] }],
+            },
+          },
         },
       },
     ],
@@ -53,8 +63,23 @@ export const boundariesDeny = defineRule({
       before() {
         const options = optionsFirst<BoundariesDenyOptions>(context, {})
 
-        imports = Object.entries(options.imports ?? {}).map(([pattern, message]) => [optionsGlob(pattern), message && ` ${message}`])
-        calls = new Map(Object.entries(options.calls ?? {}).map(([name, message]) => [name, message && ` ${message}`]))
+        const filename = context.filename.replaceAll('\\', '/')
+
+        const elsewhere = (options.only ?? []).filter((entry) =>
+          ![entry.in].flat().some((place) => optionsGlob(`**/${place}{,/**}`).test(filename)),
+        )
+
+        const owned = (entry: (typeof elsewhere)[number]) => ` ${entry.message ?? `Only ${[entry.in].flat().join(', ')} may use it.`}`
+
+        imports = [
+          ...Object.entries(options.imports ?? {}).map(([pattern, message]): [RegExp, string] => [optionsGlob(pattern), message && ` ${message}`]),
+          ...elsewhere.flatMap((entry) => [entry.imports ?? []].flat().map((pattern): [RegExp, string] => [optionsGlob(pattern), owned(entry)])),
+        ]
+
+        calls = new Map([
+          ...elsewhere.flatMap((entry) => [entry.calls ?? []].flat().map((name): [string, string] => [name, owned(entry)])),
+          ...Object.entries(options.calls ?? {}).map(([name, message]): [string, string] => [name, message && ` ${message}`]),
+        ])
 
         if (imports.length === 0 && calls.size === 0) {
           return false

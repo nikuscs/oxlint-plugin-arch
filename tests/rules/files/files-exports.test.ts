@@ -298,5 +298,22 @@ describe('arch/files-exports', () => {
       options: { stem: 'folder', patterns: ['{Domain}\\w*'] },
       errors: ['extraExport'],
     },
+    { name: 'a name reads the folder and the file', filename: 'invoice/send.ts', code: 'export const invoiceSend = 1', options: { names: ['{folder}{Stem}'] } },
+    { name: 'a name reads the parent folder', filename: 'billing/actions/send.ts', code: 'export const billingSend = 1', options: { names: ['{parent}{Stem}'] } },
+    {
+      name: 'a pattern reads captures from the path',
+      filename: 'invoice/actions/send.ts',
+      code: 'export const invoiceActionSend = 1\nexport type InvoiceActionSendInput = string',
+      options: { file: '{area}/actions/{verb}.ts', patterns: ['{area}Action{Verb}', '{Area}Action{Verb}\\w+'] },
+    },
+    { name: 'a file outside the template is skipped', filename: 'invoice/send.ts', code: 'export const anything = 1', options: { file: '{area}/actions/{verb}.ts', names: ['{area}Action{Verb}'] } },
+    { name: 'an export off the folder and file name', filename: 'invoice/send.ts', code: 'export const send = 1', options: { names: ['{folder}{Stem}'] }, errors: ['extraExport'] },
+    {
+      name: 'an export off the path captures',
+      filename: 'invoice/actions/send.ts',
+      code: 'export const invoiceSend = 1',
+      options: { file: '{area}/actions/{verb}.ts', patterns: ['{area}Action{Verb}'] },
+      errors: ['extraExport'],
+    },
   ])('$name', (row) => testerRun(filesExports, row))
 })

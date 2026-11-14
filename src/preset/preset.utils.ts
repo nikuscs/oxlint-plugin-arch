@@ -1,7 +1,7 @@
 import { existsSync, globSync, readFileSync, statSync } from 'node:fs'
 import { createRequire } from 'node:module'
 import { posix, resolve } from 'node:path'
-import { presetExtensions, presetGeneratedFiles, presetLiteralSegment } from './preset.constants.ts'
+import { presetExtensions, presetGeneratedFiles, presetLayoutFileName, presetLiteralSegment } from './preset.constants.ts'
 import type * as PresetTypes from '../types/preset.types.ts'
 import type { OxlintOverride } from 'oxlint'
 
@@ -303,6 +303,31 @@ export function presetMerge(base: boolean | PresetTypes.PresetFolder | undefined
   const merged = presetMergeObject(base, top, 2)
   const before = base.layout instanceof Object ? base.layout.files : undefined
   const after = top.layout instanceof Object ? top.layout.files : undefined
+  const owned = [base.deny, top.deny].flatMap((deny) => (deny instanceof Object ? (deny.only ?? []) : []))
+
+  if (owned.length > 0 && merged.deny instanceof Object) {
+    merged.deny = { ...merged.deny, only: owned }
+  }
 
   return before && after && merged.layout instanceof Object ? { ...merged, layout: { ...merged.layout, files: [...before, ...after] } } : merged
+}
+
+export function presetNames(inherited: string[], entries: unknown, option: string): string[] {
+  if (!Array.isArray(entries) || !entries.every((entry) => typeof entry === 'string' && presetLayoutFileName.test(entry))) {
+    throw new PresetError(`${option} takes file names such as \`*.prompts.ts\`; \`!*.utils.ts\` removes one.`)
+  }
+
+  const names = [...inherited]
+
+  for (const entry of entries) {
+    const index = names.indexOf(entry.startsWith('!') ? entry.slice(1) : entry)
+
+    if (entry.startsWith('!') && index !== -1) {
+      names.splice(index, 1)
+    } else if (!entry.startsWith('!') && index === -1) {
+      names.push(entry)
+    }
+  }
+
+  return names
 }

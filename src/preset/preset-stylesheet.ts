@@ -3,6 +3,8 @@ import { posix, resolve } from 'node:path'
 import * as PresetConstants from './preset.constants.ts'
 import { presetIsDirectory, presetIsFile } from './preset.utils.ts'
 
+const presetStylesheetNames = ['styles', 'globals', 'global', 'app', 'index', 'main', 'style', 'tailwind']
+
 function presetTailwindEntry(css: string): boolean {
   const code = css.replaceAll(/\/\*[\s\S]*?\*\//g, '')
 
@@ -40,9 +42,9 @@ export function presetStylesheet(root: string, directory: string): string | unde
   }
 
   const rank = (path: string) => {
-    const index = PresetConstants.presetStylesheetNames.indexOf(posix.basename(path, '.css'))
+    const index = presetStylesheetNames.indexOf(posix.basename(path, '.css'))
 
-    return index === -1 ? PresetConstants.presetStylesheetNames.length : index
+    return index === -1 ? presetStylesheetNames.length : index
   }
 
   return found.toSorted((left, right) => rank(left) - rank(right) || left.length - right.length).at(0)

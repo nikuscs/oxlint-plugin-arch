@@ -31,6 +31,8 @@ export default preset({
 })
 ```
 
+To lock down what one kind of file may contain (top-level statements, exports, names, imports), start at [What a file may contain](files.md).
+
 ## 🔑 Keys
 
 | | |
@@ -85,6 +87,33 @@ A folder's service files take the names in [`layout.files`](groups/layout.md): t
 '.': { layout: { files: ['*.prompts.ts'] } },
 'apps/server/src/domains': { layout: { files: ['*.gateway.ts', '!*.utils.ts'] } },
 ```
+
+## 🧮 Sets
+
+`sets` names a list or a map once, so several folders can use it without a constant or a helper function above the config. A set name starts with a lowercase letter and is not `domain`, `stem`, `file`, `folder`, `parent`, `name`, `key` or `value`.
+
+```ts
+export default preset({
+  root: import.meta.dirname,
+  sets: {
+    writes: ['insertInto', 'updateTable', 'deleteFrom'],
+    kits: { 'kit-auth': 'auth', 'kit-payments': 'payment' },
+  },
+  folders: {
+    'apps/server/src/domains/*/*.queries.ts': { deny: { calls: { '{writes}': 'A query reads only.' } } },
+    'apps/server/src': { deny: { only: [{ each: 'kits', imports: '@scope/{key}', in: 'apps/server/src/domains/{value}' }] } },
+  },
+})
+```
+
+| Where `{set}` is written | Becomes |
+| --- | --- |
+| A key (a `deny` entry, a folder key, a rule option) | One key per item, each with the same value; in that value `{key}` is the item and `{value}` its mapped value |
+| An item of a list | One item per set item |
+| A text value | A list, one text per item; `message` is left as written |
+| `each: 'set'` on an object inside a list | One object per item, with `{key}` and `{value}` filled in everywhere inside it |
+
+A map gives its keys where a list is expected. Sets expand before anything else, in every folder value including `rules`; a name that is not a set, such as `{Domain}`, is left for the rule.
 
 ## 🔎 Detection
 
@@ -142,7 +171,7 @@ Detection also adds conventions, as folder and file keys you can restate: lists 
 
 ## 📚 Groups
 
-On by default: [`layout`](groups/layout.md), [`limits`](groups/limits.md), [`style`](groups/style.md), [`basics`](groups/basics.md), [`naming`](groups/naming.md), [`comments`](groups/comments.md), [`types`](groups/types.md), [`imports`](groups/imports.md), [`tests`](groups/tests.md), [`deny`](groups/deny.md), [`externals`](groups/externals.md).
+On by default: [`layout`](groups/layout.md), [`limits`](groups/limits.md), [`style`](groups/style.md), [`basics`](groups/basics.md), [`naming`](groups/naming.md), [`comments`](groups/comments.md), [`types`](groups/types.md), [`imports`](groups/imports.md), [`tests`](groups/tests.md), [`deny`](groups/deny.md), [`top`](groups/top.md), [`externals`](groups/externals.md).
 
 Opt-in: [`react`](groups/react.md), [`tanstack`](groups/tanstack.md), [`next`](groups/next.md), [`expo`](groups/expo.md), [`tailwind`](groups/tailwind.md), [`shadcn`](groups/shadcn.md), [`kit`](groups/kit.md), [`backend`](groups/backend.md), [`orpc`](groups/orpc.md), [`schemas`](groups/schemas.md), [`forms`](groups/forms.md), [`sql`](groups/sql.md), [`effect`](groups/effect.md), [`console`](groups/console.md).
 

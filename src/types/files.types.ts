@@ -1,4 +1,4 @@
-import type { NamingExportsStem, NamingStemMode } from './naming.types.ts'
+import type { NamingCaptureOptions } from './naming.types.ts'
 import type { OptionsPattern } from './options.types.ts'
 import type { ESTree } from '@oxlint/plugins'
 
@@ -29,8 +29,7 @@ export interface FilesDomainConstantsOptions {
   file?: string
 }
 
-export interface FilesExportsOptions extends Pick<NamingExportsStem, 'roles' | 'separators' | 'singularize'> {
-  stem?: NamingStemMode | 'folder'
+export interface FilesExportsOptions extends NamingCaptureOptions {
   names?: string[]
   patterns?: string[]
   types?: boolean
@@ -105,4 +104,52 @@ export interface FilesExternalsOptions {
 export interface FilesExternalsManifest {
   dependencies?: Record<string, string>
   optionalDependencies?: Record<string, string>
+}
+
+export type FilesTopLevelKind =
+  | 'import'
+  | 'export'
+  | 'reexport'
+  | 'default'
+  | 'type'
+  | 'interface'
+  | 'enum'
+  | 'class'
+  | 'namespace'
+  | 'const'
+  | 'let'
+  | 'var'
+  | 'function'
+  | 'function-const'
+  | 'call'
+  | 'statement'
+
+export interface FilesTopLevelEntry {
+  kind: FilesTopLevelKind | FilesTopLevelKind[]
+  names?: OptionsPattern
+  from?: OptionsPattern
+  exported?: boolean
+  message?: string
+}
+
+export interface FilesTopLevelOptions extends NamingCaptureOptions {
+  allow?: (string | FilesTopLevelEntry)[]
+  deny?: (string | FilesTopLevelEntry)[]
+  message?: string
+}
+
+export interface FilesTopLevelItem {
+  kind: FilesTopLevelKind
+  name: string
+  from: string
+  exported: boolean
+  node: ESTree.Node
+}
+
+export interface FilesTopLevelMatcher {
+  kinds: FilesTopLevelKind[]
+  names: RegExp[] | null
+  from: RegExp[] | null
+  exported?: boolean
+  message: string
 }

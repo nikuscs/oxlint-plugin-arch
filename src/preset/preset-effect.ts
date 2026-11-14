@@ -2,7 +2,7 @@ import { existsSync, readdirSync } from 'node:fs'
 import { posix, resolve } from 'node:path'
 import { presetRecipes } from './preset-recipes.ts'
 import { presetBaseImports, presetEffectImports, presetEffectServerImports, presetQueryWrites, presetTanstackRsc } from './preset.constants.ts'
-import { presetFilled, presetIsDirectory, presetIsFile, presetManifest, presetMerge, presetSource } from './preset.utils.ts'
+import { PresetError, presetFilled, presetIsDirectory, presetIsFile, presetManifest, presetMerge, presetNames, presetSource } from './preset.utils.ts'
 import type * as PresetTypes from '../types/preset.types.ts'
 
 const presetEffectQueryWrites = Object.fromEntries(presetQueryWrites.map((name) => [name, 'A queries file only reads; write in an actions file.']))
@@ -19,10 +19,7 @@ const presetEffectRouters = ['@tanstack/react-router', 'next/link', 'next/naviga
 
 const presetEffectErrors = ['Schema.TaggedError', 'Schema.ErrorClass', 'Data.TaggedError', 'Data.Error']
 
-const presetEffectContractNames = '^[a-z0-9]+(?:-[a-z0-9]+)*(?:[.]schemas|[.]admin[.]schemas|[.]contract|[.]admin[.]contract|[.]errors|[.]layer[.]types)[.]ts$'
-
-const presetEffectContractMessage =
-  'Contract files use <d>.schemas.ts, <d>-<part>.schemas.ts, <d>.admin.schemas.ts, <d>.contract.ts, <d>.admin.contract.ts, <d>.errors.ts or <d>.layer.types.ts.'
+const presetEffectContractKinds = ['*.schemas.ts', '*.admin.schemas.ts', '*.contract.ts', '*.admin.contract.ts', '*.errors.ts', '*.layer.types.ts', '*.service.ts']
 
 const presetEffectSchemaUses = {
   namespaces: ['Schema'],
@@ -137,7 +134,17 @@ function presetEffectServerKeys(at: (path: string) => string): PresetTypes.Prese
   }
 }
 
-function presetEffectContractKeys(at: (path: string) => string): PresetTypes.PresetFolders {
+function presetEffectContractKeys(at: (path: string) => string, files: unknown): PresetTypes.PresetFolders {
+  const kinds = presetNames(presetEffectContractKinds, files ?? [], 'effect.files')
+
+  if (kinds.some((kind) => !/^\*\.[a-z0-9.-]+\.ts$/.test(kind))) {
+    throw new PresetError('effect.files takes contract file kinds such as `*.service.ts`.')
+  }
+
+  const pattern = `^[a-z0-9]+(?:-[a-z0-9]+)*(?:${kinds.map((kind) => kind.slice(1, -3).replaceAll('.', '[.]')).join('|')})[.]ts$`
+  const listed = kinds.flatMap((kind) => (kind === '*.schemas.ts' ? ['<d>.schemas.ts', '<d>-<part>.schemas.ts'] : [`<d>${kind.slice(1)}`]))
+  const message = `Contract files use ${listed.slice(0, -1).join(', ')} or ${listed.at(-1)}.`
+
   const schemas: PresetTypes.PresetFolder = {
     rules: {
       'arch/files-constants-only': ['error', { types: true, functions: true }],
@@ -152,7 +159,7 @@ function presetEffectContractKeys(at: (path: string) => string): PresetTypes.Pre
   return {
     [at('*/*.ts')]: {
       rules: {
-        'arch/naming-file': ['error', { pattern: presetEffectContractNames, message: presetEffectContractMessage }],
+        'arch/naming-file': ['error', { pattern, message }],
         'arch/naming-folder': ['error', { singularize: 'none', separators: ['.', '-'] }],
         'arch/files-exports': ['error', { stem: 'folder', singularize: 'trailing-s', patterns: ['{Domain}\\w*'] }],
       },
@@ -162,6 +169,7 @@ function presetEffectContractKeys(at: (path: string) => string): PresetTypes.Pre
     [at('*/*.contract.ts')]: schemas,
     [at('*/*.errors.ts')]: noFunctions,
     [at('*/*.layer.types.ts')]: noFunctions,
+    [at('*/*.service.ts')]: noFunctions,
     [at('shared/*.ts')]: {
       rules: {
         'arch/naming-file': 'off',
@@ -190,7 +198,9 @@ function presetEffectUnit(root: string, key: string, value: PresetTypes.PresetFo
 
   const contract = presetEffectContract(root, key, value)
   const server = presetEffectDomains(root, key, value)
-  const keys = server || contract ? presetFilled(server ? presetEffectServerKeys(at) : presetEffectContractKeys(at), presetEffectExists(root, key)) : {}
+  const files = value.effect instanceof Object ? value.effect.files : undefined
+  const conventions = server ? presetEffectServerKeys(at) : presetEffectContractKeys(at, files)
+  const keys = server || contract ? presetFilled(conventions, presetEffectExists(root, key)) : {}
   const errors = Object.fromEntries(presetEffectErrors.map((name) => [name, 'Tagged errors live in <d>.errors.ts.']))
   const placement: PresetTypes.PresetFolder = server || contract ? { types: { placement: false } } : {}
   const imports = server || contract ? { ...presetEffectImports, ...presetEffectServerImports } : presetEffectImports

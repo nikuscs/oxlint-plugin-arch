@@ -112,7 +112,15 @@ export interface BoundariesRpcDatabaseOptions {
   methods?: string[]
 }
 
+export interface BoundariesDenyOnly {
+  imports?: string | string[]
+  calls?: string | string[]
+  in: string | string[]
+  message?: string
+}
+
 export interface BoundariesDenyOptions {
   imports?: Record<string, string>
   calls?: Record<string, string>
+  only?: BoundariesDenyOnly[]
 }

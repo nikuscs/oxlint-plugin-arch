@@ -3,12 +3,21 @@ import type { OptionsPattern } from './options.types.ts'
 
 export type NamingStemMode = 'before-first-dot' | 'full-basename'
 
+export type NamingPrefixSource = 'file' | 'folder' | 'parent'
+
 export interface NamingExportsStem {
   stem?: NamingStemMode
   roles?: string[]
   separators?: string[]
   normalize?: 'remove-separators' | 'none'
   singularize?: 'none' | 'trailing-s'
+  prefix?: NamingPrefixSource[]
+}
+
+export interface NamingCaptureOptions extends Pick<NamingExportsStem, 'roles' | 'separators' | 'singularize'> {
+  stem?: NamingStemMode | 'folder'
+  file?: string
+  placeholder?: string
 }
 
 export interface NamingDeclarationsOptions extends NamingExportsStem {
@@ -38,7 +47,7 @@ export interface NamingExportsPatternOptions extends NamingExportsBase {
 export interface NamingExportsTemplateOptions extends NamingExportsBase {
   mode: 'template'
   file: string
-  export: string
+  export: string | string[]
   match?: 'all' | 'some'
   placeholder?: string
   camelCase?: boolean
@@ -63,4 +72,30 @@ export interface NamingFolderOptions {
 export interface NamingTypesOptions {
   pattern?: OptionsPattern
   message?: string
+}
+
+export interface NamingDeclarationsCheck {
+  kinds: Set<DeclarationsKind> | null
+  allowed: RegExp[]
+  expected: RegExp[]
+  prefixes: string[]
+  label: string
+  normalize: NamingExportsStem['normalize']
+}
+
+export interface NamingImportsEntry {
+  source: string
+  name: string | string[]
+  namespace?: boolean
+  placeholder?: string
+}
+
+export interface NamingImportsOptions {
+  imports: NamingImportsEntry[]
+}
+
+export interface NamingImportsCompiled {
+  pattern: RegExp
+  names: string[]
+  namespace: boolean
 }

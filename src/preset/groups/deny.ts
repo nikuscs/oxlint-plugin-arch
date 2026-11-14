@@ -11,8 +11,10 @@ export const denyGroup: PresetBuilder<'deny'> = (project, settings) => {
   const calls = kept(settings.calls)
   const overrides: OxlintOverride[] = []
 
-  if (Object.keys(imports).length > 0 || Object.keys(calls).length > 0) {
-    overrides.push(presetOverride([`**/${presetExtensions}`], { 'arch/boundaries-deny': ['error', { imports, calls }] }))
+  const only = settings.only.length > 0 ? { only: settings.only } : {}
+
+  if (Object.keys(imports).length > 0 || Object.keys(calls).length > 0 || settings.only.length > 0) {
+    overrides.push(presetOverride([`**/${presetExtensions}`], { 'arch/boundaries-deny': ['error', { imports, calls, ...only }] }))
   }
 
   const reads = Object.fromEntries(presetQueryWrites.map((name) => [name, 'Query files only read; move writes to an action.']))
@@ -23,7 +25,7 @@ export const denyGroup: PresetBuilder<'deny'> = (project, settings) => {
       ...presetServiceScopes(project.serviceFolders, project.operations.filter((path) => path === unit.source), '*/queries/*.ts'),
     ]
 
-    overrides.push(presetOverride(files, { 'arch/boundaries-deny': ['error', { imports, calls: kept({ ...reads, ...settings.calls }) }] }))
+    overrides.push(presetOverride(files, { 'arch/boundaries-deny': ['error', { imports, calls: kept({ ...reads, ...settings.calls }), ...only }] }))
   }
 
   return overrides

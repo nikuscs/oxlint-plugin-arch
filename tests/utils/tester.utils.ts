@@ -42,7 +42,7 @@ export function testerRun(rule: Rule, { name, code, filename = 'file.tsx', files
   }
 }
 
-export function testerPreset({ tree, files, symlinks, link, folders, detect, file, rule }: TesterTypes.TesterPresetRow): TesterTypes.TesterPresetValue {
+export function testerPreset({ tree, files, symlinks, link, folders, sets, detect, file, rule }: TesterTypes.TesterPresetRow): TesterTypes.TesterPresetValue {
   const base = tree || files ? mkdtempSync(join(tmpdir(), 'arch-preset-')) : resolve(import.meta.dirname, '../..')
   const linked = `${base}-link`
 
@@ -68,6 +68,7 @@ export function testerPreset({ tree, files, symlinks, link, folders, detect, fil
     const config = preset({
       root: link ? linked : base,
       folders,
+      sets,
       detect,
     })
 

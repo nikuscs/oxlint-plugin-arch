@@ -1,5 +1,27 @@
 # Changelog
 
+## Unreleased
+
+Preset defaults that change what an app reports:
+
+- Effect contract packages also accept `<d>.service.ts`, which holds no functions (`files-no-functions`), next to `<d>.layer.types.ts`.
+
+Rules and options:
+
+- New `files-top-level`: `allow` lists what may sit at the top level of a file, `deny` what may not, by kind (`type`, `interface`, `enum`, `class`, `const`, `let`, `function`, `function-const`, `call` and the rest), name, and what builds a constant (`from: '^Schema\\.'`).
+- New `naming-imports`: an import takes the name its specifier expands to, such as `@scope/kit-{package}` as `{Package}Kit`, as a namespace import by default.
+- New `top` group: `top: ['describe', 'it', 'it.each']` on a folder or file key runs `files-top-level`; `import` is always allowed. On by default and empty.
+- Preset `sets`: name a list or a map once and write `{name}` in any key or list, or `each: 'name'` on a list entry, instead of constants and helpers above the config.
+- `deny.only` and `boundaries-deny` `only`: imports and calls used in the listed places only, each side one value or a list.
+- `naming.imports` in the preset: specifier template to import name.
+- `effect.files` adds or removes (`!`) contract file kinds, such as `*.policy.ts`.
+- `naming-exports`, `naming-declarations` and `files-exports` read `{folder}`, `{parent}`, `{stem}` and `{file}` from the path in patterns and names; an uppercase placeholder is constant case.
+- `naming-exports` and `naming-declarations` take `prefix`, the places a prefix may come from (`file`, `folder`, `parent`); `naming-exports` `template` takes several `export` names and a `file` with folders.
+- `naming-declarations` takes several option objects, one check per kind.
+- `files-exports` takes `file`, a path template whose placeholders `names` and `patterns` use.
+- `naming-exports` `template` with a `file` that has no placeholder now checks that file; before, it was skipped.
+- New page: [What a file may contain](docs/files.md).
+
 ## 0.13.1
 
 Preset defaults that change what an app reports:

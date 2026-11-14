@@ -24,6 +24,7 @@ import { styleGroup } from './groups/style.ts'
 import { tailwindGroup } from './groups/tailwind.ts'
 import { tanstackGroup } from './groups/tanstack.ts'
 import { testsGroup } from './groups/tests.ts'
+import { topGroup } from './groups/top.ts'
 import { typesGroup } from './groups/types.ts'
 import { presetProject } from './preset-folders.ts'
 import { presetRecipes, presetTemplates } from './preset-recipes.ts'
@@ -107,6 +108,7 @@ const presetBuilders: PresetTypes.PresetBuilders = {
   shadcn: shadcnGroup,
   limits: limitsGroup,
   deny: denyGroup,
+  top: topGroup,
   externals: externalsGroup,
 }
 

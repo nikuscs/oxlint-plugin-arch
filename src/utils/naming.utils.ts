@@ -1,5 +1,5 @@
 import { posix } from 'node:path'
-import type { NamingExportsStem, NamingStemMode } from '../types/naming.types.ts'
+import type { NamingCaptureOptions, NamingExportsStem, NamingStemMode } from '../types/naming.types.ts'
 import type { OptionsSchemaProperties } from '../types/options.types.ts'
 
 export const namingStemModes: readonly NamingStemMode[] = ['before-first-dot', 'full-basename']
@@ -10,6 +10,7 @@ export const namingStemSchemaProperties: OptionsSchemaProperties = {
   separators: { type: 'array', items: { type: 'string' } },
   normalize: { type: 'string', enum: ['remove-separators', 'none'] },
   singularize: { type: 'string', enum: ['none', 'trailing-s'] },
+  prefix: { type: 'array', items: { type: 'string', enum: ['file', 'folder', 'parent'] }, minItems: 1 },
 }
 
 export function namingBasename(filePath: string): string {
@@ -57,19 +58,90 @@ export function namingFileStem(
   return stem
 }
 
-export function namingFilePrefixesFor(filename: string, options: NamingExportsStem): string[] {
-  const basename = namingBasename(filename).replace(/\.(tsx?|jsx?)$/, '')
-  const stem = namingFileStem(basename, options.stem, options.roles, options.separators)
-  const normalize = options.normalize ?? 'remove-separators'
-  const prefixes = [namingNormalized(stem, normalize)]
-  const parts = stem.split(/[-_]+/).filter(Boolean)
+function namingSingular(value: string): string {
+  const parts = value.split(/[-_]+/).filter(Boolean)
   const last = parts.at(-1) ?? ''
 
-  if (options.singularize === 'trailing-s' && last.endsWith('s') && last.length > 1) {
-    prefixes.push(namingNormalized([...parts.slice(0, -1), last.slice(0, -1)].join('-'), normalize))
+  return last.endsWith('s') && last.length > 1 ? [...parts.slice(0, -1), last.slice(0, -1)].join('-') : value
+}
+
+function namingFolders(filename: string): string[] {
+  return filename.replaceAll('\\', '/').split('/').slice(0, -1).toReversed()
+}
+
+export function namingFilePrefixesFor(filename: string, options: NamingExportsStem): string[] {
+  const basename = namingBasename(filename).replace(/\.(tsx?|jsx?)$/, '')
+  const [folder = '', parent = ''] = namingFolders(filename)
+  const normalize = options.normalize ?? 'remove-separators'
+  const sources = { file: namingFileStem(basename, options.stem, options.roles, options.separators), folder, parent }
+
+  const prefixes = (options.prefix ?? ['file']).flatMap((source) => {
+    const stem = sources[source]
+
+    return options.singularize === 'trailing-s' ? [stem, namingSingular(stem)] : [stem]
+  })
+
+  return [...new Set(prefixes.map((stem) => namingNormalized(stem, normalize)).filter(Boolean))]
+}
+
+export function namingTemplatePattern(template: string, placeholder = '[a-z0-9-]+'): RegExp | null {
+  const source = template
+    .split(/(\{[^{}]+\})/)
+    .map((part) => (/^\{[^{}]+\}$/.test(part) ? `(?<${part.slice(1, -1)}>${placeholder})` : part.replaceAll(/[.*+?^${}()|[\]\\]/g, '\\$&')))
+    .join('')
+
+  try {
+    return new RegExp(`^${source}$`)
+  } catch {
+    return null
+  }
+}
+
+export function namingCaptures(filename: string, options: NamingCaptureOptions = {}): Record<string, string> | null {
+  const path = filename.replaceAll('\\', '/')
+  const file = namingBasename(path).replace(/\.(tsx?|jsx?)$/, '')
+  const [folder = '', parent = ''] = namingFolders(path)
+  const stem = namingFileStem(file, options.stem === 'folder' ? undefined : options.stem, options.roles, options.separators)
+  const read = options.stem === 'folder' ? folder : stem
+  const last = read.split(/[-_]+/).at(-1) ?? ''
+  const domain = options.singularize === 'trailing-s' && last.length > 1 && last.endsWith('s') ? read.slice(0, -1) : read
+  const builtIn = { file, stem, folder, parent, domain }
+
+  if (options.file === undefined) {
+    return builtIn
   }
 
-  return [...new Set(prefixes.filter(Boolean))]
+  const depth = options.file.split('/').length
+  const match = namingTemplatePattern(options.file, options.placeholder)?.exec(path.split('/').slice(-depth).join('/'))
+
+  return match ? { ...builtIn, ...match.groups } : null
+}
+
+export function namingExpand(
+  template: string,
+  captures: Record<string, string>,
+  camelCase: boolean,
+  escape: (value: string) => string = (value) => value,
+): string {
+  return template.replaceAll(/\{([A-Za-z][A-Za-z0-9]*)\}/g, (placeholder, key: string) => {
+    const name = key.toLowerCase()
+
+    if (!Object.hasOwn(captures, name)) {
+      return placeholder
+    }
+
+    const value = captures[name]
+
+    if (key.length > 1 && key === key.toUpperCase()) {
+      return escape(value.split(/[-_\s.]+/).filter(Boolean).join('_').toUpperCase())
+    }
+
+    if (/^[A-Z]/.test(key)) {
+      return escape(namingPascalCase(value))
+    }
+
+    return escape(camelCase ? namingCamelCase(value) : value)
+  })
 }
 
 export function namingHasFilePrefix(name: string, prefixes: readonly string[], normalize: NamingExportsStem['normalize']): boolean {

@@ -1,3 +1,5 @@
+import type { BoundariesDenyOnly } from './boundaries.types.ts'
+import type { FilesTopLevelEntry } from './files.types.ts'
 import type { OptionsPattern } from './options.types.ts'
 import type * as EffectTsgo from '@effect/tsgo/oxlint-presets'
 import type * as EffectLinteffect from '@opsydyn/oxlint-effect'
@@ -44,6 +46,7 @@ export interface PresetNamingOptions {
   exports?: boolean | string
   folders?: boolean
   unique?: string
+  imports?: Record<string, string | string[] | false>
 }
 
 export interface PresetCommentsOptions {
@@ -132,6 +135,25 @@ export interface PresetBackendOptions {
 export interface PresetDenyOptions {
   imports?: Record<string, string | false>
   calls?: Record<string, string | false>
+  only?: PresetDenyOnly[]
+}
+
+export interface PresetDenyOnly extends BoundariesDenyOnly {
+  each?: string
+}
+
+export interface PresetTopOptions {
+  allow?: (string | FilesTopLevelEntry)[]
+  deny?: (string | FilesTopLevelEntry)[]
+  message?: string
+}
+
+export type PresetSet = string[] | Record<string, string>
+
+export type PresetSetValue = string | number | boolean | null | undefined | PresetSetValue[] | PresetSetObject
+
+export interface PresetSetObject {
+  [key: string]: PresetSetValue
 }
 
 export interface PresetOrpcOptions {
@@ -145,6 +167,7 @@ export interface PresetEffectOptions {
   exports?: OptionsPattern
   skip?: OptionsPattern
   entries?: string[]
+  files?: string[]
 }
 
 export interface PresetEffectStyle {
@@ -182,6 +205,7 @@ export interface PresetGroups {
   effect?: PresetSwitch | PresetEffectOptions
   console?: boolean
   deny?: PresetSwitch | PresetDenyOptions
+  top?: PresetSwitch | PresetTopOptions | (string | FilesTopLevelEntry)[]
   externals?: PresetSwitch
 }
 
@@ -202,6 +226,7 @@ export interface PresetConfig {
   root?: string
   folders?: PresetFolders
   detect?: boolean
+  sets?: Record<string, PresetSet>
 }
 
 export type PresetRecipe = PresetGroups & Partial<Record<symbol, string>>
@@ -233,9 +258,10 @@ export interface PresetResolvedGroups {
   schemas: PresetEmptyOptions
   forms: PresetEmptyOptions
   sql: PresetEmptyOptions
-  effect: Pick<PresetEffectOptions, 'exports' | 'skip'> & { code: boolean; width: number; entries: string[] }
+  effect: Pick<PresetEffectOptions, 'exports' | 'skip'> & { code: boolean; width: number; entries: string[]; files: string[] }
   console: PresetEmptyOptions
-  deny: { imports: Record<string, string | false>; calls: Record<string, string | false> }
+  deny: { imports: Record<string, string | false>; calls: Record<string, string | false>; only: BoundariesDenyOnly[] }
+  top: PresetTopOptions
   externals: PresetEmptyOptions
 }
 

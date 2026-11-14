@@ -85,5 +85,22 @@ var h = 1`,
     { name: 'an empty pattern entry is ignored', filename: 'accounts.ts', code: 'const badOne = 1', options: { pattern: ['', '^good'] }, errors: ['pattern'] },
     { name: 'a declaration in a for body', filename: 'invoice.ts', code: 'for (;;) { const wrong = 1 }', errors: ['prefix'] },
     { name: 'a declaration in a for...of body', filename: 'invoice.ts', code: 'for (const line of lines) { const wrong = line }', errors: ['prefix'] },
+    { name: 'the folder name is an allowed prefix', filename: 'invoice/send.ts', code: 'const invoiceTotal = 1', options: { prefix: ['file', 'folder'] } },
+    { name: 'a pattern reads the folder', filename: 'invoice/send.ts', code: 'function invoiceSend() {}', options: { kinds: ['function'], pattern: '^{folder}[A-Z]' } },
+    {
+      name: 'several checks split the kinds',
+      filename: 'invoice.ts',
+      code: 'type InvoiceRow = string\nconst MAX_ROWS = 1\nfunction invoiceSend() {}',
+      options: [{ kinds: ['function'] }, { kinds: ['type'], pattern: '^{Stem}' }, { kinds: ['const'], pattern: '^[A-Z_]+$' }],
+    },
+    { name: 'a declaration off the folder prefix', filename: 'invoice/send.ts', code: 'const orderTotal = 1', options: { prefix: ['folder'] }, errors: ['prefix'] },
+    { name: 'a function off the folder pattern', filename: 'invoice/send.ts', code: 'function orderSend() {}', options: { kinds: ['function'], pattern: '^{folder}[A-Z]' }, errors: ['pattern'] },
+    {
+      name: 'each check reports its own kind',
+      filename: 'invoice.ts',
+      code: 'type Row = string\nconst maxRows = 1\nfunction invoiceSend() {}',
+      options: [{ kinds: ['function'] }, { kinds: ['type'], pattern: '^{Stem}' }, { kinds: ['const'], pattern: '^[A-Z_]+$' }],
+      errors: ['pattern', 'pattern'],
+    },
   ])('$name', (row) => testerRun(namingDeclarations, row))
 })

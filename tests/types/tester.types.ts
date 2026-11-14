@@ -1,4 +1,4 @@
-import type { PresetFolders } from '../../src/types/preset.types.ts'
+import type { PresetConfig, PresetFolders } from '../../src/types/preset.types.ts'
 import type { OxlintConfig } from 'oxlint'
 import type { RuleTester } from 'oxlint/plugins-dev'
 
@@ -21,6 +21,7 @@ export interface TesterPresetRow {
   symlinks?: Record<string, string>
   link?: boolean
   folders: PresetFolders
+  sets?: PresetConfig['sets']
   detect?: boolean
   file: string
   rule: string

@@ -1,8 +1,7 @@
 import { defineRule } from '@oxlint/plugins'
-import { posix } from 'node:path'
 import { declarationsFunctions } from '../../utils/declarations.utils.ts'
 import { exportsCollect, exportsFunctions } from '../../utils/exports.utils.ts'
-import { namingBasename, namingCamelCase, namingFileStem, namingPascalCase, namingStemModes } from '../../utils/naming.utils.ts'
+import { namingBasename, namingCaptures, namingExpand, namingPascalCase, namingStemModes } from '../../utils/naming.utils.ts'
 import { optionsEscape, optionsFirst } from '../../utils/options.utils.ts'
 import type { FilesExportsOptions } from '../../types/files.types.ts'
 
@@ -22,6 +21,8 @@ export const filesExports = defineRule({
           separators: { type: 'array', items: { type: 'string' } },
           types: { type: 'boolean' },
           factory: { type: 'string' },
+          file: { type: 'string' },
+          placeholder: { type: 'string' },
           scope: { type: 'string', enum: ['exports', 'declarations'] },
         },
         anyOf: [{ required: ['names'] }, { required: ['patterns'] }, { required: ['factory'] }],
@@ -65,23 +66,14 @@ export const filesExports = defineRule({
           return
         }
 
-        const read = options.stem === 'folder'
-          ? namingBasename(posix.dirname(context.filename.replaceAll('\\', '/')))
-          : namingFileStem(basename, options.stem, options.roles, options.separators)
+        const captures = namingCaptures(context.filename, options)
 
-        const last = read.split(/[-_]+/).at(-1) ?? ''
-        const domain = options.singularize === 'trailing-s' && last.length > 1 && last.endsWith('s') ? read.slice(0, -1) : read
-        const pascalDomain = namingPascalCase(domain)
-        const camelDomain = namingCamelCase(domain)
-        const allowed = (options.names ?? []).map((template) => template.replaceAll('{Domain}', pascalDomain).replaceAll('{domain}', camelDomain))
+        if (!captures) {
+          return
+        }
 
-        const patterns = (options.patterns ?? []).map((template) => {
-          const source = template
-            .replaceAll('{Domain}', optionsEscape(pascalDomain))
-            .replaceAll('{domain}', optionsEscape(camelDomain))
-
-          return new RegExp(`^(?:${source})$`)
-        })
+        const allowed = (options.names ?? []).map((template) => namingExpand(template, captures, true))
+        const patterns = (options.patterns ?? []).map((template) => new RegExp(`^(?:${namingExpand(template, captures, true, optionsEscape)})$`))
 
         const allowedLabel = [...allowed, ...patterns.map((pattern) => pattern.toString())].join(', ')
 

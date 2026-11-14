@@ -337,11 +337,11 @@ export const presetIllustrationPalette = [
 
 export const presetGroupOrder: PresetTypes.PresetGroupName[] = [
   'style', 'imports', 'types', 'layout', 'naming', 'comments', 'basics', 'console', 'tests', 'schemas', 'sql', 'orpc', 'effect',
-  'react', 'forms', 'tanstack', 'next', 'expo', 'backend', 'tailwind', 'shadcn', 'kit', 'limits', 'deny', 'externals',
+  'react', 'forms', 'tanstack', 'next', 'expo', 'backend', 'tailwind', 'shadcn', 'kit', 'limits', 'deny', 'top', 'externals',
 ]
 
 export const presetDefaultGroups: PresetTypes.PresetGroupName[] = [
-  'layout', 'limits', 'style', 'basics', 'naming', 'comments', 'types', 'imports', 'tests', 'deny', 'externals',
+  'layout', 'limits', 'style', 'basics', 'naming', 'comments', 'types', 'imports', 'tests', 'deny', 'top', 'externals',
 ]
 
 export const presetExternals = [
@@ -354,7 +354,7 @@ export const presetGroupOptions: PresetTypes.PresetGroupDefaults = {
   limits: { level: 'error', lines: 400, types: 1000, complexity: 32 },
   style: { level: 'error', quotes: 'single', semicolons: true, multiline: true, padding: true, dashes: true },
   basics: { level: 'error', trivial: true, state: true, switch: true, negation: true },
-  naming: { level: 'error', files: true, exports: true, folders: true, unique: undefined },
+  naming: { level: 'error', files: true, exports: true, folders: true, unique: undefined, imports: {} },
   comments: { level: 'error', directives: true },
   types: { level: 'error', placement: true, safety: true, colocated: [] },
   imports: { level: 'error', sort: true, boundaries: true, aliases: {}, internal: undefined },
@@ -371,9 +371,10 @@ export const presetGroupOptions: PresetTypes.PresetGroupDefaults = {
   schemas: { level: 'error' },
   forms: { level: 'error' },
   sql: { level: 'error' },
-  effect: { level: 'error', code: true, width: 140, exports: undefined, skip: undefined, entries: [] },
+  effect: { level: 'error', code: true, width: 140, exports: undefined, skip: undefined, entries: [], files: [] },
   console: { level: 'error' },
-  deny: { level: 'error', imports: {}, calls: {} },
+  deny: { level: 'error', imports: {}, calls: {}, only: [] },
+  top: { level: 'error', allow: undefined, deny: undefined, message: undefined },
   externals: { level: 'error' },
 }
 
@@ -430,8 +431,6 @@ export const presetRecipeMark = Symbol('recipe')
 export const presetDetectBackend = ['@orpc/server', 'hono', 'kysely', 'drizzle-orm', 'express', 'fastify', 'elysia']
 
 export const presetDetectSkip = ['node_modules', 'dist', 'build', 'coverage', 'public', '.output', '.next', '.vinext', '.turbo', '.wrangler', 'target']
-
-export const presetStylesheetNames = ['styles', 'globals', 'global', 'app', 'index', 'main', 'style', 'tailwind']
 
 export const presetRegistryFiles = ['core/core.services.ts', 'service.ts']
 

@@ -21,6 +21,7 @@ src/
 │   ├── preset-units.ts              which scopes are units, their kind and source
 │   ├── preset-folders.ts            resolves folders: keys, inheritance, units and the project lists groups read
 │   ├── preset-recipes.ts            recipes and templates: group toggles, each marked so a forced recipe replaces detection
+│   ├── preset-sets.ts               expands named sets in folder keys, lists and `each` entries before folders resolve
 │   ├── preset.constants.ts          group defaults and order, rule lists, fixed values
 │   ├── preset.utils.ts              override, scope, glob intersection and escape, folder merge, severity, optional plugin and file system helpers; PresetError
 │   └── groups/<group>.ts            one group: a builder returning overrides for the given settings
@@ -33,7 +34,7 @@ tests/                               every test, mirroring src/; nothing in src/
 ├── vendor/dillon-anti-slop/         the vendored rules' tests
 ├── utils/tester.utils.ts            runs rule and preset test rows
 └── types/tester.types.ts            the test row types
-docs/folders.md, docs/groups/<group>.md, docs/rules/<rule>.md, docs/vendor.md, docs/plugin-only.md
+docs/folders.md, docs/files.md, docs/groups/<group>.md, docs/rules/<rule>.md, docs/vendor.md, docs/plugin-only.md
 examples/*.oxlint.config.ts          typechecked example configs
 scripts/docs.ts                      generates the README group and rule tables
 .agents/                             agent references, orchestrator configs, sync script

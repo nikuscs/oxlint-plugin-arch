@@ -1,10 +1,11 @@
 import { existsSync, readdirSync, realpathSync } from 'node:fs'
 import { posix, resolve } from 'node:path'
 import { presetDetect, presetRegistryFile } from './preset-detect.ts'
+import { presetSets } from './preset-sets.ts'
 import { presetStylesheet } from './preset-stylesheet.ts'
 import { presetUnits } from './preset-units.ts'
 import * as PresetConstants from './preset.constants.ts'
-import { PresetError, presetFileOverlaps, presetGlobEscape, presetIntersect, presetIsDirectory, presetIsFile, presetManifest, presetMerge, presetScopes, presetServiceScopes } from './preset.utils.ts'
+import { PresetError, presetFileOverlaps, presetGlobEscape, presetIntersect, presetIsDirectory, presetIsFile, presetManifest, presetMerge, presetNames, presetScopes, presetServiceScopes } from './preset.utils.ts'
 import type * as PresetTypes from '../types/preset.types.ts'
 
 function presetPortableKey(key: string): string {
@@ -131,24 +132,20 @@ function presetDenyEntries(inherited: Record<string, string | false>, changes: R
   )
 }
 
-function presetLayoutNames(inherited: string[], entries: unknown): string[] {
-  if (!Array.isArray(entries) || !entries.every((entry) => typeof entry === 'string' && PresetConstants.presetLayoutFileName.test(entry))) {
-    throw new PresetError('layout.files takes file names such as `*.prompts.ts`; `!*.utils.ts` removes one.')
+function presetDenyOnly(inherited: PresetTypes.PresetResolvedGroups['deny']['only'], entries: PresetTypes.PresetDenyOptions['only'] = []): PresetTypes.PresetResolvedGroups['deny']['only'] {
+  const each = entries.find((entry) => entry.each !== undefined)?.each
+
+  if (each !== undefined) {
+    throw new PresetError(`Unknown set \`${each}\`.`)
   }
 
-  const names = [...inherited]
+  const known = (entry: object) => 'in' in entry && ('imports' in entry || 'calls' in entry) && Object.keys(entry).every((key) => ['imports', 'calls', 'in', 'message'].includes(key))
 
-  for (const entry of entries) {
-    const index = names.indexOf(entry.startsWith('!') ? entry.slice(1) : entry)
-
-    if (entry.startsWith('!') && index !== -1) {
-      names.splice(index, 1)
-    } else if (!entry.startsWith('!') && index === -1) {
-      names.push(entry)
-    }
+  if (!Array.isArray(entries) || !entries.every((entry) => entry instanceof Object && known(entry))) {
+    throw new PresetError('deny.only takes entries such as `{ imports: [...], in: [...], message }`, with `imports` or `calls` and the places that may use them.')
   }
 
-  return names
+  return [...inherited, ...entries]
 }
 
 function presetEffective(folder: PresetTypes.PresetFolder, parent: PresetTypes.PresetEffective | null): PresetTypes.PresetEffective {
@@ -169,6 +166,7 @@ function presetEffective(folder: PresetTypes.PresetFolder, parent: PresetTypes.P
       ...effective.deny,
       imports: presetDenyEntries(inherited.imports, deny.imports),
       calls: presetDenyEntries(inherited.calls, deny.calls),
+      only: presetDenyOnly(inherited.only, deny.only),
     }
   }
 
@@ -177,7 +175,7 @@ function presetEffective(folder: PresetTypes.PresetFolder, parent: PresetTypes.P
   if (effective.layout && layout instanceof Object && layout.files !== undefined) {
     const inherited = (parent ? parent.layout?.files : null) ?? PresetConstants.presetGroupOptions.layout.files
 
-    effective.layout = { ...effective.layout, files: presetLayoutNames(inherited, layout.files) }
+    effective.layout = { ...effective.layout, files: presetNames(inherited, layout.files, 'layout.files') }
   }
 
   return effective
@@ -207,7 +205,7 @@ function presetFolder(key: string, value: unknown): PresetTypes.PresetFolder {
     throw new PresetError(`Folder \`${key}\` severity must be 'error' or 'warn'.`)
   }
 
-  return folder
+  return Array.isArray(folder.top) ? { ...folder, top: { allow: folder.top } } : folder
 }
 
 function presetScopesTree(root: string, folders: PresetTypes.PresetFolders): PresetTypes.PresetScope[] {
@@ -271,7 +269,7 @@ export function presetProject(config: PresetTypes.PresetConfig): PresetTypes.Pre
   const given = resolve(config.root ?? process.cwd())
   const root = existsSync(given) ? realpathSync(given) : given
 
-  const expanded = Object.entries(config.folders ?? {}).flatMap(([key, value]) =>
+  const expanded = Object.entries(presetSets(config.folders ?? {}, config.sets)).flatMap(([key, value]) =>
     presetBraces(key).map((path): [string, boolean | PresetTypes.PresetFolder, boolean] => [presetPortableKey(path), value, key.includes('{')]),
   )
 

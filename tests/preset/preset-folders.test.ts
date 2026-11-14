@@ -2,7 +2,7 @@ import { resolve } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import { preset, PresetError, recipes } from '../../src/preset/preset.ts'
 import { testerPreset } from '../utils/tester.utils.ts'
-import type { PresetFolders } from '../../src/types/preset.types.ts'
+import type { PresetConfig, PresetFolders } from '../../src/types/preset.types.ts'
 import type { TesterPresetRow } from '../types/tester.types.ts'
 
 describe('preset folders', () => {
@@ -95,11 +95,176 @@ describe('preset folders', () => {
       rule: 'eqeqeq',
       expected: 'off',
     },
+    {
+      name: 'an owned import reaches the rule',
+      tree: ['src/domains/auth/'],
+      folders: { src: { deny: { only: [{ imports: ['@scope/kit-auth'], in: ['src/domains/auth'] }] } } },
+      detect: false,
+      file: 'src/rpc/a.ts',
+      rule: 'arch/boundaries-deny',
+      expected: ['error', { imports: {}, calls: {}, only: [{ imports: ['@scope/kit-auth'], in: ['src/domains/auth'] }] }],
+    },
+    {
+      name: 'a child folder adds to the owned list',
+      tree: ['src/domains/auth/'],
+      folders: {
+        src: { deny: { only: [{ imports: 'a', in: 'src/domains/auth' }] } },
+        'src/domains': { deny: { only: [{ calls: 'b', in: 'src/domains/auth' }] } },
+      },
+      detect: false,
+      file: 'src/domains/auth/auth.ts',
+      rule: 'arch/boundaries-deny',
+      expected: ['error', { only: [{ imports: 'a', in: 'src/domains/auth' }, { calls: 'b', in: 'src/domains/auth' }] }],
+    },
+    {
+      name: 'a map set runs an owned entry once per pair',
+      tree: ['src/domains/'],
+      sets: { kits: { 'kit-auth': 'auth', 'kit-pay': 'payment' } },
+      folders: { src: { deny: { only: [{ each: 'kits', imports: ['@scope/{key}', '@scope/{key}/*'], in: 'src/domains/{value}', message: 'Call the {value} domain.' }] } } },
+      detect: false,
+      file: 'src/rpc/a.ts',
+      rule: 'arch/boundaries-deny',
+      expected: [
+        'error',
+        {
+          only: [
+            { imports: ['@scope/kit-auth', '@scope/kit-auth/*'], in: 'src/domains/auth', message: 'Call the auth domain.' },
+            { imports: ['@scope/kit-pay', '@scope/kit-pay/*'], in: 'src/domains/payment', message: 'Call the payment domain.' },
+          ],
+        },
+      ],
+    },
+    {
+      name: 'a list set expands a deny key',
+      tree: ['src/'],
+      sets: { writes: ['insertInto', 'deleteFrom'] },
+      folders: { src: { deny: { calls: { '{writes}': 'A query reads only.' } } } },
+      detect: false,
+      file: 'src/a.ts',
+      rule: 'arch/boundaries-deny',
+      expected: ['error', { calls: { insertInto: 'A query reads only.', deleteFrom: 'A query reads only.' } }],
+    },
+    {
+      name: 'a map set expands a deny key with its value',
+      tree: ['src/'],
+      sets: { kits: { 'kit-auth': 'auth' } },
+      folders: { src: { deny: { imports: { '@scope/{kits}/internal': 'Use the {value} domain.' } } } },
+      detect: false,
+      file: 'src/a.ts',
+      rule: 'arch/boundaries-deny',
+      expected: ['error', { imports: { '@scope/kit-auth/internal': 'Use the auth domain.' } }],
+    },
+    {
+      name: 'a list set expands inside a list and a rule option',
+      tree: ['src/'],
+      sets: { roles: ['actions', 'queries'] },
+      folders: { src: { rules: { 'arch/naming-declarations': ['error', { roles: ['utils', '{roles}'] }] } } },
+      detect: false,
+      file: 'src/a.ts',
+      rule: 'arch/naming-declarations',
+      expected: ['error', { roles: ['utils', 'actions', 'queries'] }],
+    },
+    {
+      name: 'a set expands a folder key',
+      tree: ['src/auth/', 'src/pay/'],
+      sets: { areas: ['auth', 'pay'] },
+      folders: { 'src/{areas}': { deny: { calls: { log: 'No logs in {key}.' } } } },
+      detect: false,
+      file: 'src/pay/a.ts',
+      rule: 'arch/boundaries-deny',
+      expected: ['error', { calls: { log: 'No logs in pay.' } }],
+    },
+    {
+      name: 'a name template keeps its own placeholders next to sets',
+      tree: ['src/'],
+      sets: { roles: ['actions'] },
+      folders: { src: { rules: { 'arch/files-exports': ['error', { names: ['make{Domain}Service'] }] } } },
+      detect: false,
+      file: 'src/a.ts',
+      rule: 'arch/files-exports',
+      expected: ['error', { names: ['make{Domain}Service'] }],
+    },
+    {
+      name: 'a forced recipe still replaces detection next to sets',
+      tree: ['src/routes/'],
+      files: { 'package.json': JSON.stringify({ name: 'app', dependencies: { '@tanstack/react-start': '1', react: '19' } }) },
+      sets: { roles: ['actions'] },
+      folders: { '.': recipes.library },
+      file: 'src/routes/index.tsx',
+      rule: 'arch/files-route',
+      expected: undefined,
+    },
+    {
+      name: 'a top-level list allows imports and the listed calls',
+      tree: ['tests/'],
+      folders: { 'tests/**/*.test.ts': { top: ['it', 'it.each'] } },
+      files: { 'tests/a.test.ts': '' },
+      detect: false,
+      file: 'tests/a.test.ts',
+      rule: 'arch/files-top-level',
+      expected: ['error', { allow: ['import', 'it', 'it.each'] }],
+    },
+    {
+      name: 'top-level options pass through',
+      tree: ['src/'],
+      folders: { src: { top: { allow: [{ kind: 'const', from: '^Schema\\.' }], deny: ['let'], message: 'Schemas only.' } } },
+      detect: false,
+      file: 'src/a.ts',
+      rule: 'arch/files-top-level',
+      expected: ['error', { allow: ['import', { kind: 'const', from: '^Schema\\.' }], deny: ['let'], message: 'Schemas only.' }],
+    },
+    {
+      name: 'no top-level rule without a list',
+      tree: ['src/'],
+      folders: { src: true },
+      detect: false,
+      file: 'src/a.ts',
+      rule: 'arch/files-top-level',
+      expected: undefined,
+    },
+    {
+      name: 'a folder turns the inherited top-level list off',
+      tree: ['src/legacy/'],
+      folders: { src: { top: ['it'] }, 'src/legacy': { top: false } },
+      detect: false,
+      file: 'src/legacy/a.ts',
+      rule: 'arch/files-top-level',
+      expected: undefined,
+    },
+    {
+      name: 'import names reach the rule in order',
+      tree: ['src/'],
+      folders: { src: { naming: { imports: { '@scope/kit-{package}/{subpath}': '{Package}Kit{Subpath}', '@scope/kit-{package}': ['{Package}Kit', 'Kit'] } } } },
+      detect: false,
+      file: 'src/a.ts',
+      rule: 'arch/naming-imports',
+      expected: [
+        'error',
+        { imports: [{ source: '@scope/kit-{package}/{subpath}', name: '{Package}Kit{Subpath}' }, { source: '@scope/kit-{package}', name: ['{Package}Kit', 'Kit'] }] },
+      ],
+    },
+    {
+      name: 'a child folder drops an inherited import name',
+      tree: ['src/legacy/'],
+      folders: { src: { naming: { imports: { dayjs: 'dayjs' } } }, 'src/legacy': { naming: { imports: { dayjs: false } } } },
+      detect: false,
+      file: 'src/legacy/a.ts',
+      rule: 'arch/naming-imports',
+      expected: undefined,
+    },
   ])('$name', (row) => {
     expect({ value: testerPreset(row) }).toMatchObject({ value: row.expected })
   })
 
-  it.each<{ name: string; folders: unknown; message: string }>([
+  it.each<{ name: string; folders: unknown; sets?: unknown; message: string }>([
+    { name: 'an owned entry without places fails', folders: { src: { deny: { only: [{ imports: 'a' }] } } }, message: 'deny.only takes entries such as `{ imports: [...], in: [...], message }`, with `imports` or `calls` and the places that may use them.' },
+    { name: 'an unknown set fails', folders: { src: { deny: { only: [{ each: 'kits', imports: '{key}', in: 'src' }] } } }, sets: { other: ['a'] }, message: 'Unknown set `kits`.' },
+    {
+      name: 'a set named like a placeholder fails',
+      folders: { src: true },
+      sets: { domain: ['a'] },
+      message: 'Set `domain` needs another name: start with a lowercase letter, use letters and digits, and avoid domain, stem, file, folder, parent, name, key, value.',
+    },
     { name: 'the removed layout suffixes option fails', folders: { src: { layout: { suffixes: ['prompts'] } } }, message: 'Unknown option `layout.suffixes`.' },
     {
       name: 'a layout file name with a folder fails',
@@ -107,8 +272,10 @@ describe('preset folders', () => {
       message: 'layout.files takes file names such as `*.prompts.ts`; `!*.utils.ts` removes one.',
     },
     { name: 'two folders written alone twice still fail', folders: { 'src/rules': true, './src/rules': true }, message: 'Folder `src/rules` is listed twice.' },
-  ])('$name', ({ folders, message }) => {
+  ])('$name', ({ folders, sets, message }) => {
     // SAFETY: these rows hold invalid folder maps on purpose; preset() validates its input at runtime.
-    expect(() => preset({ root, folders: folders as PresetFolders })).toThrow(new PresetError(message))
+    const config = { root, folders: folders as PresetFolders, sets: sets as PresetConfig['sets'] }
+
+    expect(() => preset(config)).toThrow(new PresetError(message))
   })
 })

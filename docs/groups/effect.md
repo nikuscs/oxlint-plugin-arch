@@ -24,6 +24,7 @@ Takes `true`, `false`, `'warn'` or an object:
 | `exports` | `string \| string[]` | | Regex for files whose exports `code-traced` checks; every non-test file when unset |
 | `skip` | `string \| string[]` | | Regex for service names `code-traced` skips, such as `Driver$` |
 | `entries` | `string[]` | `[]` | Globs for entry files (servers, Workers, scripts) that provide their own layers |
+| `files` | `string[]` | `[]` | Contract package: file kinds to add, such as `*.policy.ts`; `!*.layer.types.ts` removes one. Set on the package folder |
 
 Project style, in both modes: `typescript/consistent-type-assertions` with `assertionStyle: 'never'` and `eslint-js/max-len` at `width` (ignoring URLs, comments and regular expressions). When installed, each on its own (optional peer dependencies), it also loads `eslint-plugin-regexp` (`flat/recommended`), `eslint-plugin-de-morgan` (`recommended`) and `eslint-plugin-sonarjs` (`sonarjs/super-linear-regex` only); a package that is not installed adds nothing.
 
@@ -111,10 +112,10 @@ A unit with the `effect` group that is not a server and whose source holds a `<d
 | Key | Sets |
 | --- | --- |
 | the unit | `types: { placement: false }`: a contract declares its types next to its Schemas |
-| `C/*/*.ts` | `arch/naming-file`: `<d>.schemas.ts`, `<d>-<part>.schemas.ts`, `<d>.admin.schemas.ts`, `<d>.contract.ts`, `<d>.admin.contract.ts`, `<d>.errors.ts`, `<d>.layer.types.ts`; `arch/naming-folder` with `singularize: 'none'`, `separators: ['.', '-']`; `arch/files-exports` with `stem: 'folder'`, `singularize: 'trailing-s'`, `patterns: ['{Domain}\\w*']` |
+| `C/*/*.ts` | `arch/naming-file`: `<d>.schemas.ts`, `<d>-<part>.schemas.ts`, `<d>.admin.schemas.ts`, `<d>.contract.ts`, `<d>.admin.contract.ts`, `<d>.errors.ts`, `<d>.layer.types.ts`, `<d>.service.ts`, plus the kinds in `effect.files`; `arch/naming-folder` with `singularize: 'none'`, `separators: ['.', '-']`; `arch/files-exports` with `stem: 'folder'`, `singularize: 'trailing-s'`, `patterns: ['{Domain}\\w*']` |
 | `C/*/*.admin.*.ts` | `arch/files-exports` with `patterns: ['Admin{Domain}\\w*']` |
 | `C/*/*.schemas.ts`, `C/*/*.contract.ts` | `arch/files-no-functions` with `reexports: false`; `arch/files-constants-only` with `types: true`, `functions: true`; `arch/types-imported-alias`; `arch/schemas-single-use` with `namespaces: ['Schema']`, `methods: ['Array', 'Union', 'Record', 'Tuple']`, `structural: ['Struct', 'Array', 'Union', 'Record', 'Tuple', 'NullOr', 'UndefinedOr', 'optional', 'TaggedStruct']` |
-| `C/*/*.errors.ts`, `C/*/*.layer.types.ts` | `arch/files-no-functions` |
+| `C/*/*.errors.ts`, `C/*/*.layer.types.ts`, `C/*/*.service.ts` | `arch/files-no-functions` |
 | `C/shared/*.ts` | `arch/naming-file`, `arch/naming-folder`, `arch/files-exports` and `arch/files-no-functions` off; `arch/files-constants-only` with `types: true`, `functions: true` |
 | `C/contract*.ts` | `arch/files-constants-only` with `types: true`, `functions: true`; `arch/types-imported-alias`; `arch/schemas-single-use` |
 

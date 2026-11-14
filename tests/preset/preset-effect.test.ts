@@ -381,11 +381,21 @@ describe('preset Effect server', () => {
       expected: [
         'error',
         {
-          pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*(?:[.]schemas|[.]admin[.]schemas|[.]contract|[.]admin[.]contract|[.]errors|[.]layer[.]types)[.]ts$',
-          message: 'Contract files use <d>.schemas.ts, <d>-<part>.schemas.ts, <d>.admin.schemas.ts, <d>.contract.ts, <d>.admin.contract.ts, <d>.errors.ts or <d>.layer.types.ts.',
+          pattern: '^[a-z0-9]+(?:-[a-z0-9]+)*(?:[.]schemas|[.]admin[.]schemas|[.]contract|[.]admin[.]contract|[.]errors|[.]layer[.]types|[.]service)[.]ts$',
+          message: 'Contract files use <d>.schemas.ts, <d>-<part>.schemas.ts, <d>.admin.schemas.ts, <d>.contract.ts, <d>.admin.contract.ts, <d>.errors.ts, <d>.layer.types.ts or <d>.service.ts.',
         },
       ],
     },
+    {
+      name: 'a contract package adds and removes file kinds',
+      tree: contractTree,
+      files: contract,
+      folders: { 'packages/contract': { effect: { files: ['*.policy.ts', '!*.layer.types.ts'] } } },
+      file: 'packages/contract/src/order/order.policy.ts',
+      rule: 'arch/naming-file',
+      expected: ['error', { pattern: expect.stringContaining('[.]errors|[.]service|[.]policy)'), message: expect.stringContaining('<d>.service.ts or <d>.policy.ts.') }],
+    },
+    { name: 'a contract service file holds no functions', tree: contractTree, files: contract, folders: {}, file: 'packages/contract/src/order/order.service.ts', rule: 'arch/files-no-functions', expected: 'error' },
     {
       name: 'a contract file starts with its folder name',
       tree: contractTree,

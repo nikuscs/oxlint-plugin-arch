@@ -7,16 +7,10 @@ import {
   declarationsUnique,
 } from '../../utils/declarations.utils.ts'
 import { exportsCollect, exportsFunctions } from '../../utils/exports.utils.ts'
-import {
-  namingBasename,
-  namingCamelCase,
-  namingFilePrefixesFor,
-  namingHasFilePrefix,
-  namingPascalCase,
-  namingStemSchemaProperties,
-} from '../../utils/naming.utils.ts'
+import { namingBasename, namingCaptures, namingExpand, namingFilePrefixesFor, namingHasFilePrefix, namingStemSchemaProperties } from '../../utils/naming.utils.ts'
 import {
   optionsAll,
+  optionsEscape,
   optionsPatternLabel,
   optionsPatterns,
   optionsPatternSchema,
@@ -33,34 +27,6 @@ const namingExportsScopeProperties: OptionsSchemaProperties = {
   types: { type: 'boolean' },
   services: { type: 'boolean' },
   allow: optionsPatternSchema,
-}
-
-function matchTemplate(
-  basename: string,
-  template: string,
-  placeholder = '[a-z0-9-]+',
-): Record<string, string> | null {
-  let pattern = ''
-  let index = 0
-
-  while (index < template.length) {
-    const char = template[index]
-
-    if (char === '{') {
-      const end = template.indexOf('}', index)
-
-      if (end === -1) {
-        return null
-      }
-      pattern += `(?<${template.slice(index + 1, end)}>${placeholder})`
-      index = end + 1
-      continue
-    }
-    pattern += /[.+^${}()|[\]\\]/.test(char) ? `\\${char}` : char
-    index += 1
-  }
-
-  return new RegExp(`^${pattern}$`).exec(basename)?.groups ?? null
 }
 
 export const namingExports = defineRule({
@@ -93,7 +59,7 @@ export const namingExports = defineRule({
               mode: { type: 'string', enum: ['template'] },
               ...namingExportsScopeProperties,
               file: { type: 'string' },
-              export: { type: 'string' },
+              export: optionsPatternSchema,
               match: { type: 'string', enum: ['all', 'some'] },
               placeholder: { type: 'string' },
               camelCase: { type: 'boolean' },
@@ -122,32 +88,21 @@ export const namingExports = defineRule({
 
           if (options.mode === 'template') {
             const file = namingBasename(context.filename)
-            const groups = matchTemplate(file, options.file, options.placeholder)
+            const captures = namingCaptures(context.filename, { file: options.file, placeholder: options.placeholder })
 
-            if (!groups) {
+            if (!captures) {
               continue
             }
 
-            const expected = options.export.replaceAll(/\{([^}]+)\}/g, (placeholder, key: string) => {
-              const group = groups[key.toLowerCase()]
-
-              if (!group) {
-                return placeholder
-              }
-
-              if (/^[A-Z]/.test(key)) {
-                return namingPascalCase(group)
-              }
-
-              return options.camelCase ? namingCamelCase(group) : group
-            })
+            const names = [options.export].flat().map((template) => namingExpand(template, captures, options.camelCase ?? false))
+            const expected = names.join(' or ')
 
             const functions = (scope === 'exports' ? exportsFunctions(program, true) : declarationsFunctions(program)).filter(
               ({ name }) => !optionsPatternsTest(allowed, name),
             )
 
             if (options.match === 'some') {
-              if (functions.some((item) => item.name === expected)) {
+              if (functions.some((item) => names.includes(item.name))) {
                 continue
               }
 
@@ -162,7 +117,7 @@ export const namingExports = defineRule({
             }
 
             for (const item of functions) {
-              if (item.name !== expected) {
+              if (!names.includes(item.name)) {
                 context.report({
                   node: item.node,
                   messageId: 'mismatch',
@@ -197,7 +152,9 @@ export const namingExports = defineRule({
           }
 
           const prefixes = options.mode === 'pattern' ? [] : namingFilePrefixesFor(context.filename, options)
-          const expected = options.mode === 'pattern' ? optionsPatternsWithEmpty(options.pattern, options.flags) : []
+          const captures = namingCaptures(context.filename) ?? {}
+          const sources = options.mode === 'pattern' ? [options.pattern].flat().map((source) => namingExpand(source, captures, true, optionsEscape)) : []
+          const expected = optionsPatternsWithEmpty(sources, options.mode === 'pattern' ? options.flags : undefined)
 
           for (const item of declarationsUnique(names)) {
             if (optionsPatternsTest(allowed, item.name)) {
@@ -209,7 +166,7 @@ export const namingExports = defineRule({
                 context.report({
                   node: item.node,
                   messageId: 'pattern',
-                  data: { name: item.name, pattern: optionsPatternLabel(options.pattern) },
+                  data: { name: item.name, pattern: optionsPatternLabel(sources) },
                 })
               }
 
