@@ -241,7 +241,7 @@ describe('preset folders', () => {
       expected: undefined,
     },
     {
-      name: 'import names reach the rule in order',
+      name: 'import names reach the rule most specific first',
       tree: ['src/'],
       folders: { src: { naming: { imports: { '@scope/kit-{package}/{subpath}': '{Package}Kit{Subpath}', '@scope/kit-{package}': ['{Package}Kit', 'Kit'] } } } },
       detect: false,
@@ -249,7 +249,7 @@ describe('preset folders', () => {
       rule: 'arch/naming-imports',
       expected: [
         'error',
-        { imports: [{ source: '@scope/kit-{package}/{subpath}', name: '{Package}Kit{Subpath}' }, { source: '@scope/kit-{package}', name: ['{Package}Kit', 'Kit'] }] },
+        { imports: [{ source: '@scope/kit-{package}', name: ['{Package}Kit', 'Kit'] }, { source: '@scope/kit-{package}/{subpath}', name: '{Package}Kit{Subpath}' }] },
       ],
     },
     {

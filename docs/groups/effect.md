@@ -26,6 +26,8 @@ Takes `true`, `false`, `'warn'` or an object:
 | `entries` | `string[]` | `[]` | Globs for entry files (servers, Workers, scripts) that provide their own layers |
 | `strict` | `boolean` | `true` | Effect server and contract package: the [locked file shapes](#locked-by-default) below. `false` keeps only the names and bans |
 | `files` | `string[]` | `[]` | Contract package: file kinds to add, such as `*.policy.ts`; `!*.layer.types.ts` removes one. Set on the package folder |
+| `module` | `string \| object` | off | [Module package layout](#what-an-effect-module-package-gets): the folder name template (`'kit-{module}'`), `'flat'`, or an object with `name` and the options below |
+| `errors` | `{ files, base? }` | `**/*.errors.ts` | Where error classes live (globs from the package folder) and the one file that may call Effect's raw error constructors |
 
 Project style, in both modes: `typescript/consistent-type-assertions` with `assertionStyle: 'never'` and `eslint-js/max-len` at `width` (ignoring URLs, comments and regular expressions). When installed, each on its own (optional peer dependencies), it also loads `eslint-plugin-regexp` (`flat/recommended`), `eslint-plugin-de-morgan` (`recommended`) and `eslint-plugin-sonarjs` (`sonarjs/super-linear-regex` only); a package that is not installed adds nothing.
 
@@ -202,6 +204,65 @@ folders: {
 ## What the web app gets
 
 In a project with a contract package, a TanStack or Next app imports the contract's root entry as types only: `no-restricted-imports` on its source holds `{ name: <contract package>, allowTypeImports: true }` with the imports group's patterns, and a TanStack app keeps its `@tanstack/react-start/rsc` path. Its `services/**/*.rsc.ts` and `*.rsc.tsx` files get the contract path without the rsc one. Subpaths stay free.
+
+## What an Effect module package gets
+
+Off unless a folder sets `effect.module`. One package is one module with a flat source folder; `M` is the module name read from the folder (`kit-wallet` with `'kit-{module}'` is `wallet`), `S` its source, `T` its test folder.
+
+```ts
+folders: {
+  'packages/*': { effect: { module: 'kit-{module}' } },
+  'packages/kit-utils': { effect: { module: 'flat' } },
+  'packages/kit-kysely': { effect: { module: { spans: 'database.{method}' } } },
+}
+```
+
+| Option | Default | |
+| --- | --- | --- |
+| `name` | `'{module}'` | Folder name template that yields the module name; `'flat'` is one contract or helper per file |
+| `kinds` | `types`, `config`, `constants`, `migrations`, `layer`, `fake`, `testing`, `utils`, `handlers`, `middlewares`, `translations-*`, `assets.d` | The `M.<kind>.ts` files allowed; add or remove as in `layout.files`: `['*.policy.ts', '!*.middlewares.ts']` |
+| `parts` | `types`, `layer`, `driver`, `fake`, `testing`, `adapter`, `index` | Kinds that may be split as `M-<part>.<kind>.ts`, same syntax |
+| `spans` | `'{module}.{method}'` | The `Effect.fn` label in every source file, the module name in camelCase; `false` turns it off |
+| `imports` | `true` | Import names: a workspace package as `{Package}`, `{Package}{Subpath}`, `/schema` as `{Package}Types`; a relative file as its name, with `driver`, `adapter` and `index` dropped and a layer as `{File}` or `{File}Layer`. Merged into `naming.imports` |
+| `tests` | `{ folder: 'test', support: 'support', factories: 'testing/{module}.factories.ts' }` | Test, support and factory names and shapes; `false` turns them off |
+| `migrations` | `'{date}-create-{module}-tables'` | Migration file name (and its `.sqlite.ts` twin) in `S/migrations/`; `false` turns it off |
+
+A narrower folder's `module` object merges over the one it inherits, so `{ spans }` on one package keeps the `name` set on `packages/*`.
+
+| Key | Sets |
+| --- | --- |
+| the package | `types: { placement: false }`; `arch/comments-code` with docblocks on functions; [`arch/code-traced`](../rules/code-traced.md) asks for spans on `S/M.ts`, `S/M.handlers.ts` and `S/M.middlewares.ts` only; `naming.imports` as above |
+| `S/**/*.ts` | `arch/naming-file`: `index.ts`, `M.ts`, `M.<kind>.ts`, `M-<part>.<kind>.ts`, a dated migration, and no folder but `migrations/`; `deny.calls`: the `Layer.*` builders; spans; [`arch/effect-yield-name`](../rules/effect-yield-name.md), [`arch/effect-yields-first`](../rules/effect-yields-first.md), `arch/types-inline` with `min: 2`, `arch/types-declarations`, `arch/schemas-local`; `eslint/no-shadow` and `linteffect/prevent-dynamic-imports` off |
+| `S/index.ts`, `S/*.index.ts` | `top`: re-exports only; `index.ts` imports no adapter, driver, fake, testing or types file |
+| `S/*.config.ts` | `top`: exported constants `config` or `<x>Config` |
+| `S/*.constants.ts` | `top`: types and exported `SCREAMING_CASE` constants |
+| `S/*.migrations.ts` | `top`: exported `MIGRATIONS` and `SQLITE_MIGRATIONS` |
+| `S/*.types.ts` | Schemas first with `keep: 'Table$'` and `rows`; exports start with the module's PascalCase name, tables singular; it re-exports only `M-<part>.types.ts`, and with part files beside it holds nothing else |
+| `S/*.layer.ts`, `S/*.driver.ts`, `S/*.fake.ts` | exports `layer` only; [`arch/effect-layer-file`](../rules/effect-layer-file.md); the `Layer.*` builders are allowed |
+| `S/*.driver.ts` | imports no other driver, except in `*-config.driver.ts` |
+| `S/*.adapter.ts` | exports start with the file name; imports no layer, driver or fake; `*-react.adapter.ts` may hold React state |
+| `S/migrations/*.ts` | the migration file name |
+| index, config, constants, migrations, types and `.d.ts` files | no docblocks |
+| `T/**` | function nesting up to 5; `linteffect/no-service-layer-scatter` off |
+| `T/*.ts` | `M[-<part>][.<what>].test.ts`, `.bench.ts`, `.suite.ts` or `M.types.ts`; never `.integration` |
+| `T/*.test.ts` | `top`: `describe*`, `it*`, `layer`, `*Suite` and `*.describe` calls |
+| `T/*.<kind>.test.ts` | [`arch/files-siblings`](../rules/files-siblings.md): `S/M.<kind>.ts` exists, for layer, fake, adapter, utils, handlers, middlewares, testing and driver |
+| `T/support/*.ts` | `M.{layer,cases,scenarios}.ts`, `M-<part>.{cases,scenarios}.ts` or `M-<api>.ts`; no types; a layer constant is `<Role>Layer` |
+| `T/**/*.bench.ts` | assertion and runtime-boundary rules off |
+| the factories folder | one file, exported `…Factory` constants only |
+
+A flat package gets the package row, the `S/**/*.ts` row without the file-name, types and Schema rules, spans named after the file (`{stem}.{method}`), `S/index.ts` and the test rows without the name rules.
+
+With `effect.errors: { files: 'src/errors/*.ts', base: 'src/errors/tagged.ts' }` the listed files hold exported classes, constants and types named after the file or ending in `Data`, an error's `tag` is its class name and its `code` is `SCREAMING_CASE`; only `base` may call `Schema.TaggedError`, `Schema.ErrorClass`, `Data.TaggedError` and `Data.Error`.
+
+Restate any key to change one rule:
+
+```ts
+folders: {
+  'packages/*/test/*.test.ts': { top: ['describe*', 'it*', 'bench'] },
+  'packages/kit-kysely/src/*.ts': { rules: { 'arch/types-unknown': 'off' } },
+}
+```
 
 ## What a UI kit gets
 

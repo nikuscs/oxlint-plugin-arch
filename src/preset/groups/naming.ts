@@ -17,6 +17,13 @@ function namingOperation(role: string, file: string) {
   return { mode: 'template', file, export: `{domain}${role === 'action' ? 'Action' : 'Query'}{Name}`, placeholder: '[a-z0-9-]+', camelCase: true }
 }
 
+function namingImportRank(source: string): number {
+  const placeholders = source.match(/\{[^{}]+\}/g) ?? []
+  const literal = source.replaceAll(/\{[^{}]+\}|\*\*\/?/g, '').length
+
+  return (source.includes('**') ? 1_000_000 : 0) + placeholders.length * 1000 - literal
+}
+
 export const namingGroup: PresetBuilder<'naming'> = (project, settings, owner) => {
   const { web, serviceRoots, app, ui, testFiles, components, hooks, operations } = project
   const flatApp = app.filter((path) => !operations.includes(path))
@@ -190,7 +197,9 @@ export const namingGroup: PresetBuilder<'naming'> = (project, settings, owner) =
     ['**/*-{action,query}.*.rsc.{ts,tsx}', ...testFiles],
   )
 
-  const imports = Object.entries(settings.imports).flatMap(([source, name]) => {
+  const ranked = Object.entries(settings.imports).toSorted(([first], [second]) => namingImportRank(first) - namingImportRank(second))
+
+  const imports = ranked.flatMap(([source, name]) => {
     if (name === false) {
       return []
     }

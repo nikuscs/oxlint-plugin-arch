@@ -296,12 +296,23 @@ function presetMergeObject<T extends object>(base: T, top: T, depth: number): T 
   return merged
 }
 
+function presetMergeModule(base: PresetTypes.PresetFolder, top: PresetTypes.PresetFolder): PresetTypes.PresetFolder {
+  const before = base.effect instanceof Object ? base.effect.module : undefined
+  const after = top.effect instanceof Object ? top.effect.module : undefined
+
+  if (before === undefined || !(after instanceof Object) || !(top.effect instanceof Object)) {
+    return top
+  }
+
+  return { ...top, effect: { ...top.effect, module: { ...(typeof before === 'string' ? { name: before } : before), ...after } } }
+}
+
 export function presetMerge(base: boolean | PresetTypes.PresetFolder | undefined, top: boolean | PresetTypes.PresetFolder): boolean | PresetTypes.PresetFolder {
   if (!(base instanceof Object) || !(top instanceof Object)) {
     return top === true && base instanceof Object ? base : top
   }
 
-  const merged = presetMergeObject(base, top, 2)
+  const merged = presetMergeObject(base, presetMergeModule(base, top), 2)
   const before = base.layout instanceof Object ? base.layout.files : undefined
   const after = top.layout instanceof Object ? top.layout.files : undefined
   const owned = [base.deny, top.deny].flatMap((deny) => (deny instanceof Object ? (deny.only ?? []) : []))

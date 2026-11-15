@@ -156,6 +156,27 @@ export interface PresetOrpcOptions {
   client?: string
 }
 
+export interface PresetEffectModuleTests {
+  folder?: string
+  support?: string
+  factories?: string
+}
+
+export interface PresetEffectModule {
+  name?: string
+  kinds?: string[]
+  parts?: string[]
+  spans?: string | false
+  imports?: boolean
+  tests?: PresetEffectModuleTests | false
+  migrations?: string | false
+}
+
+export interface PresetEffectErrors {
+  files: string
+  base?: string
+}
+
 export interface PresetEffectOptions {
   code?: boolean
   width?: number
@@ -164,6 +185,8 @@ export interface PresetEffectOptions {
   entries?: string[]
   files?: string[]
   strict?: boolean
+  module?: string | PresetEffectModule
+  errors?: PresetEffectErrors
 }
 
 export interface PresetEffectContract {
@@ -259,7 +282,7 @@ export interface PresetResolvedGroups {
   schemas: PresetEmptyOptions
   forms: PresetEmptyOptions
   sql: PresetEmptyOptions
-  effect: Pick<PresetEffectOptions, 'exports' | 'skip'> & { code: boolean; width: number; entries: string[]; files: string[]; strict: boolean }
+  effect: Pick<PresetEffectOptions, 'exports' | 'skip' | 'module' | 'errors'> & { code: boolean; width: number; entries: string[]; files: string[]; strict: boolean }
   console: PresetEmptyOptions
   deny: { imports: Record<string, string | false>; calls: Record<string, string | false>; only: BoundariesDenyOnly[] }
   top: { [K in keyof Required<FilesTopLevelOptions>]: FilesTopLevelOptions[K] | undefined }

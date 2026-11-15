@@ -10,6 +10,9 @@ Preset defaults that change what an app reports:
 
 Rules and options:
 
+- New `effect.module`: an Effect module package layout, off unless a folder sets it. `effect: { module: 'kit-{module}' }` on a folder of packages locks each package's file names, per-kind top level, layer, driver, adapter and types files, spans, import names, tests, support, factories and migrations; `module: 'flat'` is one contract or helper per file. Options: `name`, `kinds`, `parts`, `spans`, `imports`, `tests`, `migrations`.
+- New `effect.errors: { files, base }`: where error classes live and the one file that may call Effect's raw error constructors. Without it, `**/*.errors.ts` as before.
+- Preset `naming.imports`: the most specific key now wins (fewest placeholders, then the longest fixed text), not the first written.
 - `naming-labels` and `naming-imports` take `file`, a path template whose placeholders (`kit-{module}/src/**`) join the ones read from the path; `**` in a path template stands for any folders.
 - `naming-imports` entries take `**/` in `source`, `drop` (a regex removed from a capture before casing) and `name: false` (skip that import); the preset's `naming.imports` map takes an entry object as a value.
 - `files-top-level` takes several option objects and `when`: globs of sibling file names that must exist for the check to run.

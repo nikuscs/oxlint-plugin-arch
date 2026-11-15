@@ -1,5 +1,6 @@
 import { existsSync, readdirSync } from 'node:fs'
 import { posix, resolve } from 'node:path'
+import { presetModuleConventions, presetModuleErrors } from './preset-module.ts'
 import { presetRecipes } from './preset-recipes.ts'
 import { presetBaseImports, presetEffectImports, presetEffectServerImports, presetQueryWrites, presetTanstackRsc } from './preset.constants.ts'
 import { PresetError, presetFilled, presetIsDirectory, presetIsFile, presetManifest, presetMerge, presetNames, presetSource } from './preset.utils.ts'
@@ -344,7 +345,7 @@ function presetEffectUnit(
   return {
     ...keys,
     '.': presetMerge({ ...placement, deny: { imports, calls: errors } }, keys['.'] ?? {}),
-    [at('**/*.errors.ts')]: { deny: { calls: Object.fromEntries(presetEffectErrors.map((name) => [name, false])) } },
+    ...presetFilled(presetModuleErrors(options.errors, at('**/*.errors.ts'), presetEffectErrors), options.errors ? presetEffectExists(root, key) : () => true),
   }
 }
 
@@ -429,6 +430,7 @@ export function presetEffectConventions(
 
   return [
     ...Object.entries(presetEffectUnit(root, key, value, packages.at(0))),
+    ...Object.entries(presetFilled(presetModuleConventions(root, key, value), presetEffectExists(root, key))),
     ...Object.entries(presetEffectFrontend(root, key, value)),
     ...Object.entries(presetEffectWeb(root, key, value, contracts)),
     ...Object.entries(presetEffectKit(root, key, value, units)),
