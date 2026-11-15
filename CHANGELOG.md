@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.13.2
 
 Preset defaults that change what an app reports:
 
