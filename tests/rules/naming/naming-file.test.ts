@@ -122,5 +122,15 @@ describe('arch/naming-file', () => {
       options: { pattern: '^\\d', message: 'Start with a number.', unique: '^(\\d{4}-\\d{2}-\\d{2}(?:-\\d{2})*|\\d{3,14})[-_]' },
       errors: ['duplicate'],
     },
+    { name: 'a path template with a repeated placeholder', filename: 'rpc/app/rpc.app.orders.ts', code: '', options: { template: '{group}/rpc.{group}.{area}.ts', message: 'Use rpc.<group>.<area>.ts in its group folder.' } },
+    { name: 'one of several templates', filename: 'mails/order-paid.mail.tsx', code: '', options: { template: ['{name}.mail.tsx', 'layout.tsx'], message: 'Use <name>.mail.tsx.' } },
+    {
+      name: 'a file off its group folder',
+      filename: 'rpc/admin/rpc.app.orders.ts',
+      code: '',
+      options: { template: '{group}/rpc.{group}.{area}.ts', message: 'Use rpc.<group>.<area>.ts in its group folder.' },
+      errors: ['Use rpc.<group>.<area>.ts in its group folder.'],
+    },
+    { name: 'a file off every template', filename: 'mails/order.ts', code: '', options: { template: ['{name}.mail.tsx'], message: 'Use <name>.mail.tsx.' }, errors: ['mismatch'] },
   ])('$name', (row) => testerRun(namingFile, row))
 })

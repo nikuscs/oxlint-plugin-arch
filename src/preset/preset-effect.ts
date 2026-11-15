@@ -3,6 +3,7 @@ import { posix, resolve } from 'node:path'
 import { presetRecipes } from './preset-recipes.ts'
 import { presetBaseImports, presetEffectImports, presetEffectServerImports, presetQueryWrites, presetTanstackRsc } from './preset.constants.ts'
 import { PresetError, presetFilled, presetIsDirectory, presetIsFile, presetManifest, presetMerge, presetNames, presetSource } from './preset.utils.ts'
+import type { FilesTopLevelOptions } from '../types/files.types.ts'
 import type * as PresetTypes from '../types/preset.types.ts'
 
 const presetEffectQueryWrites = Object.fromEntries(presetQueryWrites.map((name) => [name, 'A queries file only reads; write in an actions file.']))
@@ -20,6 +21,11 @@ const presetEffectRouters = ['@tanstack/react-router', 'next/link', 'next/naviga
 const presetEffectErrors = ['Schema.TaggedError', 'Schema.ErrorClass', 'Data.TaggedError', 'Data.Error']
 
 const presetEffectContractKinds = ['*.schemas.ts', '*.admin.schemas.ts', '*.contract.ts', '*.admin.contract.ts', '*.errors.ts', '*.layer.types.ts', '*.service.ts']
+
+const presetEffectSpans: PresetTypes.PresetRules[string] = [
+  'error',
+  { labels: [{ callee: 'Effect.fn', name: '{name}', drop: ['Action', 'Query'], loose: true }] },
+]
 
 const presetEffectSchemaUses = {
   namespaces: ['Schema'],
@@ -104,17 +110,18 @@ function presetEffectServerKeys(at: (path: string) => string): PresetTypes.Prese
     },
     [at('domains/*/*.actions.ts')]: {
       limits: { lines: 1000 },
-      rules: { 'arch/files-exports': ['error', { stem: 'folder', patterns: ['{domain}Action[A-Z]\\w*'], types: true }] },
+      rules: { 'arch/files-exports': ['error', { stem: 'folder', patterns: ['{domain}Action[A-Z]\\w*'], types: true }], 'arch/naming-labels': presetEffectSpans },
     },
     [at('domains/*/*.queries.ts')]: {
       limits: { lines: 1000 },
       deny: { calls: presetEffectQueryWrites, imports: { './*.actions{,.ts}': 'A queries file imports no actions.' } },
-      rules: { 'arch/files-exports': ['error', { stem: 'folder', patterns: ['{domain}Query[A-Z]\\w*'], types: true }] },
+      rules: { 'arch/files-exports': ['error', { stem: 'folder', patterns: ['{domain}Query[A-Z]\\w*'], types: true }], 'arch/naming-labels': presetEffectSpans },
     },
     [at('domains/*/*.constants.ts')]: { rules: { 'arch/files-no-functions': ['error', { reexports: false }] } },
     [at('domains/*/*.layer.ts')]: { rules: { 'arch/effect-layer-file': ['error', { suffix: 'Layer' }] } },
     [at('domains/*/*.driver.ts')]: { rules: { 'arch/effect-layer-file': ['error', { suffix: 'Layer' }] } },
     [at('domains/*/*.workflows.ts')]: {
+      rules: { 'arch/naming-labels': ['error', { labels: [{ callee: 'Workflow.make', name: '{name}', drop: 'Workflow$' }] }] },
       deny: {
         calls: presetEffectWorkflowCalls,
         imports: {
@@ -189,21 +196,109 @@ function presetEffectContractKeys(at: (path: string) => string, files: unknown):
   }
 }
 
-function presetEffectUnit(root: string, key: string, value: PresetTypes.PresetFolder): PresetTypes.PresetFolders {
+function presetEffectTop(allow: NonNullable<FilesTopLevelOptions['allow']>): PresetTypes.PresetFolder {
+  return { top: { allow, stem: 'folder' } }
+}
+
+function presetEffectStrictServer(at: (path: string) => string, service: string | undefined): PresetTypes.PresetFolders {
+  const operations = presetEffectTop([{ kind: 'const', exported: true, from: '^Effect\\.fn' }, { kind: 'const', names: '^decode[A-Z]' }])
+  const layerKeys: PresetTypes.PresetRules = service === undefined ? {} : { 'arch/effect-layer-keys': ['error', { service }] }
+
+  return {
+    [at('.')]: {
+      rules: {
+        'arch/effect-yield-name': 'error',
+        'arch/effect-yields-first': 'error',
+        'arch/code-inside': ['error', { inside: [{ callee: '*.transaction', calls: { '*Workflow.execute': 'Start the workflow after the commit.' } }] }],
+      },
+    },
+    [at('domains')]: { naming: { imports: { './{file}.ts': '{File}' } } },
+    [at('domains/*/*.actions.ts')]: operations,
+    [at('domains/*/*.queries.ts')]: operations,
+    [at('domains/*/*.utils.ts')]: {
+      ...operations,
+      rules: { 'arch/naming-labels': ['error', { labels: [{ callee: 'Effect.fn', name: '{name}', loose: true }] }] },
+    },
+    [at('domains/*/*.layer.ts')]: {
+      rules: { 'arch/naming-keys': ['error', { callees: ['*.bind'], name: '^{folder}(?:Action|Query){Path}$' }], ...layerKeys },
+    },
+    [at('domains/*/*.workflows.ts')]: {
+      ...presetEffectTop([{ kind: 'const', from: '(?:^Workflow\\.make|\\.toLayer|^Layer\\.\\w+|^Schedule\\.\\w+)$' }]),
+      rules: {
+        'arch/files-exports': ['error', { stem: 'folder', patterns: ['{Domain}\\w*Workflow', '{Domain}WorkflowsLayer', '{domain}Schedule[A-Z]\\w*'] }],
+      },
+    },
+    [at('domains/*/*.constants.ts')]: presetEffectTop([{ kind: 'const', exported: true, names: '^{DOMAIN}_' }]),
+    [at('domains/*/*.config.ts')]: presetEffectTop([{ kind: 'const', exported: true, names: '^{domain}\\w*Config$' }]),
+    [at('domains/*/*.prompts.ts')]: { rules: { 'arch/files-exports': ['error', { stem: 'folder', patterns: ['{domain}Prompt[A-Z]\\w*'], types: true }] } },
+    [at('rpc/*/*.ts')]: {
+      ...presetEffectTop([{ kind: 'const', exported: true }]),
+      rules: {
+        'arch/naming-file': ['error', { template: '{group}/rpc.{group}.{area}.ts', message: 'Handlers use rpc/<group>/rpc.<group>.<area>.ts.' }],
+        'arch/files-exports': ['error', { file: 'rpc.{group}.{area}.ts', names: ['rpc{Group}{Area}'] }],
+      },
+    },
+    [at('mails/*.mail.tsx')]: { rules: { 'arch/files-exports': ['error', { file: '{name}.mail.tsx', names: ['{name}Mail', '{Name}Email'], types: true }] } },
+  }
+}
+
+function presetEffectStrictContract(at: (path: string) => string, name: string | undefined): PresetTypes.PresetFolders {
+  const key = name === undefined ? [] : [{ callee: 'Context.Service', name: `${name}/{folder}/{file}/{name}` }]
+
+  return {
+    [at('*/*.schemas.ts')]: presetEffectTop(['type', 'interface', 'namespace', { kind: 'const', exported: true }]),
+    [at('*/*.contract.ts')]: presetEffectTop(['type', { kind: 'const', exported: true }, { kind: 'const', exported: false, from: '^[A-Z]\\w*\\.' }]),
+    [at('*/*.service.ts')]: {
+      ...presetEffectTop(['interface', 'type', 'class', 'namespace']),
+      rules: key.length > 0 ? { 'arch/naming-labels': ['error', { labels: key }] } : {},
+    },
+    [at('*/*.errors.ts')]: {
+      ...presetEffectTop([{ kind: 'class', exported: true }]),
+      rules: {
+        'arch/naming-labels': [
+          'error',
+          {
+            labels: [
+              { callee: ['Schema.TaggedErrorClass', 'Schema.TaggedError', 'Data.TaggedError'], name: '{name}' },
+              { callee: '*.Tagged', property: 'tag', name: '{name}' },
+              { callee: '*.Tagged', property: 'code', pattern: '^[A-Z][A-Z0-9_]*$' },
+            ],
+          },
+        ],
+      },
+    },
+  }
+}
+
+const presetEffectStrictTests: PresetTypes.PresetFolder = { top: { allow: ['describe*', 'it*', 'test*', 'layer*'] } }
+
+function presetEffectUnit(
+  root: string,
+  key: string,
+  value: PresetTypes.PresetFolder,
+  contract: PresetTypes.PresetEffectContract | undefined,
+): PresetTypes.PresetFolders {
   if (!value.effect) {
     return {}
   }
 
   const at = presetEffectAt(root, key, value)
 
-  const contract = presetEffectContract(root, key, value)
+  const own = presetEffectContract(root, key, value)
   const server = presetEffectDomains(root, key, value)
-  const files = value.effect instanceof Object ? value.effect.files : undefined
-  const conventions = server ? presetEffectServerKeys(at) : presetEffectContractKeys(at, files)
-  const keys = server || contract ? presetFilled(conventions, presetEffectExists(root, key)) : {}
+  const options = value.effect instanceof Object ? value.effect : {}
+  const service = contract && `${posix.join(root, contract.source)}/{folder}/{folder}.service.ts`
+  const base = server ? presetEffectServerKeys(at) : presetEffectContractKeys(at, options.files)
+  const tests = { 'tests/**/*.test.ts': presetEffectStrictTests, 'test/**/*.test.ts': presetEffectStrictTests }
+  const strict = server ? { ...presetEffectStrictServer(at, service), ...tests } : presetEffectStrictContract(at, presetManifest(root, key).name)
+  const locked = options.strict === false ? {} : strict
+  const paths = [...new Set([...Object.keys(base), ...Object.keys(locked)])]
+  const merged = (path: string) => (path in base && path in locked ? presetMerge(base[path], locked[path]) : (base[path] ?? locked[path]))
+  const conventions = Object.fromEntries(paths.map((path) => [path, merged(path)]))
+  const keys = server || own ? presetFilled(conventions, presetEffectExists(root, key)) : {}
   const errors = Object.fromEntries(presetEffectErrors.map((name) => [name, 'Tagged errors live in <d>.errors.ts.']))
-  const placement: PresetTypes.PresetFolder = server || contract ? { types: { placement: false } } : {}
-  const imports = server || contract ? { ...presetEffectImports, ...presetEffectServerImports } : presetEffectImports
+  const placement: PresetTypes.PresetFolder = server || own ? { types: { placement: false } } : {}
+  const imports = server || own ? { ...presetEffectImports, ...presetEffectServerImports } : presetEffectImports
 
   return {
     ...keys,
@@ -283,10 +378,16 @@ export function presetEffectConventions(
   value: PresetTypes.PresetFolder,
   units: PresetTypes.PresetEntry[],
 ): PresetTypes.PresetEntry[] {
-  const contracts = units.flatMap(([other, folder]) => (presetEffectContract(root, other, folder) ? (presetManifest(root, other).name ?? []) : []))
+  const packages = units.flatMap(([other, folder]): PresetTypes.PresetEffectContract[] => {
+    const name = presetEffectContract(root, other, folder) ? presetManifest(root, other).name : undefined
+
+    return name === undefined ? [] : [{ name, source: presetSource(root, other, folder instanceof Object ? folder.source : undefined) }]
+  })
+
+  const contracts = packages.map((item) => item.name)
 
   return [
-    ...Object.entries(presetEffectUnit(root, key, value)),
+    ...Object.entries(presetEffectUnit(root, key, value, packages.at(0))),
     ...Object.entries(presetEffectFrontend(root, key, value)),
     ...Object.entries(presetEffectWeb(root, key, value, contracts)),
     ...Object.entries(presetEffectKit(root, key, value, units)),

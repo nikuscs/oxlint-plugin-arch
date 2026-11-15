@@ -66,3 +66,7 @@ export function optionsAssertMockingApis(patterns: string[]): void {
 export function optionsEscape(value: string): string {
   return value.replaceAll(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
+
+export function optionsWildcards(names: OptionsPattern | undefined): RegExp[] {
+  return [names ?? []].flat().map((name) => new RegExp(`^${name.split('*').map(optionsEscape).join('.*')}$`))
+}

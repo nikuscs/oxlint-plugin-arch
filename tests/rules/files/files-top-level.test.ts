@@ -52,8 +52,8 @@ describe('arch/files-top-level', () => {
     {
       name: 'the unlisted report lists what is allowed',
       code: 'const rows = []',
-      options: { allow: ['import', 'it', { kind: ['type', 'interface'] }], message: 'Build rows inside the test.' },
-      errors: ["Top-level const 'rows' is not allowed in this file; allowed: import, it, type/interface. Build rows inside the test."],
+      options: { allow: ['import', 'it', { kind: ['type', 'interface'] }, { kind: 'const', exported: true, names: '^[A-Z]', from: '^Schema\\.' }], message: 'Build rows inside the test.' },
+      errors: ["Top-level const 'rows' is not allowed in this file; allowed: import, it, type/interface, exported const named ^[A-Z] from ^Schema\\.. Build rows inside the test."],
     },
     {
       name: 'a denied entry carries its own message',

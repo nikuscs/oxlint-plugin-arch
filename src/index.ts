@@ -15,6 +15,7 @@ import { codeDelegate } from './rules/code/code-delegate.ts'
 import { codeDoubleNegation } from './rules/code/code-double-negation.ts'
 import { codeFunctionNesting } from './rules/code/code-function-nesting.ts'
 import { codeInline } from './rules/code/code-inline.ts'
+import { codeInside } from './rules/code/code-inside.ts'
 import { codeJustifiedCall } from './rules/code/code-justified-call.ts'
 import { codeLiteralIn } from './rules/code/code-literal-in.ts'
 import { codeMutableState } from './rules/code/code-mutable-state.ts'
@@ -29,10 +30,13 @@ import { commentsCode } from './rules/comments/comments-code.ts'
 import { commentsDirectives } from './rules/comments/comments-directives.ts'
 import { copyDashes } from './rules/copy/copy-dashes.ts'
 import { effectLayerFile } from './rules/effect/effect-layer-file.ts'
+import { effectLayerKeys } from './rules/effect/effect-layer-keys.ts'
 import { effectLayers } from './rules/effect/effect-layers.ts'
 import { effectMergePipe } from './rules/effect/effect-merge-pipe.ts'
 import { effectSchemaFirst } from './rules/effect/effect-schema-first.ts'
 import { effectValuesFirst } from './rules/effect/effect-values-first.ts'
+import { effectYieldName } from './rules/effect/effect-yield-name.ts'
+import { effectYieldsFirst } from './rules/effect/effect-yields-first.ts'
 import { filesComponentsOnly } from './rules/files/files-components-only.ts'
 import { filesConstantsOnly } from './rules/files/files-constants-only.ts'
 import { filesDomainConstants } from './rules/files/files-domain-constants.ts'
@@ -63,6 +67,8 @@ import { namingExports } from './rules/naming/naming-exports.ts'
 import { namingFile } from './rules/naming/naming-file.ts'
 import { namingFolder } from './rules/naming/naming-folder.ts'
 import { namingImports } from './rules/naming/naming-imports.ts'
+import { namingKeys } from './rules/naming/naming-keys.ts'
+import { namingLabels } from './rules/naming/naming-labels.ts'
 import { namingTypes } from './rules/naming/naming-types.ts'
 import { reactDynamicClasses } from './rules/react/react-dynamic-classes.ts'
 import { reactEmptyEffect } from './rules/react/react-empty-effect.ts'
@@ -105,6 +111,7 @@ export default eslintCompatPlugin({
     'code-double-negation': codeDoubleNegation,
     'code-function-nesting': codeFunctionNesting,
     'code-inline': codeInline,
+    'code-inside': codeInside,
     'code-justified-call': codeJustifiedCall,
     'code-literal-in': codeLiteralIn,
     'code-mutable-state': codeMutableState,
@@ -119,10 +126,13 @@ export default eslintCompatPlugin({
     'comments-directives': commentsDirectives,
     'copy-dashes': copyDashes,
     'effect-layer-file': effectLayerFile,
+    'effect-layer-keys': effectLayerKeys,
     'effect-layers': effectLayers,
     'effect-merge-pipe': effectMergePipe,
     'effect-schema-first': effectSchemaFirst,
     'effect-values-first': effectValuesFirst,
+    'effect-yield-name': effectYieldName,
+    'effect-yields-first': effectYieldsFirst,
     'files-components-only': filesComponentsOnly,
     'files-constants-only': filesConstantsOnly,
     'files-domain-constants': filesDomainConstants,
@@ -153,6 +163,8 @@ export default eslintCompatPlugin({
     'naming-file': namingFile,
     'naming-folder': namingFolder,
     'naming-imports': namingImports,
+    'naming-keys': namingKeys,
+    'naming-labels': namingLabels,
     'naming-types': namingTypes,
     'react-dynamic-classes': reactDynamicClasses,
     'react-empty-effect': reactEmptyEffect,

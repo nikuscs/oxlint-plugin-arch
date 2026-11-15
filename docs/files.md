@@ -11,6 +11,13 @@ Every check here is scoped by a folder or file key, so one kind of file (`*.test
 | Every export starts with the file or folder name | [`arch/naming-exports`](rules/naming-exports.md) | `{ prefix: ['file', 'folder'] }` |
 | Every function follows a name pattern | [`arch/naming-exports`](rules/naming-exports.md), [`arch/naming-declarations`](rules/naming-declarations.md) | `{ mode: 'pattern', scope: 'functions', pattern: '^{folder}Action[A-Z]' }` |
 | One function named after the file | [`arch/naming-exports`](rules/naming-exports.md) `template` | `{ mode: 'template', file: '{domain}-action.{name}.ts', export: '{domain}Action{Name}' }` |
+| A label follows the name it is given to (a span, a workflow name, a service key, an error tag) | [`arch/naming-labels`](rules/naming-labels.md) | `{ callee: 'Effect.fn', name: '{name}', loose: true }` |
+| A value bound under a key is named after the key path | [`arch/naming-keys`](rules/naming-keys.md) | `{ callees: ['Domain.bind'], name: '^{folder}Action{Path}$' }` |
+| A layer binds exactly the methods its service declares | [`arch/effect-layer-keys`](rules/effect-layer-keys.md) | `{ service: '/repo/contract/src/{folder}/{folder}.service.ts' }` |
+| Dependencies are yielded first | [`arch/effect-yields-first`](rules/effect-yields-first.md) | `'error'` |
+| A call is banned inside another call's callback | [`arch/code-inside`](rules/code-inside.md) | `{ callee: '*.transaction', calls: { '*.send': '…' } }` |
+| A file name fits its folder | [`arch/naming-file`](rules/naming-file.md) `template` | `template: '{group}/rpc.{group}.{area}.ts'` |
+| A yielded service has one local name | [`arch/effect-yield-name`](rules/effect-yield-name.md) | `{ names: { 'Database.Database': 'db' } }` |
 | An import is always named the same way | [`naming.imports`](groups/naming.md) | `imports: { '@scope/kit-{package}': '{Package}Kit' }` |
 | An import or call is banned here | [`deny`](groups/deny.md) | `deny: { calls: { insertInto: 'A query reads only.' } }` |
 | An import or call is used in one place only | [`deny.only`](groups/deny.md#only-here) | `only: [{ imports: '@scope/kit-auth', in: 'src/domains/auth' }]` |

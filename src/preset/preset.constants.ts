@@ -371,10 +371,10 @@ export const presetGroupOptions: PresetTypes.PresetGroupDefaults = {
   schemas: { level: 'error' },
   forms: { level: 'error' },
   sql: { level: 'error' },
-  effect: { level: 'error', code: true, width: 140, exports: undefined, skip: undefined, entries: [], files: [] },
+  effect: { level: 'error', code: true, width: 140, exports: undefined, skip: undefined, entries: [], files: [], strict: true },
   console: { level: 'error' },
   deny: { level: 'error', imports: {}, calls: {}, only: [] },
-  top: { level: 'error', allow: undefined, deny: undefined, message: undefined },
+  top: { level: 'error', allow: undefined, deny: undefined, message: undefined, stem: undefined, singularize: undefined, roles: undefined, separators: undefined, file: undefined, placeholder: undefined },
   externals: { level: 'error' },
 }
 

@@ -54,3 +54,20 @@ export interface EffectSchemaFirstOptions {
   order?: (EffectSchemaFirstSection | EffectSchemaFirstSection[])[];
   derived?: EffectSchemaFirstDerived;
 }
+
+export interface EffectYieldNameOptions {
+  names?: Record<string, string | string[]>;
+  allow?: OptionsPattern;
+}
+
+export interface EffectLayerKeysOptions {
+  service: string;
+  callees?: string[];
+  declaration?: string;
+}
+
+export interface EffectLayerKeysFrame {
+  open: string;
+  key?: string;
+  members: number;
+}

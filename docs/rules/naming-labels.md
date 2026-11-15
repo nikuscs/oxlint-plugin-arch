@@ -1,0 +1,41 @@
+# arch/naming-labels
+
+Reports a text label given to a call when it does not follow the name the call is assigned to, or misses `pattern`.
+
+```ts
+// { callee: 'Effect.fn', name: '{name}', drop: ['Action', 'Query'], loose: true }
+// ❌
+export const orderActionScheduleCancel = Effect.fn('order.cancel')(function* () {})
+
+// ✅
+export const orderActionScheduleCancel = Effect.fn('order.schedule.cancel')(function* () {})
+```
+
+The label is the call's first argument, or with `property` that key of its first object argument. The name is the `const` or class the call ends up in, read through later calls and `.pipe(...)`: `const send = Effect.fn('send')(fn)`, `class Orders extends Context.Service<…>()('key') {}`. A call passed as an argument has no name, so only `pattern` is checked. A label that is not a plain string is skipped.
+
+In `name`, `{name}` is the name as written (after `drop`) and `{Name}` its PascalCase; `{folder}`, `{parent}`, `{stem}` and `{file}` come from the path, as written. `pattern` takes the same path placeholders in camelCase.
+
+| Entry key | Type | Default | |
+| --- | --- | --- | --- |
+| `callee` | `string \| string[]` | required | Dotted callee names; `*` is any text (`*.Tagged`) |
+| `property` | `string` | none | Read the label from this key of the first object argument |
+| `name` | `string \| string[]` | none | Templates the label must equal |
+| `pattern` | `string \| string[]` | none | Regexes the label must match |
+| `drop` | `string \| string[]` | none | Regexes removed from the name first, such as `'Workflow$'` |
+| `loose` | `boolean` | `false` | Compare without case and without `.`, `-`, `_`, `/` |
+
+| Option | Type | Default | |
+| --- | --- | --- | --- |
+| `labels` | entry list | required | Every entry whose `callee` matches is checked; each needs `name` or `pattern` |
+
+```ts
+'arch/naming-labels': ['error', {
+  labels: [
+    { callee: 'Effect.fn', name: '{name}', drop: ['Action', 'Query'], loose: true },
+    { callee: 'Workflow.make', name: '{name}', drop: 'Workflow$' },
+    { callee: 'Context.Service', name: '@app/contract/{folder}/{file}/{name}' },
+    { callee: '*.Tagged', property: 'tag', name: '{name}' },
+    { callee: '*.Tagged', property: 'code', pattern: '^[A-Z][A-Z0-9_]*$' },
+  ],
+}]
+```

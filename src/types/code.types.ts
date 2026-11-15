@@ -104,3 +104,17 @@ export interface CodeTracedOptions {
   skip?: OptionsPattern
   message?: string
 }
+
+export interface CodeInsideEntry {
+  callee: OptionsPattern
+  calls: Record<string, string>
+}
+
+export interface CodeInsideOptions {
+  inside: CodeInsideEntry[]
+}
+
+export interface CodeInsideCompiled {
+  callees: RegExp[]
+  calls: [RegExp, string][]
+}

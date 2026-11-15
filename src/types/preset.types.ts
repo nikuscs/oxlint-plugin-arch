@@ -1,5 +1,5 @@
 import type { BoundariesDenyOnly } from './boundaries.types.ts'
-import type { FilesTopLevelEntry } from './files.types.ts'
+import type { FilesTopLevelEntry, FilesTopLevelOptions } from './files.types.ts'
 import type { OptionsPattern } from './options.types.ts'
 import type * as EffectTsgo from '@effect/tsgo/oxlint-presets'
 import type * as EffectLinteffect from '@opsydyn/oxlint-effect'
@@ -142,12 +142,6 @@ export interface PresetDenyOnly extends BoundariesDenyOnly {
   each?: string
 }
 
-export interface PresetTopOptions {
-  allow?: (string | FilesTopLevelEntry)[]
-  deny?: (string | FilesTopLevelEntry)[]
-  message?: string
-}
-
 export type PresetSet = string[] | Record<string, string>
 
 export type PresetSetValue = string | number | boolean | null | undefined | PresetSetValue[] | PresetSetObject
@@ -168,6 +162,12 @@ export interface PresetEffectOptions {
   skip?: OptionsPattern
   entries?: string[]
   files?: string[]
+  strict?: boolean
+}
+
+export interface PresetEffectContract {
+  name: string
+  source: string
 }
 
 export interface PresetEffectStyle {
@@ -205,7 +205,7 @@ export interface PresetGroups {
   effect?: PresetSwitch | PresetEffectOptions
   console?: boolean
   deny?: PresetSwitch | PresetDenyOptions
-  top?: PresetSwitch | PresetTopOptions | (string | FilesTopLevelEntry)[]
+  top?: PresetSwitch | FilesTopLevelOptions | (string | FilesTopLevelEntry)[]
   externals?: PresetSwitch
 }
 
@@ -258,10 +258,10 @@ export interface PresetResolvedGroups {
   schemas: PresetEmptyOptions
   forms: PresetEmptyOptions
   sql: PresetEmptyOptions
-  effect: Pick<PresetEffectOptions, 'exports' | 'skip'> & { code: boolean; width: number; entries: string[]; files: string[] }
+  effect: Pick<PresetEffectOptions, 'exports' | 'skip'> & { code: boolean; width: number; entries: string[]; files: string[]; strict: boolean }
   console: PresetEmptyOptions
   deny: { imports: Record<string, string | false>; calls: Record<string, string | false>; only: BoundariesDenyOnly[] }
-  top: PresetTopOptions
+  top: { [K in keyof Required<FilesTopLevelOptions>]: FilesTopLevelOptions[K] | undefined }
   externals: PresetEmptyOptions
 }
 

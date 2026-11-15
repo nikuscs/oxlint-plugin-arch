@@ -20,10 +20,12 @@ Reports files whose name does not match `pattern`. With `unique`, also reports f
 
 | Option | Type | Default | |
 | --- | --- | --- | --- |
-| `pattern` | `string \| string[]` | required | Regex the file name must match |
+| `pattern` | `string \| string[]` | required unless `template` is set | Regex the file name must match |
 | `message` | `string` | required | Report text |
 | `flags` | `string` | none | Flags for `pattern` |
 | `unique` | `string` | none | Regex for the part that must be unique per folder |
+| `template` | `string \| string[]` | none | Path templates the file must fit, instead of or next to `pattern`: `{group}/rpc.{group}.{area}.ts`. A placeholder written twice must hold the same text both times |
+| `placeholder` | `string` | `'[a-z0-9-]+'` | Regex a `template` placeholder matches |
 
 ```ts
 'arch/naming-file': ['error', { pattern: '^[a-z0-9-]+(\\.[a-z]+)*\\.tsx?$', message: 'Use kebab-case file names.' }]

@@ -214,6 +214,15 @@ describe('preset folders', () => {
       expected: ['error', { allow: ['import', { kind: 'const', from: '^Schema\\.' }], deny: ['let'], message: 'Schemas only.' }],
     },
     {
+      name: 'top-level placeholders read the folder',
+      tree: ['src/'],
+      folders: { src: { top: { allow: [{ kind: 'const', names: '^{DOMAIN}_' }], stem: 'folder' } } },
+      detect: false,
+      file: 'src/a.ts',
+      rule: 'arch/files-top-level',
+      expected: ['error', { allow: ['import', { kind: 'const', names: '^{DOMAIN}_' }], stem: 'folder' }],
+    },
+    {
       name: 'no top-level rule without a list',
       tree: ['src/'],
       folders: { src: true },

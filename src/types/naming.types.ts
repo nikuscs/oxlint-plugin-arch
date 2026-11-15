@@ -56,10 +56,12 @@ export interface NamingExportsTemplateOptions extends NamingExportsBase {
 export type NamingExportsOptions = NamingExportsPrefixOptions | NamingExportsPatternOptions | NamingExportsTemplateOptions
 
 export interface NamingFileOptions {
-  pattern: OptionsPattern
+  pattern?: OptionsPattern
   message: string
   flags?: string
   unique?: string
+  template?: OptionsPattern
+  placeholder?: string
 }
 
 export interface NamingFolderOptions {
@@ -98,4 +100,29 @@ export interface NamingImportsCompiled {
   pattern: RegExp
   names: string[]
   namespace: boolean
+}
+
+export interface NamingLabelsEntry {
+  callee: OptionsPattern
+  property?: string
+  name?: OptionsPattern
+  pattern?: OptionsPattern
+  drop?: OptionsPattern
+  loose?: boolean
+}
+
+export interface NamingLabelsOptions {
+  labels: NamingLabelsEntry[]
+}
+
+export interface NamingLabelsCompiled {
+  callees: RegExp[]
+  entry: NamingLabelsEntry
+  drop: RegExp[]
+  patterns: string[]
+}
+
+export interface NamingKeysOptions {
+  callees: string[]
+  name: OptionsPattern
 }

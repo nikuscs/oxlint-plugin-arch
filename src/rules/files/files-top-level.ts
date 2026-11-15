@@ -2,7 +2,7 @@ import { defineRule } from '@oxlint/plugins'
 import { astBindings, astDottedName, astModuleName, astUnwrap } from '../../utils/ast.utils.ts'
 import { declarationsIsFunctionValue } from '../../utils/declarations.utils.ts'
 import { namingCaptures, namingExpand, namingStemModes } from '../../utils/naming.utils.ts'
-import { optionsEscape, optionsFirst, optionsPatterns, optionsPatternSchema, optionsPatternsTest } from '../../utils/options.utils.ts'
+import { optionsEscape, optionsFirst, optionsPatterns, optionsPatternSchema, optionsPatternsTest, optionsWildcards } from '../../utils/options.utils.ts'
 import type * as FilesTypes from '../../types/files.types.ts'
 import type { OptionsPattern, OptionsSchema } from '../../types/options.types.ts'
 import type { ESTree } from '@oxlint/plugins'
@@ -192,9 +192,8 @@ export const filesTopLevel = defineRule({
           }
 
           const kind = filesTopLevelKinds.find((name) => name === entry)
-          const call = `^${entry.split('*').map(optionsEscape).join('.*')}$`
 
-          return kind ? { kinds: [kind], names: null, from: null, message: '' } : { kinds: ['call'], names: optionsPatterns(call), from: null, message: '' }
+          return kind ? { kinds: [kind], names: null, from: null, message: '' } : { kinds: ['call'], names: optionsWildcards(entry), from: null, message: '' }
         }
 
         const matches = (item: FilesTypes.FilesTopLevelItem) => (entry: FilesTypes.FilesTopLevelMatcher) =>
@@ -205,7 +204,16 @@ export const filesTopLevel = defineRule({
 
         const allow = options.allow?.map(matcher)
         const deny = (options.deny ?? []).map(matcher)
-        const allowed = (options.allow ?? []).map((entry) => (typeof entry === 'string' ? entry : [entry.kind].flat().join('/'))).join(', ')
+
+        const label = (entry: FilesTypes.FilesTopLevelEntry) =>
+          [
+            entry.exported === undefined ? [] : [entry.exported ? 'exported' : 'unexported'],
+            [entry.kind].flat().join('/'),
+            entry.names === undefined ? [] : ['named', [entry.names].flat().join(' | ')],
+            entry.from === undefined ? [] : ['from', [entry.from].flat().join(' | ')],
+          ].flat().join(' ')
+
+        const allowed = (options.allow ?? []).map((entry) => (typeof entry === 'string' ? entry : label(entry))).join(', ')
         const hint = options.message ? ` ${options.message}` : ''
 
         for (const item of program.body.flatMap(filesTopLevelItems)) {

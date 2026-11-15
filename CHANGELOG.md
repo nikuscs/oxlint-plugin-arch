@@ -5,11 +5,21 @@
 Preset defaults that change what an app reports:
 
 - Effect contract packages also accept `<d>.service.ts`, which holds no functions (`files-no-functions`), next to `<d>.layer.types.ts`.
+- Effect servers and contract packages are locked by default (`effect.strict`, on): the top level of each file kind, yielded service names, dependencies yielded first, layer keys against function names and against the service class, rpc and mail file and export names, workflow, constant, config and prompt names, the service key, error tags and codes, and tests that hold only test calls. `effect: { strict: false }` on the app or package turns the lock off; `docs/groups/effect.md` lists every key.
+- Effect servers: in `*.actions.ts` and `*.queries.ts` an `Effect.fn` span follows its function's name (`orderActionScheduleCancel` is `'order.schedule.cancel'`), and in `*.workflows.ts` a `Workflow.make` name is its constant without `Workflow` (`naming-labels`).
 
 Rules and options:
 
 - New `files-top-level`: `allow` lists what may sit at the top level of a file, `deny` what may not, by kind (`type`, `interface`, `enum`, `class`, `const`, `let`, `function`, `function-const`, `call` and the rest), name, and what builds a constant (`from: '^Schema\\.'`).
 - New `naming-imports`: an import takes the name its specifier expands to, such as `@scope/kit-{package}` as `{Package}Kit`, as a namespace import by default.
+- New `naming-labels`: the text label of a call (a span, a workflow name, a service key, an error tag or code) follows the name the call is assigned to, or a pattern.
+- New `naming-keys`: a value bound under an object key is named after the key path, such as `schedule.cancel` and `orderActionScheduleCancel`.
+- New `effect-layer-keys`: a layer binds exactly the methods its service class declares in another file.
+- New `effect-yields-first`: service yields come before any other statement of a generator.
+- New `code-inside`: a call banned inside another call's callback, such as a workflow started inside a transaction.
+- `naming-file` takes `template`, a path the file must fit; a placeholder written twice must hold the same text (`{group}/rpc.{group}.{area}.ts`).
+- New `effect-yield-name`: a `const` holding a yielded service is named after it (`const orders = yield* Orders.Orders`), with `names` and `allow`.
+- The `top` group takes `stem`, `singularize`, `roles`, `separators`, `file` and `placeholder`; a `files-top-level` report says what each allowed entry requires.
 - New `top` group: `top: ['describe', 'it', 'it.each']` on a folder or file key runs `files-top-level`; `import` is always allowed. On by default and empty.
 - Preset `sets`: name a list or a map once and write `{name}` in any key or list, or `each: 'name'` on a list entry, instead of constants and helpers above the config.
 - `deny.only` and `boundaries-deny` `only`: imports and calls used in the listed places only, each side one value or a list.

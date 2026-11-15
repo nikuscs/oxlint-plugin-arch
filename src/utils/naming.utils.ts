@@ -85,9 +85,23 @@ export function namingFilePrefixesFor(filename: string, options: NamingExportsSt
 }
 
 export function namingTemplatePattern(template: string, placeholder = '[a-z0-9-]+'): RegExp | null {
+  const seen = new Set<string>()
+
   const source = template
     .split(/(\{[^{}]+\})/)
-    .map((part) => (/^\{[^{}]+\}$/.test(part) ? `(?<${part.slice(1, -1)}>${placeholder})` : part.replaceAll(/[.*+?^${}()|[\]\\]/g, '\\$&')))
+    .map((part) => {
+      const name = /^\{[^{}]+\}$/.test(part) ? part.slice(1, -1) : undefined
+
+      if (name === undefined) {
+        return part.replaceAll(/[.*+?^${}()|[\]\\]/g, '\\$&')
+      }
+
+      const again = seen.has(name)
+
+      seen.add(name)
+
+      return again ? `\\k<${name}>` : `(?<${name}>${placeholder})`
+    })
     .join('')
 
   try {
