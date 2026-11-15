@@ -49,6 +49,7 @@ export interface EffectSchemaFirstDerived {
 export interface EffectSchemaFirstOptions {
   member?: string;
   keep?: OptionsPattern;
+  allow?: OptionsPattern;
   runtime?: string[];
   rows?: EffectSchemaFirstRows;
   order?: (EffectSchemaFirstSection | EffectSchemaFirstSection[])[];

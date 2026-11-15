@@ -21,6 +21,7 @@ Rules and options:
 - `naming-keys` also reads exported objects (`exports`) and takes `keys` (a pattern for the keys themselves), `inline: false`, `delegate` (a handler returns the call its key path names), `allow`, `singularize` and the `{Key}` placeholder; `name` is now optional.
 - `naming-labels` takes `within`: a label passed into a call is named after that call's receiver (`X.toLayer(Effect.fn('…'))`).
 - New `effect-service-params`: a method of a service class takes a named params type, `<Folder>…Params` by default, with `name`, `allow` and `declaration`.
+- `effect-schema-first` takes `allow`: exported values that are not Schemas, such as a filter, need no derived type.
 - New `effect-layer-keys`: a layer binds exactly the methods its service class declares in another file.
 - New `effect-yields-first`: service yields come before any other statement of a generator.
 - New `code-inside`: a call banned inside another call's callback, such as a workflow started inside a transaction.

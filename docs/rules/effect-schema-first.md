@@ -20,6 +20,7 @@ export type User = typeof User.Type
 | --- | --- | --- | --- |
 | `member` | `string` | `'Type'` | Member a derived alias reads: `typeof X.<member>` |
 | `keep` | `string \| string[]` | none | Regexes on interface names that stay interfaces |
+| `allow` | `string \| string[]` | none | Regexes on exported values that need no derived type, such as a filter (`'Valid$'`) |
 | `runtime` | `string[]` | `['Effect', 'Layer', 'Stream', 'Context', 'Scope', 'Kysely', 'React', 'Fiber', 'Queue', 'PubSub', 'Ref', 'Deferred', 'ManagedRuntime', 'Sink', 'Channel', 'Request', 'Response', 'Headers', 'ReadableStream', 'WritableStream', 'Blob', 'File', 'AbortSignal', 'WebSocket', 'Socket', 'Worker', 'Uint8Array', 'ArrayBuffer', 'globalThis']` | Type names a Schema cannot describe; an interface that uses one stays; setting it replaces this list |
 | `rows` | `{ types?, suffix? }` | off; `{}` turns it on | Reports an alias whose type reads a row type, or an interface that `extends` one; an alias ending with `suffix` may read it. `types` lists dotted type names (default `['Kysely.Selectable']`); `suffix` defaults to `'Record'` |
 | `order` | `(section \| section[])[]` | `['values', ['interfaces', 'modules'], 'aliases']` | Section order, top to bottom. Sections are `values` (Schemas, constants, classes), `interfaces`, `modules` (`declare module`) and `aliases`; a nested list shares one place; a section left out goes anywhere |

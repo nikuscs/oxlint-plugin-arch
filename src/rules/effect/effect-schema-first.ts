@@ -59,6 +59,7 @@ export const effectSchemaFirst = defineRule({
         properties: {
           member: { type: 'string' },
           keep: optionsPatternSchema,
+          allow: optionsPatternSchema,
           runtime: { type: 'array', items: { type: 'string' } },
           rows: {
             type: 'object',
@@ -88,6 +89,7 @@ export const effectSchemaFirst = defineRule({
   createOnce(context) {
     let member = 'Type'
     let keep: RegExp[] = []
+    let allow: RegExp[] = []
     let runtime = new Set(effectSchemaFirstDefaultRuntime)
     let rows: Set<string> | undefined
     let suffix = 'Record'
@@ -170,6 +172,7 @@ export const effectSchemaFirst = defineRule({
         const options = optionsFirst<EffectSchemaFirstOptions>(context, {})
         member = options.member ?? 'Type'
         keep = optionsPatterns(options.keep)
+        allow = optionsPatterns(options.allow)
         runtime = new Set(options.runtime ?? effectSchemaFirstDefaultRuntime)
         rows = options.rows ? new Set(options.rows.types ?? ['Kysely.Selectable']) : undefined
         suffix = options.rows?.suffix ?? 'Record'
@@ -194,7 +197,7 @@ export const effectSchemaFirst = defineRule({
         for (const node of exported.flatMap((declaration) => (declaration.type === 'VariableDeclaration' ? declaration.declarations : []))) {
           const isSchema = node.init?.type === 'CallExpression' || node.init?.type === 'MemberExpression'
 
-          if (isSchema && node.id.type === 'Identifier' && !typed.has(node.id.name)) {
+          if (isSchema && node.id.type === 'Identifier' && !typed.has(node.id.name) && !optionsPatternsTest(allow, node.id.name)) {
             context.report({
               node,
               messageId: 'schemaType',

@@ -20,6 +20,7 @@ describe('arch/effect-schema-first', () => {
     { name: 'a generic interface stays', code: 'export interface Page<A> { items: A[] }' },
     { name: 'an empty interface stays', code: 'export interface Marker {}' },
     { name: 'a type imported from a relative file counts as kept', code: "import type { Clock } from './clock.types.ts'\nexport interface Deps { clock: Clock }" },
+    { name: 'an allowed value needs no derived type', code: 'export const UserFieldsValid = Schema.makeFilter(check)', options: { allow: 'Valid$' } },
     { name: 'a keep pattern keeps the interface', code: 'export interface UserTable { id: string }', options: { keep: 'Table$' } },
     { name: 'rows are off by default', code: 'export type User = Kysely.Selectable<UserTable>' },
     { name: 'a row alias with the suffix passes', code: 'export type UserRecord = Kysely.Selectable<UserTable>', options: { rows: {} } },
@@ -44,6 +45,7 @@ describe('arch/effect-schema-first', () => {
       code: 'export const A = Schema.String\nexport const B = Schema.Number\nexport type B = typeof B.Type\nexport type A = typeof A.Type',
       options: { derived: { sorted: false } },
     },
+    { name: 'a value outside the allowed names', code: 'export const User = Schema.Struct({ id: Schema.String })', options: { allow: 'Valid$' }, errors: ['schemaType'] },
     { name: 'a Schema without its derived type', code: 'export const User = Schema.Struct({ id: Schema.String })', errors: ['schemaType'] },
     {
       name: 'the message names the member',
