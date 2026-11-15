@@ -4,7 +4,7 @@ import type { TesterPresetRow } from '../types/tester.types.ts'
 
 describe('preset Effect module package', () => {
   const manifest = (name: string) => JSON.stringify({ name, dependencies: { effect: '1' } })
-  const tree = ['packages/kit-wallet/src/migrations/', 'packages/kit-wallet/test/support/', 'packages/kit-wallet/testing/', 'packages/kit-utils/src/errors/', 'packages/kit-utils/test/']
+  const tree = ['packages/kit-wallet/src/migrations/', 'packages/kit-wallet/test/support/', 'packages/kit-wallet/test/fixtures/vinext-app/src/', 'packages/kit-wallet/testing/', 'packages/kit-utils/src/errors/', 'packages/kit-utils/test/']
 
   const files = {
     'package.json': JSON.stringify({ workspaces: ['packages/*'] }),
@@ -32,6 +32,11 @@ describe('preset Effect module package', () => {
     { name: 'a span pattern of the project', ...row('packages/kit-wallet/src/wallet.layer.ts', 'arch/naming-labels', spans(`^database\\.${method}$`), { 'packages/*': kit, 'packages/kit-wallet': { effect: { module: { spans: 'database.{method}' } } } }) },
     { name: 'a narrower folder keeps the name template', ...row('packages/kit-wallet/src/wallet.layer.ts', 'arch/effect-yields-first', 'error', { 'packages/*': kit, 'packages/kit-wallet': { effect: { module: { spans: 'database.{method}' } } } }) },
     { name: 'spans off', ...row('packages/kit-wallet/src/wallet.layer.ts', 'arch/naming-labels', undefined, { 'packages/*': { effect: { module: { name: 'kit-{module}', spans: false } } } }) },
+    { name: 'yields set the yield names in a module', ...row('packages/kit-wallet/src/wallet.layer.ts', 'arch/effect-yield-name', ['error', { names: { 'Kit.Database': 'db' } }], { 'packages/*': { effect: { module: 'kit-{module}', yields: { names: { 'Kit.Database': 'db' } } } } }) },
+    { name: 'labels add entries to a module key', ...row('packages/kit-wallet/src/wallet.layer.ts', 'arch/naming-labels', ['error', { labels: [{ callee: 'Effect.fn', pattern: `^wallet\\.${method}$` }, { callee: 'Layer.effect', name: '{name}' }] }], { 'packages/*': { effect: { module: 'kit-{module}', labels: { '**/*.ts': [{ callee: 'Layer.effect', name: '{name}' }] } } } }) },
+    { name: 'fixtures are foreign apps', ...row('packages/kit-wallet/test/fixtures/vinext-app/src/page.tsx', 'arch/naming-file', 'off', { 'packages/*': { effect: { module: { name: 'kit-{module}', tests: { fixtures: ['fixtures/vinext-*'] } } } } }) },
+    { name: 'fixtures take async framework functions', ...row('packages/kit-wallet/test/fixtures/vinext-app/src/page.tsx', 'effecttsgo/async-function', 'off', { 'packages/*': { effect: { module: { name: 'kit-{module}', tests: { fixtures: ['fixtures/vinext-*'] } } } } }) },
+    { name: 'fixtures leave other tests checked', ...row('packages/kit-wallet/test/wallet.test.ts', 'arch/naming-file', ['error', expect.any(Object), expect.any(Object)], { 'packages/*': { effect: { module: { name: 'kit-{module}', tests: { fixtures: ['fixtures/vinext-*'] } } } } }) },
     { name: 'a layer file exports its layer', ...row('packages/kit-wallet/src/wallet.layer.ts', 'arch/files-exports', ['error', { names: ['layer'] }]) },
     { name: 'a layer file may build layers', ...row('packages/kit-wallet/src/wallet.layer.ts', 'arch/boundaries-deny', ['error', expect.objectContaining({ calls: expect.not.objectContaining({ 'Layer.effect': expect.anything() }) })]) },
     { name: 'another file builds no layer', ...row('packages/kit-wallet/src/wallet.utils.ts', 'arch/boundaries-deny', ['error', expect.objectContaining({ calls: expect.objectContaining({ 'Layer.effect': 'Build layers in a .layer.ts, .driver.ts or .fake.ts file.' }) })]) },
@@ -57,6 +62,8 @@ describe('preset Effect module package', () => {
     { name: 'the base file may call the raw constructors', ...row('packages/kit-utils/src/errors/tagged.ts', 'arch/boundaries-deny', ['error', expect.objectContaining({ calls: expect.not.objectContaining({ 'Data.TaggedError': expect.anything() }) })], { 'packages/kit-utils': { effect: { errors: { files: 'src/errors/*.ts', base: 'src/errors/tagged.ts' } } } }) },
     { name: 'the base file has no top-level lock', ...row('packages/kit-utils/src/errors/tagged.ts', 'arch/files-top-level', 'off', { 'packages/kit-utils': { effect: { errors: { files: 'src/errors/*.ts', base: 'src/errors/tagged.ts' } } } }) },
     { name: 'another errors file may not call the raw constructors', ...row('packages/kit-utils/src/errors/wallet.ts', 'arch/boundaries-deny', ['error', expect.objectContaining({ calls: expect.objectContaining({ 'Data.TaggedError': expect.any(String) }) })], { 'packages/kit-utils': { effect: { errors: { files: 'src/errors/*.ts', base: 'src/errors/tagged.ts' } } } }) },
+    { name: 'top off on errors file', ...row('packages/kit-utils/src/errors/tagged.ts', 'arch/files-top-level', 'off', { 'packages/kit-utils': { effect: { errors: { files: 'src/errors/*.ts' } } }, 'packages/kit-utils/src/errors/tagged.ts': { top: false } }) },
+    { name: 'top off on index file', ...row('packages/kit-wallet/src/index.ts', 'arch/files-top-level', undefined, { 'packages/*': kit, 'packages/kit-wallet/src/index.ts': { top: false } }) },
   ])('$name', (given) => {
     expect({ value: testerPreset(given) }).toMatchObject({ value: given.expected })
   })

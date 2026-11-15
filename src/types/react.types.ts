@@ -10,6 +10,7 @@ export interface ReactQueryPropsOptions {
 export interface ReactPropsOptions {
   prefix?: boolean
   suffix?: string
+  message?: string
 }
 
 export interface ReactPropsComponent {

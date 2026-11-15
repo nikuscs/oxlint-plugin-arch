@@ -324,9 +324,13 @@ export function presetMerge(base: boolean | PresetTypes.PresetFolder | undefined
   return before && after && merged.layout instanceof Object ? { ...merged, layout: { ...merged.layout, files: [...before, ...after] } } : merged
 }
 
-export function presetNames(inherited: string[], entries: unknown, option: string): string[] {
-  if (!Array.isArray(entries) || !entries.every((entry) => typeof entry === 'string' && presetLayoutFileName.test(entry))) {
-    throw new PresetError(`${option} takes file names such as \`*.prompts.ts\`; \`!*.utils.ts\` removes one.`)
+export function presetNames(inherited: string[], entries: unknown, option: string, valid = presetLayoutFileName): string[] {
+  if (!Array.isArray(entries) || !entries.every((entry) => typeof entry === 'string' && valid.test(entry))) {
+    throw new PresetError(
+      valid === presetLayoutFileName
+        ? `${option} takes file names such as \`*.prompts.ts\`; \`!*.utils.ts\` removes one.`
+        : `${option} takes a list of strings; \`!\` before one removes it.`,
+    )
   }
 
   const names = [...inherited]
@@ -342,4 +346,24 @@ export function presetNames(inherited: string[], entries: unknown, option: strin
   }
 
   return names
+}
+
+export function presetBraces(key: string): string[] {
+  const match = /\{([^{}]*)\}/.exec(key)
+
+  if (!match) {
+    return [key]
+  }
+
+  return match[1].split(',').flatMap((option) => presetBraces(`${key.slice(0, match.index)}${option}${key.slice(match.index + match[0].length)}`))
+}
+
+export function presetTop(allow: PresetTypes.PresetEffectTop): PresetTypes.PresetFolder {
+  return { top: { allow, stem: 'folder' } }
+}
+
+export function presetPlaces(names: string[]): string {
+  const listed = names.map((name) => name.replaceAll(/\{(\w+)\}|\*/g, (_, key: string | undefined) => `<${key ?? 'name'}>`))
+
+  return listed.length === 1 ? listed[0] : `${listed.slice(0, -1).join(', ')} or ${listed.at(-1)}`
 }

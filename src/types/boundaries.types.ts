@@ -1,3 +1,4 @@
+import type { NamingCaptureOptions } from './naming.types.ts'
 import type { ESTree } from '@oxlint/plugins'
 
 export interface BoundariesOptions {
@@ -119,7 +120,7 @@ export interface BoundariesDenyOnly {
   message?: string
 }
 
-export interface BoundariesDenyOptions {
+export interface BoundariesDenyOptions extends NamingCaptureOptions {
   imports?: Record<string, string>
   calls?: Record<string, string>
   only?: BoundariesDenyOnly[]

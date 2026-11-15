@@ -56,5 +56,13 @@ describe('arch/boundaries-deny', () => {
       options: { only: [{ imports: '@scope/kit-auth', in: 'domains/auth', message: 'Call the auth domain.' }] },
       errors: ["Do not import '@scope/kit-auth' here. Call the auth domain."],
     },
+    { name: 'a folder placeholder lets a module import its own package', filename: 'packages/wallet/src/a.ts', code: "import '@scope/kit-wallet'", options: { imports: { '@scope/kit-!({parent})': '' } } },
+    { name: 'a folder placeholder bans other packages', filename: 'packages/wallet/src/a.ts', code: "import '@scope/kit-cache'", options: { imports: { '@scope/kit-!({parent})': '' } }, errors: ['import'] },
+    { name: 'a captured placeholder bans the own package', filename: 'packages/wallet/src/a.ts', code: "import '@scope/kit-wallet'", options: { file: 'packages/{name}/**', imports: { '@scope/kit-{name}': 'Import a relative path.' } }, errors: ["Do not import '@scope/kit-wallet' here. Import a relative path."] },
+    { name: 'a captured placeholder fills the message', filename: 'packages/wallet/src/a.ts', code: "import '@scope/kit-wallet'", options: { file: 'packages/{name}/**', imports: { '@scope/kit-{name}': 'Inside {name}, import a relative path.' } }, errors: ["Do not import '@scope/kit-wallet' here. Inside wallet, import a relative path."] },
+    { name: 'an unmatched file template keeps the built-in placeholders', filename: 'src/order/a.ts', code: "import '#/order/b'", options: { file: 'packages/{name}/**', imports: { '#/{folder}/*': '' } }, errors: ['import'] },
+    { name: 'a placeholder call key', filename: 'src/order/order.ts', code: 'orderDelete(id)', options: { calls: { '{stem}Delete': '' } }, errors: ['call'] },
+    { name: 'a placeholder owner place passes', filename: 'packages/wallet/src/wallet.layer.ts', code: "import '@scope/kit-database'", options: { file: 'packages/{name}/**', only: [{ imports: '@scope/kit-database', in: 'packages/{name}/src/{name}.layer.ts' }] } },
+    { name: 'a placeholder owner place reports elsewhere', filename: 'packages/wallet/src/wallet.service.ts', code: "import '@scope/kit-database'", options: { file: 'packages/{name}/**', only: [{ imports: '@scope/kit-database', in: 'packages/{name}/src/{name}.layer.ts', message: 'Only {name}.layer.ts reads the database.' }] }, errors: ["Do not import '@scope/kit-database' here. Only wallet.layer.ts reads the database."] },
   ])('$name', (row) => testerRun(boundariesDeny, row))
 })

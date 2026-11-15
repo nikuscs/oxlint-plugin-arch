@@ -21,11 +21,14 @@ Placeholders in `source` capture one path segment each; `{Package}` is the captu
 | `drop` | `string \| string[]` | none | Regexes removed from each captured part before it is cased: `'[.](?:driver\|adapter)$'` turns `storage-s3.driver` into `StorageS3` |
 | `namespace` | `boolean` | `true` | Require `import * as`. With `false`, named imports pass and a default or namespace import is checked by name |
 | `placeholder` | `string` | `'[^/]+'` | Regex a placeholder matches |
+| `message` | `string` | none | Report text for this entry, instead of the rule's `message` |
 
 | Option | Type | Default | |
 | --- | --- | --- | --- |
 | `imports` | entry list | required | Checked in order |
-| `file` | `string` | none | Path template of the file being linted, like `kit-{module}/**`; its placeholders join the ones in `name`, and a file it does not match is skipped. `{stem}`, `{file}`, `{folder}` and `{parent}` are always read |
+| `message` | `string` | none | Text added to every report |
+| `file` | `string` | none | Path template of the file being linted, like `kit-{module}/**`; its placeholders join the ones in `name`, and a file it does not match is skipped. `{stem}`, `{file}`, `{folder}`, `{parent}` and `{domain}` are always read |
+| `stem`, `singularize`, `roles`, `separators` | | | How `{stem}` and `{domain}` are read, as in [`arch/files-exports`](files-exports.md) |
 
 ```ts
 'arch/naming-imports': ['error', {

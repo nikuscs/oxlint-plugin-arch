@@ -158,5 +158,6 @@ describe('arch/react-props', () => {
       options: { suffix: 'Options' },
       errors: ["'Button' props must use `interface ButtonOptions` declared directly above it, not 'ButtonProps'."],
     },
+    { name: 'a message is added', filename: 'pages/home.tsx', code: 'export function Home(props: { a: string }) { return <div /> }', options: { message: 'See the page guide.' }, errors: ["'Home' props are typed inline. Declare `interface HomeProps` directly above it and use that. See the page guide."] },
   ])('$name', (row) => testerRun(reactProps, row))
 })

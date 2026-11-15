@@ -1,5 +1,6 @@
 import { defineRule } from '@oxlint/plugins'
 import { boundariesLiteralSource, boundariesMemberName } from '../../utils/boundaries.utils.ts'
+import { namingCaptures, namingCaptureSchemaProperties, namingExpand } from '../../utils/naming.utils.ts'
 import { optionsFirst, optionsGlob, optionsPatternSchema } from '../../utils/options.utils.ts'
 import type { BoundariesDenyOptions } from '../../types/boundaries.types.ts'
 import type { ESTree } from '@oxlint/plugins'
@@ -35,6 +36,7 @@ export const boundariesDeny = defineRule({
               anyOf: [{ required: ['imports'] }, { required: ['calls'] }],
             },
           },
+          ...namingCaptureSchemaProperties,
         },
       },
     ],
@@ -64,21 +66,23 @@ export const boundariesDeny = defineRule({
         const options = optionsFirst<BoundariesDenyOptions>(context, {})
 
         const filename = context.filename.replaceAll('\\', '/')
+        const captures = namingCaptures(filename, options) ?? namingCaptures(filename) ?? {}
+        const fill = (text: string) => namingExpand(text, captures, false)
 
         const elsewhere = (options.only ?? []).filter((entry) =>
-          ![entry.in].flat().some((place) => optionsGlob(`**/${place}{,/**}`).test(filename)),
+          ![entry.in].flat().some((place) => optionsGlob(`**/${fill(place)}{,/**}`).test(filename)),
         )
 
-        const owned = (entry: (typeof elsewhere)[number]) => ` ${entry.message ?? `Only ${[entry.in].flat().join(', ')} may use it.`}`
+        const owned = (entry: (typeof elsewhere)[number]) => ` ${fill(entry.message ?? `Only ${[entry.in].flat().join(', ')} may use it.`)}`
 
         imports = [
-          ...Object.entries(options.imports ?? {}).map(([pattern, message]): [RegExp, string] => [optionsGlob(pattern), message && ` ${message}`]),
-          ...elsewhere.flatMap((entry) => [entry.imports ?? []].flat().map((pattern): [RegExp, string] => [optionsGlob(pattern), owned(entry)])),
+          ...Object.entries(options.imports ?? {}).map(([pattern, message]): [RegExp, string] => [optionsGlob(fill(pattern)), message && ` ${fill(message)}`]),
+          ...elsewhere.flatMap((entry) => [entry.imports ?? []].flat().map((pattern): [RegExp, string] => [optionsGlob(fill(pattern)), owned(entry)])),
         ]
 
         calls = new Map([
-          ...elsewhere.flatMap((entry) => [entry.calls ?? []].flat().map((name): [string, string] => [name, owned(entry)])),
-          ...Object.entries(options.calls ?? {}).map(([name, message]): [string, string] => [name, message && ` ${message}`]),
+          ...elsewhere.flatMap((entry) => [entry.calls ?? []].flat().map((name): [string, string] => [fill(name), owned(entry)])),
+          ...Object.entries(options.calls ?? {}).map(([name, message]): [string, string] => [fill(name), message && ` ${fill(message)}`]),
         ])
 
         if (imports.length === 0 && calls.size === 0) {

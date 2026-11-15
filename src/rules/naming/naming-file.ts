@@ -1,7 +1,7 @@
 import { defineRule } from '@oxlint/plugins'
 import { readdirSync } from 'node:fs'
 import { dirname } from 'node:path'
-import { namingBasename, namingTemplatePattern } from '../../utils/naming.utils.ts'
+import { namingBasename, namingCaptures, namingSiblings, namingTemplatePattern } from '../../utils/naming.utils.ts'
 import { optionsAll, optionsPatternSchema, optionsPatternsTest, optionsPatternsWithEmpty } from '../../utils/options.utils.ts'
 import type { NamingFileOptions } from '../../types/naming.types.ts'
 
@@ -20,6 +20,7 @@ export const namingFile = defineRule({
           unique: { type: 'string', minLength: 1 },
           template: optionsPatternSchema,
           placeholder: { type: 'string' },
+          when: optionsPatternSchema,
         },
         required: ['message'],
         anyOf: [{ required: ['pattern'] }, { required: ['template'] }],
@@ -36,7 +37,11 @@ export const namingFile = defineRule({
         const basename = namingBasename(context.filename)
         let siblings: string[] | undefined
 
-        for (const { pattern, message, flags, unique, template, placeholder } of optionsAll<NamingFileOptions>(context)) {
+        for (const { pattern, message, flags, unique, template, placeholder, when } of optionsAll<NamingFileOptions>(context)) {
+          if (when !== undefined && !namingSiblings(context.filename, when, namingCaptures(context.filename) ?? {})) {
+            continue
+          }
+
           const patterns = optionsPatternsWithEmpty(pattern, flags)
           const path = context.filename.replaceAll('\\', '/').split('/')
           const templates = [template ?? []].flat()

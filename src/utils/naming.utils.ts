@@ -1,6 +1,8 @@
-import { posix } from 'node:path'
+import { readdirSync } from 'node:fs'
+import { dirname, posix } from 'node:path'
+import { optionsGlob } from './options.utils.ts'
 import type { NamingCaptureOptions, NamingExportsStem, NamingStemMode } from '../types/naming.types.ts'
-import type { OptionsSchemaProperties } from '../types/options.types.ts'
+import type { OptionsPattern, OptionsSchemaProperties } from '../types/options.types.ts'
 
 export const namingStemModes: readonly NamingStemMode[] = ['before-first-dot', 'full-basename']
 
@@ -11,6 +13,15 @@ export const namingStemSchemaProperties: OptionsSchemaProperties = {
   normalize: { type: 'string', enum: ['remove-separators', 'none'] },
   singularize: { type: 'string', enum: ['none', 'trailing-s'] },
   prefix: { type: 'array', items: { type: 'string', enum: ['file', 'folder', 'parent'] }, minItems: 1 },
+}
+
+export const namingCaptureSchemaProperties: OptionsSchemaProperties = {
+  file: { type: 'string' },
+  placeholder: { type: 'string' },
+  stem: { type: 'string', enum: [...namingStemModes, 'folder'] },
+  singularize: { type: 'string', enum: ['none', 'trailing-s'] },
+  roles: { type: 'array', items: { type: 'string' } },
+  separators: { type: 'array', items: { type: 'string' } },
 }
 
 export function namingBasename(filePath: string): string {
@@ -160,6 +171,36 @@ export function namingExpand(
 
     return escape(camelCase ? namingCamelCase(value) : value)
   })
+}
+
+export function namingSiblings(filename: string, globs: OptionsPattern | undefined, captures: Record<string, string>): boolean {
+  const entries = globs === undefined ? [] : [globs].flat()
+
+  if (entries.length === 0) {
+    return true
+  }
+
+  let names: string[]
+
+  try {
+    names = readdirSync(dirname(filename))
+  } catch {
+    return false
+  }
+
+  const namingSibling = (glob: string) => {
+    const pattern = optionsGlob(namingExpand(glob, captures, false))
+
+    return names.some((name) => pattern.test(name))
+  }
+
+  const present = entries.filter((glob) => !glob.startsWith('!'))
+
+  return entries.every((glob) => !glob.startsWith('!') || !namingSibling(glob.slice(1))) && (present.length === 0 || present.some(namingSibling))
+}
+
+export function namingKeyPath(captures: Record<string, string>, keys: readonly string[], key = keys.at(-1) ?? '') {
+  return { ...captures, path: keys.join('-'), key }
 }
 
 export function namingHasFilePrefix(name: string, prefixes: readonly string[], normalize: NamingExportsStem['normalize']): boolean {

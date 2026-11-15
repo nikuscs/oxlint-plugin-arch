@@ -5,7 +5,7 @@ import { presetSets } from './preset-sets.ts'
 import { presetStylesheet } from './preset-stylesheet.ts'
 import { presetUnits } from './preset-units.ts'
 import * as PresetConstants from './preset.constants.ts'
-import { PresetError, presetFileOverlaps, presetGlobEscape, presetIntersect, presetIsDirectory, presetIsFile, presetManifest, presetMerge, presetNames, presetScopes, presetServiceScopes } from './preset.utils.ts'
+import { presetBraces, PresetError, presetFileOverlaps, presetGlobEscape, presetIntersect, presetIsDirectory, presetIsFile, presetManifest, presetMerge, presetNames, presetScopes, presetServiceScopes } from './preset.utils.ts'
 import type * as PresetTypes from '../types/preset.types.ts'
 
 function presetPortableKey(key: string): string {
@@ -37,16 +37,6 @@ function presetNormalizeKey(key: string): string {
   }
 
   return normalized
-}
-
-function presetBraces(key: string): string[] {
-  const match = /\{([^{}]*)\}/.exec(key)
-
-  if (!match) {
-    return [key]
-  }
-
-  return match[1].split(',').flatMap((option) => presetBraces(`${key.slice(0, match.index)}${option}${key.slice(match.index + match[0].length)}`))
 }
 
 function presetIsFileKey(root: string, key: string): boolean {
@@ -176,6 +166,10 @@ function presetEffective(folder: PresetTypes.PresetFolder, parent: PresetTypes.P
     const inherited = (parent ? parent.layout?.files : null) ?? PresetConstants.presetGroupOptions.layout.files
 
     effective.layout = { ...effective.layout, files: presetNames(inherited, layout.files, 'layout.files') }
+  }
+
+  if (effective.layout && layout instanceof Object && layout.folders !== undefined) {
+    effective.layout = { ...effective.layout, folders: presetNames((parent ? parent.layout?.folders : null) ?? [], layout.folders, 'layout.folders') }
   }
 
   return effective

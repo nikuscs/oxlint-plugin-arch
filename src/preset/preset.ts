@@ -211,6 +211,27 @@ function presetEmit<K extends PresetTypes.PresetGroupName>(
   })
 }
 
+function presetFileBroader<K extends PresetTypes.PresetGroupName>(
+  project: PresetTypes.PresetProject,
+  fileKey: PresetTypes.PresetFileKey,
+  scope: PresetTypes.PresetScope,
+  name: K,
+  expand: (fileKey: PresetTypes.PresetFileKey) => string[],
+): PresetTypes.PresetGroupSettings<K> | null {
+  const paths = expand(fileKey)
+
+  for (const other of project.fileKeys) {
+    const same = other === fileKey ? undefined : other.scopes.find((candidate) => candidate.key === scope.key)
+    const settings = same ? presetSettings(same, name) : null
+
+    if (settings && paths.some((path) => matchesGlob(path, other.pattern))) {
+      return settings
+    }
+  }
+
+  return null
+}
+
 function presetFileEmit<K extends PresetTypes.PresetGroupName>(
   project: PresetTypes.PresetProject,
   name: K,
@@ -221,21 +242,24 @@ function presetFileEmit<K extends PresetTypes.PresetGroupName>(
     fileKey.scopes.flatMap((scope) => {
       const owner = scope.parent
       const settings = presetSettings(scope, name)
+      const used = settings ?? (owner ? presetFileBroader(project, fileKey, scope, name, expand) : null)
 
-      if (!owner || !settings || JSON.stringify(presetSettings(owner, name)) === JSON.stringify(settings)) {
+      if (!owner || !used || (settings && JSON.stringify(presetSettings(owner, name)) === JSON.stringify(settings))) {
         return []
       }
 
       const nested = project.scopes.filter((other) => other.parent === owner).map((other) => `${other.key}/**`)
 
-      return builder(project, settings, scope).flatMap((override) => {
+      return builder(project, used, scope).flatMap((override) => {
         const files = presetKeyFiles(fileKey, scope, override.files, expand)
 
         if (files.length === 0 || !override.rules) {
           return []
         }
 
-        return [{ ...override, files, excludeFiles: [...(override.excludeFiles ?? []), ...nested], rules: presetSeverity(override.rules, settings.level) }]
+        const rules = settings ? presetSeverity(override.rules, settings.level) : Object.fromEntries(Object.keys(override.rules).map((rule) => [rule, 'off' as const]))
+
+        return [{ ...override, files, excludeFiles: [...(override.excludeFiles ?? []), ...nested], rules }]
       })
     }),
   )

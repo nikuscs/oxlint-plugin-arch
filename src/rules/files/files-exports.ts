@@ -1,8 +1,8 @@
 import { defineRule } from '@oxlint/plugins'
 import { declarationsFunctions } from '../../utils/declarations.utils.ts'
 import { exportsCollect, exportsFunctions } from '../../utils/exports.utils.ts'
-import { namingBasename, namingCaptures, namingExpand, namingPascalCase, namingStemModes } from '../../utils/naming.utils.ts'
-import { optionsEscape, optionsFirst } from '../../utils/options.utils.ts'
+import { namingBasename, namingCaptures, namingExpand, namingPascalCase, namingSiblings, namingStemModes } from '../../utils/naming.utils.ts'
+import { optionsEscape, optionsFirst, optionsMessage, optionsPatternSchema } from '../../utils/options.utils.ts'
 import type { FilesExportsOptions } from '../../types/files.types.ts'
 
 export const filesExports = defineRule({
@@ -24,13 +24,15 @@ export const filesExports = defineRule({
           file: { type: 'string' },
           placeholder: { type: 'string' },
           scope: { type: 'string', enum: ['exports', 'declarations'] },
+          when: optionsPatternSchema,
+          message: { type: 'string' },
         },
         anyOf: [{ required: ['names'] }, { required: ['patterns'] }, { required: ['factory'] }],
       },
     ],
     messages: {
-      extraExport: "Export '{{name}}' is not allowed; expected one of: {{allowed}}.",
-      factory: "Function '{{actual}}' must be named '{{expected}}'.",
+      extraExport: "Export '{{name}}' is not allowed; expected one of: {{allowed}}.{{message}}",
+      factory: "Function '{{actual}}' must be named '{{expected}}'.{{message}}",
     },
   },
   createOnce(context) {
@@ -38,6 +40,11 @@ export const filesExports = defineRule({
       Program(program) {
         const options = optionsFirst<FilesExportsOptions>(context, {})
         const basename = namingBasename(context.filename).replace(/\.(tsx?|jsx?)$/, '')
+        const message = optionsMessage(options.message)
+
+        if (options.when !== undefined && !namingSiblings(context.filename, options.when, namingCaptures(context.filename, options) ?? {})) {
+          return
+        }
 
         if (options.factory !== undefined) {
           const expected = options.factory.replaceAll('{Stem}', namingPascalCase(basename)).replaceAll('{stem}', basename)
@@ -47,7 +54,7 @@ export const filesExports = defineRule({
             context.report({
               node: program,
               messageId: 'factory',
-              data: { actual: '<none>', expected },
+              data: { actual: '<none>', expected, message },
             })
           }
 
@@ -56,7 +63,7 @@ export const filesExports = defineRule({
               context.report({
                 node: item.node,
                 messageId: 'factory',
-                data: { actual: item.name, expected },
+                data: { actual: item.name, expected, message },
               })
             }
           }
@@ -88,7 +95,7 @@ export const filesExports = defineRule({
             context.report({
               node: binding.node,
               messageId: 'extraExport',
-              data: { name, allowed: allowedLabel },
+              data: { name, allowed: allowedLabel, message },
             })
           }
         }

@@ -22,6 +22,7 @@ export function Button({ label }: ButtonProps) {
 | --- | --- | --- | --- |
 | `prefix` | `boolean` | `false` | Components not exported must start with the file name (`card.tsx`: `CardBadge`); exported ones are exempt. Reported as a rename, before the props checks |
 | `suffix` | `string` | `'Props'` | Ending of the props interface name, as in `<Name>Props` |
+| `message` | `string` | none | Text added to every report |
 
 Components without a parameter, hooks and lowercase functions are skipped. `ComponentProps<'tag'>` and `ComponentProps<typeof X>` used directly pass through; wrapped forms (`Omit<ComponentProps<'button'>, 'type'>`, `PropsWithChildren<…>`, intersections) do not. `memo(...)` and `forwardRef<El, Props>(...)` are followed. A `type` alias named `<Name>Props` fails; it must be an `interface`.
 

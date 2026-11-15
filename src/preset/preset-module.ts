@@ -1,7 +1,9 @@
 import { posix } from 'node:path'
 import { namingCamelCase, namingPascalCase, namingTemplatePattern } from '../utils/naming.utils.ts'
 import { optionsEscape } from '../utils/options.utils.ts'
-import { presetManifest, presetMerge, presetNames, presetSource } from './preset.utils.ts'
+import { presetBraces, presetManifest, presetMerge, presetNames, presetSource } from './preset.utils.ts'
+import type { NamingLabelsEntry } from '../types/naming.types.ts'
+import type { OptionsPattern } from '../types/options.types.ts'
 import type * as PresetTypes from '../types/preset.types.ts'
 
 const presetModuleKinds = [
@@ -17,7 +19,7 @@ const presetModuleSupport = ['layer', 'cases', 'scenarios']
 
 const presetModuleTests = ['test', 'bench', 'suite']
 
-const presetModuleDefaults = { folder: 'test', support: 'support', factories: 'testing/{module}.factories.ts' }
+const presetModuleDefaults: Required<PresetTypes.PresetEffectModuleTests> = { folder: 'test', support: 'support', factories: 'testing/{module}.factories.ts', fixtures: [] }
 
 const presetModuleLayerCalls = [
   'Layer.effect', 'Layer.effectContext', 'Layer.effectDiscard', 'Layer.succeed', 'Layer.succeedContext', 'Layer.sync', 'Layer.unwrap', 'Layer.merge',
@@ -52,10 +54,14 @@ function presetModuleSpans(spans: string | false | undefined, name: string): Pre
   return { 'arch/naming-labels': ['error', { labels: [{ callee: 'Effect.fn', pattern: `^${pattern}$` }] }] }
 }
 
-function presetModuleSource(at: (path: string) => string, flat: boolean, spans: PresetTypes.PresetRules): PresetTypes.PresetFolders {
+export function presetModuleYields(yields: PresetTypes.PresetEffectOptions['yields']): PresetTypes.PresetRules[string] {
+  return yields === undefined ? 'error' : ['error', yields]
+}
+
+function presetModuleSource(at: (path: string) => string, flat: boolean, spans: PresetTypes.PresetRules, yields: PresetTypes.PresetEffectOptions['yields']): PresetTypes.PresetFolders {
   const rules: PresetTypes.PresetRules = {
     ...spans,
-    'arch/effect-yield-name': 'error',
+    'arch/effect-yield-name': presetModuleYields(yields),
     'arch/effect-yields-first': 'error',
     'arch/types-inline': ['error', { min: 2 }],
     'eslint/no-shadow': 'off',
@@ -161,6 +167,9 @@ function presetModuleFiles(at: (path: string) => string, module: PresetTypes.Pre
 
 function presetModuleTestFiles(tests: typeof presetModuleDefaults, name: string, flat: boolean): PresetTypes.PresetFolders {
   const { folder, support } = tests
+
+  const foreign: PresetTypes.PresetFolder = { top: false, rules: { 'arch/naming-file': 'off', 'effecttsgo/async-function': 'off', 'linteffect/prevent-dynamic-imports': 'off' } }
+  const fixtures = tests.fixtures.flatMap((glob) => presetBraces(`${folder}/${glob}{,/**/*}.{ts,tsx}`)).map((path) => [path, foreign])
   const kinds = presetModuleTests.flatMap((kind) => [`{name}.${kind}.ts`, `{name}.{what}.${kind}.ts`, `{name}-{part}.${kind}.ts`, `{name}-{part}.{what}.${kind}.ts`])
   const template = [...kinds, '{name}.types.ts'].map((file) => `${folder}/${file.replaceAll('{name}', name)}`)
   const supported = presetModuleSupport.flatMap((kind) => [`${name}.${kind}.ts`, `${name}-{part}.${kind}.ts`])
@@ -195,6 +204,7 @@ function presetModuleTestFiles(tests: typeof presetModuleDefaults, name: string,
     [`${folder}/**/*.{ts,tsx}`]: { rules: { 'arch/code-function-nesting': ['error', { max: 5 }], 'linteffect/no-service-layer-scatter': 'off' } },
     [`${folder}/*.test.ts`]: { top: ['describe*', 'it*', 'layer', '*Suite', '*.describe'] },
     ...Object.fromEntries(siblings),
+    ...Object.fromEntries(fixtures),
     [`${folder}/${support}/*.ts`]: {
       top: {
         deny: ['type', 'interface', { kind: 'const', from: ['^Layer\\.', '(?:^|\\.)layer\\w*$'], names: '^(?!\\w*Layer$)', message: 'A test layer is <Role>Layer.' }],
@@ -257,10 +267,16 @@ function presetModulePaths(glob: string): string[] {
   return braces ? braces[1].split(',').map((option) => glob.replace(braces[0], option)) : [glob]
 }
 
+export function presetModuleErrorLabels(errors: PresetTypes.PresetEffectErrors | undefined, callee: OptionsPattern): NamingLabelsEntry[] {
+  const code = errors?.code ?? '^[A-Z][A-Z0-9_]*$'
+
+  return [{ callee, property: 'tag', name: errors?.tag ?? '{name}' }, ...(code === false ? [] : [{ callee, property: 'code', pattern: code }])]
+}
+
 export function presetModuleErrors(errors: PresetTypes.PresetEffectErrors | undefined, fallback: string, constructors: string[]): PresetTypes.PresetFolders {
   const open: PresetTypes.PresetFolder = { deny: { calls: Object.fromEntries(constructors.map((name) => [name, false])) } }
 
-  if (!errors) {
+  if (errors?.files === undefined) {
     return { [fallback]: open }
   }
 
@@ -272,10 +288,7 @@ export function presetModuleErrors(errors: PresetTypes.PresetEffectErrors | unde
       'arch/naming-labels': [
         'error',
         {
-          labels: [
-            { callee: ['Tagged', '*.Tagged'], property: 'tag', name: '{name}' },
-            { callee: ['Tagged', '*.Tagged'], property: 'code', pattern: '^[A-Z][A-Z0-9_]*$' },
-          ],
+          labels: presetModuleErrorLabels(errors, ['Tagged', '*.Tagged']),
         },
       ],
     },
@@ -287,7 +300,7 @@ export function presetModuleErrors(errors: PresetTypes.PresetEffectErrors | unde
 
   return {
     [errors.files]: classes,
-    [errors.base]: { ...open, rules: { 'arch/files-top-level': 'off', 'arch/files-exports': 'off', 'arch/naming-labels': 'off' } },
+    [errors.base]: { ...open, top: false, rules: { 'arch/files-exports': 'off', 'arch/naming-labels': 'off' } },
   }
 }
 
@@ -318,7 +331,7 @@ export function presetModuleConventions(root: string, key: string, value: Preset
   const surface = `${optionsEscape(posix.join(key, source))}/${name}(?:[.](?:handlers|middlewares))?[.]ts$`
 
   const parts: PresetTypes.PresetFolders[] = [
-    presetModuleSource(at, flat, spans),
+    presetModuleSource(at, flat, spans, options.yields),
     flat ? {} : presetModuleFiles(at, module, name, posix.basename(posix.join(key, source))),
     tests ? presetModuleTestFiles(tests, name, flat) : {},
     tests && !flat ? presetModuleFactories(tests.factories, name) : {},

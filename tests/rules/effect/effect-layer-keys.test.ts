@@ -93,5 +93,14 @@ describe('arch/effect-layer-keys', () => {
       options: { service: '<root>/contract/{folder}/{folder}.service.ts' },
       errors: ['missing', 'extra'],
     },
+    { name: 'a missing service is skipped by default', filename: 'server/order/order.layer.ts', files: {}, code: 'Orders.of({ create })', options: { service: '../../contract/{folder}/{folder}.service.ts' } },
+    {
+      name: 'a missing service reports when asked',
+      filename: 'server/order/order.layer.ts',
+      files: {},
+      code: 'Orders.of({ create })',
+      options: { service: '../../contract/{folder}/{folder}.service.ts', missing: 'error', message: 'Add the service first.' },
+      errors: ['This layer needs its service declared in order/order.service.ts. Add the service first.'],
+    },
   ])('$name', (row) => testerRun(effectLayerKeys, row))
 })

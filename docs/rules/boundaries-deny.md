@@ -18,6 +18,19 @@ const orders = await db.selectFrom('orders').selectAll().execute()
 | `imports` | `Record<string, string>` | `{}` | Specifier glob → hint |
 | `calls` | `Record<string, string>` | `{}` | Callee name → hint |
 | `only` | `{ imports?, calls?, in, message? }[]` | `[]` | Imports and calls used in the `in` places only |
+| `file`, `placeholder`, `stem`, `singularize`, `roles`, `separators` | | | How the path placeholders are read, as in [`arch/files-exports`](files-exports.md) |
+
+Import keys, call keys, `only[].imports`, `only[].calls`, `only[].in` and messages take `{folder}`, `{parent}`, `{stem}`, `{file}` and `{domain}` from the linted file's path, plus the captures of `file`. A file `file` does not match keeps the built-in placeholders.
+
+```ts
+// file: 'packages/{name}/**', imports: { '@scope/kit-{name}': 'Import a relative path.' }
+// ❌ packages/wallet/src/a.ts
+import * as WalletKit from '@scope/kit-wallet'
+
+// imports: { '@scope/kit-!({parent})': '' }
+// ✅ packages/wallet/src/a.ts
+import * as WalletKit from '@scope/kit-wallet'
+```
 
 `only` reports its imports and calls in every file outside `in`. `imports`, `calls` and `in` each take one value or a list, and every import is paired with every place. A place is a folder or a file glob, matched from any folder up: `domains/auth`, `src/domains/*/*.config.ts`.
 

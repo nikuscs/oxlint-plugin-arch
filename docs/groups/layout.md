@@ -8,6 +8,7 @@ folders: {
   'apps/web': { layout: { services: 'flat' } },
   'apps/server': { layout: { strict: true, operations: 'folders' } },
   'apps/server/src/domains': { layout: { files: ['*.prompts.ts', '*.gateway.ts', '!*.utils.ts'] } },
+  'apps/web': { layout: { folders: ['routes', 'components', 'hooks', 'services'] } },
 }
 ```
 
@@ -19,6 +20,7 @@ Takes `true`, `false`, `'warn'` or an object:
 | `hooks` | `'flat' \| 'domain' \| false` | web: 'flat' | `hooks/` layout |
 | `components` | `'flat' \| 'domain' \| false` | one group folder | `components/` layout |
 | `files` | `string[]` | the built-in names below | File names the service layout allows. Adds to the parent folder's list; `!name` removes one |
+| `folders` | `string[]` | none | Folder names allowed directly under each package's source folder (or under the folder itself when it is no package); a file in any other folder is reported. Adds to the parent folder's list; `!name` removes one. Off unless set |
 | `strict` | `boolean` | `false` | Domain service files must match a name in `files`, each `*` one kebab-case name |
 | `operations` | `'flat' \| 'folders'` | `'flat'` | Set on the app folder. Where actions and queries live (see below) |
 | `service` | `string[]` | `['make{Domain}Service', '{Domain}Service']` | Exports allowed in `<domain>.service.ts` |

@@ -43,5 +43,7 @@ describe('arch/naming-imports', () => {
       options: { imports: [{ source: '@scope/kit-{package}/{subpath}', name: '{Package}Kit{Subpath}' }] },
       errors: ["Import '@scope/kit-payments/schema' as 'PaymentsKitSchema', not 'Pay'."],
     },
+    { name: 'an entry message', code: "import * as W from '@scope/kit-wallet'", options: { imports: [{ source: '@scope/kit-{package}', name: '{Package}', message: 'Name kits after the package.' }] }, errors: ["Import '@scope/kit-wallet' as 'Wallet', not 'W'. Name kits after the package."] },
+    { name: 'a rule message', code: "import { W } from '@scope/kit-wallet'", options: { message: 'See the guide.', imports: [{ source: '@scope/kit-{package}', name: '{Package}' }] }, errors: ["Import '@scope/kit-wallet' as a namespace: import * as Wallet. See the guide."] },
   ])('$name', (row) => testerRun(namingImports, row))
 })

@@ -318,5 +318,7 @@ describe('arch/naming-exports', () => {
       errors: ['mismatch'],
     },
     { name: 'a function off a template without placeholders', filename: 'index.ts', code: 'export function start() {}', options: { mode: 'template', file: 'index.ts', export: 'main' }, errors: ['mismatch'] },
+    { name: 'a pattern from a path template', filename: 'packages/kit-order/src/order-users.types.ts', code: 'export const OrderUser = 1', options: [{ mode: 'pattern', file: 'kit-{module}/src/**', pattern: '^{Module}' }] },
+    { name: 'a pattern message', filename: 'src/order.ts', code: 'export const user = 1', options: [{ mode: 'pattern', pattern: '^order', message: 'Prefix the file.' }], errors: ["'user' must match ^order. Prefix the file."] },
   ])('$name', (row) => testerRun(namingExports, row))
 })

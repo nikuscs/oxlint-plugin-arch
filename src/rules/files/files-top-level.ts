@@ -1,10 +1,8 @@
 import { defineRule } from '@oxlint/plugins'
-import { readdirSync } from 'node:fs'
-import { dirname } from 'node:path'
 import { astBindings, astDottedName, astModuleName, astUnwrap } from '../../utils/ast.utils.ts'
 import { declarationsIsFunctionValue } from '../../utils/declarations.utils.ts'
-import { namingCaptures, namingExpand, namingStemModes } from '../../utils/naming.utils.ts'
-import { optionsAll, optionsEscape, optionsGlob, optionsPatterns, optionsPatternSchema, optionsPatternsTest, optionsWildcards } from '../../utils/options.utils.ts'
+import { namingCaptures, namingExpand, namingSiblings, namingStemModes } from '../../utils/naming.utils.ts'
+import { optionsAll, optionsEscape, optionsPatterns, optionsPatternSchema, optionsPatternsTest, optionsWildcards } from '../../utils/options.utils.ts'
 import type * as FilesTypes from '../../types/files.types.ts'
 import type { OptionsPattern, OptionsSchema } from '../../types/options.types.ts'
 import type { ESTree } from '@oxlint/plugins'
@@ -179,24 +177,10 @@ export const filesTopLevel = defineRule({
     },
   },
   createOnce(context) {
-    const siblings = (globs: OptionsPattern | undefined, captures: Record<string, string>) => {
-      if (globs === undefined) {
-        return true
-      }
-
-      const patterns = [globs].flat().map((glob) => optionsGlob(namingExpand(glob, captures, false)))
-
-      try {
-        return readdirSync(dirname(context.filename)).some((name) => patterns.some((pattern) => pattern.test(name)))
-      } catch {
-        return false
-      }
-    }
-
     const check = (program: ESTree.Program, options: FilesTypes.FilesTopLevelOptions) => {
       const captures = namingCaptures(context.filename, options)
 
-      if (!captures || !siblings(options.when, captures)) {
+      if (!captures || !namingSiblings(context.filename, options.when, captures)) {
         return
       }
 

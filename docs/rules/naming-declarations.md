@@ -22,6 +22,8 @@ export function invoiceFormatTotal() {}
 | `singularize` | `'none' \| 'trailing-s'` | `'none'` | Also accept the prefix without a trailing `s` |
 | `prefix` | `('file' \| 'folder' \| 'parent')[]` | `['file']` | Where the prefix may come from: the file name, its folder, the folder above |
 | `allow` | `string \| string[]` | none | Regexes for names to skip, such as `'ErrorKind$'` |
+| `file`, `placeholder` | `string` | none | Path template that adds placeholders to `pattern`, like `kit-{module}/src/**`; a file it does not match is skipped |
+| `message` | `string` | none | Text added to every report |
 
 ```ts
 'arch/naming-declarations': ['error', { kinds: ['function', 'class'], singularize: 'trailing-s' }]

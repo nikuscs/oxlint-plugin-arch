@@ -1,6 +1,7 @@
 import type { BoundariesDenyOnly } from './boundaries.types.ts'
+import type { EffectYieldNameOptions } from './effect.types.ts'
 import type { FilesTopLevelEntry, FilesTopLevelOptions } from './files.types.ts'
-import type { NamingImportsEntry } from './naming.types.ts'
+import type { NamingCaptureOptions, NamingImportsEntry, NamingLabelsEntry } from './naming.types.ts'
 import type { OptionsPattern } from './options.types.ts'
 import type * as EffectTsgo from '@effect/tsgo/oxlint-presets'
 import type * as EffectLinteffect from '@opsydyn/oxlint-effect'
@@ -16,6 +17,7 @@ export interface PresetLayoutOptions {
   hooks?: PresetLayoutMode | false
   components?: PresetLayoutMode | false
   files?: string[]
+  folders?: string[]
   strict?: boolean
   operations?: PresetOperations
   service?: string[]
@@ -133,7 +135,7 @@ export interface PresetBackendOptions {
   registry?: false | string | PresetRegistryOptions
 }
 
-export interface PresetDenyOptions {
+export interface PresetDenyOptions extends Pick<NamingCaptureOptions, 'file' | 'placeholder' | 'stem' | 'singularize'> {
   imports?: Record<string, string | false>
   calls?: Record<string, string | false>
   only?: PresetDenyOnly[]
@@ -160,6 +162,7 @@ export interface PresetEffectModuleTests {
   folder?: string
   support?: string
   factories?: string
+  fixtures?: string[]
 }
 
 export interface PresetEffectModule {
@@ -173,8 +176,57 @@ export interface PresetEffectModule {
 }
 
 export interface PresetEffectErrors {
-  files: string
+  files?: string
   base?: string
+  constructors?: string[]
+  message?: string
+  tag?: string
+  code?: string | false
+}
+
+export type PresetEffectStrictArea = 'code' | 'places' | 'domains' | 'rpc' | 'mails' | 'tests' | 'kinds' | 'service' | 'errors'
+
+export interface PresetEffectOperations {
+  actions?: string
+  queries?: string
+}
+
+export interface PresetEffectRpc {
+  file?: string
+  names?: string[]
+}
+
+export interface PresetEffectServer {
+  folders?: string[]
+  kinds?: string[]
+  operations?: PresetEffectOperations
+  spans?: boolean
+  rpc?: PresetEffectRpc
+  tests?: string[] | false
+}
+
+export type PresetEffectTop = NonNullable<FilesTopLevelOptions['allow']>
+
+export interface PresetEffectContractOptions {
+  kinds?: Record<string, PresetEffectTop | boolean>
+  root?: string[]
+  service?: string | false
+}
+
+export type PresetEffectStrictEntry = [PresetEffectStrictArea, string, PresetFolder]
+
+export interface PresetEffectServerSettings {
+  folders: string[]
+  kinds: string[]
+  actions: string
+  queries: string
+  spans: boolean
+  rpc: Required<PresetEffectRpc>
+  tests: string[]
+}
+
+export interface PresetEffectHandlers {
+  allow?: OptionsPattern
 }
 
 export interface PresetEffectOptions {
@@ -184,9 +236,14 @@ export interface PresetEffectOptions {
   skip?: OptionsPattern
   entries?: string[]
   files?: string[]
-  strict?: boolean
+  strict?: boolean | Partial<Record<PresetEffectStrictArea, boolean>>
   module?: string | PresetEffectModule
   errors?: PresetEffectErrors
+  yields?: Pick<EffectYieldNameOptions, 'names' | 'allow'>
+  labels?: Record<string, NamingLabelsEntry[]>
+  handlers?: PresetEffectHandlers
+  server?: PresetEffectServer
+  contract?: PresetEffectContractOptions
 }
 
 export interface PresetEffectContract {
@@ -282,9 +339,17 @@ export interface PresetResolvedGroups {
   schemas: PresetEmptyOptions
   forms: PresetEmptyOptions
   sql: PresetEmptyOptions
-  effect: Pick<PresetEffectOptions, 'exports' | 'skip' | 'module' | 'errors'> & { code: boolean; width: number; entries: string[]; files: string[]; strict: boolean }
+  effect: Pick<PresetEffectOptions, 'exports' | 'skip' | 'module' | 'errors' | 'yields' | 'labels' | 'handlers' | 'server' | 'contract'> & {
+    code: boolean
+    width: number
+    entries: string[]
+    files: string[]
+    strict: NonNullable<PresetEffectOptions['strict']>
+  }
   console: PresetEmptyOptions
-  deny: { imports: Record<string, string | false>; calls: Record<string, string | false>; only: BoundariesDenyOnly[] }
+  deny: { imports: Record<string, string | false>; calls: Record<string, string | false>; only: BoundariesDenyOnly[] } & {
+    [K in 'file' | 'placeholder' | 'stem' | 'singularize']: NamingCaptureOptions[K] | undefined
+  }
   top: { [K in keyof Required<FilesTopLevelOptions>]: FilesTopLevelOptions[K] | undefined }
   externals: PresetEmptyOptions
 }

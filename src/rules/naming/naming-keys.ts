@@ -1,7 +1,7 @@
 import { defineRule } from '@oxlint/plugins'
 import { astDottedName, astIsInlineFunction, astReturnExpressions, astSome, astUnwrap } from '../../utils/ast.utils.ts'
 import { declarationsPropertyName } from '../../utils/declarations.utils.ts'
-import { namingCaptures, namingExpand } from '../../utils/naming.utils.ts'
+import { namingCaptures, namingCaptureSchemaProperties, namingExpand, namingKeyPath } from '../../utils/naming.utils.ts'
 import * as OptionsUtils from '../../utils/options.utils.ts'
 import type { AstFunction } from '../../types/ast.types.ts'
 import type { NamingKeysOptions } from '../../types/naming.types.ts'
@@ -21,11 +21,7 @@ function namingKeysSources(options: NamingKeysOptions, captures: Record<string, 
   const last = keys.at(-1) ?? ''
 
   return [options.name ?? []].flat().flatMap((source) =>
-    namingKeysSingular(last, options).map((key) => {
-      const values = { ...captures, path: keys.join('-'), key }
-
-      return namingExpand(source, values, true, OptionsUtils.optionsEscape)
-    }),
+    namingKeysSingular(last, options).map((key) => namingExpand(source, namingKeyPath(captures, keys, key), true, OptionsUtils.optionsEscape)),
   )
 }
 
@@ -95,16 +91,17 @@ export const namingKeys = defineRule({
           inline: { type: 'boolean' },
           delegate: { type: 'boolean' },
           allow: OptionsUtils.optionsPatternSchema,
-          singularize: { type: 'string', enum: ['none', 'trailing-s'] },
+          ...namingCaptureSchemaProperties,
+          message: { type: 'string' },
         },
         anyOf: [{ required: ['callees'] }, { required: ['exports'] }],
       },
     ],
     messages: {
-      name: "'{{name}}' under key '{{path}}' must match {{pattern}}.",
-      key: "Key '{{key}}' in '{{path}}' must match {{pattern}}.",
-      inline: "Bind a named function under '{{path}}', not an inline one.",
-      delegate: "'{{path}}' must return a call to '{{path}}' on its service, not '{{called}}'.",
+      name: "'{{name}}' under key '{{path}}' must match {{pattern}}.{{message}}",
+      key: "Key '{{key}}' in '{{path}}' must match {{pattern}}.{{message}}",
+      inline: "Bind a named function under '{{path}}', not an inline one.{{message}}",
+      delegate: "'{{path}}' must return a call to '{{path}}' on its service, not '{{called}}'.{{message}}",
     },
   },
   createOnce(context) {
@@ -114,6 +111,7 @@ export const namingKeys = defineRule({
     let exported: RegExp[] = []
     let allowed: RegExp[] = []
     let keyPatterns: RegExp[] = []
+    let message = ''
 
     function checkValue(value: ESTree.Node, keys: string[]): void {
       const path = keys.join('.')
@@ -126,7 +124,7 @@ export const namingKeys = defineRule({
         context.report({
           node: value,
           messageId: 'inline',
-          data: { path },
+          data: { path, message },
         })
       }
 
@@ -134,7 +132,7 @@ export const namingKeys = defineRule({
         context.report({
           node: value,
           messageId: 'delegate',
-          data: { path, called },
+          data: { path, called, message },
         })
       }
 
@@ -142,7 +140,7 @@ export const namingKeys = defineRule({
         context.report({
           node: value,
           messageId: 'name',
-          data: { name: names[0], path, pattern: OptionsUtils.optionsPatternLabel(sources) },
+          data: { name: names[0], path, pattern: OptionsUtils.optionsPatternLabel(sources), message },
         })
       }
     }
@@ -160,7 +158,7 @@ export const namingKeys = defineRule({
           context.report({
             node: property.key,
             messageId: 'key',
-            data: { key, path: keys.join('.'), pattern: OptionsUtils.optionsPatternLabel(options.keys) },
+            data: { key, path: keys.join('.'), pattern: OptionsUtils.optionsPatternLabel(options.keys), message },
           })
         }
 
@@ -175,7 +173,14 @@ export const namingKeys = defineRule({
     return {
       before() {
         options = OptionsUtils.optionsFirst<NamingKeysOptions>(context, {})
-        captures = namingCaptures(context.filename) ?? {}
+        const paths = namingCaptures(context.filename, { ...options, singularize: undefined })
+
+        if (!paths) {
+          return false
+        }
+
+        captures = paths
+        message = OptionsUtils.optionsMessage(options.message)
         callees = OptionsUtils.optionsWildcards(options.callees)
         exported = OptionsUtils.optionsPatterns(options.exports)
         allowed = OptionsUtils.optionsPatterns(options.allow)

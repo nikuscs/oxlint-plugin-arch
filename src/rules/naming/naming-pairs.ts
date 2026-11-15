@@ -1,6 +1,6 @@
 import { defineRule } from '@oxlint/plugins'
 import { astDottedName, astMemberName } from '../../utils/ast.utils.ts'
-import { optionsFirst, optionsPatterns, optionsPatternSchema, optionsPatternsTest } from '../../utils/options.utils.ts'
+import { optionsFirst, optionsMessage, optionsPatterns, optionsPatternSchema, optionsPatternsTest } from '../../utils/options.utils.ts'
 import type { NamingPairsOptions } from '../../types/naming.types.ts'
 import type { ESTree } from '@oxlint/plugins'
 
@@ -31,6 +31,7 @@ export const namingPairs = defineRule({
         type: 'object',
         additionalProperties: false,
         properties: {
+          message: { type: 'string' },
           pairs: {
             type: 'array',
             items: {
@@ -40,6 +41,7 @@ export const namingPairs = defineRule({
                 methods: { type: 'array', items: { type: 'string' }, minItems: 2, maxItems: 2 },
                 strip: optionsPatternSchema,
                 allow: optionsPatternSchema,
+                message: { type: 'string' },
               },
               required: ['methods'],
             },
@@ -49,7 +51,7 @@ export const namingPairs = defineRule({
       },
     ],
     messages: {
-      pair: "'{{second}}' in .{{secondMethod}}() must share its name with '{{first}}' in .{{firstMethod}}().",
+      pair: "'{{second}}' in .{{secondMethod}}() must share its name with '{{first}}' in .{{firstMethod}}().{{message}}",
     },
   },
   createOnce(context) {
@@ -57,7 +59,7 @@ export const namingPairs = defineRule({
       CallExpression(node) {
         const parent = node.parent
         const chained = (parent.type === 'MemberExpression' && parent.object === node) || (parent.type === 'CallExpression' && parent.callee === node)
-        const { pairs } = optionsFirst<NamingPairsOptions>(context, { pairs: [] })
+        const { pairs, message } = optionsFirst<NamingPairsOptions>(context, { pairs: [] })
 
         if (chained || pairs.length === 0) {
           return
@@ -65,7 +67,7 @@ export const namingPairs = defineRule({
 
         const found = namingPairsArguments(node, new Map())
 
-        for (const { methods: [firstMethod, secondMethod], strip, allow } of pairs) {
+        for (const { methods: [firstMethod, secondMethod], strip, allow, message: own } of pairs) {
           const firstNode = found.get(firstMethod)
           const secondNode = found.get(secondMethod)
           const first = firstNode ? astDottedName(firstNode)?.split('.').at(-1) : undefined
@@ -81,7 +83,7 @@ export const namingPairs = defineRule({
             context.report({
               node: secondNode,
               messageId: 'pair',
-              data: { first, second, firstMethod, secondMethod },
+              data: { first, second, firstMethod, secondMethod, message: optionsMessage(own, message) },
             })
           }
         }

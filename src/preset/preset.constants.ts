@@ -350,7 +350,7 @@ export const presetExternals = [
 ]
 
 export const presetGroupOptions: PresetTypes.PresetGroupDefaults = {
-  layout: { level: 'error', services: undefined, hooks: undefined, components: undefined, files: presetLayoutFiles, strict: false, operations: 'flat', service: ['make{Domain}Service', '{Domain}Service'] },
+  layout: { level: 'error', services: undefined, hooks: undefined, components: undefined, files: presetLayoutFiles, folders: undefined, strict: false, operations: 'flat', service: ['make{Domain}Service', '{Domain}Service'] },
   limits: { level: 'error', lines: 400, types: 1000, complexity: 32 },
   style: { level: 'error', quotes: 'single', semicolons: true, multiline: true, padding: true, dashes: true },
   basics: { level: 'error', trivial: true, state: true, switch: true, negation: true },
@@ -371,9 +371,9 @@ export const presetGroupOptions: PresetTypes.PresetGroupDefaults = {
   schemas: { level: 'error' },
   forms: { level: 'error' },
   sql: { level: 'error' },
-  effect: { level: 'error', code: true, width: 140, exports: undefined, skip: undefined, entries: [], files: [], strict: true, module: undefined, errors: undefined },
+  effect: { level: 'error', code: true, width: 140, exports: undefined, skip: undefined, entries: [], files: [], strict: true, module: undefined, errors: undefined, yields: undefined, labels: undefined, handlers: undefined, server: undefined, contract: undefined },
   console: { level: 'error' },
-  deny: { level: 'error', imports: {}, calls: {}, only: [] },
+  deny: { level: 'error', imports: {}, calls: {}, only: [], file: undefined, placeholder: undefined, stem: undefined, singularize: undefined },
   top: { level: 'error', allow: undefined, deny: undefined, message: undefined, stem: undefined, singularize: undefined, roles: undefined, separators: undefined, file: undefined, placeholder: undefined, when: undefined },
   externals: { level: 'error' },
 }

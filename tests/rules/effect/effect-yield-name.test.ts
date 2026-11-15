@@ -17,5 +17,6 @@ describe('arch/effect-yield-name', () => {
     { name: 'a singular local', code: 'function* run() { const order = yield* Orders.Orders }', errors: ["Name this 'orders', not 'order': it holds Orders.Orders."] },
     { name: 'a listed service under another name', code: 'function* run() { const database = yield* DatabaseKit.Database }', options: { names: { 'DatabaseKit.Database': 'db' } }, errors: ['name'] },
     { name: 'a name outside the allowed ones', code: 'function* run() { const users = yield* AuthKit.Auth }', options: { allow: '^kit' }, errors: ['name'] },
+    { name: 'a message is added', code: 'const run = Effect.gen(function* () { const x = yield* Orders.Orders })', options: { message: 'One name per service.' }, errors: ["Name this 'orders', not 'x': it holds Orders.Orders. One name per service."] },
   ])('$name', (row) => testerRun(effectYieldName, row))
 })

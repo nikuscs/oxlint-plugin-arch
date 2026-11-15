@@ -25,6 +25,9 @@ export interface NamingDeclarationsOptions extends NamingExportsStem {
   pattern?: OptionsPattern
   flags?: string
   allow?: OptionsPattern
+  file?: string
+  placeholder?: string
+  message?: string
 }
 
 interface NamingExportsBase {
@@ -32,6 +35,7 @@ interface NamingExportsBase {
   types?: boolean
   services?: boolean
   allow?: OptionsPattern
+  message?: string
 }
 
 export interface NamingExportsPrefixOptions extends NamingExportsBase, NamingExportsStem {
@@ -42,6 +46,8 @@ export interface NamingExportsPatternOptions extends NamingExportsBase {
   mode: 'pattern'
   pattern: OptionsPattern
   flags?: string
+  file?: string
+  placeholder?: string
 }
 
 export interface NamingExportsTemplateOptions extends NamingExportsBase {
@@ -62,6 +68,7 @@ export interface NamingFileOptions {
   unique?: string
   template?: OptionsPattern
   placeholder?: string
+  when?: OptionsPattern
 }
 
 export interface NamingFolderOptions {
@@ -83,6 +90,7 @@ export interface NamingDeclarationsCheck {
   prefixes: string[]
   label: string
   normalize: NamingExportsStem['normalize']
+  message: string
 }
 
 export interface NamingImportsEntry {
@@ -91,10 +99,12 @@ export interface NamingImportsEntry {
   namespace?: boolean
   drop?: OptionsPattern
   placeholder?: string
+  message?: string
 }
 
-export interface NamingImportsOptions extends Pick<NamingCaptureOptions, 'file'> {
+export interface NamingImportsOptions extends NamingCaptureOptions {
   imports: NamingImportsEntry[]
+  message?: string
 }
 
 export interface NamingImportsCompiled {
@@ -102,6 +112,7 @@ export interface NamingImportsCompiled {
   names: string[]
   namespace: boolean
   drop: RegExp[]
+  message: string
 }
 
 export interface NamingLabelsEntry {
@@ -112,10 +123,12 @@ export interface NamingLabelsEntry {
   drop?: OptionsPattern
   loose?: boolean
   within?: OptionsPattern
+  message?: string
 }
 
-export interface NamingLabelsOptions extends Pick<NamingCaptureOptions, 'file' | 'placeholder'> {
+export interface NamingLabelsOptions extends NamingCaptureOptions {
   labels: NamingLabelsEntry[]
+  message?: string
 }
 
 export interface NamingLabelsCompiled {
@@ -126,7 +139,8 @@ export interface NamingLabelsCompiled {
   within: RegExp[]
 }
 
-export interface NamingKeysOptions {
+export interface NamingKeysOptions extends NamingCaptureOptions {
+  message?: string
   callees?: string[]
   exports?: OptionsPattern
   name?: OptionsPattern
@@ -141,8 +155,10 @@ export interface NamingPairsEntry {
   methods: [string, string]
   strip?: OptionsPattern
   allow?: OptionsPattern
+  message?: string
 }
 
 export interface NamingPairsOptions {
   pairs: NamingPairsEntry[]
+  message?: string
 }

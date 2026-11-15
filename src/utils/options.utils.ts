@@ -53,6 +53,12 @@ export function optionsGlob(pattern: string): RegExp {
   return new RegExp(`^${negated.reduce((text, names, index) => text.replace(`\u0002${index}\u0003`, `(?!(?:${names})(?:/|$))[^/]*`), source)}$`)
 }
 
+export function optionsMessage(...texts: (string | undefined)[]): string {
+  const text = texts.find((item) => item !== undefined && item !== '')
+
+  return text === undefined ? '' : ` ${text}`
+}
+
 export function optionsPatternLabel(pattern: OptionsPattern | undefined): string {
   return pattern === undefined ? '' : [pattern].flat().filter((source) => source !== '').join(' | ')
 }

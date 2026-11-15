@@ -23,6 +23,8 @@ The first parameter of every function member is checked, through nested groups. 
 | `name` | `string \| string[]` | `'^{Folder}\\w*Params$'` | Regexes for the type name. Placeholders come from the path (`{Folder}`, `{Stem}`) and the method: `{Path}` (`ScheduleCancel`) and `{Key}` (`Cancel`) |
 | `allow` | `string \| string[]` | none | Regexes for whole written types that pass, such as `'^WalletKit\\.'` |
 | `declaration` | `string` | `'Context.Service'` | The call whose second type argument holds the methods |
+| `message` | `string` | none | Text added to every report; takes the same placeholders as `name`, `{Path}` and `{Key}` included |
+| `file`, `placeholder`, `stem`, `singularize`, `roles`, `separators` | | | How the path placeholders are read, as in [`arch/files-exports`](files-exports.md); a file `file` does not match is skipped |
 
 ```ts
 'arch/effect-service-params': ['error', { name: '^{Folder}{Path}Params$' }]

@@ -7,6 +7,7 @@ Preset defaults that change what an app reports:
 - Effect servers, locked: source files live only in `application/`, `domains/`, `rpc/` and `mails/`; a file in `rpc/` is `rpc.<name>.ts` and a handler group holds no folder; a prompts file holds only exported constants.
 - Effect contract packages, locked: a contract folder holds no folder, and a file beside the folders is `contract.ts`, `contract.<name>.ts`, `errors.ts` or `index.ts`.
 - Effect servers, locked: a `decode<What>` constant in an actions, queries or utils file must be read at least twice; one read once is written where it is used.
+- Effect servers, locked: test files in `tests/` and `test/` named `*.spec.ts` hold only test calls, like `*.test.ts`.
 
 Rules and options:
 
@@ -17,6 +18,20 @@ Rules and options:
 - `naming-imports` entries take `**/` in `source`, `drop` (a regex removed from a capture before casing) and `name: false` (skip that import); the preset's `naming.imports` map takes an entry object as a value.
 - `files-top-level` takes several option objects and `when`: globs of sibling file names that must exist for the check to run.
 - `files-top-level` entries take `uses`: the least number of times a declared name is read in the file.
+- `message` on `naming-labels`, `naming-imports`, `naming-pairs`, `naming-declarations`, `naming-exports`, `naming-keys`, `files-exports`, `effect-service-params`, `effect-yield-name`, `effect-yields-first`, `effect-layer-keys` and `react-props`, added to every report; `naming-labels`, `naming-imports` and `naming-pairs` entries take their own `message`.
+- The path capture options (`file`, `placeholder`, `stem`, `singularize`, `roles`, `separators`) on `naming-keys`, `naming-declarations`, `files-siblings`, `effect-service-params`, `effect-layer-keys`, `boundaries-deny`, `naming-labels` and `naming-imports`; in `naming-keys`, `singularize` still applies to the last key only.
+- `when` (sibling file globs, `!glob` for "only when absent") on `files-exports`, `naming-file` and `files-siblings`.
+- `files-siblings`: a `require` entry that is a list passes when any one exists; `forbid` lists files that may not sit beside; `file` captures reach other folders (`../src/{name}.{kind}.ts`).
+- `effect-yields-first` takes `allow` (calls that may come first) and `services` (what counts as a dependency).
+- `effect-layer-keys` takes `missing: 'error'` to report a layer whose service file or declaration is missing; the default `'skip'` keeps today's output.
+- `boundaries-deny` and the preset `deny` group: import keys, call keys, `only[].imports`, `only[].in` and messages take `{folder}`, `{parent}`, `{stem}`, `{file}`, `{domain}` and the captures of `file`; preset `deny` takes `file`, `placeholder`, `stem` and `singularize`.
+- `effect.strict` takes an object to turn single areas off: `code`, `places`, `domains`, `rpc`, `mails`, `tests` on a server; `places`, `kinds`, `service`, `errors` on a contract package.
+- New `effect.yields`, `effect.labels` and `effect.handlers`: yield names, extra span and label entries by file pattern, and rpc handler key paths to skip, without restating the convention's rule.
+- New `effect.server: { folders, kinds, operations, spans, rpc, tests }` and `effect.contract: { kinds, root, service }`: the server and contract conventions' folders, file kinds, operation words, handler file, test globs, contract root files and service key, with `!name` to remove a default.
+- `effect.errors` takes `constructors`, `message`, `tag` and `code`, and `files` is optional; on a contract package `errors.files` replaces the contract's own errors file shape.
+- `effect.module.tests.fixtures`: globs under the test folder for whole framework apps, with file names, async functions, dynamic imports and the top level unchecked.
+- New `layout.folders`: the folder names allowed under each package's source; off unless set, `!name` removes an inherited one.
+- A group set to `false` (or `top: false`) on a file key now turns it off also where a broader file key or a convention turned it on.
 
 ## 0.13.2
 

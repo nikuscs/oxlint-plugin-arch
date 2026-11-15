@@ -44,11 +44,13 @@ In pattern mode, `pattern` takes `{folder}`, `{parent}`, `{stem}` and `{file}` f
 | `prefix` | `('file' \| 'folder' \| 'parent')[]` | `['file']` | Prefix: where the prefix may come from |
 | `pattern` | `string \| string[]` | required | Pattern: regex the name must match, with path placeholders |
 | `flags` | `string` | none | Pattern: regex flags |
+| `file`, `placeholder` | `string` | none | Pattern: a path template that adds placeholders to `pattern`; a file it does not match is skipped |
 | `file` | `string` | required | Template: file name template, like `{name}.action.ts`; with `/` it reads folders too |
 | `export` | `string \| string[]` | required | Template: allowed name templates; `{Name}` is PascalCase, `{name}` is raw |
 | `match` | `'all' \| 'some'` | `'all'` | Template: every function must match, or at least one; `some` also reports a file with no function |
 | `placeholder` | `string` | `'[a-z0-9-]+'` | Template: regex a placeholder matches in the file name |
 | `camelCase` | `boolean` | `false` | Template: camelCase lowercase placeholders |
+| `message` | `string` | none | Text added to every report |
 
 ```ts
 'arch/naming-exports': ['error', { mode: 'prefix' }, { mode: 'pattern', pattern: '^use[A-Z]', types: true }]

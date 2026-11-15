@@ -25,6 +25,8 @@ export function useInvoiceQuery() {}
 | `types` | `boolean` | `false` | Skip type-only exports |
 | `factory` | `string` | none | Required function name; `{Stem}` is the PascalCase file name, `{stem}` is raw. Every checked function must be named exactly this; `stem` and `roles` do not apply to it |
 | `scope` | `'exports' \| 'declarations'` | `'exports'` | Functions `factory` checks: exported, or every function |
+| `when` | `string \| string[]` | none | Globs of file names in the same folder; the check runs only when one exists. `!` before a glob: only when none matches. Placeholders apply: `'{stem}-*.types.ts'` |
+| `message` | `string` | none | Text added to every report |
 
 ## Placeholders
 

@@ -132,5 +132,7 @@ describe('arch/naming-file', () => {
       errors: ['Use rpc.<group>.<area>.ts in its group folder.'],
     },
     { name: 'a file off every template', filename: 'mails/order.ts', code: '', options: { template: ['{name}.mail.tsx'], message: 'Use <name>.mail.tsx.' }, errors: ['mismatch'] },
+    { name: 'the condition is not met', filename: 'src/order.ts', files: {}, code: 'export {}', options: [{ pattern: '^x', message: 'Name it x.', when: 'order.legacy.ts' }] },
+    { name: 'the condition is met', filename: 'src/order.ts', files: { 'src/order.legacy.ts': '' }, code: 'export {}', options: [{ pattern: '^x', message: 'Name it x.', when: '{stem}.legacy.ts' }], errors: ['Name it x.'] },
   ])('$name', (row) => testerRun(namingFile, row))
 })

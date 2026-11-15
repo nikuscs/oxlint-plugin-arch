@@ -1,9 +1,28 @@
 import { posix } from 'node:path'
+import { optionsGlob } from '../../utils/options.utils.ts'
 import { presetExtensions } from '../preset.constants.ts'
-import { presetOverride, presetScopes, presetServiceScopes } from '../preset.utils.ts'
-import type { PresetBuilder } from '../../types/preset.types.ts'
+import { presetOverride, presetScopes, presetServiceScopes, presetSource } from '../preset.utils.ts'
+import type { PresetBuilder, PresetProject, PresetScope } from '../../types/preset.types.ts'
+import type { OxlintOverride } from 'oxlint'
 
-export const layoutGroup: PresetBuilder<'layout'> = (project, settings) => {
+function layoutFolders(project: PresetProject, folders: string[] | undefined, scope: PresetScope): OxlintOverride[] {
+  if (folders === undefined) {
+    return []
+  }
+
+  const inside = optionsGlob(`${scope.key}{,/**}`)
+  const units = project.units.filter((unit) => inside.test(unit.key)).map((unit) => unit.source)
+  const sources = units.length > 0 ? units : [presetSource(project.root, scope.key, scope.folder.source)]
+  const message = folders.length > 0 ? `Folders here are ${folders.map((name) => `${name}/`).join(', ')}. Add a name to layout.folders.` : 'This folder takes no folders. Add a name to layout.folders.'
+
+  return sources.map((source) => {
+    const at = source === '.' ? '' : `${source}/`
+
+    return presetOverride([`${at}*/**/${presetExtensions}`], { 'arch/files-restricted': ['error', { message }] }, folders.map((name) => `${at}${name}/**`))
+  })
+}
+
+export const layoutGroup: PresetBuilder<'layout'> = (project, settings, owner) => {
   const { web, nextWeb, serviceRoots, app, services, utilities, ui, testFiles, layouts, operations } = project
   const folderOperations = presetServiceScopes(project.serviceFolders, operations, '*/{actions,queries}/*.ts')
   const operationMessage = "Action/query files export exactly one named operation. Keep helpers used only by this operation private inside its function; do not export them. Move a helper to the module's .utils.ts only when it is genuinely shared, not merely to satisfy lint."
@@ -13,6 +32,7 @@ export const layoutGroup: PresetBuilder<'layout'> = (project, settings) => {
   const ungroupedWeb = web.filter((path) => !layouts.some((scope) => scope.path === posix.join(path, 'components')))
 
   return [
+    ...layoutFolders(project, settings.folders, owner),
     ...layouts.flatMap(({ path, folder, mode }) => {
       const folders = folder === 'services' && operations.some((source) => posix.join(source, 'services') === path)
 

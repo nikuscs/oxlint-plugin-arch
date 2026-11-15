@@ -23,12 +23,15 @@ In `name`, `{name}` is the name as written (after `drop`) and `{Name}` its Pasca
 | `pattern` | `string \| string[]` | none | Regexes the label must match |
 | `drop` | `string \| string[]` | none | Regexes removed from the name first, such as `'Workflow$'` |
 | `loose` | `boolean` | `false` | Compare without case and without `.`, `-`, `_`, `/` |
+| `message` | `string` | none | Report text for this entry, instead of the rule's `message` |
 | `within` | `string \| string[]` | none | A label passed as an argument takes its name from the receiver of that call: with `'*.toLayer'`, `OrderRefundWorkflow.toLayer(Effect.fn('order.refundWorkflow')(…))` is named `OrderRefundWorkflow` |
 
 | Option | Type | Default | |
 | --- | --- | --- | --- |
 | `labels` | entry list | required | Every entry whose `callee` matches is checked; each needs `name` or `pattern` |
-| `file`, `placeholder` | `string` | none | Path template of the file being linted, like `kit-{module}/src/**`; its placeholders join `{stem}`, `{file}`, `{folder}` and `{parent}` in `pattern` and `name`, and a file it does not match is skipped |
+| `message` | `string` | none | Text added to every report |
+| `file`, `placeholder` | `string` | none | Path template of the file being linted, like `kit-{module}/src/**`; its placeholders join `{stem}`, `{file}`, `{folder}`, `{parent}` and `{domain}` in `pattern` and `name`, and a file it does not match is skipped |
+| `stem`, `singularize`, `roles`, `separators` | | | How `{stem}` and `{domain}` are read, as in [`arch/files-exports`](files-exports.md) |
 
 ```ts
 'arch/naming-labels': ['error', {

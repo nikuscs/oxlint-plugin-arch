@@ -2,7 +2,7 @@ import { defineRule } from '@oxlint/plugins'
 import { astCallName, astDeclaration, astVisit } from '../../utils/ast.utils.ts'
 import { exportsCollect } from '../../utils/exports.utils.ts'
 import { namingBasename, namingFileStem, namingNormalized, namingPascalCase } from '../../utils/naming.utils.ts'
-import { optionsFirst } from '../../utils/options.utils.ts'
+import { optionsFirst, optionsMessage } from '../../utils/options.utils.ts'
 import { reactIsComponent } from '../../utils/react.utils.ts'
 import type { ReactPropsComponent, ReactPropsOptions, ReactPropsTarget } from '../../types/react.types.ts'
 import type { ESTree } from '@oxlint/plugins'
@@ -54,20 +54,21 @@ export const reactProps = defineRule({
         properties: {
           prefix: { type: 'boolean' },
           suffix: { type: 'string', minLength: 1, default: 'Props' },
+          message: { type: 'string' },
         },
       },
     ],
     messages: {
-      inline: "'{{name}}' props are typed inline. Declare `interface {{expected}}` directly above it and use that.",
-      name: "'{{name}}' props must use `interface {{expected}}` declared directly above it, not '{{actual}}'.",
-      placement: "Move `interface {{expected}}` directly above '{{name}}', with only blank lines between them.",
-      rename: "Local component '{{name}}' would need `interface {{expected}}`, which breaks the file prefix '{{prefix}}'. Rename the component to start with '{{prefix}}' (for example '{{prefix}}Item').",
+      inline: "'{{name}}' props are typed inline. Declare `interface {{expected}}` directly above it and use that.{{message}}",
+      name: "'{{name}}' props must use `interface {{expected}}` declared directly above it, not '{{actual}}'.{{message}}",
+      placement: "Move `interface {{expected}}` directly above '{{name}}', with only blank lines between them.{{message}}",
+      rename: "Local component '{{name}}' would need `interface {{expected}}`, which breaks the file prefix '{{prefix}}'. Rename the component to start with '{{prefix}}' (for example '{{prefix}}Item').{{message}}",
     },
   },
   createOnce(context) {
     return {
       Program(program) {
-        const { prefix: filePrefix = false, suffix = 'Props' } = optionsFirst<ReactPropsOptions>(context, {})
+        const { prefix: filePrefix = false, suffix = 'Props', message } = optionsFirst<ReactPropsOptions>(context, {})
         const stem = namingFileStem(namingBasename(context.filename).replace(/\.(tsx?|jsx?)$/, ''))
         const prefix = namingNormalized(stem, 'remove-separators')
         const exported = new Set(exportsCollect(program).flatMap((binding) => (binding.typeOnly ? [] : [binding.localName])))
@@ -105,7 +106,7 @@ export const reactProps = defineRule({
 
           const type = target.typeArgument ?? reactParameterType(parameter)
           const expected = `${candidate.name}${suffix}`
-          const data = { name: candidate.name, expected }
+          const data = { name: candidate.name, expected, message: optionsMessage(message) }
 
           if (filePrefix && !exported.has(candidate.name) && !candidate.name.toLowerCase().startsWith(prefix)) {
             context.report({

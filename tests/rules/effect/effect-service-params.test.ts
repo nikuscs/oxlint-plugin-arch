@@ -107,5 +107,12 @@ describe('arch/effect-service-params', () => {
       options: { allow: '^WalletKit\\.' },
       errors: ['name'],
     },
+    {
+      name: 'a path template capture and a message',
+      filename: 'packages/contract/src/orders/orders.service.ts',
+      code: "class Orders extends Context.Service<Orders, { readonly create: (params: CreateParams) => void }>()('key') {}",
+      options: { stem: 'folder', singularize: 'trailing-s', name: '^{Domain}\\w*Params$', message: 'Name it after the domain.' },
+      errors: ["'create' takes 'CreateParams'; a service method takes a params type that matches ^Order\\w*Params$. Name it after the domain."],
+    },
   ])('$name', (row) => testerRun(effectServiceParams, row))
 })

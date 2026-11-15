@@ -24,10 +24,15 @@ Takes `true`, `false`, `'warn'` or an object:
 | `exports` | `string \| string[]` | | Regex for files whose exports `code-traced` checks; every non-test file when unset |
 | `skip` | `string \| string[]` | | Regex for service names `code-traced` skips, such as `Driver$` |
 | `entries` | `string[]` | `[]` | Globs for entry files (servers, Workers, scripts) that provide their own layers |
-| `strict` | `boolean` | `true` | Effect server and contract package: the [locked file shapes](#locked-by-default) below. `false` keeps only the names and bans |
+| `strict` | `boolean \| Record<area, boolean>` | `true` | Effect server and contract package: the [locked file shapes](#locked-by-default) below. `false` keeps only the names and bans; an object turns single areas off: `{ tests: false }` |
 | `files` | `string[]` | `[]` | Contract package: file kinds to add, such as `*.policy.ts`; `!*.layer.types.ts` removes one. Set on the package folder |
 | `module` | `string \| object` | off | [Module package layout](#what-an-effect-module-package-gets): the folder name template (`'kit-{module}'`), `'flat'`, or an object with `name` and the options below |
-| `errors` | `{ files, base? }` | `**/*.errors.ts` | Where error classes live (globs from the package folder) and the one file that may call Effect's raw error constructors |
+| `errors` | `{ files?, base?, constructors?, message?, tag?, code? }` | `**/*.errors.ts` | [Error classes](#error-classes): where they live, the one file that may call the raw constructors, the constructor list and its message, the tag and code shape |
+| `yields` | `{ names?, allow? }` | none | Options for [`arch/effect-yield-name`](../rules/effect-yield-name.md) wherever a convention turns it on (server and module package) |
+| `labels` | `Record<string, entry[]>` | none | Extra [`arch/naming-labels`](../rules/naming-labels.md) entries by file pattern, relative to the source: `{ 'domains/*/*.workflows.ts': [{ callee: 'Activity.make', name: '{name}' }] }`. On a pattern a convention uses, they join its entries; on another pattern they are that file kind's only labels |
+| `handlers` | `{ allow? }` | none | `allow` for the rpc handler [`arch/naming-keys`](../rules/naming-keys.md): key paths that need not delegate |
+| `server` | object | the values below | [Server knobs](#server-knobs): `folders`, `kinds`, `operations`, `spans`, `rpc`, `tests` |
+| `contract` | object | the values below | [Contract knobs](#contract-knobs): `kinds`, `root`, `service` |
 
 Project style, in both modes: `typescript/consistent-type-assertions` with `assertionStyle: 'never'` and `eslint-js/max-len` at `width` (ignoring URLs, comments and regular expressions). When installed, each on its own (optional peer dependencies), it also loads `eslint-plugin-regexp` (`flat/recommended`), `eslint-plugin-de-morgan` (`recommended`) and `eslint-plugin-sonarjs` (`sonarjs/super-linear-regex` only); a package that is not installed adds nothing.
 
@@ -110,32 +115,35 @@ folders: {
 
 ## Locked by default
 
-With `strict` on (the default), an Effect server and a contract package also get these, so a new file has one shape it can take. Restate a key to change one rule, or set `effect: { strict: false }` on the app or package to drop them all.
+With `strict` on (the default), an Effect server and a contract package also get these, so a new file has one shape it can take. Restate a key to change one rule, set `effect: { strict: false }` on the app or package to drop them all, or turn one area off with `effect: { strict: { tests: false } }`. Server areas are `code`, `places`, `domains`, `rpc`, `mails` and `tests`; contract areas are `places`, `kinds`, `service` and `errors`.
 
-| Key | Sets |
-| --- | --- |
-| `S` | [`arch/effect-yield-name`](../rules/effect-yield-name.md), [`arch/effect-yields-first`](../rules/effect-yields-first.md); [`arch/code-inside`](../rules/code-inside.md): no `*Workflow.execute` inside `*.transaction` |
-| `S/*.ts`, every folder of `S` but `application`, `domains`, `rpc` and `mails` | [`arch/files-restricted`](../rules/files-restricted.md): server code lives in those four folders; open another with `'off'` on its key |
-| `S/rpc/*.ts`, `S/rpc/*/*/**` | files beside the handler groups are `rpc.<name>.ts`; no folder below a group |
-| `D` | `naming.imports`: `'./{file}.ts'` as the namespace `{File}` (`import * as OrderActions from './order.actions.ts'`) |
-| `D/*/*.actions.ts`, `D/*/*.queries.ts`, `D/*/*.utils.ts` | `top`: only exported constants built by `Effect.fn`, and `decode<What>` constants read at least twice; in `utils` the span is the function's name |
-| `D/*/*.layer.ts` | [`arch/naming-keys`](../rules/naming-keys.md): a value bound by `*.bind` or `*.of` is `<d>Action<Path>` or `<d>Query<Path>`, never an inline function; with a contract package, [`arch/effect-layer-keys`](../rules/effect-layer-keys.md) against `<contract>/<d>/<d>.service.ts` |
-| `D/*/*.workflows.ts` | `top`: only constants built by `Workflow.make`, `.toLayer`, `Layer.*` or `Schedule.*`; exports named `<D>…Workflow`, `<D>WorkflowsLayer` or `<d>Schedule<Name>`; the span inside `X.toLayer(Effect.fn('…'))` follows `X` |
-| `D/*/*.constants.ts` | `top`: only exported constants named `<D>_…` |
-| `D/*/*.config.ts` | `top`: only exported constants named `<d>…Config` |
-| `D/*/*.prompts.ts` | `top`: only exported constants; exports named `<d>Prompt<Name>` |
-| `S/rpc/*/*.ts` | file `rpc/<group>/rpc.<group>.<area>.ts`, one exported constant `rpc<Group><Area>`; [`arch/naming-keys`](../rules/naming-keys.md) `delegate`: a handler under `schedule.cancel` returns the call `<service>.schedule.cancel` |
-| `S/mails/*.mail.tsx` | exports `<name>Mail` and `<Name>Email` |
-| `tests/**/*.test.ts`, `test/**/*.test.ts` | `top`: only `describe*`, `it*`, `test*` and `layer*` calls |
-| `C/*.ts`, `C/*/*/**` | files beside the contract folders are `contract.ts`, `contract.<name>.ts`, `errors.ts` or `index.ts`; a contract folder holds no folder |
-| `C/*/*.schemas.ts` | `top`: types, interfaces, `declare module` and exported constants |
-| `C/*/*.contract.ts` | `top`: types, exported constants, and unexported constants built by a namespace call; `deny.calls`: `Schema.Struct` (name it in `<d>.schemas.ts`); [`arch/files-siblings`](../rules/files-siblings.md): `<d>.service.ts` beside it, unless `effect.files` removes that kind |
-| `C/*/*.service.ts` | `top`: interfaces, types, one class, `declare module`; the `Context.Service` key is `<package>/<d>/<d>.service/<Class>`; [`arch/effect-service-params`](../rules/effect-service-params.md): a method takes `<D>…Params` |
-| `C/*/*.errors.ts` | `top`: exported classes only; an error's tag is its class name, and a `code` is `SCREAMING_CASE` |
+| Area | Key | Sets |
+| --- | --- | --- |
+| `code` | `S` | [`arch/effect-yield-name`](../rules/effect-yield-name.md) (with `effect.yields`), [`arch/effect-yields-first`](../rules/effect-yields-first.md); [`arch/code-inside`](../rules/code-inside.md): no `*Workflow.execute` inside `*.transaction` |
+| `places` | `S/*.ts`, every folder of `S` but `application`, `domains`, `rpc` and `mails` | [`arch/files-restricted`](../rules/files-restricted.md): server code lives in those folders (`effect.server.folders`); open another with `'off'` on its key |
+| `places` | `S/rpc/*/*/**` | no folder below a handler group |
+| `rpc` | `S/rpc/*.ts` | files beside the handler groups are `rpc.<name>.ts` |
+| `domains` | `D` | `naming.imports`: `'./{file}.ts'` as the namespace `{File}` (`import * as OrderActions from './order.actions.ts'`) |
+| `domains` | `D/*/*.actions.ts`, `D/*/*.queries.ts`, `D/*/*.utils.ts` | `top`: only exported constants built by `Effect.fn`, and `decode<What>` constants read at least twice; in `utils` the span is the function's name |
+| `domains` | `D/*/*.layer.ts` | [`arch/naming-keys`](../rules/naming-keys.md): a value bound by `*.bind` or `*.of` is `<d>Action<Path>` or `<d>Query<Path>`, never an inline function; with a contract package, [`arch/effect-layer-keys`](../rules/effect-layer-keys.md) against `<contract>/<d>/<d>.service.ts` |
+| `domains` | `D/*/*.workflows.ts` | `top`: only constants built by `Workflow.make`, `.toLayer`, `Layer.*` or `Schedule.*`; exports named `<D>…Workflow`, `<D>WorkflowsLayer` or `<d>Schedule<Name>`; the span inside `X.toLayer(Effect.fn('…'))` follows `X` |
+| `domains` | `D/*/*.constants.ts` | `top`: only exported constants named `<D>_…` |
+| `domains` | `D/*/*.config.ts` | `top`: only exported constants named `<d>…Config` |
+| `domains` | `D/*/*.prompts.ts` | `top`: only exported constants; exports named `<d>Prompt<Name>` |
+| `rpc` | `S/rpc/*/*.ts` | file `rpc/<group>/rpc.<group>.<area>.ts`, one exported constant `rpc<Group><Area>` (`effect.server.rpc`); [`arch/naming-keys`](../rules/naming-keys.md) `delegate`: a handler under `schedule.cancel` returns the call `<service>.schedule.cancel` (`effect.handlers.allow` skips key paths) |
+| `mails` | `S/mails/*.mail.tsx` | exports `<name>Mail` and `<Name>Email` |
+| `tests` | `tests/**/*.test.ts`, `test/**/*.test.ts`, `tests/**/*.spec.ts`, `test/**/*.spec.ts` | `top`: only `describe*`, `it*`, `test*` and `layer*` calls (`effect.server.tests`) |
+| `places` | `C/*.ts`, `C/*/*/**` | files beside the contract folders are `contract.ts`, `contract.<name>.ts`, `errors.ts` or `index.ts` (`effect.contract.root`); a contract folder holds no folder |
+| `kinds` | `C/*/*.schemas.ts` | `top`: types, interfaces, `declare module` and exported constants |
+| `kinds` | `C/*/*.contract.ts` | `top`: types, exported constants, and unexported constants built by a namespace call; `deny.calls`: `Schema.Struct` (name it in `<d>.schemas.ts`); [`arch/files-siblings`](../rules/files-siblings.md): `<d>.service.ts` beside it, unless `effect.files` removes that kind |
+| `kinds` | `C/*/*.service.ts` | `top`: interfaces, types, one class, `declare module` |
+| `service` | `C/*/*.service.ts` | the `Context.Service` key is `<package>/<d>/<d>.service/<Class>` (`effect.contract.service`); [`arch/effect-service-params`](../rules/effect-service-params.md): a method takes `<D>…Params` |
+| `kinds` | `C/*/*.errors.ts` | `top`: exported classes only |
+| `errors` | `C/*/*.errors.ts` | an error's tag is its class name, and a `code` is `SCREAMING_CASE` (`effect.errors.tag`, `effect.errors.code`) |
 
 ```ts
 folders: {
-  'apps/server': { effect: { strict: false } },
+  'apps/server': { effect: { strict: { tests: false } } },
   'apps/server/src': { rules: { 'arch/effect-yield-name': ['error', { names: { 'Database.Database': 'db' }, allow: '^kit' }] } },
   'apps/server/src/domains/*/*.layer.ts': { rules: { 'arch/naming-keys': ['error', { callees: ['Domain.bind'], name: '^{folder}(?:Action|Query){Path}$' }] } },
   'apps/server/tests/**/*.test.ts': { top: ['describe', 'it', 'it.effect'] },
@@ -146,6 +154,52 @@ folders: {
 ```
 
 A whole project config that tunes these keys, with a comment on every entry, is in [`examples/effect.oxlint.config.ts`](../../examples/effect.oxlint.config.ts).
+
+## Server knobs
+
+`effect.server` on the server's folder changes the conventions above instead of restating their keys. Lists take names to add and `!name` to remove one.
+
+| Option | Default | |
+| --- | --- | --- |
+| `folders` | `application`, `domains`, `rpc`, `mails` | Folders server code may live in |
+| `kinds` | the `D` file names above | Domain file kinds (`D` `layout.files`): `['*.gateway.ts', '!*.prompts.ts']`; a removed kind is also removed from the inherited `layout.files` |
+| `operations` | `{ actions: 'Action', queries: 'Query' }` | The word in operation names: `{domain}Action…` exports, the span words dropped, the layer keys `<d>Action<Path>` |
+| `spans` | `true` | `false` drops the span check in actions and queries files |
+| `rpc` | `{ file: '{group}/rpc.{group}.{area}.ts', names: ['rpc{Group}{Area}'] }` | Handler file template under `rpc/` and its export names |
+| `tests` | `tests/**/*.test.ts`, `test/**/*.test.ts`, `tests/**/*.spec.ts`, `test/**/*.spec.ts` | Test globs from the unit folder whose top level is locked; `false` locks none |
+
+```ts
+folders: {
+  'apps/server': {
+    effect: {
+      server: { folders: ['jobs'], kinds: ['*.gateway.ts'], operations: { actions: 'Command' }, rpc: { file: '{group}/{area}.rpc.ts', names: ['{area}Rpc'] } },
+      yields: { names: { 'Database.Database': 'db' }, allow: '^kit' },
+      labels: { 'domains/*/*.workflows.ts': [{ callee: 'Activity.make', name: '{name}' }] },
+      handlers: { allow: '^health$' },
+    },
+  },
+}
+```
+
+## Contract knobs
+
+`effect.contract` on the contract package folder.
+
+| Option | Default | |
+| --- | --- | --- |
+| `kinds` | none | File kinds by name: a `top` list adds the kind with that top level (or replaces a built-in kind's), `true` adds it with no top level (a built-in kind keeps its own), `false` removes it. `effect.files` still adds and removes kinds |
+| `root` | `contract.ts`, `contract.*.ts`, `errors.ts`, `index.ts` | Files allowed beside the contract folders; `!name` removes one |
+| `service` | `'{package}/{folder}/{file}/{name}'` | The `Context.Service` key template; `{package}` is the package name. `false` drops the check |
+
+```ts
+folders: {
+  'packages/contract': {
+    effect: {
+      contract: { kinds: { '*.policy.ts': ['type', { kind: 'const', exported: true }], '*.admin.schemas.ts': false }, root: ['!index.ts'], service: '{package}:{name}' },
+    },
+  },
+}
+```
 
 ## What a contract package gets
 
@@ -177,9 +231,18 @@ Every unit with the `effect` group (server, contract or plain package) builds ta
 | the unit | `deny.calls`: `Schema.TaggedError`, `Schema.ErrorClass`, `Data.TaggedError`, `Data.Error` |
 | `<source>/**/*.errors.ts` | the four entries set to `false` |
 
+| `effect.errors` option | Default | |
+| --- | --- | --- |
+| `files` | none | Globs from the package folder for the error class files; they hold exported classes, constants and types named after the file or ending in `Data`, with the tag and code checks below. On a contract package they replace the contract's own `<d>.errors.ts` top level and labels |
+| `base` | none | The one file that may call the constructors; without it every `files` match may |
+| `constructors` | the four above | The banned constructors; `!name` removes one, a new name adds one |
+| `message` | `'Tagged errors live in <d>.errors.ts.'` | The ban's report text |
+| `tag` | `'{name}'` | Template the `tag` (and the tag of `Schema.TaggedErrorClass` and the like) must equal |
+| `code` | `'^[A-Z][A-Z0-9_]*$'` | Regex a `code` must match; `false` drops the check |
+
 ```ts
 folders: {
-  'packages/contract': { deny: { calls: { 'Data.Error': false } } },
+  'packages/contract': { effect: { errors: { constructors: ['!Data.Error', 'Errors.make'], message: 'Errors live in errors files.' } } },
   'packages/contract/src/**/*.errors.ts': { rules: { 'arch/boundaries-deny': 'off' } },
 }
 ```
@@ -224,7 +287,7 @@ folders: {
 | `parts` | `types`, `layer`, `driver`, `fake`, `testing`, `adapter`, `index` | Kinds that may be split as `M-<part>.<kind>.ts`, same syntax |
 | `spans` | `'{module}.{method}'` | The `Effect.fn` label in every source file, the module name in camelCase; `false` turns it off |
 | `imports` | `true` | Import names: a workspace package as `{Package}`, `{Package}{Subpath}`, `/schema` as `{Package}Types`; a relative file as its name, with `driver`, `adapter` and `index` dropped and a layer as `{File}` or `{File}Layer`. Merged into `naming.imports` |
-| `tests` | `{ folder: 'test', support: 'support', factories: 'testing/{module}.factories.ts' }` | Test, support and factory names and shapes; `false` turns them off |
+| `tests` | `{ folder: 'test', support: 'support', factories: 'testing/{module}.factories.ts', fixtures: [] }` | Test, support and factory names and shapes; `false` turns them off. `fixtures` are globs under the test folder for whole framework apps (`['fixtures/{vinext,tanstack}-*']`): their files and folders get `arch/naming-file`, `effecttsgo/async-function`, `linteffect/prevent-dynamic-imports` and `top` off |
 | `migrations` | `'{date}-create-{module}-tables'` | Migration file name (and its `.sqlite.ts` twin) in `S/migrations/`; `false` turns it off |
 
 A narrower folder's `module` object merges over the one it inherits, so `{ spans }` on one package keeps the `name` set on `packages/*`.

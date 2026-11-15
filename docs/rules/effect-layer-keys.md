@@ -23,6 +23,9 @@ The service file is read as text: the member names of the object type after `dec
 | `service` | `string` | required | Absolute path of the service file; `{folder}`, `{parent}`, `{stem}` and `{file}` come from the layer file's path |
 | `callees` | `string[]` | `['*.of', '*.bind']` | Dotted callee names whose object is the binding; `*` is any text |
 | `declaration` | `string` | `'Context.Service'` | Text before the `<` that opens the service's type |
+| `missing` | `'skip' \| 'error'` | `'skip'` | When the service file or its declaration is missing: check nothing, or report that the layer needs it |
+| `message` | `string` | none | Text added to every report |
+| `file`, `placeholder`, `stem`, `singularize`, `roles`, `separators` | | | How the path placeholders are read, as in [`arch/files-exports`](files-exports.md); a file `file` does not match is skipped |
 
 ```ts
 'arch/effect-layer-keys': ['error', { service: '/repo/packages/contract/src/{folder}/{folder}.service.ts' }]

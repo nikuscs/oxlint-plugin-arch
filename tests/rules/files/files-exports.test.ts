@@ -315,5 +315,7 @@ describe('arch/files-exports', () => {
       options: { file: '{area}/actions/{verb}.ts', patterns: ['{area}Action{Verb}'] },
       errors: ['extraExport'],
     },
+    { name: 'the condition is not met', filename: 'order/order.types.ts', files: {}, code: 'export const other = 1', options: { names: ['*'], when: '{stem}-*.types.ts' } },
+    { name: 'the condition is met', filename: 'order/order.types.ts', files: { 'order/order-users.types.ts': '' }, code: 'export const other = 1', options: { names: ['*'], when: '{stem}-*.types.ts', message: 'Re-export the parts.' }, errors: ["Export 'other' is not allowed; expected one of: *. Re-export the parts."] },
   ])('$name', (row) => testerRun(filesExports, row))
 })

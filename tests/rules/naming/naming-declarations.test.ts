@@ -102,5 +102,7 @@ var h = 1`,
       options: [{ kinds: ['function'] }, { kinds: ['type'], pattern: '^{Stem}' }, { kinds: ['const'], pattern: '^[A-Z_]+$' }],
       errors: ['pattern', 'pattern'],
     },
+    { name: 'a path template capture', filename: 'packages/kit-order/src/order-users.types.ts', code: 'type OrderUser = string', options: [{ file: 'kit-{module}/src/**', pattern: '^{Module}' }] },
+    { name: 'a pattern off the path template', filename: 'packages/kit-order/src/order-users.types.ts', code: 'type User = string', options: [{ file: 'kit-{module}/src/**', pattern: '^{Module}', message: 'Prefix the module.' }], errors: ["'User' must match ^Order. Prefix the module."] },
   ])('$name', (row) => testerRun(namingDeclarations, row))
 })

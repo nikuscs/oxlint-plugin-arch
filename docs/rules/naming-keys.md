@@ -42,6 +42,8 @@ export const rpcPublicFingerprint = {
 | `delegate` | `boolean` | `false` | The function's returned call follows the key path. The yielded call is read when the result is wrapped or held in a local first; a function that returns no service call is skipped |
 | `allow` | `string \| string[]` | none | Regexes on key paths (`apiKeys.list`) that are skipped, with everything under them |
 | `singularize` | `'none' \| 'trailing-s'` | `'none'` | `{Key}` also matches without its trailing `s` (`payments` and `PaymentContract`) |
+| `message` | `string` | none | Text added to every report |
+| `file`, `placeholder`, `stem`, `roles`, `separators` | | | How the path placeholders in `name` are read, as in [`arch/files-exports`](files-exports.md); a file `file` does not match is skipped |
 
 ```ts
 'arch/naming-keys': ['error', { callees: ['Domain.bind'], name: '^{folder}(?:Action|Query){Path}$', inline: false }]

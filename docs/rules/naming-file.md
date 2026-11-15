@@ -26,6 +26,7 @@ Reports files whose name does not match `pattern`. With `unique`, also reports f
 | `unique` | `string` | none | Regex for the part that must be unique per folder |
 | `template` | `string \| string[]` | none | Path templates the file must fit, instead of or next to `pattern`: `{group}/rpc.{group}.{area}.ts`. A placeholder written twice must hold the same text both times |
 | `placeholder` | `string` | `'[a-z0-9-]+'` | Regex a `template` placeholder matches |
+| `when` | `string \| string[]` | none | Globs of file names in the same folder; this options object runs only when one exists. `!` before a glob: only when none matches. `{folder}`, `{parent}`, `{stem}`, `{file}` and `{domain}` apply |
 
 ```ts
 'arch/naming-file': ['error', { pattern: '^[a-z0-9-]+(\\.[a-z]+)*\\.tsx?$', message: 'Use kebab-case file names.' }]

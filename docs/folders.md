@@ -42,7 +42,7 @@ To lock down what one kind of file may contain (top-level statements, exports, n
 | Key forms | A folder (`apps/web`, or `packages/*` for each folder in it), a list of folders (`src/lib/{dgsi,dr}`, each as if written alone; a folder also written alone merges with it in config order, the later over the earlier), one file (`src/app/default.tsx`) or a file pattern (`*`, `**`, `{a,b}`, ending in a file name such as `*.actions.ts`). |
 | File keys | A file key changes the settings of the files it matches on top of their folder's. When several file keys match one file, their settings merge on that file, broadest key first (the one matching the most files), so a narrower key's setting wins and neither key drops the other's `deny` entries or `rules`. A group set on a file key applies to exactly the files that match both the key and the group's own files. When the group's files are narrower than every source file, the preset lists the matching files on disk when the config loads: a matching file created later keeps its folder's settings for that group until the config loads again. Its `rules` come after every folder's `rules`. |
 | Folder value | `true` inherits, `false` skips the folder (or the files of a file key), an object inherits and changes. |
-| Group value | `true` on with the inherited settings (defaults when nothing is inherited), `false` off, `'warn'` the same as warnings, an object = inherited settings plus changes (an options object inside merges too; arrays replace, except `layout.files`, which adds to the parent's list and drops a `!name` entry). `console` and `kit` take only `true` or `false`. |
+| Group value | `true` on with the inherited settings (defaults when nothing is inherited), `false` off, `'warn'` the same as warnings, an object = inherited settings plus changes (an options object inside merges too; arrays replace, except `layout.files` and `layout.folders`, which add to the parent's list and drop a `!name` entry). `console` and `kit` take only `true` or `false`. |
 | Paths | Paths inside settings are relative to `root`; `source` is relative to its folder. Folder keys are literal paths (dots allowed, `.agents` too); `apps/web/` and `./apps/web` mean `apps/web`. File keys may also hold `@`, `$`, `[` and `]` (`src/routes/[...rest].tsx`). |
 | Units | Top-level keys are units (app, backend, library, CLI). When `'.'` is itself an app, backend or CLI, it stays a unit, and only top-level keys that set `tanstack`, `next`, `expo`, `backend` or `console`, or have their own `package.json`, become units. A folder with its own `package.json` is a unit with its own kind anywhere; another key inside a key only refines it. Output folders (`dist`, `build`, `coverage`, `.output`) are ignored at the root and at each unit's root. |
 | Errors | Unknown keys, unknown options, missing folders or files and keys inside a `false` folder throw. A file pattern that matches nothing does not. |
@@ -78,6 +78,8 @@ A file key takes every key above and every group, except those that say what a f
 'alchemy.*.ts': { rules: { 'import-extra/no-relative-packages': 'off' } },
 'tools/legacy/**/*.gen.ts': false,
 ```
+
+A group set to `false` (or `top: false`) on a file key turns that group off for its files, also where a broader file key or a convention turned it on.
 
 ## 🏷️ Names
 

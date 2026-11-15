@@ -1,7 +1,7 @@
 import { defineRule } from '@oxlint/plugins'
 import { declarationsIdName, declarationsKindOf } from '../../utils/declarations.utils.ts'
 import { namingCaptures, namingExpand, namingFilePrefixesFor, namingHasFilePrefix, namingStemSchemaProperties } from '../../utils/naming.utils.ts'
-import { optionsAll, optionsEscape, optionsPatternLabel, optionsPatterns, optionsPatternSchema, optionsPatternsTest } from '../../utils/options.utils.ts'
+import { optionsAll, optionsEscape, optionsMessage, optionsPatternLabel, optionsPatterns, optionsPatternSchema, optionsPatternsTest } from '../../utils/options.utils.ts'
 import type { DeclarationsKind } from '../../types/declarations.types.ts'
 import type { NamingDeclarationsCheck, NamingDeclarationsOptions } from '../../types/naming.types.ts'
 import type { ESTree } from '@oxlint/plugins'
@@ -22,12 +22,15 @@ export const namingDeclarations = defineRule({
           flags: { type: 'string' },
           ...namingStemSchemaProperties,
           allow: optionsPatternSchema,
+          file: { type: 'string' },
+          placeholder: { type: 'string' },
+          message: { type: 'string' },
         },
       },
     },
     messages: {
-      prefix: "'{{name}}' must start with file prefix '{{prefix}}'.",
-      pattern: "'{{name}}' must match {{pattern}}.",
+      prefix: "'{{name}}' must start with file prefix '{{prefix}}'.{{message}}",
+      pattern: "'{{name}}' must match {{pattern}}.{{message}}",
     },
   },
   createOnce(context) {
@@ -44,7 +47,7 @@ export const namingDeclarations = defineRule({
         return
       }
 
-      for (const { kinds, allowed, expected, prefixes, label, normalize } of checks) {
+      for (const { kinds, allowed, expected, prefixes, label, normalize, message } of checks) {
         if ((kinds && !kinds.has(kind)) || optionsPatternsTest(allowed, name)) {
           continue
         }
@@ -54,7 +57,7 @@ export const namingDeclarations = defineRule({
             context.report({
               node,
               messageId: 'pattern',
-              data: { name, pattern: label },
+              data: { name, pattern: label, message },
             })
           }
 
@@ -65,7 +68,7 @@ export const namingDeclarations = defineRule({
           context.report({
             node,
             messageId: 'prefix',
-            data: { name, prefix: prefixes.join(' or ') },
+            data: { name, prefix: prefixes.join(' or '), message },
           })
         }
       }
@@ -74,9 +77,13 @@ export const namingDeclarations = defineRule({
     return {
       before() {
         const given = optionsAll<NamingDeclarationsOptions>(context)
-        const captures = namingCaptures(context.filename) ?? {}
+        checks = (given.length > 0 ? given : [{}]).flatMap((options) => {
+          const captures = namingCaptures(context.filename, options)
 
-        checks = (given.length > 0 ? given : [{}]).map((options) => {
+          if (!captures) {
+            return []
+          }
+
           const sources = options.pattern === undefined ? [] : [options.pattern].flat().map((source) => namingExpand(source, captures, true, optionsEscape))
 
           return {
@@ -86,6 +93,7 @@ export const namingDeclarations = defineRule({
             prefixes: namingFilePrefixesFor(context.filename, options),
             label: optionsPatternLabel(sources),
             normalize: options.normalize,
+            message: optionsMessage(options.message),
           }
         })
       },

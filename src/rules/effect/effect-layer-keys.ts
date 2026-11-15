@@ -2,8 +2,8 @@ import { defineRule } from '@oxlint/plugins'
 import { readFileSync } from 'node:fs'
 import { astDottedName } from '../../utils/ast.utils.ts'
 import { declarationsPropertyName } from '../../utils/declarations.utils.ts'
-import { namingCaptures, namingExpand } from '../../utils/naming.utils.ts'
-import { optionsFirst, optionsPatternsTest, optionsWildcards } from '../../utils/options.utils.ts'
+import { namingCaptures, namingCaptureSchemaProperties, namingExpand } from '../../utils/naming.utils.ts'
+import { optionsFirst, optionsMessage, optionsPatternsTest, optionsWildcards } from '../../utils/options.utils.ts'
 import type { EffectLayerKeysFrame, EffectLayerKeysOptions } from '../../types/effect.types.ts'
 import type { ESTree } from '@oxlint/plugins'
 
@@ -95,26 +95,38 @@ export const effectLayerKeys = defineRule({
           service: { type: 'string', minLength: 1 },
           callees: { type: 'array', items: { type: 'string' }, minItems: 1 },
           declaration: { type: 'string', minLength: 1 },
+          missing: { type: 'string', enum: ['error', 'skip'] },
+          message: { type: 'string' },
+          ...namingCaptureSchemaProperties,
         },
         required: ['service'],
       },
     ],
     messages: {
-      extra: "'{{path}}' is not a method of the service declared in {{file}}.",
-      missing: 'The service in {{file}} declares {{paths}}, which this layer does not bind.',
+      extra: "'{{path}}' is not a method of the service declared in {{file}}.{{message}}",
+      missing: 'The service in {{file}} declares {{paths}}, which this layer does not bind.{{message}}',
+      service: 'This layer needs its service declared in {{file}}.{{message}}',
     },
   },
   createOnce(context) {
     let declared: string[] | null = null
     let callees: RegExp[] = []
     let file = ''
+    let message = ''
+    let unbound = false
 
     return {
       before() {
         const options = optionsFirst<EffectLayerKeysOptions>(context, { service: '' })
+        const captures = namingCaptures(context.filename, options)
 
-        file = namingExpand(options.service, namingCaptures(context.filename) ?? {}, false)
+        if (!captures) {
+          return false
+        }
+
+        file = namingExpand(options.service, captures, false)
         callees = optionsWildcards(options.callees ?? ['*.of', '*.bind'])
+        message = optionsMessage(options.message)
 
         try {
           declared = effectLayerKeysDeclared(readFileSync(file, 'utf8'), options.declaration ?? 'Context.Service')
@@ -122,8 +134,19 @@ export const effectLayerKeys = defineRule({
           declared = null
         }
 
-        if (!declared) {
+        unbound = !declared && options.missing === 'error'
+
+        if (!declared && !unbound) {
           return false
+        }
+      },
+      Program(program) {
+        if (unbound) {
+          context.report({
+            node: program,
+            messageId: 'service',
+            data: { file: file.split('/').slice(-2).join('/'), message },
+          })
         }
       },
       CallExpression(node) {
@@ -143,7 +166,7 @@ export const effectLayerKeys = defineRule({
             context.report({
               node: property,
               messageId: 'extra',
-              data: { path, file: short },
+              data: { path, file: short, message },
             })
           }
         }
@@ -152,7 +175,7 @@ export const effectLayerKeys = defineRule({
           context.report({
             node: first,
             messageId: 'missing',
-            data: { paths: missing.map((path) => `'${path}'`).join(', '), file: short },
+            data: { paths: missing.map((path) => `'${path}'`).join(', '), file: short, message },
           })
         }
       },

@@ -1,8 +1,8 @@
 import { defineRule } from '@oxlint/plugins'
 import { astDottedName, astStaticString } from '../../utils/ast.utils.ts'
 import { declarationsPropertyName } from '../../utils/declarations.utils.ts'
-import { namingCaptures, namingExpand } from '../../utils/naming.utils.ts'
-import { optionsEscape, optionsFirst, optionsPatternLabel, optionsPatterns, optionsPatternSchema, optionsPatternsTest, optionsWildcards } from '../../utils/options.utils.ts'
+import { namingCaptures, namingCaptureSchemaProperties, namingExpand } from '../../utils/naming.utils.ts'
+import { optionsEscape, optionsFirst, optionsMessage, optionsPatternLabel, optionsPatterns, optionsPatternSchema, optionsPatternsTest, optionsWildcards } from '../../utils/options.utils.ts'
 import type { NamingLabelsCompiled, NamingLabelsOptions } from '../../types/naming.types.ts'
 import type { ESTree } from '@oxlint/plugins'
 
@@ -62,8 +62,8 @@ export const namingLabels = defineRule({
         type: 'object',
         additionalProperties: false,
         properties: {
-          file: { type: 'string' },
-          placeholder: { type: 'string' },
+          ...namingCaptureSchemaProperties,
+          message: { type: 'string' },
           labels: {
             type: 'array',
             items: {
@@ -77,6 +77,7 @@ export const namingLabels = defineRule({
                 drop: optionsPatternSchema,
                 loose: { type: 'boolean' },
                 within: optionsPatternSchema,
+                message: { type: 'string' },
               },
               required: ['callee'],
               anyOf: [{ required: ['name'] }, { required: ['pattern'] }],
@@ -87,24 +88,26 @@ export const namingLabels = defineRule({
       },
     ],
     messages: {
-      name: "'{{label}}' must be '{{expected}}', after the name '{{name}}'.",
-      pattern: "'{{label}}' must match {{pattern}}.",
+      name: "'{{label}}' must be '{{expected}}', after the name '{{name}}'.{{message}}",
+      pattern: "'{{label}}' must match {{pattern}}.{{message}}",
     },
   },
   createOnce(context) {
     let entries: NamingLabelsCompiled[] = []
     let captures: Record<string, string> = {}
+    let message: string | undefined
 
     return {
       before() {
         const options = optionsFirst<NamingLabelsOptions>(context, { labels: [] })
-        const paths = namingCaptures(context.filename, { file: options.file, placeholder: options.placeholder })
+        const paths = namingCaptures(context.filename, options)
 
         if (!paths) {
           return false
         }
 
         captures = paths
+        message = options.message
 
         entries = options.labels.map((entry) => ({
           callees: optionsWildcards(entry.callee),
@@ -138,7 +141,7 @@ export const namingLabels = defineRule({
             context.report({
               node: target,
               messageId: 'pattern',
-              data: { label, pattern: optionsPatternLabel(compiled.patterns) },
+              data: { label, pattern: optionsPatternLabel(compiled.patterns), message: optionsMessage(compiled.entry.message, message) },
             })
           }
 
@@ -150,7 +153,7 @@ export const namingLabels = defineRule({
             context.report({
               node: target,
               messageId: 'name',
-              data: { label, expected: expected.join(' or '), name: binding },
+              data: { label, expected: expected.join(' or '), name: binding, message: optionsMessage(compiled.entry.message, message) },
             })
           }
         }

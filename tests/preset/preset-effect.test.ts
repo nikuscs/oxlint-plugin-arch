@@ -171,7 +171,7 @@ describe('preset Effect server', () => {
     { name: 'a server names the files beside its handler groups', tree, files: server, folders: {}, file: 'apps/server/src/rpc/router.ts', rule: 'arch/naming-file', expected: ['error', { pattern: '^rpc[.][a-z0-9-]+[.]ts$', message: 'A file in rpc/ is rpc.<name>.ts.' }] },
     { name: 'a server locks the top level of a prompts file', tree, files: server, folders: {}, file: 'apps/server/src/domains/order/order.prompts.ts', rule: 'arch/files-top-level', expected: ['error', { stem: 'folder', allow: ['import', { kind: 'const', exported: true }] }] },
     { name: 'a contract folder is flat', tree: contractTree, files: contract, folders: {}, file: 'packages/contract/src/order/parts/order.schemas.ts', rule: 'arch/files-restricted', expected: ['error', { message: 'A contract folder is flat: no folder below <d>/.' }] },
-    { name: 'a contract names the files beside its folders', tree: contractTree, files: contract, folders: {}, file: 'packages/contract/src/helpers.ts', rule: 'arch/naming-file', expected: ['error', expect.objectContaining({ pattern: '^(?:contract(?:[.][a-z0-9-]+)?|errors|index)[.]ts$' })] },
+    { name: 'a contract names the files beside its folders', tree: contractTree, files: contract, folders: {}, file: 'packages/contract/src/helpers.ts', rule: 'arch/naming-file', expected: ['error', expect.objectContaining({ pattern: String.raw`^(?:contract\.ts|contract\.[a-z0-9-]+\.ts|errors\.ts|index\.ts)$`, message: 'A file beside the contract folders is contract.ts, contract.<name>.ts, errors.ts or index.ts.' })] },
     { name: 'a server handler returns the call its key names', tree, files: server, folders: {}, file: 'apps/server/src/rpc/app/rpc.app.orders.ts', rule: 'arch/naming-keys', expected: ['error', { exports: '^rpc[A-Z]', delegate: true }] },
     { name: 'a contract ties an error tag to its class', tree: contractTree, files: contract, folders: {}, file: 'packages/contract/src/order/order.errors.ts', rule: 'arch/naming-labels', expected: ['error', { labels: expect.arrayContaining([{ callee: '*.Tagged', property: 'tag', name: '{name}' }]) }] },
     { name: 'a server splits union type arguments', tree, files: server, folders: {}, file: 'apps/server/src/domains/order/order.actions.ts', rule: 'arch/layout-type-arguments', expected: ['error', { min: 3 }] },
@@ -579,4 +579,5 @@ describe('preset Effect server', () => {
   ])('$name', (row) => {
     expect({ value: testerPreset(row) }).toMatchObject({ value: row.expected })
   })
+
 })

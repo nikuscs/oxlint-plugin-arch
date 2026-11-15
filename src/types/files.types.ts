@@ -35,6 +35,8 @@ export interface FilesExportsOptions extends NamingCaptureOptions {
   types?: boolean
   factory?: string
   scope?: 'exports' | 'declarations'
+  when?: OptionsPattern
+  message?: string
 }
 
 export interface FilesFactoryKeySet {
@@ -157,7 +159,9 @@ export interface FilesTopLevelMatcher {
   message: string
 }
 
-export interface FilesSiblingsOptions {
-  require: OptionsPattern
+export interface FilesSiblingsOptions extends NamingCaptureOptions {
+  require?: string | (string | string[])[]
+  forbid?: OptionsPattern
+  when?: OptionsPattern
   message?: string
 }

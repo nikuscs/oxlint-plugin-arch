@@ -1,3 +1,4 @@
+import type { NamingCaptureOptions } from './naming.types.ts'
 import type { OptionsPattern } from './options.types.ts'
 import type { SourceIndent } from './source.types.ts'
 
@@ -59,12 +60,21 @@ export interface EffectSchemaFirstOptions {
 export interface EffectYieldNameOptions {
   names?: Record<string, string | string[]>;
   allow?: OptionsPattern;
+  message?: string;
 }
 
-export interface EffectLayerKeysOptions {
+export interface EffectYieldsFirstOptions {
+  allow?: OptionsPattern;
+  services?: OptionsPattern;
+  message?: string;
+}
+
+export interface EffectLayerKeysOptions extends NamingCaptureOptions {
   service: string;
   callees?: string[];
   declaration?: string;
+  missing?: 'error' | 'skip';
+  message?: string;
 }
 
 export interface EffectLayerKeysFrame {
@@ -73,8 +83,9 @@ export interface EffectLayerKeysFrame {
   members: number;
 }
 
-export interface EffectServiceParamsOptions {
+export interface EffectServiceParamsOptions extends NamingCaptureOptions {
   name?: OptionsPattern;
   allow?: OptionsPattern;
   declaration?: string;
+  message?: string;
 }

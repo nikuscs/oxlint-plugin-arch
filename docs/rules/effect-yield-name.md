@@ -17,6 +17,7 @@ Only `const name = yield* Namespace.Service` is checked, where `Service` starts 
 | --- | --- | --- | --- |
 | `names` | `Record<string, string \| string[]>` | `{}` | The name a service takes instead, keyed by `Namespace.Service` or `*.Service` |
 | `allow` | `string \| string[]` | none | Regexes for names that always pass, such as `'^kit'` |
+| `message` | `string` | none | Text added to every report |
 
 ```ts
 'arch/effect-yield-name': ['error', { names: { 'Database.Database': 'db' }, allow: '^kit' }]

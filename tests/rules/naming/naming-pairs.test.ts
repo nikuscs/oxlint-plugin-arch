@@ -18,5 +18,6 @@ describe('arch/naming-pairs', () => {
     },
     { name: 'a plural on one side', code: 'read.input(OrderRefillStatusInput).output(OrderRefillsStatusOutput)', options: { pairs: [{ methods: ['input', 'output'], strip: ['Input$', 'Output$'] }] }, errors: ['pair'] },
     { name: 'one report per chain', code: 'const c = { a: read.input(AInput).output(BOutput), b: read.input(CInput).output(COutput) }', options: { pairs: [{ methods: ['input', 'output'], strip: ['Input$', 'Output$'] }] }, errors: ['pair'] },
+    { name: 'a message is added', code: 'b.input(OrderInput).output(UserOutput)', options: { message: 'Share the name.', pairs: [{ methods: ['input', 'output'], strip: ['Input$', 'Output$'] }] }, errors: ["'UserOutput' in .output() must share its name with 'OrderInput' in .input(). Share the name."] },
   ])('$name', (row) => testerRun(namingPairs, row))
 })

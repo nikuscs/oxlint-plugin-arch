@@ -19,6 +19,21 @@ Takes `true`, `false`, `'warn'` or an object:
 | `imports` | `Record<string, string \| false>` | `{}` | Specifier glob → hint; covers static, re-export and literal dynamic imports |
 | `calls` | `Record<string, string \| false>` | `{}` | Callee, member or dotted name → hint |
 | `only` | `{ imports?, calls?, in, message? }[]` | `[]` | Imports and calls used in the `in` places only |
+| `file`, `placeholder`, `stem`, `singularize` | | none | How path placeholders are read (see below) |
+
+## Path placeholders
+
+Import keys, call keys, `only[].imports`, `only[].calls`, `only[].in` and every message take `{folder}`, `{parent}`, `{stem}`, `{file}` and `{domain}`, read from the linted file. `file` is a path template that adds its own placeholders; a file it does not match keeps the built-in ones.
+
+```ts
+'packages': {
+  deny: {
+    file: 'packages/kit-{name}/**',
+    imports: { '@scope/kit-{name}': 'Inside kit-{name}, import a relative path.' },
+    only: [{ imports: '@scope/kit-database', in: 'packages/kit-{name}/src/{name}.layer.ts', message: 'Only {name}.layer.ts reads the database.' }],
+  },
+},
+```
 
 ## Only here
 

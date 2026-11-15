@@ -16,5 +16,7 @@ describe('arch/effect-yields-first', () => {
     },
     { name: 'a dependency after a read', code: 'const run = Effect.fn("a")(function* () { const db = yield* Kit.Database; const rows = yield* db.query(); const users = yield* Users.Users; return rows })', errors: ['first'] },
     { name: 'one report per late dependency', code: 'const run = Effect.fn("a")(function* () { work(); const a = yield* A.A; const b = yield* B.B })', errors: ['first', 'first'] },
+    { name: 'an allowed statement may come first', code: 'const run = Effect.fn("a")(function* () { yield* Effect.annotateCurrentSpan("a", 1); const users = yield* Users.Users; return users })', options: { allow: '^Effect[.]annotateCurrentSpan$' } },
+    { name: 'only listed services are dependencies', code: 'const run = Effect.fn("a")(function* () { work(); const config = yield* Kit.Config; const users = yield* Users.Users })', options: { services: '^Users[.]', message: 'Yield services first.' }, errors: ['Yield Users.Users with the other dependencies, at the top of the function. Yield services first.'] },
   ])('$name', (row) => testerRun(effectYieldsFirst, row))
 })

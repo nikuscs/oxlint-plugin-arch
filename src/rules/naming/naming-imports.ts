@@ -1,6 +1,6 @@
 import { defineRule } from '@oxlint/plugins'
-import { namingCaptures, namingExpand, namingTemplatePattern } from '../../utils/naming.utils.ts'
-import { optionsFirst, optionsPatterns, optionsPatternSchema } from '../../utils/options.utils.ts'
+import { namingCaptures, namingCaptureSchemaProperties, namingExpand, namingTemplatePattern } from '../../utils/naming.utils.ts'
+import { optionsFirst, optionsMessage, optionsPatterns, optionsPatternSchema } from '../../utils/options.utils.ts'
 import type { NamingImportsCompiled, NamingImportsOptions } from '../../types/naming.types.ts'
 
 function namingImportsNames(entry: NamingImportsCompiled, captures: Record<string, string>): string[] {
@@ -17,7 +17,8 @@ export const namingImports = defineRule({
         type: 'object',
         additionalProperties: false,
         properties: {
-          file: { type: 'string' },
+          ...namingCaptureSchemaProperties,
+          message: { type: 'string' },
           imports: {
             type: 'array',
             items: {
@@ -29,6 +30,7 @@ export const namingImports = defineRule({
                 namespace: { type: 'boolean' },
                 drop: optionsPatternSchema,
                 placeholder: { type: 'string' },
+                message: { type: 'string' },
               },
               required: ['source', 'name'],
             },
@@ -38,8 +40,8 @@ export const namingImports = defineRule({
       },
     ],
     messages: {
-      name: "Import '{{source}}' as '{{expected}}', not '{{actual}}'.",
-      namespace: "Import '{{source}}' as a namespace: import * as {{expected}}.",
+      name: "Import '{{source}}' as '{{expected}}', not '{{actual}}'.{{message}}",
+      namespace: "Import '{{source}}' as a namespace: import * as {{expected}}.{{message}}",
     },
   },
   createOnce(context) {
@@ -49,7 +51,7 @@ export const namingImports = defineRule({
     return {
       before() {
         const options = optionsFirst<NamingImportsOptions>(context, { imports: [] })
-        const captures = namingCaptures(context.filename, { file: options.file })
+        const captures = namingCaptures(context.filename, options)
 
         paths = captures ?? {}
 
@@ -57,7 +59,9 @@ export const namingImports = defineRule({
           const pattern = namingTemplatePattern(entry.source, entry.placeholder ?? '[^/]+')
           const names = entry.name === false ? [] : [entry.name].flat()
 
-          return pattern ? [{ pattern, names, namespace: entry.namespace !== false, drop: optionsPatterns(entry.drop) }] : []
+          const message = optionsMessage(entry.message, options.message)
+
+          return pattern ? [{ pattern, names, namespace: entry.namespace !== false, drop: optionsPatterns(entry.drop), message }] : []
         })
 
         if (entries.length === 0 || !captures) {
@@ -86,13 +90,13 @@ export const namingImports = defineRule({
               context.report({
                 node: specifier,
                 messageId: 'namespace',
-                data: { source, expected },
+                data: { source, expected, message: entry.message },
               })
             } else if (specifier.type !== 'ImportSpecifier' && !names.includes(specifier.local.name)) {
               context.report({
                 node: specifier,
                 messageId: 'name',
-                data: { source, expected, actual: specifier.local.name },
+                data: { source, expected, actual: specifier.local.name, message: entry.message },
               })
             }
           }

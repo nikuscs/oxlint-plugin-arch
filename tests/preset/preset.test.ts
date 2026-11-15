@@ -386,6 +386,13 @@ describe('preset', () => {
       expected: ['error', { calls: { legacy: 'Use the owner API.', updateTable: 'A query reads only.' } }],
     },
     {
+      name: 'deny passes its file template to the rule',
+      folders: { src: { deny: { file: 'src/{name}/**', imports: { '@scope/kit-{name}': 'Import a relative path.' } } } },
+      file: 'src/order.ts',
+      rule: 'arch/boundaries-deny',
+      expected: ['error', { file: 'src/{name}/**', imports: { '@scope/kit-{name}': 'Import a relative path.' } }],
+    },
+    {
       name: 'deny on a file pattern leaves other files on the folder deny',
       folders: { src: { deny: { calls: { legacy: 'Use the owner API.' } } }, 'src/**/*.queries.ts': { deny: { calls: { updateTable: 'A query reads only.' } } } },
       file: 'src/order.ts',

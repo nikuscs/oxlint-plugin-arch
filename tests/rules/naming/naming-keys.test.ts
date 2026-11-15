@@ -50,5 +50,8 @@ describe('arch/naming-keys', () => {
     },
     { name: 'a nested handler off its path', code: 'export const rpcAppNotifications = { preference: { get: rpc.x.effect(function* () { return yield* notifications.preference.list() }) } }', options: { exports: '^rpc', delegate: true }, errors: ['delegate'] },
     { name: 'a local filled by another method', code: 'export const rpcPublicFingerprint = { get: rpc.x.effect(function* () { const entry = yield* fingerprint.resolve(); return Option.getOrNull(entry) }) }', options: { exports: '^rpc', delegate: true }, errors: ["'get' must return a call to 'get' on its service, not 'fingerprint.resolve'."] },
+    { name: 'a path template capture', filename: 'packages/kit-order/src/order.layer.ts', code: 'bind({ create: orderCreate })', options: { file: 'kit-{module}/src/**', callees: ['bind'], name: '^{module}{Path}$' } },
+    { name: 'a file off the path template is skipped', filename: 'apps/web/a.ts', code: 'bind({ create: wrong })', options: { file: 'kit-{module}/src/**', callees: ['bind'], name: '^{module}{Path}$' } },
+    { name: 'a message is added', code: 'bind({ create: () => 1 })', options: { callees: ['bind'], inline: false, message: 'Name the action.' }, errors: ["Bind a named function under 'create', not an inline one. Name the action."] },
   ])('$name', (row) => testerRun(namingKeys, row))
 })

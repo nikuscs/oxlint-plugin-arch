@@ -1,6 +1,6 @@
 import { defineRule } from '@oxlint/plugins'
 import { astDottedName } from '../../utils/ast.utils.ts'
-import { namingCaptures, namingExpand } from '../../utils/naming.utils.ts'
+import { namingCaptures, namingCaptureSchemaProperties, namingExpand, namingKeyPath } from '../../utils/naming.utils.ts'
 import * as OptionsUtils from '../../utils/options.utils.ts'
 import type { EffectServiceParamsOptions } from '../../types/effect.types.ts'
 import type { ESTree } from '@oxlint/plugins'
@@ -32,12 +32,14 @@ export const effectServiceParams = defineRule({
           name: OptionsUtils.optionsPatternSchema,
           allow: OptionsUtils.optionsPatternSchema,
           declaration: { type: 'string', minLength: 1 },
+          message: { type: 'string' },
+          ...namingCaptureSchemaProperties,
         },
       },
     ],
     messages: {
-      name: "'{{path}}' takes '{{type}}'; a service method takes a params type that matches {{pattern}}.",
-      inline: "'{{path}}' takes an unnamed type; a service method takes a params type that matches {{pattern}}.",
+      name: "'{{path}}' takes '{{type}}'; a service method takes a params type that matches {{pattern}}.{{message}}",
+      inline: "'{{path}}' takes an unnamed type; a service method takes a params type that matches {{pattern}}.{{message}}",
     },
   },
   createOnce(context) {
@@ -53,9 +55,9 @@ export const effectServiceParams = defineRule({
         return
       }
 
-      const values = { ...captures, path: keys.join('-'), key: keys.at(-1) ?? '' }
+      const values = namingKeyPath(captures, keys)
       const sources = [options.name ?? '^{Folder}\\w*Params$'].flat().map((source) => namingExpand(source, values, true, OptionsUtils.optionsEscape))
-      const data = { path: keys.join('.'), pattern: OptionsUtils.optionsPatternLabel(sources) }
+      const data = { path: keys.join('.'), pattern: OptionsUtils.optionsPatternLabel(sources), message: OptionsUtils.optionsMessage(options.message && namingExpand(options.message, values, true)) }
 
       if (annotation.type !== 'TSTypeReference') {
         context.report({
@@ -101,8 +103,14 @@ export const effectServiceParams = defineRule({
     return {
       before() {
         options = OptionsUtils.optionsFirst<EffectServiceParamsOptions>(context, {})
-        captures = namingCaptures(context.filename) ?? {}
         allowed = OptionsUtils.optionsPatterns(options.allow)
+        const paths = namingCaptures(context.filename, options)
+
+        if (!paths) {
+          return false
+        }
+
+        captures = paths
       },
       TSTypeLiteral(node) {
         const call = node.parent.type === 'TSTypeParameterInstantiation' ? node.parent.parent : undefined

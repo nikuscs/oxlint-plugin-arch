@@ -11,7 +11,8 @@ export const denyGroup: PresetBuilder<'deny'> = (project, settings) => {
   const calls = kept(settings.calls)
   const overrides: OxlintOverride[] = []
 
-  const only = settings.only.length > 0 ? { only: settings.only } : {}
+  const keys = ['only', 'file', 'placeholder', 'stem', 'singularize'] as const
+  const only = Object.fromEntries(keys.flatMap((key) => (settings[key] === undefined || (key === 'only' && settings.only.length === 0) ? [] : [[key, settings[key]]])))
 
   if (Object.keys(imports).length > 0 || Object.keys(calls).length > 0 || settings.only.length > 0) {
     overrides.push(presetOverride([`**/${presetExtensions}`], { 'arch/boundaries-deny': ['error', { imports, calls, ...only }] }))

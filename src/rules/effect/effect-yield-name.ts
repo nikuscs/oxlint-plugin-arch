@@ -1,6 +1,6 @@
 import { defineRule } from '@oxlint/plugins'
 import { astDottedName, astMemberName } from '../../utils/ast.utils.ts'
-import { optionsFirst, optionsPatterns, optionsPatternSchema, optionsPatternsTest } from '../../utils/options.utils.ts'
+import { optionsFirst, optionsMessage, optionsPatterns, optionsPatternSchema, optionsPatternsTest } from '../../utils/options.utils.ts'
 import type { EffectYieldNameOptions } from '../../types/effect.types.ts'
 
 export const effectYieldName = defineRule({
@@ -13,11 +13,12 @@ export const effectYieldName = defineRule({
         properties: {
           names: { type: 'object', additionalProperties: optionsPatternSchema },
           allow: optionsPatternSchema,
+          message: { type: 'string' },
         },
       },
     ],
     messages: {
-      name: "Name this '{{expected}}', not '{{actual}}': it holds {{source}}.",
+      name: "Name this '{{expected}}', not '{{actual}}': it holds {{source}}.{{message}}",
     },
   },
   createOnce(context) {
@@ -44,7 +45,7 @@ export const effectYieldName = defineRule({
           context.report({
             node: id,
             messageId: 'name',
-            data: { expected: expected.join(' or '), actual: id.name, source },
+            data: { expected: expected.join(' or '), actual: id.name, source, message: optionsMessage(options.message) },
           })
         }
       },

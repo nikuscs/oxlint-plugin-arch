@@ -92,5 +92,8 @@ describe('arch/naming-labels', () => {
       options: { labels: [{ callee: 'Effect.fn', name: '{name}', within: '*.toLayer', loose: true }] },
       errors: ["'user.emailVerifyWorkflow' must be 'UserVerifyEmailWorkflow', after the name 'UserVerifyEmailWorkflow'."],
     },
+    { name: 'an entry message', code: "const a = Effect.fn('b')(function* () {})", options: { labels: [{ callee: 'Effect.fn', pattern: '^a', message: 'Spans start with a.' }] }, errors: ["'b' must match ^a. Spans start with a."] },
+    { name: 'a rule message', code: "const a = Effect.fn('b')(function* () {})", options: { message: 'See the guide.', labels: [{ callee: 'Effect.fn', name: '{name}' }] }, errors: ["'b' must be 'a', after the name 'a'. See the guide."] },
+    { name: 'a domain from the folder', filename: 'src/orders/orders.layer.ts', code: "const a = Effect.fn('order.a')(function* () {})", options: { stem: 'folder', singularize: 'trailing-s', labels: [{ callee: 'Effect.fn', pattern: '^{domain}[.]' }] } },
   ])('$name', (row) => testerRun(namingLabels, row))
 })

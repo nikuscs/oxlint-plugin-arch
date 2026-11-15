@@ -16,7 +16,8 @@ src/
 ├── preset/
 │   ├── preset.ts                    public entry: preset(), recipes, templates, types; scopes each group to its folders
 │   ├── preset-detect.ts             detection: workspaces, recipes from package.json, forcing, backend conventions
-│   ├── preset-effect.ts             Effect conventions as folder and file keys: server, contract, error classes, frontend, web app, UI kit
+│   ├── preset-contract.ts           Effect contract package conventions: kinds, root files, service key, error labels
+│   ├── preset-effect.ts             Effect conventions as folder and file keys: server, error classes, frontend, web app, UI kit
 │   ├── preset-module.ts             the Effect module package layout (`effect.module`) and error class files (`effect.errors`)
 │   ├── preset-stylesheet.ts         finds a unit's Tailwind entry stylesheet
 │   ├── preset-units.ts              which scopes are units, their kind and source

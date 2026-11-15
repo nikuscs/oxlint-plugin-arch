@@ -11,6 +11,7 @@ import { namingBasename, namingCaptures, namingExpand, namingFilePrefixesFor, na
 import {
   optionsAll,
   optionsEscape,
+  optionsMessage,
   optionsPatternLabel,
   optionsPatterns,
   optionsPatternSchema,
@@ -27,6 +28,7 @@ const namingExportsScopeProperties: OptionsSchemaProperties = {
   types: { type: 'boolean' },
   services: { type: 'boolean' },
   allow: optionsPatternSchema,
+  message: { type: 'string' },
 }
 
 export const namingExports = defineRule({
@@ -49,6 +51,8 @@ export const namingExports = defineRule({
               ...namingExportsScopeProperties,
               pattern: optionsPatternSchema,
               flags: { type: 'string' },
+              file: { type: 'string' },
+              placeholder: { type: 'string' },
             },
             required: ['mode', 'pattern'],
           },
@@ -70,9 +74,9 @@ export const namingExports = defineRule({
       },
     },
     messages: {
-      prefix: "'{{name}}' must start with file prefix '{{prefix}}'.",
-      pattern: "'{{name}}' must match {{pattern}}.",
-      mismatch: "Function '{{actual}}' must be named '{{expected}}' for file '{{file}}'.",
+      prefix: "'{{name}}' must start with file prefix '{{prefix}}'.{{message}}",
+      pattern: "'{{name}}' must match {{pattern}}.{{message}}",
+      mismatch: "Function '{{actual}}' must be named '{{expected}}' for file '{{file}}'.{{message}}",
     },
   },
   createOnce(context) {
@@ -85,6 +89,7 @@ export const namingExports = defineRule({
         for (const options of checks.length > 0 ? checks : [{}]) {
           const scope = options.scope ?? 'exports'
           const allowed = optionsPatterns(options.allow)
+          const message = optionsMessage(options.message)
 
           if (options.mode === 'template') {
             const file = namingBasename(context.filename)
@@ -110,7 +115,7 @@ export const namingExports = defineRule({
               context.report({
                 node: first?.node ?? program,
                 messageId: 'mismatch',
-                data: { actual: first?.name ?? '<none>', expected, file },
+                data: { actual: first?.name ?? '<none>', expected, file, message },
               })
 
               continue
@@ -121,7 +126,7 @@ export const namingExports = defineRule({
                 context.report({
                   node: item.node,
                   messageId: 'mismatch',
-                  data: { actual: item.name, expected, file },
+                  data: { actual: item.name, expected, file, message },
                 })
               }
             }
@@ -152,7 +157,12 @@ export const namingExports = defineRule({
           }
 
           const prefixes = options.mode === 'pattern' ? [] : namingFilePrefixesFor(context.filename, options)
-          const captures = namingCaptures(context.filename) ?? {}
+          const captures = namingCaptures(context.filename, options.mode === 'pattern' ? options : {})
+
+          if (!captures) {
+            continue
+          }
+
           const sources = options.mode === 'pattern' ? [options.pattern].flat().map((source) => namingExpand(source, captures, true, optionsEscape)) : []
           const expected = optionsPatternsWithEmpty(sources, options.mode === 'pattern' ? options.flags : undefined)
 
@@ -166,7 +176,7 @@ export const namingExports = defineRule({
                 context.report({
                   node: item.node,
                   messageId: 'pattern',
-                  data: { name: item.name, pattern: optionsPatternLabel(sources) },
+                  data: { name: item.name, pattern: optionsPatternLabel(sources), message },
                 })
               }
 
@@ -177,7 +187,7 @@ export const namingExports = defineRule({
               context.report({
                 node: item.node,
                 messageId: 'prefix',
-                data: { name: item.name, prefix: prefixes.join(' or ') },
+                data: { name: item.name, prefix: prefixes.join(' or '), message },
               })
             }
           }
