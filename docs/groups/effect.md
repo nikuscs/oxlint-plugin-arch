@@ -139,6 +139,8 @@ folders: {
 }
 ```
 
+A whole project config that tunes these keys, with a comment on every entry, is in [`examples/effect.oxlint.config.ts`](../../examples/effect.oxlint.config.ts).
+
 ## What a contract package gets
 
 A unit with the `effect` group that is not a server and whose source holds a `<d>/<d>.contract.ts` is a contract package. Detection adds these keys, relative to the unit; `C` is its source. Later keys win on the files they share.

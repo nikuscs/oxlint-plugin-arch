@@ -20,6 +20,9 @@ Every check here is scoped by a folder or file key, so one kind of file (`*.test
 | Group and key names follow a pattern; a handler calls the method its path names | [`arch/naming-keys`](rules/naming-keys.md) `keys`, `delegate` | `{ exports: '^rpc[A-Z]', delegate: true }` |
 | Two calls of a chain share a name (input and output) | [`arch/naming-pairs`](rules/naming-pairs.md) | `{ methods: ['input', 'output'], strip: ['Input$', 'Output$'] }` |
 | A file needs another beside it | [`arch/files-siblings`](rules/files-siblings.md) | `{ require: '{folder}.service.ts' }` |
+| A service method takes a named params type | [`arch/effect-service-params`](rules/effect-service-params.md) | `{ name: '^{Folder}\\w*Params$', allow: 'Kit\\.' }` |
+| No inline function bound under a key | [`arch/naming-keys`](rules/naming-keys.md) `inline` | `{ callees: ['*.bind', '*.of'], inline: false }` |
+| A span passed into a call follows that call's receiver | [`arch/naming-labels`](rules/naming-labels.md) `within` | `{ callee: 'Effect.fn', name: '{name}', within: '*.toLayer' }` |
 | A yielded service has one local name | [`arch/effect-yield-name`](rules/effect-yield-name.md) | `{ names: { 'Database.Database': 'db' } }` |
 | An import is always named the same way | [`naming.imports`](groups/naming.md) | `imports: { '@scope/kit-{package}': '{Package}Kit' }` |
 | An import or call is banned here | [`deny`](groups/deny.md) | `deny: { calls: { insertInto: 'A query reads only.' } }` |
@@ -58,6 +61,25 @@ folders: {
   },
 }
 ```
+
+## A rule you chose not to use
+
+Keep it in the config as `'off'` with its options and a comment, so the choice is visible and one word turns it back on.
+
+```ts
+folders: {
+  'packages/contract/src/*/*.contract.ts': {
+    rules: {
+      // Off: one input is shared across procedures while each output is shaped for its surface.
+      'arch/naming-pairs': ['off', { pairs: [{ methods: ['input', 'output'], strip: ['Input$', 'Output$'] }] }],
+    },
+  },
+  // Off for the folders not migrated yet; remove a folder from the list when it is.
+  'packages/contract/src/{legacy,report}/*.contract.ts': { rules: { 'arch/files-siblings': 'off' } },
+}
+```
+
+A full Effect project config with a comment on every entry is in [`examples/effect.oxlint.config.ts`](../examples/effect.oxlint.config.ts).
 
 ## Names from the path
 
