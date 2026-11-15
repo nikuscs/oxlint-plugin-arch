@@ -29,6 +29,8 @@ Rules and options:
 - New `effect.yields`, `effect.labels` and `effect.handlers`: yield names, extra span and label entries by file pattern, and rpc handler key paths to skip, without restating the convention's rule.
 - New `effect.server: { folders, kinds, operations, spans, rpc, tests }` and `effect.contract: { kinds, root, service }`: the server and contract conventions' folders, file kinds, operation words, handler file, test globs, contract root files and service key, with `!name` to remove a default.
 - `effect.errors` takes `constructors`, `message`, `tag` and `code`, and `files` is optional; on a contract package `errors.files` replaces the contract's own errors file shape.
+- `effect.module`: a module may hold an unsplit `M.driver.ts`, `M.adapter.ts` and `M.index.ts`; test support files keep their top-level lock; a dashed module's types file may re-export its own `M-<part>.types.ts`.
+- `effect-layer-keys` `message` takes the path placeholders, and `{Path}` and `{Key}` on an extra key.
 - `effect.module.tests.fixtures`: globs under the test folder for whole framework apps, with file names, async functions, dynamic imports and the top level unchecked.
 - New `layout.folders`: the folder names allowed under each package's source; off unless set, `!name` removes an inherited one.
 - A group set to `false` (or `top: false`) on a file key now turns it off also where a broader file key or a convention turned it on.

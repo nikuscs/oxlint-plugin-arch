@@ -102,5 +102,13 @@ describe('arch/effect-layer-keys', () => {
       options: { service: '../../contract/{folder}/{folder}.service.ts', missing: 'error', message: 'Add the service first.' },
       errors: ['This layer needs its service declared in order/order.service.ts. Add the service first.'],
     },
+    {
+      name: 'the message names the extra key path',
+      filename: 'server/order/order.layer.ts',
+      files: { 'contract/order/order.service.ts': 'class Orders extends Context.Service<Orders, { readonly schedule: { readonly cancel: () => void } }>()("k") {}' },
+      code: 'Kit.bind({ schedule: { cancel: a, pause: b } })',
+      options: { service: '<root>/contract/{folder}/{folder}.service.ts', message: 'Declare {folder}{Path} on the service first.' },
+      errors: ["'schedule.pause' is not a method of the service declared in order/order.service.ts. Declare orderSchedulePause on the service first."],
+    },
   ])('$name', (row) => testerRun(effectLayerKeys, row))
 })

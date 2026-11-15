@@ -8,7 +8,7 @@ import type * as PresetTypes from '../types/preset.types.ts'
 
 const presetModuleKinds = [
   '*.types.ts', '*.config.ts', '*.constants.ts', '*.migrations.ts', '*.layer.ts', '*.fake.ts', '*.testing.ts', '*.utils.ts', '*.handlers.ts',
-  '*.middlewares.ts', '*.translations-*.ts', '*.assets.d.ts',
+  '*.middlewares.ts', '*.driver.ts', '*.adapter.ts', '*.index.ts', '*.translations-*.ts', '*.assets.d.ts',
 ]
 
 const presetModuleParts = ['*.types.ts', '*.layer.ts', '*.driver.ts', '*.fake.ts', '*.testing.ts', '*.adapter.ts', '*.index.ts']
@@ -144,7 +144,7 @@ function presetModuleFiles(at: (path: string) => string, module: PresetTypes.Pre
         'arch/files-exports': ['error', { patterns: [`${namingPascalCase(name)}(?!\\w*(?<!ss|us|is)sTable$)\\w*`, '\\*'] }],
         'arch/files-top-level': [
           'error',
-          { deny: [{ kind: 'reexport', names: '^\\./(?!{stem}-[a-z0-9-]+\\.types\\.ts$)' }], message: "Re-export only this module's <module>-<part>.types.ts." },
+          { deny: [{ kind: 'reexport', names: `^\\./(?!${optionsEscape(name)}-[a-z0-9-]+\\.types\\.ts$)` }], message: "Re-export only this module's <module>-<part>.types.ts." },
           { allow: ['import', 'reexport'], when: '{stem}-*.types.ts', message: 'With part files beside it, <module>.types.ts only re-exports them.' },
         ],
         'arch/comments-code': presetModuleDocblockFree,
@@ -205,11 +205,6 @@ function presetModuleTestFiles(tests: typeof presetModuleDefaults, name: string,
     [`${folder}/*.test.ts`]: { top: ['describe*', 'it*', 'layer', '*Suite', '*.describe'] },
     ...Object.fromEntries(siblings),
     ...Object.fromEntries(fixtures),
-    [`${folder}/${support}/*.ts`]: {
-      top: {
-        deny: ['type', 'interface', { kind: 'const', from: ['^Layer\\.', '(?:^|\\.)layer\\w*$'], names: '^(?!\\w*Layer$)', message: 'A test layer is <Role>Layer.' }],
-      },
-    },
     [`${folder}/**/*.bench.ts`]: {
       rules: {
         'arch/tests-assertions': 'off',
@@ -219,6 +214,11 @@ function presetModuleTestFiles(tests: typeof presetModuleDefaults, name: string,
       },
     },
     ...named,
+    [`${folder}/${support}/*.ts`]: presetMerge(named[`${folder}/${support}/*.ts`] ?? {}, {
+      top: {
+        deny: ['type', 'interface', { kind: 'const', from: ['^Layer\\.', '(?:^|\\.)layer\\w*$'], names: '^(?!\\w*Layer$)', message: 'A test layer is <Role>Layer.' }],
+      },
+    }),
   }
 }
 

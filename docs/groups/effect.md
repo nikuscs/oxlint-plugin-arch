@@ -283,7 +283,7 @@ folders: {
 | Option | Default | |
 | --- | --- | --- |
 | `name` | `'{module}'` | Folder name template that yields the module name; `'flat'` is one contract or helper per file |
-| `kinds` | `types`, `config`, `constants`, `migrations`, `layer`, `fake`, `testing`, `utils`, `handlers`, `middlewares`, `translations-*`, `assets.d` | The `M.<kind>.ts` files allowed; add or remove as in `layout.files`: `['*.policy.ts', '!*.middlewares.ts']` |
+| `kinds` | `types`, `config`, `constants`, `migrations`, `layer`, `fake`, `testing`, `utils`, `handlers`, `middlewares`, `driver`, `adapter`, `index`, `translations-*`, `assets.d` | The `M.<kind>.ts` files allowed; add or remove as in `layout.files`: `['*.policy.ts', '!*.middlewares.ts']` |
 | `parts` | `types`, `layer`, `driver`, `fake`, `testing`, `adapter`, `index` | Kinds that may be split as `M-<part>.<kind>.ts`, same syntax |
 | `spans` | `'{module}.{method}'` | The `Effect.fn` label in every source file, the module name in camelCase; `false` turns it off |
 | `imports` | `true` | Import names: a workspace package as `{Package}`, `{Package}{Subpath}`, `/schema` as `{Package}Types`; a relative file as its name, with `driver`, `adapter` and `index` dropped and a layer as `{File}` or `{File}Layer`. Merged into `naming.imports` |

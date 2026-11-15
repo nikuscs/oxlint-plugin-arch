@@ -54,7 +54,7 @@ export const Order = Schema.Struct({ id: Schema.String })
 | `deny` | entry list | none | These may not |
 | `message` | `string` | none | Text added to every report |
 | several objects | | | Pass more than one options object to run each as its own check |
-| `when` | `string \| string[]` | none | Globs of file names; the check runs only when one sits beside the file. Path placeholders apply: `'{stem}-*.types.ts'` |
+| `when` | `string \| string[]` | none | Globs of file names; the check runs only when one sits beside the file. `!` before a glob: only when none matches. Path placeholders apply: `'{stem}-*.types.ts'` |
 | `stem`, `singularize`, `roles`, `separators`, `file`, `placeholder` | | | How the placeholders are read, as in [`arch/files-exports`](files-exports.md) |
 
 At least one of `allow` or `deny` is required.

@@ -2,7 +2,7 @@ import { defineRule } from '@oxlint/plugins'
 import { readFileSync } from 'node:fs'
 import { astDottedName } from '../../utils/ast.utils.ts'
 import { declarationsPropertyName } from '../../utils/declarations.utils.ts'
-import { namingCaptures, namingCaptureSchemaProperties, namingExpand } from '../../utils/naming.utils.ts'
+import { namingCaptures, namingCaptureSchemaProperties, namingExpand, namingKeyPath } from '../../utils/naming.utils.ts'
 import { optionsFirst, optionsMessage, optionsPatternsTest, optionsWildcards } from '../../utils/options.utils.ts'
 import type { EffectLayerKeysFrame, EffectLayerKeysOptions } from '../../types/effect.types.ts'
 import type { ESTree } from '@oxlint/plugins'
@@ -113,20 +113,24 @@ export const effectLayerKeys = defineRule({
     let callees: RegExp[] = []
     let file = ''
     let message = ''
+    let template: string | undefined
+    let captures: Record<string, string> = {}
     let unbound = false
 
     return {
       before() {
         const options = optionsFirst<EffectLayerKeysOptions>(context, { service: '' })
-        const captures = namingCaptures(context.filename, options)
+        const paths = namingCaptures(context.filename, options)
 
-        if (!captures) {
+        if (!paths) {
           return false
         }
 
+        captures = paths
         file = namingExpand(options.service, captures, false)
         callees = optionsWildcards(options.callees ?? ['*.of', '*.bind'])
-        message = optionsMessage(options.message)
+        template = options.message
+        message = optionsMessage(template && namingExpand(template, captures, true))
 
         try {
           declared = effectLayerKeysDeclared(readFileSync(file, 'utf8'), options.declaration ?? 'Context.Service')
@@ -166,7 +170,7 @@ export const effectLayerKeys = defineRule({
             context.report({
               node: property,
               messageId: 'extra',
-              data: { path, file: short, message },
+              data: { path, file: short, message: optionsMessage(template && namingExpand(template, namingKeyPath(captures, path.split('.')), true)) },
             })
           }
         }

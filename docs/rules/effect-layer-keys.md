@@ -24,7 +24,7 @@ The service file is read as text: the member names of the object type after `dec
 | `callees` | `string[]` | `['*.of', '*.bind']` | Dotted callee names whose object is the binding; `*` is any text |
 | `declaration` | `string` | `'Context.Service'` | Text before the `<` that opens the service's type |
 | `missing` | `'skip' \| 'error'` | `'skip'` | When the service file or its declaration is missing: check nothing, or report that the layer needs it |
-| `message` | `string` | none | Text added to every report |
+| `message` | `string` | none | Text added to every report; takes the path placeholders (`{folder}`, `{Domain}`), and on an extra key `{Path}` and `{Key}` as in [`arch/effect-service-params`](effect-service-params.md) |
 | `file`, `placeholder`, `stem`, `singularize`, `roles`, `separators` | | | How the path placeholders are read, as in [`arch/files-exports`](files-exports.md); a file `file` does not match is skipped |
 
 ```ts
