@@ -129,6 +129,7 @@ export interface FilesTopLevelEntry {
   names?: OptionsPattern
   from?: OptionsPattern
   exported?: boolean
+  uses?: number
   message?: string
 }
 
@@ -151,6 +152,7 @@ export interface FilesTopLevelMatcher {
   names: RegExp[] | null
   from: RegExp[] | null
   exported?: boolean
+  uses?: number
   message: string
 }
 

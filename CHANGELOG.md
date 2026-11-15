@@ -1,5 +1,17 @@
 # Changelog
 
+## Unreleased
+
+Preset defaults that change what an app reports:
+
+- Effect servers, locked: source files live only in `application/`, `domains/`, `rpc/` and `mails/`; a file in `rpc/` is `rpc.<name>.ts` and a handler group holds no folder; a prompts file holds only exported constants.
+- Effect contract packages, locked: a contract folder holds no folder, and a file beside the folders is `contract.ts`, `contract.<name>.ts`, `errors.ts` or `index.ts`.
+- Effect servers, locked: a `decode<What>` constant in an actions, queries or utils file must be read at least twice; one read once is written where it is used.
+
+Rules and options:
+
+- `files-top-level` entries take `uses`: the least number of times a declared name is read in the file.
+
 ## 0.13.2
 
 Preset defaults that change what an app reports:

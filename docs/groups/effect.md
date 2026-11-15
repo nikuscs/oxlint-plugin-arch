@@ -113,16 +113,19 @@ With `strict` on (the default), an Effect server and a contract package also get
 | Key | Sets |
 | --- | --- |
 | `S` | [`arch/effect-yield-name`](../rules/effect-yield-name.md), [`arch/effect-yields-first`](../rules/effect-yields-first.md); [`arch/code-inside`](../rules/code-inside.md): no `*Workflow.execute` inside `*.transaction` |
+| `S/*.ts`, every folder of `S` but `application`, `domains`, `rpc` and `mails` | [`arch/files-restricted`](../rules/files-restricted.md): server code lives in those four folders; open another with `'off'` on its key |
+| `S/rpc/*.ts`, `S/rpc/*/*/**` | files beside the handler groups are `rpc.<name>.ts`; no folder below a group |
 | `D` | `naming.imports`: `'./{file}.ts'` as the namespace `{File}` (`import * as OrderActions from './order.actions.ts'`) |
-| `D/*/*.actions.ts`, `D/*/*.queries.ts`, `D/*/*.utils.ts` | `top`: only exported constants built by `Effect.fn`, and `decode<What>` constants; in `utils` the span is the function's name |
+| `D/*/*.actions.ts`, `D/*/*.queries.ts`, `D/*/*.utils.ts` | `top`: only exported constants built by `Effect.fn`, and `decode<What>` constants read at least twice; in `utils` the span is the function's name |
 | `D/*/*.layer.ts` | [`arch/naming-keys`](../rules/naming-keys.md): a value bound by `*.bind` or `*.of` is `<d>Action<Path>` or `<d>Query<Path>`, never an inline function; with a contract package, [`arch/effect-layer-keys`](../rules/effect-layer-keys.md) against `<contract>/<d>/<d>.service.ts` |
 | `D/*/*.workflows.ts` | `top`: only constants built by `Workflow.make`, `.toLayer`, `Layer.*` or `Schedule.*`; exports named `<D>…Workflow`, `<D>WorkflowsLayer` or `<d>Schedule<Name>`; the span inside `X.toLayer(Effect.fn('…'))` follows `X` |
 | `D/*/*.constants.ts` | `top`: only exported constants named `<D>_…` |
 | `D/*/*.config.ts` | `top`: only exported constants named `<d>…Config` |
-| `D/*/*.prompts.ts` | exports named `<d>Prompt<Name>` |
+| `D/*/*.prompts.ts` | `top`: only exported constants; exports named `<d>Prompt<Name>` |
 | `S/rpc/*/*.ts` | file `rpc/<group>/rpc.<group>.<area>.ts`, one exported constant `rpc<Group><Area>`; [`arch/naming-keys`](../rules/naming-keys.md) `delegate`: a handler under `schedule.cancel` returns the call `<service>.schedule.cancel` |
 | `S/mails/*.mail.tsx` | exports `<name>Mail` and `<Name>Email` |
 | `tests/**/*.test.ts`, `test/**/*.test.ts` | `top`: only `describe*`, `it*`, `test*` and `layer*` calls |
+| `C/*.ts`, `C/*/*/**` | files beside the contract folders are `contract.ts`, `contract.<name>.ts`, `errors.ts` or `index.ts`; a contract folder holds no folder |
 | `C/*/*.schemas.ts` | `top`: types, interfaces, `declare module` and exported constants |
 | `C/*/*.contract.ts` | `top`: types, exported constants, and unexported constants built by a namespace call; `deny.calls`: `Schema.Struct` (name it in `<d>.schemas.ts`); [`arch/files-siblings`](../rules/files-siblings.md): `<d>.service.ts` beside it, unless `effect.files` removes that kind |
 | `C/*/*.service.ts` | `top`: interfaces, types, one class, `declare module`; the `Context.Service` key is `<package>/<d>/<d>.service/<Class>`; [`arch/effect-service-params`](../rules/effect-service-params.md): a method takes `<D>…Params` |
@@ -134,6 +137,7 @@ folders: {
   'apps/server/src': { rules: { 'arch/effect-yield-name': ['error', { names: { 'Database.Database': 'db' }, allow: '^kit' }] } },
   'apps/server/src/domains/*/*.layer.ts': { rules: { 'arch/naming-keys': ['error', { callees: ['Domain.bind'], name: '^{folder}(?:Action|Query){Path}$' }] } },
   'apps/server/tests/**/*.test.ts': { top: ['describe', 'it', 'it.effect'] },
+  'apps/server/src/lib': { rules: { 'arch/files-restricted': 'off' } },
   'packages/contract/src/*/*.service.ts': { rules: { 'arch/effect-service-params': ['error', { allow: 'Kit\\.' }] } },
   'packages/contract/src/api/*.contract.ts': { rules: { 'arch/files-siblings': 'off' } },
 }

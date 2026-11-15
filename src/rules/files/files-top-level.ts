@@ -34,6 +34,7 @@ const filesTopLevelEntries: OptionsSchema = {
           names: optionsPatternSchema,
           from: optionsPatternSchema,
           exported: { type: 'boolean' },
+          uses: { type: 'integer', minimum: 1 },
           message: { type: 'string' },
         },
         required: ['kind'],
@@ -188,7 +189,14 @@ export const filesTopLevel = defineRule({
 
         const matcher = (entry: string | FilesTypes.FilesTopLevelEntry): FilesTypes.FilesTopLevelMatcher => {
           if (typeof entry !== 'string') {
-            return { kinds: [entry.kind].flat(), names: patterns(entry.names), from: patterns(entry.from), exported: entry.exported, message: entry.message ?? '' }
+            return {
+              kinds: [entry.kind].flat(),
+              names: patterns(entry.names),
+              from: patterns(entry.from),
+              exported: entry.exported,
+              uses: entry.uses,
+              message: entry.message ?? '',
+            }
           }
 
           const kind = filesTopLevelKinds.find((name) => name === entry)
@@ -196,11 +204,18 @@ export const filesTopLevel = defineRule({
           return kind ? { kinds: [kind], names: null, from: null, message: '' } : { kinds: ['call'], names: optionsWildcards(entry), from: null, message: '' }
         }
 
+        const reads = (item: FilesTypes.FilesTopLevelItem) => {
+          const variable = context.sourceCode.getDeclaredVariables(item.node).find(({ name }) => name === item.name)
+
+          return variable?.references.filter((reference) => !reference.init).length
+        }
+
         const matches = (item: FilesTypes.FilesTopLevelItem) => (entry: FilesTypes.FilesTopLevelMatcher) =>
           entry.kinds.includes(item.kind)
           && (entry.names === null || optionsPatternsTest(entry.names, item.name))
           && (entry.from === null || optionsPatternsTest(entry.from, item.from))
           && (entry.exported === undefined || entry.exported === item.exported)
+          && (entry.uses === undefined || (reads(item) ?? entry.uses) >= entry.uses)
 
         const allow = options.allow?.map(matcher)
         const deny = (options.deny ?? []).map(matcher)
@@ -211,6 +226,7 @@ export const filesTopLevel = defineRule({
             [entry.kind].flat().join('/'),
             entry.names === undefined ? [] : ['named', [entry.names].flat().join(' | ')],
             entry.from === undefined ? [] : ['from', [entry.from].flat().join(' | ')],
+            entry.uses === undefined ? [] : [`read ${entry.uses}+ times`],
           ].flat().join(' ')
 
         const allowed = (options.allow ?? []).map((entry) => (typeof entry === 'string' ? entry : label(entry))).join(', ')

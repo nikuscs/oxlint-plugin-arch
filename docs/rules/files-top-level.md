@@ -34,6 +34,7 @@ An entry is a kind, a call name, or an object. A string that is not a kind is a 
 | `names` | `string \| string[]` | Regexes; the item must match one |
 | `from` | `string \| string[]` | Regexes on what builds a variable's value: the callee (`Schema.Struct`), the identifier, or `<literal>`, `<object>`, `<array>`, `<function>`, `<other>`. Read through `.pipe(...)`, `await` and type assertions |
 | `exported` | `boolean` | Only exported items, or only unexported ones |
+| `uses` | `number` | Only a declared name read at least this many times in the file, such as a decoder shared by two functions (`uses: 2`) |
 | `message` | `string` | `deny` only: report text for this entry |
 
 ```ts
