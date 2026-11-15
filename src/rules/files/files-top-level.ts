@@ -1,8 +1,10 @@
 import { defineRule } from '@oxlint/plugins'
+import { readdirSync } from 'node:fs'
+import { dirname } from 'node:path'
 import { astBindings, astDottedName, astModuleName, astUnwrap } from '../../utils/ast.utils.ts'
 import { declarationsIsFunctionValue } from '../../utils/declarations.utils.ts'
 import { namingCaptures, namingExpand, namingStemModes } from '../../utils/naming.utils.ts'
-import { optionsEscape, optionsFirst, optionsPatterns, optionsPatternSchema, optionsPatternsTest, optionsWildcards } from '../../utils/options.utils.ts'
+import { optionsAll, optionsEscape, optionsGlob, optionsPatterns, optionsPatternSchema, optionsPatternsTest, optionsWildcards } from '../../utils/options.utils.ts'
 import type * as FilesTypes from '../../types/files.types.ts'
 import type { OptionsPattern, OptionsSchema } from '../../types/options.types.ts'
 import type { ESTree } from '@oxlint/plugins'
@@ -151,14 +153,16 @@ function filesTopLevelItems(statement: ESTree.Program['body'][number]): FilesTyp
 export const filesTopLevel = defineRule({
   meta: {
     type: 'problem',
-    schema: [
-      {
+    schema: {
+      type: 'array',
+      items: {
         type: 'object',
         additionalProperties: false,
         properties: {
           allow: filesTopLevelEntries,
           deny: filesTopLevelEntries,
           message: { type: 'string' },
+          when: optionsPatternSchema,
           stem: { type: 'string', enum: [...namingStemModes, 'folder'] },
           singularize: { type: 'string', enum: ['none', 'trailing-s'] },
           roles: { type: 'array', items: { type: 'string' } },
@@ -168,87 +172,106 @@ export const filesTopLevel = defineRule({
         },
         anyOf: [{ required: ['allow'] }, { required: ['deny'] }],
       },
-    ],
+    },
     messages: {
       denied: 'Top-level {{what}} is not allowed in this file.{{message}}',
       unlisted: 'Top-level {{what}} is not allowed in this file; allowed: {{allowed}}.{{message}}',
     },
   },
   createOnce(context) {
-    return {
-      Program(program) {
-        const options = optionsFirst<FilesTypes.FilesTopLevelOptions>(context, {})
-        const captures = namingCaptures(context.filename, options)
+    const siblings = (globs: OptionsPattern | undefined, captures: Record<string, string>) => {
+      if (globs === undefined) {
+        return true
+      }
 
-        if (!captures) {
-          return
-        }
+      const patterns = [globs].flat().map((glob) => optionsGlob(namingExpand(glob, captures, false)))
 
-        const patterns = (pattern: OptionsPattern | undefined) =>
-          pattern === undefined ? null : optionsPatterns([pattern].flat().map((source) => namingExpand(source, captures, true, optionsEscape)))
+      try {
+        return readdirSync(dirname(context.filename)).some((name) => patterns.some((pattern) => pattern.test(name)))
+      } catch {
+        return false
+      }
+    }
 
-        const matcher = (entry: string | FilesTypes.FilesTopLevelEntry): FilesTypes.FilesTopLevelMatcher => {
-          if (typeof entry !== 'string') {
-            return {
-              kinds: [entry.kind].flat(),
-              names: patterns(entry.names),
-              from: patterns(entry.from),
-              exported: entry.exported,
-              uses: entry.uses,
-              message: entry.message ?? '',
-            }
+    const check = (program: ESTree.Program, options: FilesTypes.FilesTopLevelOptions) => {
+      const captures = namingCaptures(context.filename, options)
+
+      if (!captures || !siblings(options.when, captures)) {
+        return
+      }
+
+      const patterns = (pattern: OptionsPattern | undefined) =>
+        pattern === undefined ? null : optionsPatterns([pattern].flat().map((source) => namingExpand(source, captures, true, optionsEscape)))
+
+      const matcher = (entry: string | FilesTypes.FilesTopLevelEntry): FilesTypes.FilesTopLevelMatcher => {
+        if (typeof entry !== 'string') {
+          return {
+            kinds: [entry.kind].flat(),
+            names: patterns(entry.names),
+            from: patterns(entry.from),
+            exported: entry.exported,
+            uses: entry.uses,
+            message: entry.message ?? '',
           }
-
-          const kind = filesTopLevelKinds.find((name) => name === entry)
-
-          return kind ? { kinds: [kind], names: null, from: null, message: '' } : { kinds: ['call'], names: optionsWildcards(entry), from: null, message: '' }
         }
 
-        const reads = (item: FilesTypes.FilesTopLevelItem) => {
-          const variable = context.sourceCode.getDeclaredVariables(item.node).find(({ name }) => name === item.name)
+        const kind = filesTopLevelKinds.find((name) => name === entry)
 
-          return variable?.references.filter((reference) => !reference.init).length
-        }
+        return kind ? { kinds: [kind], names: null, from: null, message: '' } : { kinds: ['call'], names: optionsWildcards(entry), from: null, message: '' }
+      }
 
-        const matches = (item: FilesTypes.FilesTopLevelItem) => (entry: FilesTypes.FilesTopLevelMatcher) =>
-          entry.kinds.includes(item.kind)
+      const reads = (item: FilesTypes.FilesTopLevelItem) => {
+        const variable = context.sourceCode.getDeclaredVariables(item.node).find(({ name }) => name === item.name)
+
+        return variable?.references.filter((reference) => !reference.init).length
+      }
+
+      const matches = (item: FilesTypes.FilesTopLevelItem) => (entry: FilesTypes.FilesTopLevelMatcher) =>
+        entry.kinds.includes(item.kind)
           && (entry.names === null || optionsPatternsTest(entry.names, item.name))
           && (entry.from === null || optionsPatternsTest(entry.from, item.from))
           && (entry.exported === undefined || entry.exported === item.exported)
           && (entry.uses === undefined || (reads(item) ?? entry.uses) >= entry.uses)
 
-        const allow = options.allow?.map(matcher)
-        const deny = (options.deny ?? []).map(matcher)
+      const allow = options.allow?.map(matcher)
+      const deny = (options.deny ?? []).map(matcher)
 
-        const label = (entry: FilesTypes.FilesTopLevelEntry) =>
-          [
-            entry.exported === undefined ? [] : [entry.exported ? 'exported' : 'unexported'],
-            [entry.kind].flat().join('/'),
-            entry.names === undefined ? [] : ['named', [entry.names].flat().join(' | ')],
-            entry.from === undefined ? [] : ['from', [entry.from].flat().join(' | ')],
-            entry.uses === undefined ? [] : [`read ${entry.uses}+ times`],
-          ].flat().join(' ')
+      const label = (entry: FilesTypes.FilesTopLevelEntry) =>
+        [
+          entry.exported === undefined ? [] : [entry.exported ? 'exported' : 'unexported'],
+          [entry.kind].flat().join('/'),
+          entry.names === undefined ? [] : ['named', [entry.names].flat().join(' | ')],
+          entry.from === undefined ? [] : ['from', [entry.from].flat().join(' | ')],
+          entry.uses === undefined ? [] : [`read ${entry.uses}+ times`],
+        ].flat().join(' ')
 
-        const allowed = (options.allow ?? []).map((entry) => (typeof entry === 'string' ? entry : label(entry))).join(', ')
-        const hint = options.message ? ` ${options.message}` : ''
+      const allowed = (options.allow ?? []).map((entry) => (typeof entry === 'string' ? entry : label(entry))).join(', ')
+      const hint = options.message ? ` ${options.message}` : ''
 
-        for (const item of program.body.flatMap(filesTopLevelItems)) {
-          const what = item.name && item.kind !== 'statement' ? `${item.kind} '${item.name}'` : item.kind
-          const denied = deny.find(matches(item))
+      for (const item of program.body.flatMap(filesTopLevelItems)) {
+        const what = item.name && item.kind !== 'statement' ? `${item.kind} '${item.name}'` : item.kind
+        const denied = deny.find(matches(item))
 
-          if (denied) {
-            context.report({
-              node: item.node,
-              messageId: 'denied',
-              data: { what, message: denied.message ? ` ${denied.message}` : hint },
-            })
-          } else if (allow && !allow.some(matches(item))) {
-            context.report({
-              node: item.node,
-              messageId: 'unlisted',
-              data: { what, allowed, message: hint },
-            })
-          }
+        if (denied) {
+          context.report({
+            node: item.node,
+            messageId: 'denied',
+            data: { what, message: denied.message ? ` ${denied.message}` : hint },
+          })
+        } else if (allow && !allow.some(matches(item))) {
+          context.report({
+            node: item.node,
+            messageId: 'unlisted',
+            data: { what, allowed, message: hint },
+          })
+        }
+      }
+    }
+
+    return {
+      Program(program) {
+        for (const options of optionsAll<FilesTypes.FilesTopLevelOptions>(context)) {
+          check(program, options)
         }
       },
     }

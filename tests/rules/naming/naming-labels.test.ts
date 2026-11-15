@@ -4,6 +4,9 @@ import { testerRun } from '../../utils/tester.utils.ts'
 
 describe('arch/naming-labels', () => {
   it.each([
+    { name: 'a label from the path template', filename: 'packages/kit-wallet/src/wallet-entry.layer.ts', code: "const run = Effect.fn('wallet.entryList')(function* () {})", options: { file: 'kit-{module}/src/**', labels: [{ callee: 'Effect.fn', pattern: '^{module}[.]' }] } },
+    { name: 'a file off the path template is skipped', filename: 'apps/web/src/a.ts', code: "const run = Effect.fn('other.run')(function* () {})", options: { file: 'kit-{module}/src/**', labels: [{ callee: 'Effect.fn', pattern: '^{module}[.]' }] } },
+    { name: 'a label off the path template', filename: 'packages/kit-wallet/src/wallet-entry.layer.ts', code: "const run = Effect.fn('entry.list')(function* () {})", options: { file: 'kit-{module}/src/**', labels: [{ callee: 'Effect.fn', pattern: '^{module}[.]' }] }, errors: ["'entry.list' must match ^wallet[.]."] },
     { name: 'no options checks nothing', code: "const a = Effect.fn('b')(function* () {})" },
     { name: 'an unlisted callee passes', code: "const a = Other.fn('b')()", options: { labels: [{ callee: 'Effect.fn', name: '{name}' }] } },
     { name: 'a label equal to the name', code: "const send = Effect.fn('send')(function* () {})", options: { labels: [{ callee: 'Effect.fn', name: '{name}' }] } },

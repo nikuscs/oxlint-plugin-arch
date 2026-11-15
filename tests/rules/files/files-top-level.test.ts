@@ -11,6 +11,8 @@ describe('arch/files-top-level', () => {
     { name: 'nested declarations are not top level', code: "it('works', () => { const local = 1; function helper() {} })", options: { allow: ['it'] } },
     { name: 'kinds are listed by name', code: 'type A = string\ninterface B {}\nexport const C = 1', options: { allow: ['type', 'interface', 'const'] } },
     { name: 'a const is allowed by name', code: 'const ROWS = []', options: { allow: [{ kind: 'const', names: '^[A-Z_]+$' }] } },
+    { name: 'a condition with no matching sibling is skipped', filename: 'src/wallet.types.ts', files: { 'src/wallet.ts': '' }, code: 'export const A = 1', options: { allow: ['reexport'], when: '{stem}-*.types.ts' } },
+    { name: 'a condition with a matching sibling applies', filename: 'src/wallet.types.ts', files: { 'src/wallet-entry.types.ts': '' }, code: 'export const A = 1', options: { allow: ['reexport'], when: '{stem}-*.types.ts' }, errors: ['unlisted'] },
     { name: 'a const read twice meets its uses', code: 'const decodeA = make(); export const x = () => [decodeA(1), decodeA(2)]', options: { allow: [{ kind: 'const', names: '^decode', uses: 2 }, { kind: 'function-const', exported: true }] } },
     { name: 'a const read once misses its uses', code: 'const decodeA = make(); export const x = () => decodeA(1)', options: { allow: [{ kind: 'const', names: '^decode', uses: 2 }, { kind: 'function-const', exported: true }] }, errors: ["Top-level const 'decodeA' is not allowed in this file; allowed: const named ^decode read 2+ times, exported function-const."] },
     { name: 'a const never read misses its uses', code: 'const decodeA = make()', options: { allow: [{ kind: 'const', names: '^decode', uses: 1 }] }, errors: ['unlisted'] },

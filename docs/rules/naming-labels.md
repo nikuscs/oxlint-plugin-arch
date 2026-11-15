@@ -28,6 +28,7 @@ In `name`, `{name}` is the name as written (after `drop`) and `{Name}` its Pasca
 | Option | Type | Default | |
 | --- | --- | --- | --- |
 | `labels` | entry list | required | Every entry whose `callee` matches is checked; each needs `name` or `pattern` |
+| `file`, `placeholder` | `string` | none | Path template of the file being linted, like `kit-{module}/src/**`; its placeholders join `{stem}`, `{file}`, `{folder}` and `{parent}` in `pattern` and `name`, and a file it does not match is skipped |
 
 ```ts
 'arch/naming-labels': ['error', {

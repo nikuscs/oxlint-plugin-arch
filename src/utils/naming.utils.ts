@@ -93,7 +93,10 @@ export function namingTemplatePattern(template: string, placeholder = '[a-z0-9-]
       const name = /^\{[^{}]+\}$/.test(part) ? part.slice(1, -1) : undefined
 
       if (name === undefined) {
-        return part.replaceAll(/[.*+?^${}()|[\]\\]/g, '\\$&')
+        return part
+          .replaceAll(/[.*+?^${}()|[\]\\]/g, '\\$&')
+          .replaceAll('\\*\\*/', '(?:.*/)?')
+          .replaceAll('\\*\\*', '.*')
       }
 
       const again = seen.has(name)
@@ -125,8 +128,9 @@ export function namingCaptures(filename: string, options: NamingCaptureOptions =
     return builtIn
   }
 
+  const deep = options.file.includes('**')
   const depth = options.file.split('/').length
-  const match = namingTemplatePattern(options.file, options.placeholder)?.exec(path.split('/').slice(-depth).join('/'))
+  const match = namingTemplatePattern(deep ? `**/${options.file}` : options.file, options.placeholder)?.exec(deep ? path : path.split('/').slice(-depth).join('/'))
 
   return match ? { ...builtIn, ...match.groups } : null
 }

@@ -53,6 +53,8 @@ export const Order = Schema.Struct({ id: Schema.String })
 | `allow` | entry list | none | Only these may sit at the top level |
 | `deny` | entry list | none | These may not |
 | `message` | `string` | none | Text added to every report |
+| several objects | | | Pass more than one options object to run each as its own check |
+| `when` | `string \| string[]` | none | Globs of file names; the check runs only when one sits beside the file. Path placeholders apply: `'{stem}-*.types.ts'` |
 | `stem`, `singularize`, `roles`, `separators`, `file`, `placeholder` | | | How the placeholders are read, as in [`arch/files-exports`](files-exports.md) |
 
 At least one of `allow` or `deny` is required.

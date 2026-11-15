@@ -4,6 +4,13 @@ import { testerRun } from '../../utils/tester.utils.ts'
 
 describe('arch/naming-imports', () => {
   it.each([
+    { name: 'a source at any depth', code: "import * as WalletCases from '../../support/wallet.cases.ts'", options: { imports: [{ source: '**/support/{file}.ts', name: '{File}' }] } },
+    { name: 'a dropped ending', code: "import * as StorageS3 from './storage-s3.driver.ts'", options: { imports: [{ source: '**/{file}.ts', name: '{File}', drop: '[.](?:driver|adapter)$' }] } },
+    { name: 'a skipped source stops the search', code: "import * as Anything from '../src/index.ts'", options: { imports: [{ source: '**/index.ts', name: false }, { source: '**/{file}.ts', name: '{File}' }] } },
+    { name: 'a name from the file path', filename: 'packages/kit-wallet/test/wallet.test.ts', code: "import * as Wallet from '../src/index.ts'", options: { file: 'kit-{module}/**', imports: [{ source: '**/index.ts', name: '{Module}' }] } },
+    { name: 'a file off the path template is skipped', filename: 'apps/web/src/a.ts', code: "import * as Other from '../src/index.ts'", options: { file: 'kit-{module}/**', imports: [{ source: '**/index.ts', name: '{Module}' }] } },
+    { name: 'a kept ending without drop', code: "import * as StorageS3 from './storage-s3.driver.ts'", options: { imports: [{ source: '**/{file}.ts', name: '{File}' }] }, errors: ["Import './storage-s3.driver.ts' as 'StorageS3Driver', not 'StorageS3'."] },
+    { name: 'a deep source under another name', code: "import * as Cases from '../../support/wallet.cases.ts'", options: { imports: [{ source: '**/support/{file}.ts', name: '{File}' }] }, errors: ['name'] },
     { name: 'no options checks nothing', code: "import { a } from 'other'" },
     { name: 'an unlisted import passes', code: "import { a } from 'other'", options: { imports: [{ source: '@scope/kit-{package}', name: '{Package}Kit' }] } },
     { name: 'a namespace named after the package', code: "import * as PaymentsKit from '@scope/kit-payments'", options: { imports: [{ source: '@scope/kit-{package}', name: '{Package}Kit' }] } },

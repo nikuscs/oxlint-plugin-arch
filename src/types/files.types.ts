@@ -137,6 +137,7 @@ export interface FilesTopLevelOptions extends NamingCaptureOptions {
   allow?: (string | FilesTopLevelEntry)[]
   deny?: (string | FilesTopLevelEntry)[]
   message?: string
+  when?: OptionsPattern
 }
 
 export interface FilesTopLevelItem {

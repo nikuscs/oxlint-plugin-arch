@@ -62,6 +62,8 @@ export const namingLabels = defineRule({
         type: 'object',
         additionalProperties: false,
         properties: {
+          file: { type: 'string' },
+          placeholder: { type: 'string' },
           labels: {
             type: 'array',
             items: {
@@ -95,11 +97,16 @@ export const namingLabels = defineRule({
 
     return {
       before() {
-        const paths = namingCaptures(context.filename) ?? {}
+        const options = optionsFirst<NamingLabelsOptions>(context, { labels: [] })
+        const paths = namingCaptures(context.filename, { file: options.file, placeholder: options.placeholder })
+
+        if (!paths) {
+          return false
+        }
 
         captures = paths
 
-        entries = optionsFirst<NamingLabelsOptions>(context, { labels: [] }).labels.map((entry) => ({
+        entries = options.labels.map((entry) => ({
           callees: optionsWildcards(entry.callee),
           entry,
           drop: optionsPatterns(entry.drop),

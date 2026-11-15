@@ -190,7 +190,13 @@ export const namingGroup: PresetBuilder<'naming'> = (project, settings, owner) =
     ['**/*-{action,query}.*.rsc.{ts,tsx}', ...testFiles],
   )
 
-  const imports = Object.entries(settings.imports).flatMap(([source, name]) => (name === false ? [] : [{ source, name }]))
+  const imports = Object.entries(settings.imports).flatMap(([source, name]) => {
+    if (name === false) {
+      return []
+    }
+
+    return name instanceof Object && !Array.isArray(name) ? [{ source, ...name }] : [{ source, name }]
+  })
 
   if (imports.length > 0) {
     overrides.push(presetOverride([`**/${presetExtensions}`], { 'arch/naming-imports': ['error', { imports }] }))

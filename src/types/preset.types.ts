@@ -1,5 +1,6 @@
 import type { BoundariesDenyOnly } from './boundaries.types.ts'
 import type { FilesTopLevelEntry, FilesTopLevelOptions } from './files.types.ts'
+import type { NamingImportsEntry } from './naming.types.ts'
 import type { OptionsPattern } from './options.types.ts'
 import type * as EffectTsgo from '@effect/tsgo/oxlint-presets'
 import type * as EffectLinteffect from '@opsydyn/oxlint-effect'
@@ -46,7 +47,7 @@ export interface PresetNamingOptions {
   exports?: boolean | string
   folders?: boolean
   unique?: string
-  imports?: Record<string, string | string[] | false>
+  imports?: Record<string, string | string[] | false | Pick<NamingImportsEntry, 'name' | 'namespace' | 'drop'>>
 }
 
 export interface PresetCommentsOptions {

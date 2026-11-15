@@ -87,12 +87,13 @@ export interface NamingDeclarationsCheck {
 
 export interface NamingImportsEntry {
   source: string
-  name: string | string[]
+  name: string | string[] | false
   namespace?: boolean
+  drop?: OptionsPattern
   placeholder?: string
 }
 
-export interface NamingImportsOptions {
+export interface NamingImportsOptions extends Pick<NamingCaptureOptions, 'file'> {
   imports: NamingImportsEntry[]
 }
 
@@ -100,6 +101,7 @@ export interface NamingImportsCompiled {
   pattern: RegExp
   names: string[]
   namespace: boolean
+  drop: RegExp[]
 }
 
 export interface NamingLabelsEntry {
@@ -112,7 +114,7 @@ export interface NamingLabelsEntry {
   within?: OptionsPattern
 }
 
-export interface NamingLabelsOptions {
+export interface NamingLabelsOptions extends Pick<NamingCaptureOptions, 'file' | 'placeholder'> {
   labels: NamingLabelsEntry[]
 }
 

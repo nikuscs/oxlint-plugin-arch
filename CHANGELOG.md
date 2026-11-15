@@ -10,6 +10,9 @@ Preset defaults that change what an app reports:
 
 Rules and options:
 
+- `naming-labels` and `naming-imports` take `file`, a path template whose placeholders (`kit-{module}/src/**`) join the ones read from the path; `**` in a path template stands for any folders.
+- `naming-imports` entries take `**/` in `source`, `drop` (a regex removed from a capture before casing) and `name: false` (skip that import); the preset's `naming.imports` map takes an entry object as a value.
+- `files-top-level` takes several option objects and `when`: globs of sibling file names that must exist for the check to run.
 - `files-top-level` entries take `uses`: the least number of times a declared name is read in the file.
 
 ## 0.13.2
