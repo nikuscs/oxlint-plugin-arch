@@ -153,3 +153,8 @@ export interface FilesTopLevelMatcher {
   exported?: boolean
   message: string
 }
+
+export interface FilesSiblingsOptions {
+  require: OptionsPattern
+  message?: string
+}

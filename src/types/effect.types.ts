@@ -71,3 +71,9 @@ export interface EffectLayerKeysFrame {
   key?: string;
   members: number;
 }
+
+export interface EffectServiceParamsOptions {
+  name?: OptionsPattern;
+  allow?: OptionsPattern;
+  declaration?: string;
+}

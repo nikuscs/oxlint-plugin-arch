@@ -109,6 +109,7 @@ export interface NamingLabelsEntry {
   pattern?: OptionsPattern
   drop?: OptionsPattern
   loose?: boolean
+  within?: OptionsPattern
 }
 
 export interface NamingLabelsOptions {
@@ -120,9 +121,26 @@ export interface NamingLabelsCompiled {
   entry: NamingLabelsEntry
   drop: RegExp[]
   patterns: string[]
+  within: RegExp[]
 }
 
 export interface NamingKeysOptions {
-  callees: string[]
-  name: OptionsPattern
+  callees?: string[]
+  exports?: OptionsPattern
+  name?: OptionsPattern
+  keys?: OptionsPattern
+  inline?: boolean
+  delegate?: boolean
+  allow?: OptionsPattern
+  singularize?: 'none' | 'trailing-s'
+}
+
+export interface NamingPairsEntry {
+  methods: [string, string]
+  strip?: OptionsPattern
+  allow?: OptionsPattern
+}
+
+export interface NamingPairsOptions {
+  pairs: NamingPairsEntry[]
 }

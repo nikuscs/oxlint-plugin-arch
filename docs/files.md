@@ -17,6 +17,9 @@ Every check here is scoped by a folder or file key, so one kind of file (`*.test
 | Dependencies are yielded first | [`arch/effect-yields-first`](rules/effect-yields-first.md) | `'error'` |
 | A call is banned inside another call's callback | [`arch/code-inside`](rules/code-inside.md) | `{ callee: '*.transaction', calls: { '*.send': '…' } }` |
 | A file name fits its folder | [`arch/naming-file`](rules/naming-file.md) `template` | `template: '{group}/rpc.{group}.{area}.ts'` |
+| Group and key names follow a pattern; a handler calls the method its path names | [`arch/naming-keys`](rules/naming-keys.md) `keys`, `delegate` | `{ exports: '^rpc[A-Z]', delegate: true }` |
+| Two calls of a chain share a name (input and output) | [`arch/naming-pairs`](rules/naming-pairs.md) | `{ methods: ['input', 'output'], strip: ['Input$', 'Output$'] }` |
+| A file needs another beside it | [`arch/files-siblings`](rules/files-siblings.md) | `{ require: '{folder}.service.ts' }` |
 | A yielded service has one local name | [`arch/effect-yield-name`](rules/effect-yield-name.md) | `{ names: { 'Database.Database': 'db' } }` |
 | An import is always named the same way | [`naming.imports`](groups/naming.md) | `imports: { '@scope/kit-{package}': '{Package}Kit' }` |
 | An import or call is banned here | [`deny`](groups/deny.md) | `deny: { calls: { insertInto: 'A query reads only.' } }` |

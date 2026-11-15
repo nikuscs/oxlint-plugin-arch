@@ -23,6 +23,7 @@ In `name`, `{name}` is the name as written (after `drop`) and `{Name}` its Pasca
 | `pattern` | `string \| string[]` | none | Regexes the label must match |
 | `drop` | `string \| string[]` | none | Regexes removed from the name first, such as `'Workflow$'` |
 | `loose` | `boolean` | `false` | Compare without case and without `.`, `-`, `_`, `/` |
+| `within` | `string \| string[]` | none | A label passed as an argument takes its name from the receiver of that call: with `'*.toLayer'`, `OrderRefundWorkflow.toLayer(Effect.fn('order.refundWorkflow')(…))` is named `OrderRefundWorkflow` |
 
 | Option | Type | Default | |
 | --- | --- | --- | --- |

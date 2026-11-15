@@ -34,6 +34,7 @@ import { effectLayerKeys } from './rules/effect/effect-layer-keys.ts'
 import { effectLayers } from './rules/effect/effect-layers.ts'
 import { effectMergePipe } from './rules/effect/effect-merge-pipe.ts'
 import { effectSchemaFirst } from './rules/effect/effect-schema-first.ts'
+import { effectServiceParams } from './rules/effect/effect-service-params.ts'
 import { effectValuesFirst } from './rules/effect/effect-values-first.ts'
 import { effectYieldName } from './rules/effect/effect-yield-name.ts'
 import { effectYieldsFirst } from './rules/effect/effect-yields-first.ts'
@@ -47,6 +48,7 @@ import { filesHelpers } from './rules/files/files-helpers.ts'
 import { filesNoFunctions } from './rules/files/files-no-functions.ts'
 import { filesRestricted } from './rules/files/files-restricted.ts'
 import { filesRoute } from './rules/files/files-route.ts'
+import { filesSiblings } from './rules/files/files-siblings.ts'
 import { filesTopLevel } from './rules/files/files-top-level.ts'
 import { filesTypesOnly } from './rules/files/files-types-only.ts'
 import { layoutArrowBody } from './rules/layout/layout-arrow-body.ts'
@@ -69,6 +71,7 @@ import { namingFolder } from './rules/naming/naming-folder.ts'
 import { namingImports } from './rules/naming/naming-imports.ts'
 import { namingKeys } from './rules/naming/naming-keys.ts'
 import { namingLabels } from './rules/naming/naming-labels.ts'
+import { namingPairs } from './rules/naming/naming-pairs.ts'
 import { namingTypes } from './rules/naming/naming-types.ts'
 import { reactDynamicClasses } from './rules/react/react-dynamic-classes.ts'
 import { reactEmptyEffect } from './rules/react/react-empty-effect.ts'
@@ -130,6 +133,7 @@ export default eslintCompatPlugin({
     'effect-layers': effectLayers,
     'effect-merge-pipe': effectMergePipe,
     'effect-schema-first': effectSchemaFirst,
+    'effect-service-params': effectServiceParams,
     'effect-values-first': effectValuesFirst,
     'effect-yield-name': effectYieldName,
     'effect-yields-first': effectYieldsFirst,
@@ -143,6 +147,7 @@ export default eslintCompatPlugin({
     'files-no-functions': filesNoFunctions,
     'files-restricted': filesRestricted,
     'files-route': filesRoute,
+    'files-siblings': filesSiblings,
     'files-top-level': filesTopLevel,
     'files-types-only': filesTypesOnly,
     'layout-arrow-body': layoutArrowBody,
@@ -165,6 +170,7 @@ export default eslintCompatPlugin({
     'naming-imports': namingImports,
     'naming-keys': namingKeys,
     'naming-labels': namingLabels,
+    'naming-pairs': namingPairs,
     'naming-types': namingTypes,
     'react-dynamic-classes': reactDynamicClasses,
     'react-empty-effect': reactEmptyEffect,

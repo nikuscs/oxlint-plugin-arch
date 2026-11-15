@@ -10,7 +10,7 @@ function namingLabelsRoot(node: ESTree.Node): string | undefined {
   return node.type === 'CallExpression' ? namingLabelsRoot(node.callee) : astDottedName(node)
 }
 
-function namingLabelsBinding(node: ESTree.Node): string | undefined {
+function namingLabelsBinding(node: ESTree.Node, within: RegExp[]): string | undefined {
   const parent = node.parent
 
   if (!parent) {
@@ -25,9 +25,13 @@ function namingLabelsBinding(node: ESTree.Node): string | undefined {
     return parent.id?.name
   }
 
-  const chained = (parent.type === 'CallExpression' && parent.callee === node) || (parent.type === 'MemberExpression' && parent.object === node)
+  if ((parent.type === 'CallExpression' && parent.callee === node) || (parent.type === 'MemberExpression' && parent.object === node)) {
+    return namingLabelsBinding(parent, within)
+  }
 
-  return chained ? namingLabelsBinding(parent) : undefined
+  const owner = parent.type === 'CallExpression' && parent.callee.type === 'MemberExpression' ? astDottedName(parent.callee) : undefined
+
+  return owner !== undefined && optionsPatternsTest(within, owner) ? owner.split('.').at(-2) : undefined
 }
 
 function namingLabelsTarget(first: ESTree.Node, property: string | undefined): ESTree.Node | undefined {
@@ -70,6 +74,7 @@ export const namingLabels = defineRule({
                 pattern: optionsPatternSchema,
                 drop: optionsPatternSchema,
                 loose: { type: 'boolean' },
+                within: optionsPatternSchema,
               },
               required: ['callee'],
               anyOf: [{ required: ['name'] }, { required: ['pattern'] }],
@@ -98,6 +103,7 @@ export const namingLabels = defineRule({
           callees: optionsWildcards(entry.callee),
           entry,
           drop: optionsPatterns(entry.drop),
+          within: optionsWildcards(entry.within),
           patterns: [entry.pattern ?? []].flat().map((source) => namingExpand(source, paths, true, optionsEscape)),
         }))
 
@@ -129,7 +135,7 @@ export const namingLabels = defineRule({
             })
           }
 
-          const binding = namingLabelsBinding(node)
+          const binding = namingLabelsBinding(node, compiled.within)
           const expected = binding === undefined ? [] : namingLabelsExpected(compiled, captures, binding)
           const plain = expected.map((item) => namingLabelsPlain(item, compiled.entry.loose))
 

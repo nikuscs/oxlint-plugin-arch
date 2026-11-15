@@ -220,12 +220,21 @@ function presetEffectStrictServer(at: (path: string) => string, service: string 
       rules: { 'arch/naming-labels': ['error', { labels: [{ callee: 'Effect.fn', name: '{name}', loose: true }] }] },
     },
     [at('domains/*/*.layer.ts')]: {
-      rules: { 'arch/naming-keys': ['error', { callees: ['*.bind'], name: '^{folder}(?:Action|Query){Path}$' }], ...layerKeys },
+      rules: { 'arch/naming-keys': ['error', { callees: ['*.bind', '*.of'], name: '^{folder}(?:Action|Query){Path}$', inline: false }], ...layerKeys },
     },
     [at('domains/*/*.workflows.ts')]: {
       ...presetEffectTop([{ kind: 'const', from: '(?:^Workflow\\.make|\\.toLayer|^Layer\\.\\w+|^Schedule\\.\\w+)$' }]),
       rules: {
         'arch/files-exports': ['error', { stem: 'folder', patterns: ['{Domain}\\w*Workflow', '{Domain}WorkflowsLayer', '{domain}Schedule[A-Z]\\w*'] }],
+        'arch/naming-labels': [
+          'error',
+          {
+            labels: [
+              { callee: 'Workflow.make', name: '{name}', drop: 'Workflow$' },
+              { callee: 'Effect.fn', name: '{name}', within: '*.toLayer', loose: true },
+            ],
+          },
+        ],
       },
     },
     [at('domains/*/*.constants.ts')]: presetEffectTop([{ kind: 'const', exported: true, names: '^{DOMAIN}_' }]),
@@ -236,21 +245,32 @@ function presetEffectStrictServer(at: (path: string) => string, service: string 
       rules: {
         'arch/naming-file': ['error', { template: '{group}/rpc.{group}.{area}.ts', message: 'Handlers use rpc/<group>/rpc.<group>.<area>.ts.' }],
         'arch/files-exports': ['error', { file: 'rpc.{group}.{area}.ts', names: ['rpc{Group}{Area}'] }],
+        'arch/naming-keys': ['error', { exports: '^rpc[A-Z]', delegate: true }],
       },
     },
     [at('mails/*.mail.tsx')]: { rules: { 'arch/files-exports': ['error', { file: '{name}.mail.tsx', names: ['{name}Mail', '{Name}Email'], types: true }] } },
   }
 }
 
-function presetEffectStrictContract(at: (path: string) => string, name: string | undefined): PresetTypes.PresetFolders {
+function presetEffectStrictContract(at: (path: string) => string, name: string | undefined, files: unknown): PresetTypes.PresetFolders {
   const key = name === undefined ? [] : [{ callee: 'Context.Service', name: `${name}/{folder}/{file}/{name}` }]
+  const labels: PresetTypes.PresetRules = key.length > 0 ? { 'arch/naming-labels': ['error', { labels: key }] } : {}
+  const service = presetNames(presetEffectContractKinds, files ?? [], 'effect.files').includes('*.service.ts')
+
+  const sibling: PresetTypes.PresetRules = service
+    ? { 'arch/files-siblings': ['error', { require: '{folder}.service.ts', message: 'A domain is reached through its service.' }] }
+    : {}
 
   return {
     [at('*/*.schemas.ts')]: presetEffectTop(['type', 'interface', 'namespace', { kind: 'const', exported: true }]),
-    [at('*/*.contract.ts')]: presetEffectTop(['type', { kind: 'const', exported: true }, { kind: 'const', exported: false, from: '^[A-Z]\\w*\\.' }]),
+    [at('*/*.contract.ts')]: {
+      ...presetEffectTop(['type', { kind: 'const', exported: true }, { kind: 'const', exported: false, from: '^[A-Z]\\w*\\.' }]),
+      deny: { calls: { 'Schema.Struct': 'Name the Schema in <d>.schemas.ts.' } },
+      rules: sibling,
+    },
     [at('*/*.service.ts')]: {
       ...presetEffectTop(['interface', 'type', 'class', 'namespace']),
-      rules: key.length > 0 ? { 'arch/naming-labels': ['error', { labels: key }] } : {},
+      rules: { ...labels, 'arch/effect-service-params': 'error' },
     },
     [at('*/*.errors.ts')]: {
       ...presetEffectTop([{ kind: 'class', exported: true }]),
@@ -290,7 +310,7 @@ function presetEffectUnit(
   const service = contract && `${posix.join(root, contract.source)}/{folder}/{folder}.service.ts`
   const base = server ? presetEffectServerKeys(at) : presetEffectContractKeys(at, options.files)
   const tests = { 'tests/**/*.test.ts': presetEffectStrictTests, 'test/**/*.test.ts': presetEffectStrictTests }
-  const strict = server ? { ...presetEffectStrictServer(at, service), ...tests } : presetEffectStrictContract(at, presetManifest(root, key).name)
+  const strict = server ? { ...presetEffectStrictServer(at, service), ...tests } : presetEffectStrictContract(at, presetManifest(root, key).name, options.files)
   const locked = options.strict === false ? {} : strict
   const paths = [...new Set([...Object.keys(base), ...Object.keys(locked)])]
   const merged = (path: string) => (path in base && path in locked ? presetMerge(base[path], locked[path]) : (base[path] ?? locked[path]))

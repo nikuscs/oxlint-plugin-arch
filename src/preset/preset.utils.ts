@@ -271,7 +271,8 @@ export function presetSource(root: string, directory: string, configured?: strin
 export function presetFilled(conventions: PresetTypes.PresetFolders, exists: (path: string) => boolean): PresetTypes.PresetFolders {
   return Object.fromEntries(
     Object.entries(conventions).filter(([path, folder]) => {
-      const empty = folder instanceof Object && folder.deny instanceof Object && Object.keys(folder.deny.imports ?? {}).length === 0
+      const denied = folder instanceof Object && folder.deny instanceof Object ? { ...folder.deny.imports, ...folder.deny.calls } : undefined
+      const empty = denied !== undefined && Object.keys(denied).length === 0
 
       return exists(path) && !empty
     }),

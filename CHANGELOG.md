@@ -6,6 +6,8 @@ Preset defaults that change what an app reports:
 
 - Effect contract packages also accept `<d>.service.ts`, which holds no functions (`files-no-functions`), next to `<d>.layer.types.ts`.
 - Effect servers and contract packages are locked by default (`effect.strict`, on): the top level of each file kind, yielded service names, dependencies yielded first, layer keys against function names and against the service class, rpc and mail file and export names, workflow, constant, config and prompt names, the service key, error tags and codes, and tests that hold only test calls. `effect: { strict: false }` on the app or package turns the lock off; `docs/groups/effect.md` lists every key.
+- Effect servers, locked: a layer binds no inline function, under `*.of` as well as `*.bind`; the span inside `X.toLayer(Effect.fn('…'))` follows `X`; an rpc handler returns the call its key path names (`naming-keys` `delegate`).
+- Effect contract packages, locked: a contract file has `<d>.service.ts` beside it (`files-siblings`), calls no `Schema.Struct`, and a service method takes a `<D>…Params` type (`effect-service-params`).
 - Effect servers: in `*.actions.ts` and `*.queries.ts` an `Effect.fn` span follows its function's name (`orderActionScheduleCancel` is `'order.schedule.cancel'`), and in `*.workflows.ts` a `Workflow.make` name is its constant without `Workflow` (`naming-labels`).
 
 Rules and options:
@@ -14,6 +16,11 @@ Rules and options:
 - New `naming-imports`: an import takes the name its specifier expands to, such as `@scope/kit-{package}` as `{Package}Kit`, as a namespace import by default.
 - New `naming-labels`: the text label of a call (a span, a workflow name, a service key, an error tag or code) follows the name the call is assigned to, or a pattern.
 - New `naming-keys`: a value bound under an object key is named after the key path, such as `schedule.cancel` and `orderActionScheduleCancel`.
+- New `naming-pairs`: two calls of one chain take values that share a name, such as a procedure's input and output Schemas.
+- New `files-siblings`: a file needs other files beside it, such as a contract next to its service.
+- `naming-keys` also reads exported objects (`exports`) and takes `keys` (a pattern for the keys themselves), `inline: false`, `delegate` (a handler returns the call its key path names), `allow`, `singularize` and the `{Key}` placeholder; `name` is now optional.
+- `naming-labels` takes `within`: a label passed into a call is named after that call's receiver (`X.toLayer(Effect.fn('…'))`).
+- New `effect-service-params`: a method of a service class takes a named params type, `<Folder>…Params` by default, with `name`, `allow` and `declaration`.
 - New `effect-layer-keys`: a layer binds exactly the methods its service class declares in another file.
 - New `effect-yields-first`: service yields come before any other statement of a generator.
 - New `code-inside`: a call banned inside another call's callback, such as a workflow started inside a transaction.

@@ -78,5 +78,16 @@ describe('arch/naming-labels', () => {
     },
     { name: 'a pattern is checked without a name', code: "run(Effect.fn('Bad Name')())", options: { labels: [{ callee: 'Effect.fn', pattern: '^[a-z.]+$' }] }, errors: ['pattern'] },
     { name: 'a label off the folder pattern', filename: 'order/order.actions.ts', code: "const a = Effect.fn('user.create')()", options: { labels: [{ callee: 'Effect.fn', pattern: '^{folder}\\.' }] }, errors: ['pattern'] },
+    {
+      name: 'a label inside a call takes the receiver name',
+      code: "const UserBanLayer = UserBanWorkflow.toLayer(Effect.fn('user.banWorkflow')(function* () {}))",
+      options: { labels: [{ callee: 'Effect.fn', name: '{name}', within: '*.toLayer', loose: true }] },
+    },
+    {
+      name: 'a label inside a call off the receiver name',
+      code: "const Layer = UserVerifyEmailWorkflow.toLayer(Effect.fn('user.emailVerifyWorkflow')(function* () {}))",
+      options: { labels: [{ callee: 'Effect.fn', name: '{name}', within: '*.toLayer', loose: true }] },
+      errors: ["'user.emailVerifyWorkflow' must be 'UserVerifyEmailWorkflow', after the name 'UserVerifyEmailWorkflow'."],
+    },
   ])('$name', (row) => testerRun(namingLabels, row))
 })
