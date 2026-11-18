@@ -9,5 +9,11 @@ describe('dillon-anti-slop/no-object-parameters', () => {
     { name: 'a broad parameter fails', code: 'export function save(input: object) {}', errors: ['objectParameter'] },
     { name: 'an alias remains broad', code: 'type Input = object; function save(input: Input) {}', errors: ['objectParameter'] },
     { name: 'a union remains broad', code: 'function save(input: object | null) {}', errors: ['objectParameter'] },
+    { name: 'a closer local alias passes', code: 'type Payload = object; function outer() { type Payload = { readonly id: string }; function consume(value: Payload) {} }' },
+    { name: 'a function-local object alias fails', code: 'function outer() { type Payload = object; function consume(value: Payload) {} }', errors: ['objectParameter'] },
+    { name: 'a later local object alias fails', code: 'function outer() { function consume(value: Payload) {} type Payload = object }', errors: ['objectParameter'] },
+    { name: 'a generic identity of object fails', code: 'type Identity<T> = T; function consume(value: Identity<object>) {}', errors: ['objectParameter'] },
+    { name: 'a nested generic identity of object fails', code: 'type Identity<T> = T; type Wrapped<T> = Identity<T>; function consume(value: Wrapped<object>) {}', errors: ['objectParameter'] },
+    { name: 'an identity of an identity of object fails', code: 'type Identity<T> = T; function consume(input: Identity<Identity<object>>) {}', errors: ['objectParameter'] },
   ])('$name', (row) => testerRun(noObjectParametersRule, row))
 })

@@ -234,6 +234,8 @@ describe('preset', () => {
       expected: expect.not.arrayContaining([expect.objectContaining({ message: expect.stringMatching(/^Domain files/) })]),
     },
     { name: 'a dot folder can be a key', tree: ['.agents/'], folders: { '.agents': false }, file: '.agents/a.ts', rule: 'no-console', expected: 'ignored' },
+    { name: 'reducer accumulator copies are reported everywhere', tree: ['src/'], folders: {}, file: 'src/a.ts', rule: 'dillon-anti-slop/no-reduce-accumulator-copy', expected: 'error' },
+    { name: 'filter then map passes are off by default', tree: ['src/'], folders: {}, file: 'src/a.ts', rule: 'dillon-anti-slop/no-array-filter-map', expected: undefined },
     {
       name: 'a nested options object inherits the parent options',
       tree: ['src/'],

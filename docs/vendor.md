@@ -1,14 +1,16 @@
 # 🧹 Dillon anti-slop rules
 
-Type-evidence and test-double rules by Dillon Mulroy, vendored from [dmmulroy/anti-slop](https://github.com/dmmulroy/anti-slop) and registered as the `dillon-anti-slop` plugin.
+Type-evidence, array-pass and test-double rules by Dillon Mulroy, vendored from [dmmulroy/anti-slop](https://github.com/dmmulroy/anti-slop) with faster versions adapted from Christoph Nakazawa's [`@nkzw/oxlint-config`](https://github.com/nkzw-tech/oxlint-config), and registered as the `dillon-anti-slop` plugin.
 
 | Rule | Checks | 🔧 |
 | --- | --- | --- |
+| [`no-array-filter-map`](#no-array-filter-map) | No `.filter().map()` passes over a known array | |
 | [`no-chained-type-assertions`](#no-chained-type-assertions) | No `as X as Y` chains | |
 | [`no-conditional-empty-object-spread`](#no-conditional-empty-object-spread) | No `...(cond ? { a } : {})` | |
 | [`no-known-value-widening`](#no-known-value-widening) | Known values keep their inferred type | |
 | [`no-module-mocking`](#no-module-mocking) | No `vi.mock` or `jest.mock` | |
 | [`no-object-parameters`](#no-object-parameters) | No parameters typed `object` | |
+| [`no-reduce-accumulator-copy`](#no-reduce-accumulator-copy) | No copying the reducer accumulator on every pass | |
 | [`no-reflect-apply`](#no-reflect-apply) | No `Reflect.apply` | |
 | [`no-reflect-get`](#no-reflect-get) | No `Reflect.get` | |
 | [`no-runtime-typeof`](#no-runtime-typeof) | No runtime `typeof` checks | |
@@ -19,6 +21,22 @@ Type-evidence and test-double rules by Dillon Mulroy, vendored from [dmmulroy/an
 | [`no-unsafe-dictionary-type`](#no-unsafe-dictionary-type) | No dictionaries of `unknown`, `any` or `object` | |
 | [`no-widen-then-assert`](#no-widen-then-assert) | No widening a value then asserting it back | |
 | [`require-safety-comment-for-type-assertion`](#require-safety-comment-for-type-assertion) | Type assertions need a `SAFETY:` comment | |
+
+## no-array-filter-map
+
+Reports a `filter` followed by `map`, or `map` followed by `filter`, on a value known to be an array: a literal, a `const` array, a parameter typed as an array, or the result of an array method. Iterator pipelines and unknown receivers pass. Off in the preset; turn it on in a folder's `rules`.
+
+```ts
+// ❌
+const emails = users.filter((user) => user.active).map((user) => user.email)
+
+// ✅
+const emails = users.values().filter((user) => user.active).map((user) => user.email).toArray()
+```
+
+```ts
+'dillon-anti-slop/no-array-filter-map': 'error'
+```
 
 ## no-chained-type-assertions
 
@@ -55,7 +73,7 @@ if (cursor) query.cursor = cursor
 
 ## no-known-value-widening
 
-Reports a value with known fields flowing into an explicit broad type such as `unknown`, `object`, `Record<string, unknown>` or an anonymous object type, through a variable, class property, reassignment, return or assertion. An empty `{}` into a dictionary passes.
+Reports a value with known fields flowing into an explicit broad type such as `unknown`, `object`, `Record<string, unknown>` or an anonymous object type, through a variable, class property, reassignment, return or assertion, and a known argument passed to a type guard whose parameter is `unknown`. An empty `{}` into a dictionary passes, and so does a record unless its key is `string`, `number`, `symbol`, `PropertyKey` or a local alias of one. Aliases are resolved in the scope where they are used.
 
 ```ts
 // ❌
@@ -107,6 +125,22 @@ export function save(input: Draft) {}
 
 ```ts
 'dillon-anti-slop/no-object-parameters': 'error'
+```
+
+## no-reduce-accumulator-copy
+
+Reports copying the accumulator inside a `reduce` or `reduceRight` callback with `Object.assign({}, acc)`, `Array.from(acc)` or an array copy method (`concat`, `slice`, `toSpliced`, `toSorted`, `toReversed`, `with`) when the initial value is an array. Spread copies are left to `oxc/no-accumulating-spread`. On in every preset project.
+
+```ts
+// ❌
+const all = pages.reduce((acc, page) => acc.concat(page.items), [])
+
+// ✅
+const all = pages.flatMap((page) => page.items)
+```
+
+```ts
+'dillon-anti-slop/no-reduce-accumulator-copy': 'error'
 ```
 
 ## no-reflect-apply
@@ -239,7 +273,7 @@ type Payload = { id: string }
 
 ## no-unsafe-dictionary-type
 
-Reports dictionary types whose value is `unknown`, `any`, `object`, `{}` or a union or alias containing one.
+Reports dictionary types whose value is `unknown`, `any`, `object`, `{}` or a union or alias containing one. Generic constraints (`T extends Record<string, unknown>`) pass.
 
 ```ts
 // ❌

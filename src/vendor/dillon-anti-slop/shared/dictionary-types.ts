@@ -1,29 +1,64 @@
-import {
-  typeEnvironmentIsBuiltIn,
-  typeEnvironmentIsUnappliedReference,
-  typeEnvironmentReference,
-  typeEnvironmentResolveAlias,
-  typeEnvironmentUnwrap,
-} from './type-environment.ts'
+import { typeBindingsBound, typeBindingsStep, typeBindingsVisible } from './type-bindings.ts'
+import { typeReferenceName } from './type-reference-name.ts'
 import type * as DillonAntiSlopTypes from '../../../types/dillon-anti-slop.types.ts'
 import type { ESTree } from '@oxlint/plugins'
+
+const builtIns = new Set(['Record', 'Readonly', 'Partial', 'Required', 'Pick', 'Omit', 'PropertyKey', 'NonNullable'])
+
+const transparentWrappers = new Set(['Readonly', 'Partial', 'Required', 'NonNullable'])
+
+const sourceWrappers = new Set([...transparentWrappers, 'Pick', 'Omit'])
+
+function isBuiltIn(name: string, use: ESTree.Node, environment: DillonAntiSlopTypes.DillonAntiSlopTypeEnvironment): boolean {
+  return builtIns.has(name) && typeBindingsVisible(name, use, environment) === undefined
+}
+
+function unwrapTransparent(type: ESTree.TSType): ESTree.TSType {
+  let current = type
+
+  while (current.type === 'TSParenthesizedType' || (current.type === 'TSTypeOperator' && current.operator === 'readonly')) {
+    current = current.typeAnnotation
+  }
+
+  return current
+}
 
 function isEffectivelyEmptyMember(member: ESTree.TSSignature): boolean {
   return (
     member.type === 'TSPropertySignature' &&
     member.optional &&
     member.typeAnnotation !== null &&
-    typeEnvironmentUnwrap(member.typeAnnotation.typeAnnotation).type === 'TSNeverKeyword'
+    unwrapTransparent(member.typeAnnotation.typeAnnotation).type === 'TSNeverKeyword'
   )
 }
 
-export function dictionaryTypesUnsafeValue(
-  type: ESTree.TSType,
+function boundReference(bound: DillonAntiSlopTypes.DillonAntiSlopBoundType): DillonAntiSlopTypes.DillonAntiSlopBoundReference | null {
+  const type = unwrapTransparent(bound.type)
+  const name = type.type === 'TSTypeReference' ? typeReferenceName(type) : null
+
+  return type.type === 'TSTypeReference' && name !== null ? { bound: { ...bound, type }, reference: type, name } : null
+}
+
+function wrappedArgument(
+  reference: DillonAntiSlopTypes.DillonAntiSlopBoundReference,
   environment: DillonAntiSlopTypes.DillonAntiSlopTypeEnvironment,
-  substitutions: DillonAntiSlopTypes.DillonAntiSlopSubstitutions,
-  resolvingAliases: ReadonlySet<string>,
+  names: ReadonlySet<string>,
+): DillonAntiSlopTypes.DillonAntiSlopBoundType | null | undefined {
+  if (!names.has(reference.name) || !isBuiltIn(reference.name, reference.reference, environment)) {
+    return undefined
+  }
+
+  const wrapped = reference.reference.typeArguments?.params.at(0)
+
+  return wrapped === undefined ? null : { ...reference.bound, type: wrapped }
+}
+
+function unsafeDirectValue(
+  bound: DillonAntiSlopTypes.DillonAntiSlopBoundType,
+  environment: DillonAntiSlopTypes.DillonAntiSlopTypeEnvironment,
 ): DillonAntiSlopTypes.DillonAntiSlopUnsafeValue | null {
-  const unwrapped = typeEnvironmentUnwrap(type)
+  const unwrapped = unwrapTransparent(bound.type)
+  const child = (type: ESTree.TSType) => unsafeDirectValue({ ...bound, type }, environment)
 
   if (unwrapped.type === 'TSUnknownKeyword') {
     return 'unknown'
@@ -42,122 +77,185 @@ export function dictionaryTypesUnsafeValue(
   }
 
   if (unwrapped.type === 'TSUnionType') {
-    return unwrapped.types.some(
-      (member) => dictionaryTypesUnsafeValue(member, environment, substitutions, resolvingAliases) !== null,
-    )
-      ? 'union'
-      : null
+    return unwrapped.types.some((member) => child(member) !== null) ? 'union' : null
   }
 
   if (unwrapped.type === 'TSIntersectionType') {
-    const unsafeMembers = unwrapped.types.map((member) =>
-      dictionaryTypesUnsafeValue(member, environment, substitutions, resolvingAliases),
-    )
+    const members = unwrapped.types.map(child)
 
-    if (unsafeMembers.includes('any')) {
+    if (members.includes('any')) {
       return 'any'
     }
 
-    return unsafeMembers.length > 0 && unsafeMembers.every((member) => member !== null) ? unsafeMembers[0] : null
+    return members.length > 0 && members.every((member) => member !== null) ? (members.at(0) ?? null) : null
   }
 
-  const named = typeEnvironmentReference(unwrapped, environment)
+  const reference = boundReference(bound)
 
-  if (named === null) {
+  if (reference === null) {
     return null
   }
 
-  const { reference, name } = named
+  const wrapped = wrappedArgument(reference, environment, transparentWrappers)
 
-  if (named.transparent) {
-    return named.argument === undefined ? null : dictionaryTypesUnsafeValue(named.argument, environment, substitutions, resolvingAliases)
+  if (wrapped !== undefined) {
+    return wrapped === null ? null : unsafeDirectValue(wrapped, environment)
   }
 
-  const substitution = substitutions.get(name)
+  const declaration = reference.bound.substitutions.has(reference.name) ? null : typeBindingsVisible(reference.name, reference.reference, environment)
 
-  if (substitution !== undefined) {
-    return typeEnvironmentIsUnappliedReference(substitution, name)
-      ? null
-      : dictionaryTypesUnsafeValue(substitution, environment, substitutions, resolvingAliases)
+  if (declaration?.type === 'TSInterfaceDeclaration') {
+    return declaration.extends.length === 0 && declaration.body.body.every(isEffectivelyEmptyMember) ? 'empty-object' : null
   }
 
-  const interfaceDeclarations = environment.interfaces.get(name)
+  const next = typeBindingsStep(reference.bound, environment)
 
-  if (interfaceDeclarations !== undefined) {
-    const [declaration] = interfaceDeclarations
-    return interfaceDeclarations.length === 1 &&
-      declaration.extends.length === 0 &&
-      declaration.body.body.every(isEffectivelyEmptyMember)
-      ? 'empty-object'
-      : null
-  }
-
-  const step = typeEnvironmentResolveAlias(name, reference, environment, substitutions, resolvingAliases)
-  return step === null ? null : dictionaryTypesUnsafeValue(step.type, environment, step.substitutions, step.resolving)
+  return next === null ? null : unsafeDirectValue(next, environment)
 }
 
-export function dictionaryTypesValueTypes(
-  type: ESTree.TSType,
+function dictionaryValueTypes(
+  bound: DillonAntiSlopTypes.DillonAntiSlopBoundType,
   environment: DillonAntiSlopTypes.DillonAntiSlopTypeEnvironment,
-  substitutions: DillonAntiSlopTypes.DillonAntiSlopSubstitutions,
-  resolvingAliases: ReadonlySet<string>,
-): readonly DillonAntiSlopTypes.DillonAntiSlopResolvedType[] {
-  const unwrapped = typeEnvironmentUnwrap(type)
+): DillonAntiSlopTypes.DillonAntiSlopBoundType[] {
+  const unwrapped = unwrapTransparent(bound.type)
 
   if (unwrapped.type === 'TSTypeLiteral') {
-    return unwrapped.members.flatMap((member): readonly DillonAntiSlopTypes.DillonAntiSlopResolvedType[] =>
-      member.type === 'TSIndexSignature' ? [{ type: member.typeAnnotation.typeAnnotation, substitutions }] : [],
-    )
+    return unwrapped.members.flatMap((member) => (member.type === 'TSIndexSignature' ? [{ ...bound, type: member.typeAnnotation.typeAnnotation }] : []))
   }
 
   if (unwrapped.type === 'TSMappedType') {
-    return unwrapped.typeAnnotation === null ? [] : [{ type: unwrapped.typeAnnotation, substitutions }]
+    return unwrapped.typeAnnotation === null ? [] : [{ ...bound, type: unwrapped.typeAnnotation }]
   }
 
-  const named = typeEnvironmentReference(unwrapped, environment)
+  const reference = boundReference(bound)
 
-  if (named === null) {
+  if (reference === null) {
     return []
   }
 
-  const { reference, name } = named
+  const wrapped = wrappedArgument(reference, environment, sourceWrappers)
 
-  const substitution = substitutions.get(name)
-
-  if (substitution !== undefined) {
-    return typeEnvironmentIsUnappliedReference(substitution, name)
-      ? []
-      : dictionaryTypesValueTypes(substitution, environment, substitutions, resolvingAliases)
+  if (wrapped !== undefined) {
+    return wrapped === null ? [] : dictionaryValueTypes(wrapped, environment)
   }
 
-  if (named.transparent) {
-    return named.argument === undefined ? [] : dictionaryTypesValueTypes(named.argument, environment, substitutions, resolvingAliases)
+  if (reference.name === 'Record' && isBuiltIn(reference.name, reference.reference, environment)) {
+    const value = reference.reference.typeArguments?.params.at(1)
+
+    return value === undefined ? [] : [{ ...bound, type: value }]
   }
 
-  if (name === 'Record' && typeEnvironmentIsBuiltIn(name, environment)) {
-    const value = reference.typeArguments?.params[1] ?? null
-    return value === null ? [] : [{ type: value, substitutions }]
-  }
+  const next = typeBindingsStep(reference.bound, environment)
 
-  if ((name === 'Pick' || name === 'Omit') && typeEnvironmentIsBuiltIn(name, environment)) {
-    const source = reference.typeArguments?.params[0]
-    return source === undefined ? [] : dictionaryTypesValueTypes(source, environment, substitutions, resolvingAliases)
-  }
-
-  const step = typeEnvironmentResolveAlias(name, reference, environment, substitutions, resolvingAliases)
-  return step === null ? [] : dictionaryTypesValueTypes(step.type, environment, step.substitutions, step.resolving)
+  return next === null ? [] : dictionaryValueTypes(next, environment)
 }
 
-export function dictionaryTypesClassify(
+function isBroadMappedKey(bound: DillonAntiSlopTypes.DillonAntiSlopBoundType, environment: DillonAntiSlopTypes.DillonAntiSlopTypeEnvironment): boolean {
+  const unwrapped = unwrapTransparent(bound.type)
+
+  if (unwrapped.type === 'TSStringKeyword' || unwrapped.type === 'TSNumberKeyword' || unwrapped.type === 'TSSymbolKeyword') {
+    return true
+  }
+
+  if (unwrapped.type === 'TSUnionType') {
+    return unwrapped.types.some((member) => isBroadMappedKey({ ...bound, type: member }, environment))
+  }
+
+  const reference = boundReference(bound)
+
+  if (reference === null) {
+    return false
+  }
+
+  if (reference.name === 'PropertyKey' && isBuiltIn(reference.name, reference.reference, environment)) {
+    return true
+  }
+
+  const next = typeBindingsStep(reference.bound, environment)
+
+  return next !== null && isBroadMappedKey(next, environment)
+}
+
+function broadTarget(
+  bound: DillonAntiSlopTypes.DillonAntiSlopBoundType,
+  environment: DillonAntiSlopTypes.DillonAntiSlopTypeEnvironment,
+  top: boolean,
+): DillonAntiSlopTypes.DillonAntiSlopWideningTarget | null {
+  const unwrapped = unwrapTransparent(bound.type)
+
+  if (unwrapped.type === 'TSUnknownKeyword') {
+    return { kind: 'unknown' }
+  }
+
+  if (unwrapped.type === 'TSObjectKeyword') {
+    return { kind: 'object' }
+  }
+
+  if (unwrapped.type === 'TSTypeLiteral') {
+    if (unwrapped.members.some((member) => member.type === 'TSIndexSignature')) {
+      return { kind: 'open dictionary' }
+    }
+
+    return top && unwrapped.members.length > 0 ? { kind: 'anonymous object' } : null
+  }
+
+  if (unwrapped.type === 'TSMappedType') {
+    return top || isBroadMappedKey({ ...bound, type: unwrapped.constraint }, environment) ? { kind: 'open dictionary' } : null
+  }
+
+  const reference = boundReference(bound)
+
+  if (reference === null) {
+    return null
+  }
+
+  const wrapped = wrappedArgument(reference, environment, transparentWrappers)
+
+  if (wrapped !== undefined) {
+    return wrapped === null ? null : broadTarget(wrapped, environment, top)
+  }
+
+  if (reference.name === 'Record' && isBuiltIn(reference.name, reference.reference, environment)) {
+    const key = reference.reference.typeArguments?.params.at(0)
+
+    return key === undefined || isBroadMappedKey({ ...bound, type: key }, environment) ? { kind: 'open dictionary' } : null
+  }
+
+  const next = typeBindingsStep(reference.bound, environment)
+  const resolved = next === null ? null : broadTarget(next, environment, false)
+
+  if (!top || next === null || next.substitutions.size === 0) {
+    return resolved
+  }
+
+  return resolved?.kind === 'open dictionary' ? { kind: 'generic container' } : null
+}
+
+export function dictionaryTypesUnsafeValue(
   type: ESTree.TSType,
   environment: DillonAntiSlopTypes.DillonAntiSlopTypeEnvironment,
 ): DillonAntiSlopTypes.DillonAntiSlopUnsafeValue | null {
-  for (const valueType of dictionaryTypesValueTypes(type, environment, new Map(), new Set())) {
-    const unsafeValue = dictionaryTypesUnsafeValue(valueType.type, environment, valueType.substitutions, new Set())
+  return unsafeDirectValue(typeBindingsBound(type), environment)
+}
 
-    if (unsafeValue !== null) {
-      return unsafeValue
+export function dictionaryTypesUnsafeDictionary(
+  type: ESTree.TSType,
+  environment: DillonAntiSlopTypes.DillonAntiSlopTypeEnvironment,
+): DillonAntiSlopTypes.DillonAntiSlopUnsafeValue | null {
+  for (const value of dictionaryValueTypes(typeBindingsBound(type), environment)) {
+    const unsafe = unsafeDirectValue(value, environment)
+
+    if (unsafe !== null) {
+      return unsafe
     }
   }
+
   return null
+}
+
+export function dictionaryTypesWideningTarget(
+  type: ESTree.TSType,
+  environment: DillonAntiSlopTypes.DillonAntiSlopTypeEnvironment,
+): DillonAntiSlopTypes.DillonAntiSlopWideningTarget | null {
+  return broadTarget(typeBindingsBound(type), environment, true)
 }

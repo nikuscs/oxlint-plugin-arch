@@ -82,4 +82,4 @@ Also bundled: [Dillon Mulroy's anti-slop rules](docs/vendor.md) as `oxlint-plugi
 
 ## 📄 License
 
-MIT. The `dillon-anti-slop` rules are by [Dillon Mulroy](https://github.com/dmmulroy/anti-slop), MIT, vendored with [attribution](src/vendor/dillon-anti-slop/UPSTREAM.md).
+MIT. The `dillon-anti-slop` rules are by [Dillon Mulroy](https://github.com/dmmulroy/anti-slop), MIT, with faster versions adapted from [Christoph Nakazawa's `@nkzw/oxlint-config`](https://github.com/nkzw-tech/oxlint-config), MIT, vendored with [attribution](src/vendor/dillon-anti-slop/UPSTREAM.md).

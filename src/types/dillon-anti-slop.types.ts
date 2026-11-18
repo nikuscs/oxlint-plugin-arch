@@ -11,14 +11,6 @@ export type DillonAntiSlopSignature =
   | ESTree.TSFunctionType
   | ESTree.TSMethodSignature
 
-export interface DillonAntiSlopAliasResolution {
-  readonly aliases: ReadonlyMap<string, ESTree.TSTypeAliasDeclaration>
-  readonly keyword: 'TSObjectKeyword' | 'TSUnknownKeyword'
-  readonly shadowed: ReadonlySet<string>
-  readonly unions: boolean
-  readonly promises: boolean
-}
-
 export type DillonAntiSlopTestFramework = 'vi' | 'jest'
 
 export interface DillonAntiSlopDeniedApi {
@@ -36,24 +28,6 @@ export interface DillonAntiSlopRuntimeTypeofOptions {
   allowInTypeGuards?: boolean
 }
 
-export type DillonAntiSlopSubstitutions = ReadonlyMap<string, ESTree.TSType>
-
-export interface DillonAntiSlopResolvedType {
-  readonly type: ESTree.TSType
-  readonly substitutions: DillonAntiSlopSubstitutions
-}
-
-export interface DillonAntiSlopAliasStep extends DillonAntiSlopResolvedType {
-  readonly resolving: ReadonlySet<string>
-}
-
-export interface DillonAntiSlopNamedReference {
-  readonly reference: ESTree.TSTypeReference
-  readonly name: string
-  readonly transparent: boolean
-  readonly argument: ESTree.TSType | undefined
-}
-
 export type DillonAntiSlopUnsafeValue = 'any' | 'empty-object' | 'object' | 'union' | 'unknown'
 
 export type DillonAntiSlopWideningTargetKind =
@@ -67,11 +41,42 @@ export interface DillonAntiSlopWideningTarget {
   readonly kind: DillonAntiSlopWideningTargetKind
 }
 
+export type DillonAntiSlopTypeBinding =
+  | ESTree.Class
+  | ESTree.ImportDefaultSpecifier
+  | ESTree.ImportNamespaceSpecifier
+  | ESTree.ImportSpecifier
+  | ESTree.TSEnumDeclaration
+  | ESTree.TSInterfaceDeclaration
+  | ESTree.TSTypeAliasDeclaration
+
 export interface DillonAntiSlopTypeEnvironment {
-  readonly aliases: ReadonlyMap<string, ESTree.TSTypeAliasDeclaration>
-  readonly interfaces: ReadonlyMap<string, readonly ESTree.TSInterfaceDeclaration[]>
-  readonly shadowedBuiltIns: ReadonlySet<string>
+  readonly bindingsByName: Map<string, Map<ESTree.Node, DillonAntiSlopTypeBinding | null>>
+  readonly visitorKeys: Readonly<Record<string, readonly string[]>>
 }
+
+export interface DillonAntiSlopTypeBindingsState {
+  environment?: DillonAntiSlopTypeEnvironment
+  collect: boolean
+}
+
+export type DillonAntiSlopTypeCheck = (environment: DillonAntiSlopTypeEnvironment) => void
+
+export type DillonAntiSlopDefer = (check: DillonAntiSlopTypeCheck) => void
+
+export interface DillonAntiSlopBoundType {
+  readonly type: ESTree.TSType
+  readonly substitutions: ReadonlyMap<string, DillonAntiSlopBoundType>
+  readonly resolving: ReadonlySet<ESTree.TSTypeAliasDeclaration>
+}
+
+export interface DillonAntiSlopBoundReference {
+  readonly bound: DillonAntiSlopBoundType
+  readonly reference: ESTree.TSTypeReference
+  readonly name: string
+}
+
+export type DillonAntiSlopTypeMatcher = (type: ESTree.TSType, matches: (child: ESTree.TSType) => boolean) => boolean
 
 export type DillonAntiSlopBroadTypeKind = 'top' | 'object' | 'record'
 
@@ -82,6 +87,17 @@ export interface DillonAntiSlopKnownValueEvidence {
 export interface DillonAntiSlopConstBinding {
   readonly declarator: ESTree.VariableDeclarator
   readonly init: ESTree.Expression
+}
+
+export interface DillonAntiSlopArrayMethod {
+  readonly name: string
+  readonly object: ESTree.Expression
+}
+
+export interface DillonAntiSlopReducer {
+  readonly accumulator: ESTree.BindingIdentifier
+  readonly callback: ESTree.ArrowFunctionExpression | ESTree.Function
+  readonly initialValue: ESTree.Argument | undefined
 }
 
 export interface DillonAntiSlopSymbolNamesOptions {

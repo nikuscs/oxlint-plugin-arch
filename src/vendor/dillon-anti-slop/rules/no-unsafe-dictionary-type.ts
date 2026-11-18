@@ -1,8 +1,7 @@
 import { defineRule } from '@oxlint/plugins'
-import { dictionaryTypesClassify, dictionaryTypesUnsafeValue } from '../shared/dictionary-types.ts'
-import { typeEnvironmentCreate } from '../shared/type-environment.ts'
+import { dictionaryTypesUnsafeDictionary, dictionaryTypesUnsafeValue } from '../shared/dictionary-types.ts'
+import { typeBindingsAlias, typeBindingsWith } from '../shared/type-bindings.ts'
 import { typeReferenceName } from '../shared/type-reference-name.ts'
-import type { DillonAntiSlopTypeEnvironment } from '../../../types/dillon-anti-slop.types.ts'
 import type { ESTree } from '@oxlint/plugins'
 
 const typeNodeKinds: ReadonlySet<string> = new Set([
@@ -60,8 +59,6 @@ export const noUnsafeDictionaryTypeRule = defineRule({
     },
   },
   createOnce(context) {
-    let environment: DillonAntiSlopTypeEnvironment | null = null
-
     const report = (node: ESTree.Node, value: string) => {
       context.report({
         node,
@@ -70,62 +67,53 @@ export const noUnsafeDictionaryTypeRule = defineRule({
       })
     }
 
-    const reportIfUnsafe = (node: ESTree.TSType) => {
-      if (environment === null) {
-        return
-      }
+    return typeBindingsWith(context, (defer) => {
+      const checkType = (node: ESTree.TSType) => {
+        defer((environment) => {
+          const unsafe = dictionaryTypesUnsafeDictionary(node, environment)
 
-      if (node.type === 'TSTypeReference' && (node.typeArguments?.params.length ?? 0) === 0) {
-        const name = typeReferenceName(node)
-
-        if (name !== null && environment.aliases.has(name)) {
-          let owner: ESTree.Node = node.parent
-
-          while (owner.type !== 'Program' && owner.type !== 'TSTypeAliasDeclaration') {
-            owner = owner.parent
-          }
-
-          if (owner.type !== 'TSTypeAliasDeclaration') {
+          if (unsafe === null) {
             return
           }
-        }
+
+          const name = node.type === 'TSTypeReference' && !node.typeArguments?.params.length ? typeReferenceName(node) : null
+          let aliasUse = name !== null && typeBindingsAlias(name, node, environment) !== null
+          let child: ESTree.Node = node
+
+          for (let current = node.parent; current.type !== 'Program'; current = current.parent) {
+            if (
+              (current.type === 'TSTypeParameter' && current.constraint === child) ||
+              (isTypeNode(current) && dictionaryTypesUnsafeDictionary(current, environment) !== null)
+            ) {
+              return
+            }
+            aliasUse &&= current.type !== 'TSTypeAliasDeclaration'
+            child = current
+          }
+
+          if (!aliasUse) {
+            report(node, unsafe)
+          }
+        })
       }
 
-      const unsafe = dictionaryTypesClassify(node, environment)
+      return {
+        TSTypeReference: checkType,
+        TSTypeLiteral: checkType,
+        TSMappedType: checkType,
+        TSIndexSignature(node) {
+          if (node.parent.type === 'TSTypeLiteral') {
+            return
+          }
+          defer((environment) => {
+            const unsafe = dictionaryTypesUnsafeValue(node.typeAnnotation.typeAnnotation, environment)
 
-      if (unsafe === null) {
-        return
+            if (unsafe !== null) {
+              report(node, unsafe)
+            }
+          })
+        },
       }
-
-      let current: ESTree.Node = node.parent
-
-      while (current.type !== 'Program') {
-        if (isTypeNode(current) && dictionaryTypesClassify(current, environment) !== null) {
-          return
-        }
-        current = current.parent
-      }
-      report(node, unsafe)
-    }
-
-    return {
-      Program(node) {
-        environment = typeEnvironmentCreate(node)
-      },
-      TSTypeReference: reportIfUnsafe,
-      TSTypeLiteral: reportIfUnsafe,
-      TSMappedType: reportIfUnsafe,
-      TSIndexSignature(node) {
-        if (environment === null || node.parent.type === 'TSTypeLiteral') {
-          return
-        }
-
-        const unsafe = dictionaryTypesUnsafeValue(node.typeAnnotation.typeAnnotation, environment, new Map(), new Set())
-
-        if (unsafe !== null) {
-          report(node, unsafe)
-        }
-      },
-    }
+    })
   },
 })

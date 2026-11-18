@@ -308,9 +308,45 @@ export const noWidenThenAssertRule = defineRule({
       })
     }
 
+    const candidates: DillonAntiSlopTypes.DillonAntiSlopTypeAssertion[] = []
+    const broadBindings = new Set<string>()
+
+    const collectAssertion = (node: DillonAntiSlopTypes.DillonAntiSlopTypeAssertion) => {
+      if (expressionsUnwrapParentheses(node.expression).type === 'Identifier') {
+        candidates.push(node)
+      }
+    }
+
     return {
-      TSAsExpression: checkAssertion,
-      TSTypeAssertion: checkAssertion,
+      Program() {
+        candidates.length = 0
+        broadBindings.clear()
+      },
+      TSAsExpression: collectAssertion,
+      TSTypeAssertion: collectAssertion,
+      VariableDeclarator(node) {
+        if (node.id.type !== 'Identifier' || node.init === null || node.parent.type !== 'VariableDeclaration' || node.parent.kind !== 'const') {
+          return
+        }
+
+        const annotated = node.id.typeAnnotation?.typeAnnotation
+        const initializer = expressionsUnwrapParentheses(node.init)
+        const asserted = expressionsIsAssertion(initializer) ? initializer.typeAnnotation : undefined
+
+        if ((annotated && broadTypeKind(annotated)) || (asserted && broadTypeKind(asserted))) {
+          broadBindings.add(node.id.name)
+        }
+      },
+      'Program:exit'() {
+        for (const node of candidates) {
+          const expression = expressionsUnwrapParentheses(node.expression)
+
+          if (expression.type === 'Identifier' && broadBindings.has(expression.name)) {
+            checkAssertion(node)
+          }
+        }
+        candidates.length = 0
+      },
     }
   },
 })

@@ -1,23 +1,6 @@
 import { defineRule } from '@oxlint/plugins'
-import { signaturesListeners, signaturesParameterAnnotation } from '../shared/signatures.ts'
+import { signaturesListeners, signaturesParameterAnnotation, signaturesParameterName } from '../shared/signatures.ts'
 import type { DillonAntiSlopSignature } from '../../../types/dillon-anti-slop.types.ts'
-import type { ESTree } from '@oxlint/plugins'
-
-function parameterName(parameter: ESTree.ParamPattern, sourceText: string): string {
-  if (parameter.type === 'TSParameterProperty') {
-    return parameterName(parameter.parameter, sourceText)
-  }
-
-  if (parameter.type === 'AssignmentPattern') {
-    return parameterName(parameter.left, sourceText)
-  }
-
-  if (parameter.type === 'RestElement') {
-    return parameterName(parameter.argument, sourceText)
-  }
-
-  return parameter.type === 'Identifier' ? parameter.name : sourceText.replace(/\s*:\s*unknown\s*$/u, '')
-}
 
 export const noUnknownParametersRule = defineRule({
   meta: {
@@ -38,7 +21,7 @@ export const noUnknownParametersRule = defineRule({
           continue
         }
 
-        const name = parameterName(parameter, context.sourceCode.getText(parameter))
+        const name = signaturesParameterName(parameter, context.sourceCode)
 
         if (name === 'cause' || name === 'error') {
           continue

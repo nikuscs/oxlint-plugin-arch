@@ -1,9 +1,7 @@
 import { defineRule } from '@oxlint/plugins'
-import { lexicalTypeParametersNames } from '../shared/lexical-type-parameters.ts'
 import { signaturesListeners } from '../shared/signatures.ts'
-import { typeAliasesCollect, typeAliasesResolvesTo } from '../shared/type-aliases.ts'
+import { typeBindingsMatches, typeBindingsWith } from '../shared/type-bindings.ts'
 import type { DillonAntiSlopSignature } from '../../../types/dillon-anti-slop.types.ts'
-import type { ESTree } from '@oxlint/plugins'
 
 export const noUnknownReturnsRule = defineRule({
   meta: {
@@ -16,30 +14,40 @@ export const noUnknownReturnsRule = defineRule({
     },
   },
   createOnce(context) {
-    let aliases = new Map<string, ESTree.TSTypeAliasDeclaration>()
+    return typeBindingsWith(context, (defer) =>
+      signaturesListeners((node: DillonAntiSlopSignature) => {
+        const type = node.returnType?.typeAnnotation
 
-    return {
-      Program(node) {
-        aliases = typeAliasesCollect(node, true)
-      },
-      ...signaturesListeners((node: DillonAntiSlopSignature) => {
-        const annotation = node.returnType
-
-        if (
-          annotation === null ||
-          annotation === undefined ||
-          !typeAliasesResolvesTo(annotation.typeAnnotation, {
-            aliases,
-            keyword: 'TSUnknownKeyword',
-            shadowed: lexicalTypeParametersNames(node, context.sourceCode.visitorKeys),
-            unions: true,
-            promises: true,
-          })
-        ) {
+        if (type === undefined) {
           return
         }
-        context.report({ node: annotation.typeAnnotation, messageId: 'unknownReturn' })
-      }),
-    }
+        defer((environment) => {
+          const isUnknown = typeBindingsMatches(type, environment, (resolved, matches) => {
+            if (resolved.type === 'TSParenthesizedType') {
+              return matches(resolved.typeAnnotation)
+            }
+
+            if (resolved.type === 'TSUnionType') {
+              return resolved.types.some(matches)
+            }
+
+            if (
+              resolved.type !== 'TSTypeReference' ||
+              resolved.typeName.type !== 'Identifier' ||
+              (resolved.typeName.name !== 'Promise' && resolved.typeName.name !== 'PromiseLike')
+            ) {
+              return resolved.type === 'TSUnknownKeyword'
+            }
+
+            const value = resolved.typeArguments?.params.at(0)
+
+            return value !== undefined && matches(value)
+          })
+
+          if (isUnknown) {
+            context.report({ node: type, messageId: 'unknownReturn' })
+          }
+        })
+      }))
   },
 })

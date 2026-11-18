@@ -1,0 +1,48 @@
+import { describe, it } from 'vitest'
+import { noReduceAccumulatorCopyRule } from '../../../../src/vendor/dillon-anti-slop/rules/no-reduce-accumulator-copy.ts'
+import { testerRun } from '../../../utils/tester.utils.ts'
+
+describe('dillon-anti-slop/no-reduce-accumulator-copy', () => {
+  it.each([
+    { name: 'pushing into the accumulator passes', code: 'items.reduce((acc, item) => { acc.push(item); return acc; }, []);' },
+    { name: 'assigning into the accumulator passes', code: 'items.reduce((acc, item) => Object.assign(acc, item), {});' },
+    { name: 'assigning the accumulator into itself passes', code: 'items.reduce((acc, item) => Object.assign(acc, acc, item), {});' },
+    { name: 'copying the item passes', code: 'items.reduce((acc, item) => { acc[item.id] = { ...item }; return acc; }, {});' },
+    { name: 'copying the item into the accumulator passes', code: 'items.reduce((acc, item) => { acc.push(Object.assign({}, item)); return acc; }, []);' },
+    { name: 'slicing the item passes', code: 'items.reduce((acc, item) => { acc.push(item.slice()); return acc; }, []);' },
+    { name: 'a string accumulator passes', code: "items.reduce((acc, item) => acc.concat(item), '');" },
+    { name: 'an unknown collection accumulator passes', code: 'items.reduce((acc, item) => acc.concat(item), customCollection);' },
+    { name: 'a copy outside a reducer passes', code: 'function copy(acc) { return Object.assign({}, acc); }' },
+    { name: 'a copy in a map callback passes', code: 'items.map((acc, item) => Object.assign({}, acc));' },
+    { name: 'a copy in a nested function passes', code: 'items.reduce((acc, item) => { function copy(acc) { return Object.assign({}, acc); } return acc; }, {});' },
+    { name: 'a copy in a nested arrow passes', code: 'items.reduce((acc, item) => { const snapshot = () => Object.assign({}, acc); return acc; }, {});' },
+    { name: 'a shadowed accumulator passes', code: 'items.reduce((acc, item) => { { const acc = {}; Object.assign({}, acc); } return acc; }, {});' },
+    { name: 'a shadowed Object passes', code: 'const Object = custom; items.reduce((acc, item) => Object.assign({}, acc), {});' },
+    { name: 'an Object parameter passes', code: 'function run(Object) { return items.reduce((acc, item) => Object.assign({}, acc), {}); }' },
+    { name: 'a shadowed Array passes', code: 'const Array = custom; items.reduce((acc, item) => Array.from(acc), []);' },
+    { name: 'a reassigned alias passes', code: 'items.reduce((acc, item) => { let alias = acc; alias = item; return Object.assign({}, alias); }, {});' },
+    { name: 'an accumulating spread is left to oxc', code: 'items.reduce((acc, item) => [...acc, item], []);' },
+    { name: 'an object accumulating spread is left to oxc', code: 'items.reduce((acc, item) => ({ ...acc, [item.id]: item }), {});' },
+    { name: 'Object.assign copying the accumulator fails', code: 'items.reduce((acc, item) => Object.assign({}, acc, { [item.id]: item }), {});', errors: ['accumulatorCopy'] },
+    { name: 'reduceRight fails', code: 'items.reduceRight((acc, item) => Object.assign({}, acc, item), {});', errors: ['accumulatorCopy'] },
+    { name: 'extra callback parameters fail', code: 'items.reduce((acc, item, index, array) => Object.assign({}, acc, item), {});', errors: ['accumulatorCopy'] },
+    { name: 'a single-parameter reducer fails', code: 'items.reduce(acc => Object.assign({}, acc), {});', errors: ['accumulatorCopy'] },
+    { name: 'a function expression reducer fails', code: 'items.reduce(function (acc, item) { return Object.assign({}, item, acc); }, {});', errors: ['accumulatorCopy'] },
+    { name: 'computed methods fail', code: "items['reduce'](((acc, item) => Object['assign']({}, acc, item)), {});", errors: ['accumulatorCopy'] },
+    { name: 'a defaulted accumulator fails', code: 'items.reduce((acc = {}, item) => Object.assign({}, acc, item), {});', errors: ['accumulatorCopy'] },
+    { name: 'an alias of the accumulator fails', code: 'items.reduce((acc, item) => { const alias = acc; return Object.assign({}, alias, item); }, {});', errors: ['accumulatorCopy'] },
+    { name: 'an asserted accumulator fails', code: 'items.reduce((acc, item) => Object.assign({}, acc as State, item), {});', errors: ['accumulatorCopy'] },
+    { name: 'a copy stored in a local fails', code: 'items.reduce((acc, item) => { const next = Object.assign({}, acc); next[item.id] = item; return next; }, {});', errors: ['accumulatorCopy'] },
+    { name: 'concat on an array accumulator fails', code: 'items.reduce((acc, item) => acc.concat([item]), []);', errors: ['accumulatorCopy'] },
+    { name: 'computed concat on an asserted array fails', code: "items.reduceRight((acc, item, index) => acc['concat']([item]), [] as Item[]);", errors: ['accumulatorCopy'] },
+    { name: 'slice on an array accumulator fails', code: 'items.reduce((acc, item) => { const next = acc.slice(); next.push(item); return next; }, []);', errors: ['accumulatorCopy'] },
+    { name: 'concat through an alias fails', code: 'items.reduce((acc, item) => { const alias = acc; return alias.concat(item); }, []);', errors: ['accumulatorCopy'] },
+    { name: 'a const array initial value fails', code: 'const initial = []; items.reduce((acc, item) => acc.concat(item), initial);', errors: ['accumulatorCopy'] },
+    { name: 'Array.from of the accumulator fails', code: 'items.reduce((acc, item) => { const next = Array.from(acc); next.push(item); return next; }, []);', errors: ['accumulatorCopy'] },
+    { name: 'toSpliced fails', code: 'items.reduce((acc, item) => acc.toSpliced(acc.length, 0, item), []);', errors: ['accumulatorCopy'] },
+    { name: 'toSorted fails', code: 'items.reduce((acc, item) => acc.toSorted(), []);', errors: ['accumulatorCopy'] },
+    { name: 'toReversed fails', code: 'items.reduce((acc, item) => acc.toReversed(), []);', errors: ['accumulatorCopy'] },
+    { name: 'with fails', code: 'items.reduce((acc, item) => acc.with(0, item), []);', errors: ['accumulatorCopy'] },
+    { name: 'a local Array type passes', code: 'type Array<T> = string; function join(items: string[], initial: Array<string>) { return items.reduce((acc, item) => acc.concat(item), initial) }' },
+  ])('$name', (row) => testerRun(noReduceAccumulatorCopyRule, row))
+})

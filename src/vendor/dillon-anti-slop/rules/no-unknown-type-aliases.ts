@@ -1,6 +1,5 @@
 import { defineRule } from '@oxlint/plugins'
-import { typeAliasesCollect, typeAliasesResolvesTo } from '../shared/type-aliases.ts'
-import type { DillonAntiSlopAliasResolution } from '../../../types/dillon-anti-slop.types.ts'
+import { typeBindingsMatches, typeBindingsWith } from '../shared/type-bindings.ts'
 
 export const noUnknownTypeAliasesRule = defineRule({
   meta: {
@@ -13,29 +12,26 @@ export const noUnknownTypeAliasesRule = defineRule({
     },
   },
   createOnce(context) {
-    return {
-      Program(node) {
-        const aliases = typeAliasesCollect(node, true)
+    return typeBindingsWith(context, (defer) => ({
+      TSTypeAliasDeclaration(node) {
+        defer((environment) => {
+          const isUnknown = typeBindingsMatches(node.typeAnnotation, environment, (resolved, matches) => {
+            if (resolved.type === 'TSParenthesizedType') {
+              return matches(resolved.typeAnnotation)
+            }
 
-        const resolution: DillonAntiSlopAliasResolution = {
-          aliases,
-          keyword: 'TSUnknownKeyword',
-          shadowed: new Set<string>(),
-          unions: false,
-          promises: false,
-        }
-
-        for (const alias of aliases.values()) {
-          if (!typeAliasesResolvesTo(alias.typeAnnotation, resolution, new Set([alias.id.name]))) {
-            continue
-          }
-          context.report({
-            node: alias.id,
-            messageId: 'unknownAlias',
-            data: { alias: alias.id.name },
+            return resolved.type === 'TSUnknownKeyword' || (resolved.type === 'TSUnionType' && resolved.types.some(matches))
           })
-        }
+
+          if (isUnknown) {
+            context.report({
+              node: node.id,
+              messageId: 'unknownAlias',
+              data: { alias: node.id.name },
+            })
+          }
+        })
       },
-    }
+    }))
   },
 })

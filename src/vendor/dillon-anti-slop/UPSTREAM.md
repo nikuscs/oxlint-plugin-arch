@@ -4,10 +4,22 @@ Upstream: https://github.com/dmmulroy/anti-slop
 
 Author: Dillon Mulroy. Licensed under MIT; see LICENSE in this directory.
 
-These files were copied from an earlier vendored copy of these rules in
-another project.
-The original upstream revision of that copy has not been established. This is
-not a fresh copy of upstream main and must not be described as one.
+Most files were copied from an earlier vendored copy of these rules in
+another project; its upstream revision has not been established.
+
+`no-array-filter-map`, `no-reduce-accumulator-copy`, `no-known-value-widening`,
+`no-object-parameters`, `no-unknown-returns`, `no-unknown-type-aliases`,
+`no-unsafe-dictionary-type` and the shared `array-method`, `dictionary-types`,
+`signatures` and `type-bindings` helpers follow
+upstream revision 13909c9e07590f5a85d93c62712259fe14a883f7 as optimized by
+Christoph Nakazawa in `@nkzw/oxlint-config` 3.0.0 (MIT,
+https://github.com/nkzw-tech/oxlint-config/tree/main/quality): type bindings
+are indexed once per file and checks run at `Program:exit`.
+Local fixes: a named class expression's name binds only inside the class,
+generic arguments resolve with the substitutions of the scope that wrote them,
+a generic alias of a broad key (`Key<T> = string`) counts as a broad key, and a
+locally declared `Array` or `ReadonlyArray` type is not array evidence.
+`no-widen-then-assert` takes only its candidate filter from that version.
 
 Local packaging changes rename the plugin namespace to `dillon-anti-slop`.
 The TanStack preset selects the enabled rules; this directory implements them

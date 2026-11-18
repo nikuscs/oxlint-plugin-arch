@@ -1,9 +1,7 @@
 import { defineRule } from '@oxlint/plugins'
-import { lexicalTypeParametersNames } from '../shared/lexical-type-parameters.ts'
-import { signaturesListeners, signaturesParameterAnnotation } from '../shared/signatures.ts'
-import { typeAliasesCollect, typeAliasesResolvesTo } from '../shared/type-aliases.ts'
+import { signaturesListeners, signaturesParameterAnnotation, signaturesParameterName } from '../shared/signatures.ts'
+import { typeBindingsMatches, typeBindingsWith } from '../shared/type-bindings.ts'
 import type { DillonAntiSlopSignature } from '../../../types/dillon-anti-slop.types.ts'
-import type { ESTree } from '@oxlint/plugins'
 
 export const noObjectParametersRule = defineRule({
   meta: {
@@ -16,42 +14,32 @@ export const noObjectParametersRule = defineRule({
     },
   },
   createOnce(context) {
-    let aliases = new Map<string, ESTree.TSTypeAliasDeclaration>()
-
-    return {
-      Program(node) {
-        aliases = typeAliasesCollect(node, false)
-      },
-      ...signaturesListeners((node: DillonAntiSlopSignature) => {
-        const shadowed = lexicalTypeParametersNames(node, context.sourceCode.visitorKeys)
-
+    return typeBindingsWith(context, (defer) =>
+      signaturesListeners((node: DillonAntiSlopSignature) => {
         for (const parameter of node.params) {
-          const annotation = signaturesParameterAnnotation(parameter)
+          const type = signaturesParameterAnnotation(parameter)?.typeAnnotation
 
-          if (
-            annotation === null ||
-            annotation === undefined ||
-            !typeAliasesResolvesTo(annotation.typeAnnotation, {
-              aliases,
-              keyword: 'TSObjectKeyword',
-              shadowed,
-              unions: true,
-              promises: false,
-            })
-          ) {
+          if (type === undefined) {
             continue
           }
-          context.report({
-            node: annotation.typeAnnotation,
-            messageId: 'objectParameter',
-            data: {
-              parameter: parameter.type === 'Identifier'
-                ? parameter.name
-                : context.sourceCode.getText(parameter).replace(/\s*:\s*object\s*$/u, ''),
-            },
+          defer((environment) => {
+            const isObject = typeBindingsMatches(type, environment, (resolved, matches) => {
+              if (resolved.type === 'TSParenthesizedType') {
+                return matches(resolved.typeAnnotation)
+              }
+
+              return resolved.type === 'TSObjectKeyword' || (resolved.type === 'TSUnionType' && resolved.types.some(matches))
+            })
+
+            if (isObject) {
+              context.report({
+                node: type,
+                messageId: 'objectParameter',
+                data: { parameter: signaturesParameterName(parameter, context.sourceCode) },
+              })
+            }
           })
         }
-      }),
-    }
+      }))
   },
 })

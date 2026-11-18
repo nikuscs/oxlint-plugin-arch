@@ -1,10 +1,31 @@
 import { defineRule } from '@oxlint/plugins'
+import { dictionaryTypesUnsafeValue, dictionaryTypesWideningTarget } from '../shared/dictionary-types.ts'
 import { resolveVariable } from '../shared/resolve-variable.ts'
-import { typeEnvironmentCreate } from '../shared/type-environment.ts'
-import { wideningTargetsClassify } from '../shared/widening-targets.ts'
+import { signaturesParameterAnnotation, signaturesParameterName } from '../shared/signatures.ts'
+import { typeBindingsWith } from '../shared/type-bindings.ts'
 import type { AstFunction } from '../../../types/ast.types.ts'
-import type * as DillonAntiSlopTypes from '../../../types/dillon-anti-slop.types.ts'
+import type { DillonAntiSlopTypeAssertion, DillonAntiSlopTypeEnvironment, DillonAntiSlopWideningTarget } from '../../../types/dillon-anti-slop.types.ts'
 import type * as PluginsTypes from '@oxlint/plugins'
+
+const knownEvidenceTypes = new Set([
+  'ObjectExpression',
+  'ArrayExpression',
+  'ArrowFunctionExpression',
+  'ClassExpression',
+  'FunctionExpression',
+  'NewExpression',
+  'Literal',
+  'TemplateLiteral',
+  'UnaryExpression',
+])
+
+function containsUnknown(type: PluginsTypes.ESTree.TSType): boolean {
+  if (type.type === 'TSParenthesizedType') {
+    return containsUnknown(type.typeAnnotation)
+  }
+
+  return type.type === 'TSUnknownKeyword' || (type.type === 'TSUnionType' && type.types.some(containsUnknown))
+}
 
 function unwrapExpression(expression: PluginsTypes.ESTree.Expression): PluginsTypes.ESTree.Expression {
   let current = expression
@@ -22,63 +43,139 @@ function unwrapExpression(expression: PluginsTypes.ESTree.Expression): PluginsTy
   return current
 }
 
-function variableDeclarator(variable: PluginsTypes.Variable): PluginsTypes.ESTree.VariableDeclarator | null {
-  if (variable.defs.length !== 1) {
+function isFunctionLike(node: PluginsTypes.ESTree.Node): node is AstFunction {
+  return (
+    node.type === 'ArrowFunctionExpression' ||
+    node.type === 'FunctionDeclaration' ||
+    node.type === 'FunctionExpression' ||
+    node.type === 'TSDeclareFunction' ||
+    node.type === 'TSEmptyBodyFunctionExpression'
+  )
+}
+
+function stableConstInit(variable: PluginsTypes.Variable): PluginsTypes.ESTree.Expression | null {
+  const [definition] = variable.defs
+
+  if (variable.defs.length !== 1 || definition.type !== 'Variable' || definition.node.type !== 'VariableDeclarator') {
     return null
   }
 
-  const [definition] = variable.defs
-  return definition.type === 'Variable' && definition.node.type === 'VariableDeclarator' ? definition.node : null
+  const declarator = definition.node
+
+  return declarator.parent.type === 'VariableDeclaration' &&
+    declarator.parent.kind === 'const' &&
+    variable.references.every((reference) => reference.init || !reference.isWrite())
+    ? declarator.init
+    : null
 }
 
 function hasKnownEvidence(
   sourceCode: PluginsTypes.SourceCode,
   expression: PluginsTypes.ESTree.Expression,
-  visitedVariables = new Set<PluginsTypes.Variable>(),
+  visited = new Set<PluginsTypes.Variable>(),
 ): boolean {
-  const unwrapped = unwrapExpression(expression)
-
-  if (
-    unwrapped.type === 'ObjectExpression' ||
-    unwrapped.type === 'ArrayExpression' ||
-    unwrapped.type === 'ArrowFunctionExpression' ||
-    unwrapped.type === 'ClassExpression' ||
-    unwrapped.type === 'FunctionExpression' ||
-    unwrapped.type === 'NewExpression' ||
-    unwrapped.type === 'Literal' ||
-    unwrapped.type === 'TemplateLiteral' ||
-    unwrapped.type === 'UnaryExpression'
-  ) {
+  if (knownEvidenceTypes.has(unwrapExpression(expression).type)) {
     return true
   }
 
-  if (unwrapped.type !== 'Identifier') {
+  const unwrapped = unwrapExpression(expression)
+  const variable = unwrapped.type === 'Identifier' ? resolveVariable(sourceCode, unwrapped) : null
+
+  if (variable === null || visited.has(variable)) {
     return false
   }
 
-  const variable = resolveVariable(sourceCode, unwrapped)
+  const init = stableConstInit(variable)
 
-  if (variable === null || visitedVariables.has(variable)) {
+  if (init === null) {
+    return false
+  }
+  visited.add(variable)
+
+  return hasKnownEvidence(sourceCode, init, visited)
+}
+
+function localFunction(sourceCode: PluginsTypes.SourceCode, callee: PluginsTypes.ESTree.Expression): AstFunction | null {
+  const unwrapped = unwrapExpression(callee)
+
+  if (isFunctionLike(unwrapped)) {
+    return unwrapped
+  }
+
+  const variable = unwrapped.type === 'Identifier' ? resolveVariable(sourceCode, unwrapped) : null
+
+  if (variable?.defs.length !== 1) {
+    return null
+  }
+
+  const [definition] = variable.defs
+
+  if (definition.type === 'FunctionName' && isFunctionLike(definition.node)) {
+    return definition.node
+  }
+
+  if (definition.type !== 'Variable' || definition.node.type !== 'VariableDeclarator' || definition.node.init === null) {
+    return null
+  }
+
+  const init = unwrapExpression(definition.node.init)
+
+  return isFunctionLike(init) ? init : null
+}
+
+function hasKnownArgumentEvidence(
+  sourceCode: PluginsTypes.SourceCode,
+  expression: PluginsTypes.ESTree.Expression,
+  environment: DillonAntiSlopTypeEnvironment,
+  visited = new Set<PluginsTypes.Variable>(),
+): boolean {
+  if (expression.type === 'ParenthesizedExpression' || expression.type === 'TSNonNullExpression' || expression.type === 'TSSatisfiesExpression') {
+    return hasKnownArgumentEvidence(sourceCode, expression.expression, environment, visited)
+  }
+
+  if (expression.type === 'TSAsExpression' || expression.type === 'TSTypeAssertion') {
+    return dictionaryTypesUnsafeValue(expression.typeAnnotation, environment) === null
+  }
+
+  if (expression.type === 'CallExpression') {
+    const returnType = localFunction(sourceCode, expression.callee)?.returnType?.typeAnnotation
+
+    return returnType !== undefined && dictionaryTypesUnsafeValue(returnType, environment) === null
+  }
+
+  if (expression.type !== 'Identifier') {
+    return knownEvidenceTypes.has(unwrapExpression(expression).type)
+  }
+
+  const variable = resolveVariable(sourceCode, expression)
+
+  if (variable?.defs.length !== 1 || visited.has(variable)) {
     return false
   }
 
-  const declarator = variableDeclarator(variable)
+  const [definition] = variable.defs
+  const { node } = definition
 
-  if (declarator === null) {
-    return false
+  const parameter = definition.type === 'Parameter' && isFunctionLike(node)
+    ? node.params.find((candidate) => signaturesParameterName(candidate, sourceCode) === variable.name)
+    : undefined
+
+  const annotation = definition.type === 'Variable' && node.type === 'VariableDeclarator' && node.id.type === 'Identifier'
+    ? node.id.typeAnnotation
+    : parameter && signaturesParameterAnnotation(parameter)
+
+  if (annotation) {
+    return dictionaryTypesUnsafeValue(annotation.typeAnnotation, environment) === null
   }
 
-  if (
-    declarator.init === null ||
-    declarator.parent.type !== 'VariableDeclaration' ||
-    declarator.parent.kind !== 'const' ||
-    !variable.references.every((reference) => reference.init || !reference.isWrite())
-  ) {
+  const init = stableConstInit(variable)
+
+  if (init === null) {
     return false
   }
-  visitedVariables.add(variable)
+  visited.add(variable)
 
-  return hasKnownEvidence(sourceCode, declarator.init, visitedVariables)
+  return hasKnownArgumentEvidence(sourceCode, init, environment, visited)
 }
 
 function sourceKeyName(sourceCode: PluginsTypes.SourceCode, key: PluginsTypes.ESTree.PropertyKey): string {
@@ -86,11 +183,7 @@ function sourceKeyName(sourceCode: PluginsTypes.SourceCode, key: PluginsTypes.ES
     return key.name
   }
 
-  if (key.type === 'Literal') {
-    return String(key.value)
-  }
-
-  return sourceCode.getText(key)
+  return key.type === 'Literal' ? String(key.value) : sourceCode.getText(key)
 }
 
 function functionName(sourceCode: PluginsTypes.SourceCode, owner: AstFunction | null): string {
@@ -102,21 +195,13 @@ function functionName(sourceCode: PluginsTypes.SourceCode, owner: AstFunction | 
     return owner.id.name
   }
 
-  const parent = owner.parent
+  const { parent } = owner
 
   if (parent.type === 'VariableDeclarator' && parent.id.type === 'Identifier') {
     return parent.id.name
   }
 
-  if (parent.type === 'MethodDefinition') {
-    return sourceKeyName(sourceCode, parent.key)
-  }
-
-  return 'anonymous function'
-}
-
-function hasParentAssertion(node: PluginsTypes.ESTree.Node): boolean {
-  return node.parent?.type === 'TSAsExpression' || node.parent?.type === 'TSTypeAssertion'
+  return parent.type === 'MethodDefinition' ? sourceKeyName(sourceCode, parent.key) : 'anonymous function'
 }
 
 export const noKnownValueWideningRule = defineRule({
@@ -130,13 +215,10 @@ export const noKnownValueWideningRule = defineRule({
     },
   },
   createOnce(context) {
-    let environment: DillonAntiSlopTypes.DillonAntiSlopTypeEnvironment | null = null
+    const annotatedBindings = new Set<string>()
+    const predicateNames = new Set<string>()
 
-    const reportFlow = (
-      expression: PluginsTypes.ESTree.Expression,
-      destination: DillonAntiSlopTypes.DillonAntiSlopWideningTarget | null,
-      subject: string,
-    ) => {
+    const reportFlow = (expression: PluginsTypes.ESTree.Expression, destination: DillonAntiSlopWideningTarget | null, subject: string) => {
       if (destination === null) {
         return
       }
@@ -151,110 +233,190 @@ export const noKnownValueWideningRule = defineRule({
         return
       }
 
-      if (!hasKnownEvidence(context.sourceCode, expression)) {
+      if (hasKnownEvidence(context.sourceCode, expression)) {
+        context.report({
+          node: expression,
+          messageId: 'widening',
+          data: { subject, target: destination.kind },
+        })
+      }
+    }
+
+    const annotationTarget = (annotation: PluginsTypes.ESTree.TSTypeAnnotation | null | undefined, environment: DillonAntiSlopTypeEnvironment) =>
+      annotation === null || annotation === undefined ? null : dictionaryTypesWideningTarget(annotation.typeAnnotation, environment)
+
+    const checkPredicateCall = (node: PluginsTypes.ESTree.CallExpression, environment: DillonAntiSlopTypeEnvironment) => {
+      const owner = localFunction(context.sourceCode, node.callee)
+      const predicate = owner?.returnType?.typeAnnotation
+
+      if (owner === null || predicate?.type !== 'TSTypePredicate' || predicate.parameterName.type !== 'Identifier') {
+        return
+      }
+
+      const subjectName = predicate.parameterName.name
+      const index = owner.params.findIndex((parameter) => signaturesParameterName(parameter, context.sourceCode) === subjectName)
+      const parameter = owner.params.at(index)
+      const argument = node.arguments.at(index)
+
+      if (index === -1 || parameter === undefined || argument === undefined || argument.type === 'SpreadElement') {
+        return
+      }
+
+      const annotation = signaturesParameterAnnotation(parameter)
+
+      if (
+        annotation === null ||
+        annotation === undefined ||
+        !containsUnknown(annotation.typeAnnotation) ||
+        !hasKnownArgumentEvidence(context.sourceCode, argument, environment)
+      ) {
         return
       }
       context.report({
-        node: expression,
+        node: argument,
         messageId: 'widening',
-        data: { subject, target: destination.kind },
+        data: {
+          subject: `argument for parameter \`${signaturesParameterName(parameter, context.sourceCode)}\` of \`${functionName(context.sourceCode, owner)}\``,
+          target: 'unknown',
+        },
       })
     }
 
-    const targetFromAnnotation = (annotation: PluginsTypes.ESTree.TSTypeAnnotation | null | undefined) =>
-      environment === null || annotation === null || annotation === undefined
-        ? null
-        : wideningTargetsClassify(annotation.typeAnnotation, environment)
+    const checkReturn = (
+      node: PluginsTypes.ESTree.ArrowFunctionExpression | PluginsTypes.ESTree.ReturnStatement,
+      environment: DillonAntiSlopTypeEnvironment,
+    ) => {
+      let owner: PluginsTypes.ESTree.Node = node.type === 'ArrowFunctionExpression' ? node : node.parent
 
-    return {
-      Program(node) {
-        environment = typeEnvironmentCreate(node)
-      },
-      VariableDeclarator(node) {
-        if (node.init === null || node.id.type !== 'Identifier') {
-          return
-        }
-        reportFlow(node.init, targetFromAnnotation(node.id.typeAnnotation), `binding \`${node.id.name}\``)
-      },
-      PropertyDefinition(node) {
-        if (node.value === null) {
-          return
-        }
-        reportFlow(
-          node.value,
-          targetFromAnnotation(node.typeAnnotation),
-          `property \`${sourceKeyName(context.sourceCode, node.key)}\``,
-        )
-      },
-      AccessorProperty(node) {
-        if (node.value === null) {
-          return
-        }
-        reportFlow(
-          node.value,
-          targetFromAnnotation(node.typeAnnotation),
-          `property \`${sourceKeyName(context.sourceCode, node.key)}\``,
-        )
-      },
-      AssignmentExpression(node) {
-        if (node.operator !== '=' || node.left.type !== 'Identifier') {
-          return
-        }
+      while (owner.type !== 'Program' && !isFunctionLike(owner)) {
+        owner = owner.parent
+      }
 
-        const variable = resolveVariable(context.sourceCode, node.left)
-        const declarator = variable === null ? null : variableDeclarator(variable)
+      if (!isFunctionLike(owner)) {
+        return
+      }
 
-        if (declarator?.id.type !== 'Identifier') {
-          return
-        }
-        reportFlow(node.right, targetFromAnnotation(declarator.id.typeAnnotation), `binding \`${declarator.id.name}\``)
-      },
-      ReturnStatement(node) {
-        if (node.argument === null) {
-          return
-        }
+      const value = node.type === 'ArrowFunctionExpression' ? node.body : node.argument
 
-        let owner: AstFunction | null = null
-        let current: PluginsTypes.ESTree.Node = node.parent
-
-        while (owner === null && current.type !== 'Program') {
-          if (
-            current.type === 'ArrowFunctionExpression' ||
-            current.type === 'FunctionDeclaration' ||
-            current.type === 'FunctionExpression'
-          ) {
-            owner = current
-          }
-          current = current.parent
-        }
-        reportFlow(
-          node.argument,
-          targetFromAnnotation(owner?.returnType),
-          `return value of \`${functionName(context.sourceCode, owner)}\``,
-        )
-      },
-      ArrowFunctionExpression(node) {
-        if (node.body.type === 'BlockStatement') {
-          return
-        }
-        reportFlow(
-          node.body,
-          targetFromAnnotation(node.returnType),
-          `return value of \`${functionName(context.sourceCode, node)}\``,
-        )
-      },
-      TSAsExpression(node) {
-        if (environment === null || hasParentAssertion(node)) {
-          return
-        }
-        reportFlow(node.expression, wideningTargetsClassify(node.typeAnnotation, environment), 'assertion')
-      },
-      TSTypeAssertion(node) {
-        if (environment === null || hasParentAssertion(node)) {
-          return
-        }
-        reportFlow(node.expression, wideningTargetsClassify(node.typeAnnotation, environment), 'assertion')
-      },
+      if (owner.returnType && value !== null && value.type !== 'BlockStatement') {
+        reportFlow(value, annotationTarget(owner.returnType, environment), `return value of \`${functionName(context.sourceCode, owner)}\``)
+      }
     }
+
+    return typeBindingsWith(context, (defer) => {
+      const assertion = (node: DillonAntiSlopTypeAssertion) => {
+        if (node.parent.type !== 'TSAsExpression' && node.parent.type !== 'TSTypeAssertion') {
+          defer((environment) => reportFlow(node.expression, dictionaryTypesWideningTarget(node.typeAnnotation, environment), 'assertion'))
+        }
+      }
+
+      const property = (node: PluginsTypes.ESTree.PropertyDefinition | PluginsTypes.ESTree.AccessorProperty) => {
+        const { value, typeAnnotation } = node
+
+        if (typeAnnotation && value) {
+          defer((environment) =>
+            reportFlow(value, annotationTarget(typeAnnotation, environment), `property \`${sourceKeyName(context.sourceCode, node.key)}\``))
+        }
+      }
+
+      return {
+        Program() {
+          predicateNames.clear()
+          annotatedBindings.clear()
+        },
+        AccessorProperty: property,
+        PropertyDefinition: property,
+        TSAsExpression: assertion,
+        TSTypeAssertion: assertion,
+        ArrowFunctionExpression(node) {
+          if (node.returnType && node.body.type !== 'BlockStatement') {
+            defer((environment) => checkReturn(node, environment))
+          }
+        },
+        ReturnStatement(node) {
+          if (node.argument) {
+            defer((environment) => checkReturn(node, environment))
+          }
+        },
+        AssignmentExpression(node) {
+          const { left } = node
+
+          if (node.operator !== '=' || left.type !== 'Identifier') {
+            return
+          }
+          defer((environment) => {
+            const variable = annotatedBindings.has(left.name) ? resolveVariable(context.sourceCode, left) : null
+            const [definition] = variable?.defs ?? []
+
+            if (variable?.defs.length !== 1 || definition.type !== 'Variable' || definition.node.type !== 'VariableDeclarator') {
+              return
+            }
+
+            const { id } = definition.node
+
+            if (id.type === 'Identifier') {
+              reportFlow(node.right, annotationTarget(id.typeAnnotation, environment), `binding \`${id.name}\``)
+            }
+          })
+        },
+        CallExpression(node) {
+          const callee = unwrapExpression(node.callee)
+
+          if (callee.type === 'Identifier' || isFunctionLike(callee)) {
+            defer((environment) => {
+              if (callee.type !== 'Identifier' || predicateNames.has(callee.name)) {
+                checkPredicateCall(node, environment)
+              }
+            })
+          }
+        },
+        TSTypePredicate(node) {
+          const owner = node.parent.parent
+
+          if (owner === null || !isFunctionLike(owner) || owner.returnType?.typeAnnotation !== node) {
+            return
+          }
+
+          if (owner.id) {
+            predicateNames.add(owner.id.name)
+          }
+
+          let initializer: PluginsTypes.ESTree.Node = owner
+
+          while ('expression' in initializer.parent && initializer.parent.expression === initializer) {
+            initializer = initializer.parent
+          }
+
+          const declaration = initializer.parent
+
+          if (declaration.type !== 'VariableDeclarator' || declaration.init !== initializer) {
+            return
+          }
+
+          if (declaration.id.type === 'Identifier') {
+            predicateNames.add(declaration.id.name)
+            return
+          }
+
+          for (const variable of context.sourceCode.getDeclaredVariables(declaration)) {
+            predicateNames.add(variable.name)
+          }
+        },
+        VariableDeclarator(node) {
+          const { id, init } = node
+
+          if (id.type !== 'Identifier' || !id.typeAnnotation) {
+            return
+          }
+          annotatedBindings.add(id.name)
+
+          const { typeAnnotation } = id
+
+          if (init) {
+            defer((environment) => reportFlow(init, annotationTarget(typeAnnotation, environment), `binding \`${id.name}\``))
+          }
+        },
+      }
+    })
   },
 })
