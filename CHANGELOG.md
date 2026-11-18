@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.13.4
+
+- New `dillon-anti-slop/no-reduce-accumulator-copy`, on in every preset project beside `oxc/no-accumulating-spread`: a reducer that copies its accumulator with `Object.assign`, `Array.from` or an array copy method.
+- New `dillon-anti-slop/no-array-filter-map`, off in the preset: a `filter` then `map` (or `map` then `filter`) over a known array. Turn it on with `'dillon-anti-slop/no-array-filter-map': 'error'` in a folder's `rules`.
+- `dillon-anti-slop` type rules synced with upstream and Christoph Nakazawa's faster versions: aliases resolve in the scope they are used in, generic wrappers (`Identity<unknown>`) and `string | unknown` are seen through, `no-known-value-widening` reports known values passed to `unknown` type guards and only reports records whose key is `string`, `number`, `symbol`, `PropertyKey` or a local alias of one, and `no-unsafe-dictionary-type` allows generic constraints; generic arguments resolve in the scope that wrote them, so nested (`Identity<Identity<unknown>>`) and swapped aliases are seen through.
+- `dillon-anti-slop/no-unknown-parameters` and `dillon-anti-slop/no-object-parameters` name a destructured or defaulted parameter by its binding only (`claims`, not `claims: object = {}`).
+
 ## 0.13.3
 
 Preset defaults that change what an app reports:
