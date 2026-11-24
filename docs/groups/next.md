@@ -18,4 +18,6 @@ Takes `true`, `false`, `'warn'` or an object:
 
 With [`basics`](basics.md) on, the default export of `app/**/{layout,page,default}.tsx` may be trivial (`defaults: false` on `arch/code-trivial-functions`); the other functions in those files are checked.
 
-Rules: [`arch/boundaries-next`](../rules/boundaries-next.md), [`arch/files-helpers`](../rules/files-helpers.md), [`arch/files-route`](../rules/files-route.md).
+A page's default export is named after its folders, with the route markers dropped: `app/(marketing)/blog/[slug]/page.tsx` holds `MarketingBlogSlugPage`, a `layout.tsx` ends in `Layout`, and a Pages Router file `pages/blog/[slug].tsx` holds `BlogSlugPage` (`pages/api/` and `pages/_*.tsx` skipped) (`arch/naming-exports`).
+
+Rules: [`arch/naming-exports`](../rules/naming-exports.md), [`arch/boundaries-next`](../rules/boundaries-next.md), [`arch/files-helpers`](../rules/files-helpers.md), [`arch/files-route`](../rules/files-route.md).

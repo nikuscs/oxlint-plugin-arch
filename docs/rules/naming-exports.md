@@ -18,6 +18,8 @@ export function makeInvoiceActionSend() {}
 
 In template mode, placeholders such as `{domain}` and `{name}` come from `file`, and a file that does not match `file` is skipped. `file` may hold folders (`{domain}/actions/{name}.ts`), and `export` may list several allowed names. Only functions are checked, private ones too when `scope` is not `'exports'`.
 
+A PascalCase or camelCase placeholder drops route sigils, so route files name their component after the URL: TanStack `$userId`, `{-$category}`, `file{$id}.json`, `(group)`, `script[.]js`, `my[_]page`, `_pathless`, `posts_` and `__root` give `UserId`, `Category`, `FileIdJson`, `Group`, `ScriptJs`, `MyPage`, `Pathless`, `Posts` and `Root`, and a `$` splat adds nothing (put `.lazy` or `.route` in `file` to keep them out of the name); Next `[id]`, `[...slug]`, `[[...slug]]`, `(group)`, `(.)photo` and `@slot` give `Id`, `Slug`, `Group`, `Photo` and `Slot`. Widen `placeholder` to let such a segment match (`'[A-Za-z0-9.$-]+'` for TanStack, `'[^/]+'` for Next folders).
+
 In prefix mode, `prefix` lists where the prefix may come from: the file name, its folder, or the folder above. A name passes when it starts with any of them, so a file in `invoice/` need not repeat `invoice` in its own name.
 
 ```ts

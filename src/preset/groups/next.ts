@@ -1,5 +1,5 @@
 import { presetNextHandlerMethods, presetNextSegmentConfig, presetNextSegmentExports } from '../preset.constants.ts'
-import { presetOverride, presetRuntime, presetScopes } from '../preset.utils.ts'
+import { presetOverride, presetRouteName, presetRuntime, presetScopes } from '../preset.utils.ts'
 import type { PresetBuilder } from '../../types/preset.types.ts'
 
 export const nextGroup: PresetBuilder<'next'> = (project, settings) => {
@@ -8,6 +8,13 @@ export const nextGroup: PresetBuilder<'next'> = (project, settings) => {
   const page = { export: 'default', exports: presetNextSegmentExports, hooks, inspect: true }
 
   return [
+    presetOverride(presetScopes(nextWeb, 'app/**/page.tsx'), presetRouteName('**/app/{path}/page.tsx', 'Page', 'exports'), testFiles),
+    presetOverride(presetScopes(nextWeb, 'app/**/layout.tsx'), presetRouteName('**/app/{path}/layout.tsx', 'Layout', 'exports'), testFiles),
+    presetOverride(
+      presetScopes(nextWeb, 'pages/**/*.tsx'),
+      presetRouteName('**/pages/{path}.tsx', 'Page', 'exports'),
+      [...testFiles, ...presetScopes(nextWeb, 'pages/api/**'), ...presetScopes(nextWeb, 'pages/_*.tsx')],
+    ),
     presetOverride(
       presetScopes(nextWeb, 'app/**/{page,template,default,not-found,forbidden,unauthorized,loading}.tsx'),
       { 'arch/files-route': ['error', { ...page, intrinsic: true }] },

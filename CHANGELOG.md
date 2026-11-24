@@ -21,6 +21,10 @@ Preset defaults that change what an app reports:
 - A React package with `tailwind` and no stylesheet of its own uses the stylesheet of the app that depends on it (TanStack, Next or a plain React app), like a kit.
 - A root `alchemy.*.ts` file skips `import-extra/no-relative-packages`.
 
+- `arch/naming-exports` (and every `{Name}`/`{name}` placeholder) drops route markers: TanStack `$param`, `$` splat, `{-$optional}`, `prefix{$param}suffix`, `(group)`, `[.]` escapes, `_pathless`, `name_` and `__root`, and Next `[id]`, `[...slug]`, `[[...slug]]`, `(group)`, `(.)intercept` and `@slot` become plain words (`AdminUsersUserIdRoute`, `ShopSlugPage`).
+
+- TanStack apps name each route's component after its path (`PostsPostIdEditRoute`); Next and Vinext apps name each page after its folders (`BlogSlugPage`, `…Layout`), App Router and Pages Router alike. Turn it off or replace it with `arch/naming-exports` on the routes folder.
+
 Options:
 
 - New `extends` on `preset()`: a list of `{ sets, folders }` fragments merged left to right before the config's own; `PresetFragment` is exported.

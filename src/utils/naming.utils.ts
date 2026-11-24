@@ -30,7 +30,8 @@ export function namingBasename(filePath: string): string {
 
 export function namingPascalCase(value: string): string {
   return value
-    .split(/[-_\s.]+/)
+    .split(/[-_\s.{}/]+/)
+    .map((part) => part.replaceAll(/^[$@()[\]{}]+|[$@()[\]{}]+$/g, ''))
     .filter(Boolean)
     .map((part) => `${part.charAt(0).toUpperCase()}${part.slice(1)}`)
     .join('')

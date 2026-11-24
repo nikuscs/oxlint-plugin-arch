@@ -78,6 +78,10 @@ export function presetOverride(files: string[], rules: PresetTypes.PresetRules, 
   }
 }
 
+export function presetRouteName(file: string, suffix: string, scope: 'functions' | 'exports'): PresetTypes.PresetRules {
+  return { 'arch/naming-exports': ['error', { mode: 'template', scope, allow: '^[a-z]', file, placeholder: '.+', export: `{Path}${suffix}` }] }
+}
+
 export function presetSeverity(rules: PresetTypes.PresetRules, level: PresetTypes.PresetLevel): PresetTypes.PresetRules {
   return Object.fromEntries(
     Object.entries(rules).map(([name, value]) => {
