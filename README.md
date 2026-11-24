@@ -42,7 +42,7 @@ export default preset({
 })
 ```
 
-The preset detects each workspace from its `package.json` (TanStack, Next, Expo, backend, UI kit, library) along with its stylesheet, service registry and migrations. List only the folders you want to change. Detection, inheritance, groups, recipes and templates: [docs/folders.md](docs/folders.md). Locking down what one kind of file may contain: [docs/files.md](docs/files.md). Rules without the preset: [docs/plugin-only.md](docs/plugin-only.md).
+The preset detects each workspace from its `package.json` (TanStack, Next, Expo, backend, UI kit, library) along with its stylesheet, `#` import aliases, service registry and migrations. List only the folders you want to change. To share config across projects, split it into fragments and pick them with `extends: [server, tests]`. Detection, inheritance, groups, recipes and templates: [docs/folders.md](docs/folders.md). Locking down what one kind of file may contain: [docs/files.md](docs/files.md). Rules without the preset: [docs/plugin-only.md](docs/plugin-only.md).
 
 **3. Lint**
 
