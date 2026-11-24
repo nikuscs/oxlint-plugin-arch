@@ -31,7 +31,6 @@ export function presetContractKindTops(options: PresetTypes.PresetEffectOptions,
     : []
 
   const has = (kind: string) => found.some((name) => name.endsWith(kind.slice(1)))
-  const tables = has('*.tables.ts')
   const layers = has('*.service.ts') && !has('*.layer.types.ts')
   const detected = ['*.tables.ts', '*.constants.ts'].filter(has)
   const defaults = [...presetContractKinds.filter((kind) => !layers || kind !== '*.layer.types.ts'), ...detected]
@@ -46,9 +45,7 @@ export function presetContractKindTops(options: PresetTypes.PresetEffectOptions,
     throw new PresetError('effect.files takes contract file kinds such as `*.service.ts`.')
   }
 
-  const top = (kind: string) => (tables && kind === '*.service.ts' ? [{ kind: 'class' as const, exported: true }] : presetContractTops.get(kind))
-
-  return new Map(names.map((kind) => [kind, Array.isArray(kinds[kind]) ? kinds[kind] : top(kind)]))
+  return new Map(names.map((kind) => [kind, Array.isArray(kinds[kind]) ? kinds[kind] : presetContractTops.get(kind)]))
 }
 
 export function presetContractKeys(at: (path: string) => string, kinds: string[]): PresetTypes.PresetFolders {

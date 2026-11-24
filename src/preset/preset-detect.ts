@@ -238,7 +238,21 @@ function presetWebConventions(root: string, key: string, value: PresetTypes.Pres
   const appImports: Record<string, string | false> = Object.fromEntries(internals.map((specifier) => [specifier, 'Import the backend through its client entry.']))
   const services = posix.relative(key, presetServicesFolder(root, presetSource(root, key, value.source), value.services))
   const rpc = ['rpc.client', 'rpc/rpc.client'].filter((file) => exists(posix.join(services, `${file}.ts`)))
-  const rpcImports = Object.fromEntries(rpc.map((file) => [`**/${posix.basename(services)}/${file}{,.ts}`, 'Components take data through props or hooks; only routes and services reach the rpc client.']))
+
+  const aliased = Object.entries(presetManifest(root, key).imports ?? {}).flatMap(([alias, mapping]) => {
+    const target = presetImportTargets(mapping).find((mapped) => /^\.\/(?:[^*]*\/)?\*$/.test(mapped))
+    const folder = target === undefined ? undefined : (target.slice(2, -1).replace(/\/$/, '') || '.')
+    const inside = folder !== undefined && alias.endsWith('/*') && (folder === '.' || services === folder || services.startsWith(`${folder}/`))
+
+    return inside ? [posix.join(alias.slice(0, -2), posix.relative(folder, services))] : []
+  })
+
+  const rpcMessage = 'Components take data through props or hooks; only routes and services reach the rpc client.'
+
+  const rpcImports = Object.fromEntries(rpc.flatMap((file) => [
+    [`**/${posix.basename(services)}/${file}{,.ts}`, rpcMessage],
+    ...aliased.map((prefix) => [`${prefix}/${file}{,.ts}`, rpcMessage]),
+  ]))
 
   if (servers.length > 0) {
     appImports['**/services/*.service'] = 'Import the client or rsc service file, not a server service.'

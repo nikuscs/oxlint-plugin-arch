@@ -456,7 +456,7 @@ export interface PresetProject {
   backendRoots: string[]
   packageSources: string[]
   reactPackages: string[]
-  aliases: Record<string, string>
+  aliases: Record<string, Record<string, string>>
   serviceRoots: string[]
   app: string[]
   appFiles: string[]

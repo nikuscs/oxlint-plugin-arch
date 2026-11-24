@@ -446,7 +446,7 @@ describe('preset folders', () => {
       expected: ['error', { aliases: { '#web': expect.stringMatching(/apps\/web\/src$/) } }],
     },
     {
-      name: 'a subpath import two packages map to different folders is no alias',
+      name: 'a subpath import resolves inside the package that declares it',
       files: {
         'package.json': workspaces,
         'apps/web/package.json': manifest('web', { '@tanstack/react-start': '1', react: '19' }, { '#/*': './src/*' }),
@@ -456,7 +456,17 @@ describe('preset folders', () => {
       folders: {},
       file: 'apps/web/src/services/a.ts',
       rule: 'arch/boundaries-tanstack',
-      expected: ['error', { aliases: expect.not.objectContaining({ '#': expect.anything() }) }],
+      expected: ['error', { aliases: { '#': expect.stringMatching(/apps\/web\/src$/) } }],
+    },
+    {
+      name: 'a fragment and the local folders combine their layout folders',
+      tree: ['apps/web/src/lib/', 'apps/web/src/routes/'],
+      files: { 'apps/web/package.json': manifest('web', { react: '1' }, {}) },
+      extends: [{ folders: { 'apps/web': { layout: { folders: ['lib'] } } } }],
+      folders: { 'apps/web': { layout: { folders: ['routes'] } } },
+      file: 'apps/web/src/lib/dates.ts',
+      rule: 'arch/files-restricted',
+      expected: undefined,
     },
     {
       name: 'a root alchemy file may import across packages',

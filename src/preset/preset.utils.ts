@@ -197,25 +197,20 @@ export function presetImportTargets(value: unknown): string[] {
   return value instanceof Object ? Object.values(value).flatMap(presetImportTargets) : []
 }
 
-export function presetHarvestAliases(root: string, directories: string[]): Record<string, string> {
-  const found = new Map<string, Set<string>>()
-
-  for (const directory of directories) {
-    for (const [key, value] of Object.entries(presetManifest(root, directory).imports ?? {})) {
+export function presetHarvestAliases(root: string, directories: string[]): Record<string, Record<string, string>> {
+  return Object.fromEntries(directories.map((directory) => [
+    directory,
+    Object.fromEntries(Object.entries(presetManifest(root, directory).imports ?? {}).flatMap(([key, value]) => {
       const alias = /^(#[^*]*)\/\*$/.exec(key)?.[1]
       const target = presetImportTargets(value).find((mapped) => /^\.\/(?:[^*]*\/)?\*$/.test(mapped))
 
-      if (alias && target) {
-        found.set(alias, (found.get(alias) ?? new Set()).add(posix.join(directory, target.slice(0, -1)).replace(/\/$/, '') || '.'))
-      }
-    }
-  }
-
-  return Object.fromEntries([...found].flatMap(([alias, paths]) => (paths.size === 1 ? [[alias, [...paths][0]]] : [])))
+      return alias && target ? [[alias, posix.join(directory, target.slice(0, -1)).replace(/\/$/, '') || '.']] : []
+    })),
+  ]))
 }
 
-export function presetAliases(project: PresetTypes.PresetProject, aliases: Record<string, string | false> | undefined): Record<string, string> {
-  const merged = { ...project.aliases, ...Object.fromEntries(Object.entries(aliases ?? {}).map(([alias, path]) => [alias.replace(/\/$/, ''), path])) }
+export function presetAliases(project: PresetTypes.PresetProject, aliases: Record<string, string | false> | undefined, key = '.'): Record<string, string> {
+  const merged = { ...project.aliases[key], ...Object.fromEntries(Object.entries(aliases ?? {}).map(([alias, path]) => [alias.replace(/\/$/, ''), path])) }
 
   return Object.fromEntries(Object.entries(merged).flatMap(([alias, path]) => (path === false ? [] : [[alias, resolve(project.root, path)]])))
 }
@@ -234,7 +229,7 @@ export function presetRuntime(
     const options: PresetTypes.PresetRuntimeOptions = {
       web: project.web.map((path) => resolve(project.root, path)),
       backend: project.backend.map((path) => resolve(project.root, path)),
-      aliases: presetAliases(project, unit.scope.effective.imports?.aliases),
+      aliases: presetAliases(project, unit.scope.effective.imports?.aliases, unit.key),
       backendPackages: project.units.flatMap((item) => (item.kind === 'backend' ? (presetPackageName(project.root, item.key) ?? []) : [])),
       server: settings.server,
       client: settings.client,
@@ -338,21 +333,38 @@ function presetMergeModule(base: PresetTypes.PresetFolder, top: PresetTypes.Pres
   return { ...top, effect: { ...top.effect, module: { ...(typeof before === 'string' ? { name: before } : before), ...after } } }
 }
 
+function presetLayoutList(layout: PresetTypes.PresetFolder['layout'], key: 'files' | 'folders'): string[] | undefined {
+  return layout instanceof Object ? layout[key] : undefined
+}
+
 export function presetMerge(base: boolean | PresetTypes.PresetFolder | undefined, top: boolean | PresetTypes.PresetFolder): boolean | PresetTypes.PresetFolder {
   if (!(base instanceof Object) || !(top instanceof Object)) {
     return top === true && base instanceof Object ? base : top
   }
 
   const merged = presetMergeObject(base, presetMergeModule(base, top), 2)
-  const before = base.layout instanceof Object ? base.layout.files : undefined
-  const after = top.layout instanceof Object ? top.layout.files : undefined
   const owned = [base.deny, top.deny].flatMap((deny) => (deny instanceof Object ? (deny.only ?? []) : []))
 
   if (owned.length > 0 && merged.deny instanceof Object) {
     merged.deny = { ...merged.deny, only: owned }
   }
 
-  return before && after && merged.layout instanceof Object ? { ...merged, layout: { ...merged.layout, files: [...before, ...after] } } : merged
+  if (!(merged.layout instanceof Object)) {
+    return merged
+  }
+
+  const layout = { ...merged.layout }
+
+  for (const key of ['files', 'folders'] as const) {
+    const before = presetLayoutList(base.layout, key)
+    const after = presetLayoutList(top.layout, key)
+
+    if (before && after) {
+      layout[key] = [...new Set([...before, ...after])]
+    }
+  }
+
+  return { ...merged, layout }
 }
 
 export function presetNames(inherited: string[], entries: unknown, option: string, valid = presetLayoutFileName): string[] {

@@ -4,6 +4,13 @@ import type { TesterPresetRow } from '../types/tester.types.ts'
 
 describe('preset React', () => {
   const manifest = (name: string, dependencies: Record<string, string>) => JSON.stringify({ name, dependencies })
+
+  const aliasedWeb = JSON.stringify({
+    name: 'web',
+    dependencies: { '@tanstack/react-start': '1' },
+    imports: { '#web/*': './src/*' },
+  })
+
   const workspaces = JSON.stringify({ workspaces: ['apps/*', 'packages/*'] })
   const tailwind = '@import "tailwindcss";'
   const frontend = { 'package.json': workspaces, 'packages/frontend/package.json': manifest('@app/frontend', { react: '1', effect: '1' }), 'packages/frontend/src/link.tsx': '' }
@@ -44,11 +51,11 @@ describe('preset React', () => {
     { name: 'a frontend page names its props interfaces', tree: views, files: frontend, folders: {}, file: 'packages/frontend/src/pages/home/home-page.tsx', rule: 'arch/naming-declarations', expected: ['error', { kinds: ['interface'] }, { kinds: ['type', 'interface'], pattern: 'Props$' }] },
     { name: 'a frontend page is TSX', tree: views, files: frontend, folders: {}, file: 'packages/frontend/src/pages/home/home.ts', rule: 'arch/files-restricted', expected: ['error', { message: 'Pages use TSX.' }] },
     { name: 'a frontend component exports the component its file names', tree: views, files: frontend, folders: {}, file: 'packages/frontend/src/components/order/order-card.tsx', rule: 'arch/files-exports', expected: ['error', { file: '{area}/{name}.tsx', names: ['{Name}'], types: true }] },
-    { name: 'a frontend component locks its top level', tree: views, files: frontend, folders: {}, file: 'packages/frontend/src/components/order/order-card.tsx', rule: 'arch/files-top-level', expected: ['error', { file: '{area}/{name}.tsx', allow: ['import', 'interface', { kind: 'function', names: '^{Name}' }, { kind: 'const', exported: true, names: '^{Name}$', from: '^lazy$' }] }] },
+    { name: 'a frontend component locks its top level', tree: views, files: frontend, folders: {}, file: 'packages/frontend/src/components/order/order-card.tsx', rule: 'arch/files-top-level', expected: ['error', { file: '{area}/{name}.tsx', allow: ['import', 'interface', { kind: 'function', names: '^{Name}' }, { kind: 'const', names: '^{Name}', from: '^(?:lazy|forwardRef|memo)$' }] }] },
     { name: 'a frontend component names its props interfaces', tree: views, files: frontend, folders: {}, file: 'packages/frontend/src/components/order/order-card.tsx', rule: 'arch/naming-declarations', expected: ['error', { kinds: ['interface'] }, { kinds: ['type', 'interface'], pattern: 'Props$' }] },
     { name: 'a frontend component reads context through use and storage through hooks', tree: views, files: frontend, folders: {}, file: 'packages/frontend/src/components/order/order-card.tsx', rule: 'arch/boundaries-deny', expected: ['error', { calls: { useContext: expect.any(String), 'localStorage.getItem': expect.any(String), 'localStorage.setItem': expect.any(String), 'sessionStorage.getItem': expect.any(String), 'sessionStorage.setItem': expect.any(String) } }] },
     { name: 'a frontend component may call use', tree: views, files: frontend, folders: {}, file: 'packages/frontend/src/components/order/order-card.tsx', rule: 'arch/boundaries-deny', expected: ['error', { calls: expect.not.objectContaining({ use: expect.anything() }) }] },
-    { name: 'a frontend page reads context through use', tree: views, files: frontend, folders: {}, file: 'packages/frontend/src/pages/home/home-page.tsx', rule: 'arch/boundaries-deny', expected: ['error', { calls: { useContext: 'A page reads React state through use(), not useContext().' } }] },
+    { name: 'a frontend page reads context through use', tree: views, files: frontend, folders: {}, file: 'packages/frontend/src/pages/home/home-page.tsx', rule: 'arch/boundaries-deny', expected: ['error', { calls: expect.objectContaining({ useContext: 'A page reads a context through its hook in hooks/, not useContext().' }) }] },
     { name: 'a frontend context file exports contexts', tree: views, files: frontend, folders: {}, file: 'packages/frontend/src/context/cart.ts', rule: 'arch/files-exports', expected: ['error', { patterns: ['[A-Z]\\w*Context$'], types: true }] },
     { name: 'a frontend context file reads context through use', tree: views, files: frontend, folders: {}, file: 'packages/frontend/src/context/cart.ts', rule: 'arch/boundaries-deny', expected: ['error', { calls: { useContext: expect.any(String) } }] },
     { name: 'a frontend context provider declares only props types', tree: views, files: frontend, folders: {}, file: 'packages/frontend/src/context/cart-provider.tsx', rule: 'arch/types-declarations', expected: ['error', { allow: 'Props$' }] },
@@ -65,6 +72,15 @@ describe('preset React', () => {
       file: 'apps/web/src/components/card.tsx',
       rule: 'arch/boundaries-deny',
       expected: ['error', { imports: { '**/services/rpc.client{,.ts}': 'Components take data through props or hooks; only routes and services reach the rpc client.' } }],
+    },
+    {
+      name: 'components reach no rpc client through the package alias',
+      tree: ['apps/web/src/components/'],
+      files: { 'package.json': workspaces, 'apps/web/package.json': aliasedWeb, 'apps/web/src/services/rpc.client.ts': '' },
+      folders: {},
+      file: 'apps/web/src/components/card.tsx',
+      rule: 'arch/boundaries-deny',
+      expected: ['error', expect.objectContaining({ imports: expect.objectContaining({ '#web/services/rpc.client{,.ts}': expect.any(String) }) })],
     },
     {
       name: 'routes reach the rpc client',

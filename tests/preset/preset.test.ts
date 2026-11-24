@@ -372,6 +372,15 @@ describe('preset', () => {
       expected: ['error', { max: 1500 }],
     },
     {
+      name: 'a types limit below the line limit holds for types files',
+      files: { 'src/order.types.ts': '' },
+      folders: { '.': { limits: { lines: 50, types: 10 } } },
+      detect: false,
+      file: 'src/order.types.ts',
+      rule: 'max-lines',
+      expected: ['error', { max: 10 }],
+    },
+    {
       name: 'limits on a file pattern leave other files on the folder limit',
       files: { 'src/order.actions.ts': '', 'src/order.ts': '' },
       folders: { '.': true, 'src/**/*.actions.ts': { limits: { lines: 1500 } } },

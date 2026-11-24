@@ -410,13 +410,13 @@ export function presetProject(config: PresetTypes.PresetConfig): PresetTypes.Pre
       .flatMap((unit) => {
         const name = presetManifest(root, unit.key).name ?? ''
 
-        const consumer = webUnits.find((candidate) => {
+        const consumer = units.find((candidate) => {
           const manifest = presetManifest(root, candidate.key)
 
-          return name in { ...manifest.dependencies, ...manifest.devDependencies }
+          return candidate !== unit && name in { ...manifest.dependencies, ...manifest.devDependencies } && stylesheet(candidate) !== undefined
         })
 
-        const css = stylesheet(unit) ?? (consumer && webCss[consumer.source]) ?? webStylesheets.at(0)
+        const css = stylesheet(unit) ?? (consumer && stylesheet(consumer)) ?? webStylesheets.at(0)
 
         if (css === undefined && unit.scope.effective.kit) {
           throw new PresetError(`The UI kit ${unit.key} needs a Tailwind stylesheet: set tailwind.css on it.`)

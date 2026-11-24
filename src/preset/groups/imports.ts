@@ -48,25 +48,28 @@ export const importsGroup: PresetTypes.PresetBuilder<'imports'> = (project, sett
 
   const absolute = (paths: string[]) => paths.map((path) => resolve(project.root, path))
 
-  overrides.push(
-    presetOverride([...project.appFiles, ...presetScopes(project.packages, `**/${presetExtensions}`)], {
-      'arch/boundaries-imports': [
-        'error',
-        {
-          web: absolute(project.web),
-          backend: absolute(project.backend),
-          packages: absolute(project.packages),
-          roles: project.fileKinds,
-          services: absolute([...project.web, ...project.backend].map((source) => project.serviceFolders[source])),
-          portable: true,
-          aliases: presetAliases(project, settings.aliases),
-          appPackages: importsPackageNames(project, ['web', 'backend']),
-          backendPackages: importsPackageNames(project, ['backend']),
-          entrypoints: project.publicEntrypoints,
-        },
-      ],
-    }),
-  )
+  const options = {
+    web: absolute(project.web),
+    backend: absolute(project.backend),
+    packages: absolute(project.packages),
+    roles: project.fileKinds,
+    services: absolute([...project.web, ...project.backend].map((source) => project.serviceFolders[source])),
+    portable: true,
+    aliases: presetAliases(project, settings.aliases),
+    appPackages: importsPackageNames(project, ['web', 'backend']),
+    backendPackages: importsPackageNames(project, ['backend']),
+    entrypoints: project.publicEntrypoints,
+  }
+
+  const files = [...project.appFiles, ...presetScopes(project.packages, `**/${presetExtensions}`)]
+
+  overrides.push(presetOverride(files, { 'arch/boundaries-imports': ['error', options] }))
+
+  for (const unit of project.units.filter((item) => item.key !== '.' && Object.keys(project.aliases[item.key] ?? {}).length > 0)) {
+    overrides.push(presetOverride(files.filter((glob) => glob.startsWith(`${unit.key}/`)), {
+      'arch/boundaries-imports': ['error', { ...options, aliases: presetAliases(project, settings.aliases, unit.key) }],
+    }))
+  }
 
   return overrides
 }

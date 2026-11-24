@@ -187,7 +187,7 @@ function presetEffectStrictServer(
   const places: PresetTypes.PresetFolder = { rules: { 'arch/files-restricted': ['error', { message: `Server code lives in ${presetPlaces(settings.folders.map((name) => `${name}/`))}.` }] } }
   const handlers = options.handlers?.allow === undefined ? {} : { allow: options.handlers.allow }
 
-  const testFolders = [...new Set(settings.tests.map((glob) => glob.split('/')[0]).filter((folder) => Boolean(folder) && !folder.includes('*')))]
+  const testFolders = [...new Set(settings.tests.map((glob) => glob.split('/')[0]).filter((folder) => /^tests?$/.test(folder)))]
   const testRules: PresetTypes.PresetFolder = { rules: { 'arch/code-function-nesting': ['error', { max: 5 }], 'arch/effect-yield-name': 'off' } }
   const strictTests: PresetTypes.PresetFolder = { top: { allow: ['describe*', 'it*', 'test*', 'layer*'] } }
 
@@ -248,7 +248,7 @@ function presetEffectStrictServer(
     ],
     ['mails', at('mails/*.mail.tsx'), { rules: { 'arch/files-exports': ['error', { file: '{name}.mail.tsx', names: ['{name}Mail', '{Name}Email'], types: true }] } }],
     ...testFolders.map((folder): PresetTypes.PresetEffectStrictEntry => ['tests', folder, testRules]),
-    ...settings.tests.map((glob): PresetTypes.PresetEffectStrictEntry => ['tests', glob, strictTests]),
+    ...settings.tests.map((glob): PresetTypes.PresetEffectStrictEntry => ['tests', glob, testFolders.includes(glob.split('/')[0]) ? strictTests : { ...strictTests, ...testRules }]),
   ]
 }
 
@@ -334,7 +334,7 @@ function presetEffectLabels(
 function presetEffectViews(at: (path: string) => string): PresetTypes.PresetFolders {
   const names: PresetTypes.PresetRules = { 'arch/naming-declarations': ['error', { kinds: ['interface'] }, { kinds: ['type', 'interface'], pattern: 'Props$' }] }
   const props: PresetTypes.PresetRules = { 'arch/types-declarations': ['error', { allow: 'Props$' }] }
-  const context = 'reads React state through use(), not useContext().'
+  const context = 'reads a context through its hook in hooks/, not useContext().'
   const storage = ['localStorage', 'sessionStorage'].flatMap((store) => ['getItem', 'setItem'].map((method) => [`${store}.${method}`, `Read ${store} through a hook.`]))
   const builders = ['Struct', 'Literals', 'Union', 'Array', 'Record'].map((name) => [`Schema.${name}`, 'Define a Schema in constants/ or the contract, not in a view.'])
 
@@ -352,7 +352,7 @@ function presetEffectViews(at: (path: string) => string): PresetTypes.PresetFold
         'arch/files-exports': ['error', { file: '{area}/{name}.tsx', names: ['{Name}'], types: true }],
         'arch/files-top-level': [
           'error',
-          { file: '{area}/{name}.tsx', allow: ['import', 'interface', { kind: 'function', names: '^{Name}' }, { kind: 'const', exported: true, names: '^{Name}$', from: '^lazy$' }] },
+          { file: '{area}/{name}.tsx', allow: ['import', 'interface', { kind: 'function', names: '^{Name}' }, { kind: 'const', names: '^{Name}', from: '^(?:lazy|forwardRef|memo)$' }] },
         ],
         ...names,
       },
@@ -399,19 +399,21 @@ function presetEffectFrontend(root: string, key: string, value: PresetTypes.Pres
   const routers = presetEffectRouters.map((name) => ({ name, message: 'Import the router through link.tsx.' }))
   const linkRule: PresetTypes.PresetRules = { 'no-restricted-imports': ['error', { patterns: presetBaseImports }] }
   const services = Object.fromEntries(contracts.map((name) => [`${name}/*/*.service{,.ts}`, 'A frontend package takes its data functions as props, not from a contract service.']))
+  const packageRoot: PresetTypes.PresetFolder = contracts.length > 0 ? { forms: true, deny: { imports: services } } : { forms: true }
+
+  const source: PresetTypes.PresetFolder = {
+    deny: { calls: presetEffectParsers, imports: { '@orpc/*': 'A frontend package takes its data functions as props, not from an rpc client.' } },
+    rules: {
+      'arch/react-query-props': 'error',
+      'no-restricted-imports': [
+        'error',
+        { paths: [{ ...routers[0], allowImportNames: ['ClientOnly'] }, ...routers.slice(1)], patterns: presetBaseImports },
+      ],
+    },
+  }
 
   return presetFilled({
-    '.': contracts.length > 0 ? { forms: true, deny: { imports: services } } : { forms: true },
-    [at('.')]: {
-      deny: { calls: presetEffectParsers, imports: { '@orpc/*': 'A frontend package takes its data functions as props, not from an rpc client.' } },
-      rules: {
-        'arch/react-query-props': 'error',
-        'no-restricted-imports': [
-          'error',
-          { paths: [{ ...routers[0], allowImportNames: ['ClientOnly'] }, ...routers.slice(1)], patterns: presetBaseImports },
-        ],
-      },
-    },
+    ...(at('.') === '.' ? { '.': presetMerge(packageRoot, source) } : { '.': packageRoot, [at('.')]: source }),
     [at('link.tsx')]: { rules: linkRule },
     [at('link.ts')]: { rules: linkRule },
     [at('services/**/*.client.ts')]: { rules: { 'arch/backend-service-functions': ['error', { frontend: true }] } },
@@ -428,15 +430,16 @@ function presetEffectWeb(root: string, key: string, value: PresetTypes.PresetFol
 
   const types = contracts.map((name) => ({ name, allowTypeImports: true, message: 'The web imports the contract package as types only.' }))
   const rsc: PresetTypes.PresetFolder = { rules: { 'no-restricted-imports': ['error', { paths: types, patterns: presetBaseImports }] } }
+  const parsers = value.effect ? { deny: { calls: presetEffectParsers } } : {}
 
   if (!value.tanstack) {
-    return { [at('.')]: { ...rsc, deny: { calls: presetEffectParsers } } }
+    return { [at('.')]: { ...rsc, ...parsers } }
   }
 
   const services = value.services ?? 'services'
 
   return {
-    [at('.')]: { deny: { calls: presetEffectParsers }, rules: { 'no-restricted-imports': ['error', { paths: [...types, presetTanstackRsc], patterns: presetBaseImports }] } },
+    [at('.')]: { ...parsers, rules: { 'no-restricted-imports': ['error', { paths: [...types, presetTanstackRsc], patterns: presetBaseImports }] } },
     [at(`${services}/**/*.rsc.ts`)]: rsc,
     [at(`${services}/**/*.rsc.tsx`)]: rsc,
   }
