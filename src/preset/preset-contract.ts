@@ -1,12 +1,15 @@
+import { readdirSync } from 'node:fs'
+import { resolve } from 'node:path'
 import { optionsEscape } from '../utils/options.utils.ts'
 import { presetModuleErrorLabels } from './preset-module.ts'
-import { PresetError, presetNames, presetPlaces, presetTop } from './preset.utils.ts'
+import { PresetError, presetIsDirectory, presetNames, presetPlaces, presetTop } from './preset.utils.ts'
 import type * as PresetTypes from '../types/preset.types.ts'
 
 const presetContractKinds = ['*.schemas.ts', '*.admin.schemas.ts', '*.contract.ts', '*.admin.contract.ts', '*.errors.ts', '*.layer.types.ts', '*.service.ts']
 
 const presetContractTops = new Map<string, PresetTypes.PresetEffectTop>([
   ['*.schemas.ts', ['type', 'interface', 'namespace', { kind: 'const', exported: true }]],
+  ['*.tables.ts', ['type', 'namespace']],
   ['*.contract.ts', ['type', { kind: 'const', exported: true }, { kind: 'const', exported: false, from: '^[A-Z]\\w*\\.' }]],
   ['*.service.ts', ['interface', 'type', 'class', 'namespace']],
   ['*.errors.ts', [{ kind: 'class', exported: true }]],
@@ -22,8 +25,17 @@ const presetContractSchemaUses = {
   structural: ['Struct', 'Array', 'Union', 'Record', 'Tuple', 'NullOr', 'UndefinedOr', 'optional', 'TaggedStruct'],
 }
 
-export function presetContractKindTops(options: PresetTypes.PresetEffectOptions): Map<string, PresetTypes.PresetEffectTop | undefined> {
-  const listed = presetNames(presetContractKinds, options.files ?? [], 'effect.files')
+export function presetContractKindTops(options: PresetTypes.PresetEffectOptions, source?: string): Map<string, PresetTypes.PresetEffectTop | undefined> {
+  const found = source !== undefined && presetIsDirectory(source)
+    ? readdirSync(source).filter((name) => presetIsDirectory(resolve(source, name))).flatMap((name) => readdirSync(resolve(source, name)))
+    : []
+
+  const has = (kind: string) => found.some((name) => name.endsWith(kind.slice(1)))
+  const tables = has('*.tables.ts')
+  const layers = has('*.service.ts') && !has('*.layer.types.ts')
+  const detected = ['*.tables.ts', '*.constants.ts'].filter(has)
+  const defaults = [...presetContractKinds.filter((kind) => !layers || kind !== '*.layer.types.ts'), ...detected]
+  const listed = presetNames(defaults, options.files ?? [], 'effect.files')
   const kinds = options.contract?.kinds ?? {}
 
   presetNames([], Object.keys(kinds), 'effect.contract.kinds')
@@ -34,7 +46,9 @@ export function presetContractKindTops(options: PresetTypes.PresetEffectOptions)
     throw new PresetError('effect.files takes contract file kinds such as `*.service.ts`.')
   }
 
-  return new Map(names.map((kind) => [kind, Array.isArray(kinds[kind]) ? kinds[kind] : presetContractTops.get(kind)]))
+  const top = (kind: string) => (tables && kind === '*.service.ts' ? [{ kind: 'class' as const, exported: true }] : presetContractTops.get(kind))
+
+  return new Map(names.map((kind) => [kind, Array.isArray(kinds[kind]) ? kinds[kind] : top(kind)]))
 }
 
 export function presetContractKeys(at: (path: string) => string, kinds: string[]): PresetTypes.PresetFolders {
@@ -62,11 +76,12 @@ export function presetContractKeys(at: (path: string) => string, kinds: string[]
       },
     },
     [at('*/*.admin.*.ts')]: { rules: { 'arch/files-exports': ['error', { stem: 'folder', singularize: 'trailing-s', patterns: ['Admin{Domain}\\w*'] }] } },
-    [at('*/*.schemas.ts')]: schemas,
+    [at('*/*.schemas.ts')]: { rules: { ...schemas.rules, 'arch/effect-schema-first': 'error' } },
     [at('*/*.contract.ts')]: schemas,
     [at('*/*.errors.ts')]: noFunctions,
     [at('*/*.layer.types.ts')]: noFunctions,
-    [at('*/*.service.ts')]: noFunctions,
+    [at('*/*.service.ts')]: { rules: { 'arch/files-no-functions': 'error', 'effecttsgo/lazy-effect': 'off' } },
+    [at('*/*.constants.ts')]: { rules: { 'arch/files-exports': ['error', { patterns: ['{STEM}(?:_[A-Z0-9]+)*'] }] } },
     [at('shared/*.ts')]: {
       rules: {
         'arch/naming-file': 'off',
@@ -83,6 +98,7 @@ export function presetContractKeys(at: (path: string) => string, kinds: string[]
         'arch/schemas-single-use': ['error', presetContractSchemaUses],
       },
     },
+    [at('contract.constants.ts')]: { rules: { 'arch/files-constants-only': ['error', { reexports: true }] } },
   }
 }
 
@@ -105,12 +121,16 @@ export function presetContractStrict(
 
   const tops = [...kinds].flatMap(([kind, top]): PresetTypes.PresetEffectStrictEntry[] => (top === undefined || (kind === '*.errors.ts' && !errors) ? [] : [['kinds', at(`*/${kind}`), presetTop(top)]]))
 
+  const schemasTop = kinds.get('*.schemas.ts')
+  const shared: PresetTypes.PresetEffectStrictEntry[] = schemasTop ? [['kinds', at('shared/*.schemas.ts'), presetTop([...schemasTop, { kind: 'function-const', exported: true }])]] : []
+
   const entries: PresetTypes.PresetEffectStrictEntry[] = [
     ['places', at('*.ts'), { rules: { 'arch/naming-file': ['error', { pattern, message: `A file beside the contract folders is ${presetPlaces(root)}.` }] } }],
     ['places', at('*/*/**/*.ts'), { rules: { 'arch/files-restricted': ['error', { message: 'A contract folder is flat: no folder below <d>/.' }] } }],
     ...tops,
+    ...shared,
     ['kinds', at('*/*.contract.ts'), { deny: { calls: { 'Schema.Struct': 'Name the Schema in <d>.schemas.ts.' } }, rules: sibling }],
-    ['service', at('*/*.service.ts'), { rules: { ...labels, 'arch/effect-service-params': 'error' } }],
+    ['service', at('*/*.service.ts'), { rules: { ...labels, 'arch/effect-service-params': ['error', { allow: ['^\\w+Schemas\\.'] }] } }],
   ]
 
   if (errors) {

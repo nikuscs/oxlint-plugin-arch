@@ -22,6 +22,7 @@ export interface TesterPresetRow {
   link?: boolean
   folders: PresetFolders
   sets?: PresetConfig['sets']
+  extends?: PresetConfig['extends']
   detect?: boolean
   file: string
   rule: string

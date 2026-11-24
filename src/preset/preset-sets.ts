@@ -3,7 +3,8 @@ import type * as PresetTypes from '../types/preset.types.ts'
 
 const presetSetsReserved = ['domain', 'stem', 'file', 'folder', 'parent', 'name', 'key', 'value']
 
-export function presetSets(folders: PresetTypes.PresetFolders, sets: Record<string, PresetTypes.PresetSet> = {}): PresetTypes.PresetFolders {
+export function presetSets(fragments: PresetTypes.PresetFragment[]): PresetTypes.PresetFolders[] {
+  const sets: PresetTypes.PresetSets = Object.assign({}, ...fragments.map((fragment) => fragment.sets))
   const names = Object.keys(sets)
   const reserved = names.find((name) => presetSetsReserved.includes(name) || !/^[a-z][A-Za-z0-9]*$/.test(name))
 
@@ -14,7 +15,7 @@ export function presetSets(folders: PresetTypes.PresetFolders, sets: Record<stri
   }
 
   if (names.length === 0) {
-    return folders
+    return fragments.map((fragment) => fragment.folders ?? {})
   }
 
   const token = new RegExp(`\\{(${names.join('|')})\\}`)
@@ -85,5 +86,5 @@ export function presetSets(folders: PresetTypes.PresetFolders, sets: Record<stri
   }
 
   // SAFETY: folders hold only plain JSON values, and expansion keeps their shape; each folder is validated when it is resolved.
-  return expand(folders as PresetTypes.PresetSetValue) as PresetTypes.PresetFolders
+  return fragments.map((fragment) => expand((fragment.folders ?? {}) as PresetTypes.PresetSetValue) as PresetTypes.PresetFolders)
 }

@@ -3,7 +3,7 @@ import { matchesGlob, posix, resolve } from 'node:path'
 import { presetEffectConventions, presetEffectServers } from './preset-effect.ts'
 import { presetRecipes } from './preset-recipes.ts'
 import * as PresetConstants from './preset.constants.ts'
-import { presetFilled, presetIsDirectory, presetManifest, presetMerge, presetServicesFolder, presetSource } from './preset.utils.ts'
+import { presetFilled, presetImportTargets, presetIsDirectory, presetManifest, presetMerge, presetServicesFolder, presetSource } from './preset.utils.ts'
 import type * as PresetTypes from '../types/preset.types.ts'
 
 function presetDirectories(root: string, base: string, skip = PresetConstants.presetDetectSkip): string[] {
@@ -84,18 +84,6 @@ function presetRecipe(root: string, directory: string, app: boolean, folder: Pre
   }
 
   return presetRecipes.library
-}
-
-function presetImportTargets(value: unknown): string[] {
-  if (typeof value === 'string') {
-    return [value]
-  }
-
-  if (Array.isArray(value)) {
-    return value.flatMap(presetImportTargets)
-  }
-
-  return value instanceof Object ? Object.values(value).flatMap(presetImportTargets) : []
 }
 
 function presetSpecifiers(manifest: PresetTypes.PresetManifest, target: string, file = false): string[] {
@@ -248,6 +236,9 @@ function presetWebConventions(root: string, key: string, value: PresetTypes.Pres
   const clients = Object.fromEntries(named.map((name) => [`${name}/client`, 'Route handlers run on the server; import the server entry.']))
 
   const appImports: Record<string, string | false> = Object.fromEntries(internals.map((specifier) => [specifier, 'Import the backend through its client entry.']))
+  const services = posix.relative(key, presetServicesFolder(root, presetSource(root, key, value.source), value.services))
+  const rpc = ['rpc.client', 'rpc/rpc.client'].filter((file) => exists(posix.join(services, `${file}.ts`)))
+  const rpcImports = Object.fromEntries(rpc.map((file) => [`**/${posix.basename(services)}/${file}{,.ts}`, 'Components take data through props or hooks; only routes and services reach the rpc client.']))
 
   if (servers.length > 0) {
     appImports['**/services/*.service'] = 'Import the client or rsc service file, not a server service.'
@@ -255,7 +246,7 @@ function presetWebConventions(root: string, key: string, value: PresetTypes.Pres
 
   const conventions: PresetTypes.PresetFolders = {
     '.': presetDeny(appImports),
-    [at('components')]: presetDeny(entries),
+    [at('components')]: presetDeny({ ...entries, ...rpcImports }),
     [at('routes')]: presetDeny(entries),
     [at('routes/handlers')]: { deny: { imports: { ...clients, ...Object.fromEntries(Object.keys(entries).map((entry) => [entry, false])) } } },
   }
@@ -353,6 +344,12 @@ function presetGroupOff(folders: PresetTypes.PresetFolders, path: string, group:
   return owner instanceof Object && Object(owner)[group] === false
 }
 
+function presetRootFiles(root: string): PresetTypes.PresetFolders {
+  const alchemy = presetIsDirectory(root) && readdirSync(root).some((name) => /^alchemy\.[\w.-]+\.ts$/.test(name))
+
+  return alchemy ? { 'alchemy.*.ts': { rules: { 'import-extra/no-relative-packages': 'off' } } } : {}
+}
+
 export function presetDetect(root: string, folders: PresetTypes.PresetFolders): PresetTypes.PresetFolders {
   const manifest = presetManifest(root, '.')
 
@@ -365,9 +362,10 @@ export function presetDetect(root: string, folders: PresetTypes.PresetFolders): 
   const patterns = presetWorkspacePatterns(root, manifest)
   const directories = presetWorkspaces(root, patterns)
 
-  const detected: PresetTypes.PresetFolders = Object.fromEntries(
-    directories.map((directory) => [directory, presetRecipe(root, directory, !directory.startsWith('packages/'), configured(directory))]),
-  )
+  const detected: PresetTypes.PresetFolders = {
+    ...Object.fromEntries(directories.map((directory) => [directory, presetRecipe(root, directory, !directory.startsWith('packages/'), configured(directory))])),
+    ...presetRootFiles(root),
+  }
 
   const rootRecipe = presetRecipe(root, '.', true, configured('.'))
   const single = Object.keys(manifest).length > 0 || rootRecipe !== presetRecipes.library

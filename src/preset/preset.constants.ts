@@ -273,6 +273,7 @@ export const presetTestRules: PresetTypes.PresetRules = {
   'jest/require-to-throw-message': 'off',
   'vitest/no-conditional-expect': 'error',
   'vitest/require-mock-type-parameters': 'error',
+  'vitest/warn-todo': 'off',
 }
 
 const presetModuleMockingApis = ['*.mock', '*.doMock', '*.unstable_mockModule']
@@ -349,7 +350,7 @@ export const presetExternals = [
 
 export const presetGroupOptions: PresetTypes.PresetGroupDefaults = {
   layout: { level: 'error', services: undefined, hooks: undefined, components: undefined, files: presetLayoutFiles, folders: undefined, strict: false, operations: 'flat', service: ['make{Domain}Service', '{Domain}Service'] },
-  limits: { level: 'error', lines: 400, types: 1000, complexity: 32 },
+  limits: { level: 'error', lines: 2000, types: 2000, complexity: 32 },
   style: { level: 'error', quotes: 'single', semicolons: true, multiline: true, padding: true, dashes: true },
   basics: { level: 'error', trivial: true, state: true, switch: true, negation: true },
   naming: { level: 'error', files: true, exports: true, folders: true, unique: undefined, imports: {} },

@@ -12,8 +12,8 @@ Takes `true`, `false`, `'warn'` or an object:
 
 | Key | Type | Default | |
 | --- | --- | --- | --- |
-| `lines` | `number` | `400` | Max lines per file |
-| `types` | `number` | `1000` | Max lines per `*.types.ts` |
+| `lines` | `number` | `2000` | Max lines per file |
+| `types` | `number` | `2000` | Max lines per `*.types.ts` and `*.schemas.ts` |
 | `complexity` | `number` | `32` | Max cyclomatic complexity |
 
 Plus `eslint` (2).

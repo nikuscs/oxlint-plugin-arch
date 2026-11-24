@@ -9,6 +9,10 @@ const namingOperationMessage = 'Use domain-action.name.ts or domain-query.name.t
 
 const namingFrontendPrefix = { ...presetExportPrefix, scope: 'functions', services: true, allow: '^\\*$' }
 
+function namingHooks(exports: string[]) {
+  return ['use-{name}.ts', 'use-{name}.{platform}.ts'].map((file) => ({ mode: 'template', file, export: exports }))
+}
+
 function namingOperationPrefix(role: string) {
   return { ...presetExportPrefix, roles: [role], scope: 'functions', allow: '^\\*$' }
 }
@@ -122,8 +126,14 @@ export const namingGroup: PresetBuilder<'naming'> = (project, settings, owner) =
   add(
     'exports',
     hooks,
-    { 'arch/naming-exports': ['error', {}, { mode: 'pattern', pattern: '^use[A-Z]', types: true }] },
+    { 'arch/naming-exports': ['error', {}, { mode: 'pattern', pattern: '^use[A-Z]', types: true }, ...namingHooks(['use{Name}'])] },
     ui,
+  )
+  add(
+    'exports',
+    presetScopes(project.uiRoots, 'hooks/**/*.ts'),
+    { 'arch/naming-exports': ['error', ...namingHooks(['use{Name}', 'useIs{Name}'])] },
+    testFiles,
   )
   add(
     'exports',

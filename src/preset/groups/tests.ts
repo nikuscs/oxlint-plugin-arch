@@ -47,7 +47,7 @@ export const testsGroup: PresetBuilder<'tests'> = (project, settings) => {
   const rules: PresetRules = {
     ...presetTestRules,
     'dillon-anti-slop/no-module-mocking': customized ? mockingRule([]) : 'error',
-    'arch/tests-modifiers': ['error', { functions }],
+    'arch/tests-modifiers': ['error', { functions, modifiers: ['only', 'skip'] }],
     'arch/tests-assertions': ['error', { functions, assertions }],
   }
 

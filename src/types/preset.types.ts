@@ -65,7 +65,7 @@ export interface PresetTypesOptions {
 export interface PresetImportsOptions {
   sort?: boolean
   boundaries?: boolean
-  aliases?: Record<string, string>
+  aliases?: Record<string, string | false>
   internal?: string[]
 }
 
@@ -146,6 +146,8 @@ export interface PresetDenyOnly extends BoundariesDenyOnly {
 }
 
 export type PresetSet = string[] | Record<string, string>
+
+export type PresetSets = Record<string, PresetSet>
 
 export type PresetSetValue = string | number | boolean | null | undefined | PresetSetValue[] | PresetSetObject
 
@@ -303,11 +305,17 @@ export type PresetFolders = Record<string, boolean | PresetFolder>
 
 export type PresetEntry = [string, boolean | PresetFolder]
 
-export interface PresetConfig {
-  root?: string
+export type PresetSourced = [string, boolean | PresetFolder, boolean, number]
+
+export interface PresetFragment {
+  sets?: PresetSets
   folders?: PresetFolders
+}
+
+export interface PresetConfig extends PresetFragment {
+  root?: string
   detect?: boolean
-  sets?: Record<string, PresetSet>
+  extends?: PresetFragment[]
 }
 
 export type PresetRecipe = PresetGroups & Partial<Record<symbol, string>>
@@ -447,6 +455,8 @@ export interface PresetProject {
   backend: string[]
   backendRoots: string[]
   packageSources: string[]
+  reactPackages: string[]
+  aliases: Record<string, string>
   serviceRoots: string[]
   app: string[]
   appFiles: string[]

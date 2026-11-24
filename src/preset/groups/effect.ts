@@ -45,12 +45,14 @@ export const effectGroup: PresetBuilder<'effect'> = (project, settings) => {
 
   const style = presetOverride(files, {
     'typescript/consistent-type-assertions': ['error', { assertionStyle: 'never' }],
-    'eslint-js/max-len': ['error', { code: max, ignoreUrls: true, ignoreComments: true, ignoreRegExpLiterals: true }],
+    'eslint-js/max-len': ['error', { code: max, ignoreUrls: true, ignoreComments: true, ignoreRegExpLiterals: true, ignoreStrings: true, ignoreTemplateLiterals: true }],
     ...presetEffectStyle().rules,
   })
 
+  const jsx = presetOverride(['**/*.tsx'], { 'eslint-js/max-len': 'off' })
+
   if (!settings.code) {
-    return [style]
+    return [style, jsx]
   }
 
   const { tsgo, linteffect } = presetEffectPackages()
@@ -58,6 +60,7 @@ export const effectGroup: PresetBuilder<'effect'> = (project, settings) => {
 
   return [
     style,
+    jsx,
     presetOverride(files, {
       ...Object.fromEntries(tsgoRules.map((rule) => [rule, 'error'])),
       ...linteffect.recommended.rules,

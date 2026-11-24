@@ -28,15 +28,17 @@ export const reactGroup: PresetBuilder<'react'> = (project, settings) => {
     overrides.push(presetOverride(reactFiles, { 'arch/react-memo': 'error' }, ui))
   }
 
-  if (web.length > 0) {
+  const owners = [...web, ...project.reactPackages]
+
+  if (owners.length > 0) {
     overrides.push(
-      presetOverride(project.webFiles, {
+      presetOverride([...project.webFiles, ...presetScopes(project.reactPackages)], {
         'arch/boundaries-token-owner': [
           'error',
           {
             restrictions: [
               { token: 'RouterClient', allow: [...project.rpcClients] },
-              { token: 'createContext', patterns: [...presetScopes(web, 'context/'), ...project.webUiRoots.map((path) => `${path}/`)] },
+              { token: 'createContext', patterns: [...presetScopes(owners, 'context/'), ...project.webUiRoots.map((path) => `${path}/`)] },
             ],
           },
         ],

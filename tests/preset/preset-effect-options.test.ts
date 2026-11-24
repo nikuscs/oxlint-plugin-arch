@@ -37,7 +37,7 @@ describe('preset Effect options', () => {
       folders: { 'apps/server': { effect: { labels: { 'domains/*/*.workflows.ts': [{ callee: 'Activity.make', name: '{name}' }] } } } },
       file: 'apps/server/src/domains/order/order.workflows.ts',
       rule: 'arch/naming-labels',
-      expected: ['error', { labels: [{ callee: 'Workflow.make', name: '{name}', drop: 'Workflow$' }, { callee: 'Effect.fn', name: '{name}', within: '*.toLayer', loose: true }, { callee: 'Activity.make', name: '{name}' }] }],
+      expected: ['error', { labels: [{ callee: 'Workflow.make', name: '{name}', drop: 'Workflow$' }, { callee: 'Activity.make', property: 'name' }, { callee: 'Effect.fn', name: '{name}', within: '*.toLayer', loose: true }, { callee: 'Activity.make', name: '{name}' }] }],
     },
     { name: 'labels on another pattern are that file kind\'s labels', tree, files: server, folders: { 'apps/server': { effect: { labels: { 'domains/*/*.layer.ts': [{ callee: 'Layer.effect', name: '{name}' }] } } } }, file: 'apps/server/src/domains/order/order.layer.ts', rule: 'arch/naming-labels', expected: ['error', { labels: [{ callee: 'Layer.effect', name: '{name}' }] }] },
     { name: 'handlers allow keys on rpc handlers', tree, files: server, folders: { 'apps/server': { effect: { handlers: { allow: '^health$' } } } }, file: 'apps/server/src/rpc/app/rpc.app.orders.ts', rule: 'arch/naming-keys', expected: ['error', { exports: '^rpc[A-Z]', delegate: true, allow: '^health$' }] },

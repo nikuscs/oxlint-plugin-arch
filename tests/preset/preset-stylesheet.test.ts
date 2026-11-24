@@ -115,6 +115,33 @@ describe('preset stylesheet', () => {
       rule: 'tailwindcss/enforce-canonical',
       expected: ['error', { entryPoint: expect.stringMatching(/app\.css$/) }],
     },
+    {
+      name: 'a React package that is no UI kit uses the stylesheet of the app that depends on it',
+      files: {
+        'package.json': workspaces,
+        'apps/web/package.json': manifest('web', { '@tanstack/react-start': '1', frontend: '1' }),
+        'apps/web/src/app.css': tailwind,
+        'packages/frontend/package.json': manifest('frontend', { react: '19' }),
+        'packages/frontend/src/pages/home-page.tsx': '',
+      },
+      folders: {},
+      file: 'packages/frontend/src/pages/home-page.tsx',
+      rule: 'tailwindcss/enforce-canonical',
+      expected: ['error', { entryPoint: expect.stringMatching(/apps\/web\/src\/app\.css$/) }],
+    },
+    {
+      name: 'a React package with no app stylesheet anywhere gets no Tailwind rules',
+      files: {
+        'package.json': workspaces,
+        'apps/web/package.json': manifest('web', { '@tanstack/react-start': '1' }),
+        'packages/frontend/package.json': manifest('frontend', { react: '19' }),
+        'packages/frontend/src/pages/home-page.tsx': '',
+      },
+      folders: {},
+      file: 'packages/frontend/src/pages/home-page.tsx',
+      rule: 'tailwindcss/enforce-canonical',
+      expected: undefined,
+    },
   ])('$name', (row) => {
     expect({ value: testerPreset(row) }).toMatchObject({ value: row.expected })
   })

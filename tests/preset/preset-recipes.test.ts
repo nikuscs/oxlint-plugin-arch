@@ -368,7 +368,8 @@ describe('preset recipes', () => {
       rule: 'arch/boundaries-deny',
       expected: ['error', { imports: { zod: 'Use effect/Schema.', dayjs: 'Use effect/DateTime.' } }],
     },
-    { name: 'a React package on Effect gets the project style', tree: kitTree, files: kits, folders: {}, file: 'packages/ui/src/components/button.tsx', rule: 'eslint-js/max-len', expected: ['error', { code: 140 }] },
+    { name: 'a React package on Effect gets the project style', tree: kitTree, files: kits, folders: {}, file: 'packages/ui/src/lib/utils.ts', rule: 'eslint-js/max-len', expected: ['error', { code: 140 }] },
+    { name: 'a JSX file on Effect has no line width', tree: kitTree, files: kits, folders: {}, file: 'packages/ui/src/components/button.tsx', rule: 'eslint-js/max-len', expected: 'off' },
     { name: 'a React package on Effect gets no Effect code rule', tree: kitTree, files: kits, folders: {}, file: 'packages/ui/src/components/button.tsx', rule: 'arch/code-traced', expected: undefined },
     {
       name: 'a React package without Effect bans none of them',

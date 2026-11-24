@@ -378,7 +378,7 @@ describe('preset', () => {
       detect: false,
       file: 'src/order.ts',
       rule: 'max-lines',
-      expected: ['error', { max: 400 }],
+      expected: ['error', { max: 2000 }],
     },
     {
       name: 'deny on a file pattern adds to the folder deny',

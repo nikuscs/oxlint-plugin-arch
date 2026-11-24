@@ -1,5 +1,27 @@
 # Changelog
 
+## Unreleased
+
+Preset defaults that change what an app reports:
+
+- React packages that are not UI kits get the web app's placement and context rules: components are TSX, hooks are `.ts` files in `hooks/`, `createContext` lives in `context/`, and `services/**/*.client.ts` exports follow the frontend prefix.
+- Hook files `use-<name>.ts` and `use-<name>.<platform>.ts` export `use<Name>`; in a UI kit `use<Name>` or `useIs<Name>`, so shadcn's `use-mobile.ts` keeps `useIsMobile`.
+- A web app with `services/rpc.client.ts` (or `services/rpc/rpc.client.ts`) bans importing it from `components/`; routes, `app/` and `pages/` keep it.
+- Effect frontend packages: pages under `pages/` follow the component rules plus `<Name>Page` exports, components export the component their file names, `components/` and `pages/` call `use()` instead of `useContext()` and no `localStorage` or `sessionStorage`, `context/` and `constants/` files name their exports, and the contract package's `*/*.service` files are banned.
+- Effect servers: `*.config.ts` and `*.utils.ts` are domain file names, a domain config file may import `effect/Config`, an `Activity.make` name is kebab-case, tests nest functions five deep and skip `effect-yield-name`, and `mails/*.mail.ts` may import dynamically.
+- Effect contracts: `*.schemas.ts` puts schemas first and counts against `limits.types`, `shared/*.schemas.ts` may export function constants, a service skips `effecttsgo/lazy-effect` and takes `<Name>Schemas.` params, `*.constants.ts` exports `<STEM>_…` names, and `contract.constants.ts` may re-export. A contract with `*.tables.ts` files gets that kind and class-only services; one with services and no `*.layer.types.ts` drops that kind.
+- Effect's `max-len` ignores strings and template literals, like the base style, and is off in `.tsx` files, where class lists and copy run long.
+- `limits.lines` and `limits.types` default to 2000; Effect actions and queries no longer carry their own 1000.
+- Tests may use `.todo` (`vitest/warn-todo` is off and `arch/tests-modifiers` bans `only` and `skip`).
+- Effect frontend packages also: `components/` and `pages/` build no Schema (`Schema.Struct`, `Literals`, `Union`, `Array`, `Record`) and keep folder names as is; `constants/*.constants.ts` stop at 400 lines; `services/*.client.ts` call no `Date.now`, `DateTime.now`, `Math.random` and export no `<stem>Client…`; `types/*.types.ts` export `<Stem>…` without `Client`; the package calls no `JSON.stringify`, `parseInt` or `parseFloat`. An Effect web app with a contract bans those three calls too.
+- A React package with `tailwind` and no stylesheet of its own uses its app's, like a kit.
+- A root `alchemy.*.ts` file skips `import-extra/no-relative-packages`.
+
+Options:
+
+- New `extends` on `preset()`: a list of `{ sets, folders }` fragments merged left to right before the config's own; `PresetFragment` is exported.
+- `imports.aliases` is read from each workspace's `package.json` `imports` (`"#server/*": "./src/*"`); your aliases win and `false` drops a read one. The same aliases reach `arch/boundaries-tanstack` and `arch/boundaries-next`.
+
 ## 0.13.4
 
 - New `dillon-anti-slop/no-reduce-accumulator-copy`, on in every preset project beside `oxc/no-accumulating-spread`: a reducer that copies its accumulator with `Object.assign`, `Array.from` or an array copy method.

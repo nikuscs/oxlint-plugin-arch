@@ -15,7 +15,7 @@ describe('preset Effect server', () => {
     'apps/server/src/application/app.config.ts': '',
   }
 
-  const names = '*.constants.ts, *.test.ts, *.spec.ts, *.actions.ts, *.queries.ts, *.layer.ts, *.workflows.ts, *.prompts.ts, *-*.driver.ts'
+  const names = '*.utils.ts, *.constants.ts, *.test.ts, *.spec.ts, *.actions.ts, *.queries.ts, *.layer.ts, *.workflows.ts, *.prompts.ts, *-*.driver.ts, *.config.ts'
   const reads = 'A queries file only reads; write in an actions file.'
   const contractTree = ['packages/contract/src/order/', 'packages/contract/src/shared/']
 
@@ -113,8 +113,7 @@ describe('preset Effect server', () => {
       rule: 'arch/naming-file',
       expected: expect.not.arrayContaining([expect.objectContaining({ message: expect.stringMatching(/^Domain files/) })]),
     },
-    { name: 'an actions file stops at 1,000 lines', tree, files: server, folders: {}, file: 'apps/server/src/domains/order/order.actions.ts', rule: 'max-lines', expected: ['error', { max: 1000 }] },
-    { name: 'a layer file keeps the default line limit', tree, files: server, folders: {}, file: 'apps/server/src/domains/order/order.layer.ts', rule: 'max-lines', expected: ['error', { max: 400 }] },
+    { name: 'an actions file keeps the default line limit', tree, files: server, folders: {}, file: 'apps/server/src/domains/order/order.actions.ts', rule: 'max-lines', expected: ['error', { max: 2000 }] },
     {
       name: 'an actions file exports domain actions',
       tree,
@@ -148,7 +147,7 @@ describe('preset Effect server', () => {
     { name: 'a server keeps one-line step comments', tree, files: server, folders: {}, file: 'apps/server/src/domains/order/order.actions.ts', rule: 'arch/comments-code', expected: ['error', { why: false, jsdoc: true, allow: ['^\\s*SAFETY: '], steps: true }] },
     { name: 'a server breaks Kysely chains', tree, files: server, folders: {}, file: 'apps/server/src/domains/order/order.queries.ts', rule: 'arch/layout-chain', expected: ['error', { groups: [{ min: 3, methods: ['selectFrom', 'insertInto', 'updateTable', 'deleteFrom', 'mergeInto', 'with'] }] }] },
     { name: 'a server ties spans to function names', tree, files: server, folders: {}, file: 'apps/server/src/domains/order/order.queries.ts', rule: 'arch/naming-labels', expected: ['error', { labels: [{ callee: 'Effect.fn', name: '{name}', drop: ['Action', 'Query'], loose: true }] }] },
-    { name: 'a server ties workflow names to constants', tree, files: server, folders: {}, file: 'apps/server/src/domains/order/order.workflows.ts', rule: 'arch/naming-labels', expected: ['error', { labels: [{ callee: 'Workflow.make', name: '{name}', drop: 'Workflow$' }, { callee: 'Effect.fn', name: '{name}', within: '*.toLayer', loose: true }] }] },
+    { name: 'a server ties workflow names to constants', tree, files: server, folders: {}, file: 'apps/server/src/domains/order/order.workflows.ts', rule: 'arch/naming-labels', expected: ['error', { labels: [{ callee: 'Workflow.make', name: '{name}', drop: 'Workflow$' }, { callee: 'Activity.make', property: 'name', pattern: '^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$' }, { callee: 'Effect.fn', name: '{name}', within: '*.toLayer', loose: true }] }] },
     { name: 'a server locks the top level of an actions file', tree, files: server, folders: {}, file: 'apps/server/src/domains/order/order.actions.ts', rule: 'arch/files-top-level', expected: ['error', { stem: 'folder', allow: ['import', { kind: 'const', exported: true, from: '^Effect\\.fn' }, { kind: 'const', names: '^decode[A-Z]', uses: 2 }] }] },
     { name: 'a server names yielded services', tree, files: server, folders: {}, file: 'apps/server/src/domains/order/order.actions.ts', rule: 'arch/effect-yield-name', expected: 'error' },
     { name: 'a server yields dependencies first', tree, files: server, folders: {}, file: 'apps/server/src/rpc/app/rpc.app.orders.ts', rule: 'arch/effect-yields-first', expected: 'error' },
@@ -163,7 +162,7 @@ describe('preset Effect server', () => {
     { name: 'a contract file needs its service beside it', tree: contractTree, files: contract, folders: {}, file: 'packages/contract/src/order/order.contract.ts', rule: 'arch/files-siblings', expected: ['error', { require: '{folder}.service.ts', message: 'A domain is reached through its service.' }] },
     { name: 'a contract without service files needs none', tree: contractTree, files: contract, folders: { 'packages/contract': { effect: { files: ['!*.service.ts'] } } }, file: 'packages/contract/src/order/order.contract.ts', rule: 'arch/files-siblings', expected: undefined },
     { name: 'a contract file names its Schemas elsewhere', tree: contractTree, files: contract, folders: {}, file: 'packages/contract/src/order/order.contract.ts', rule: 'arch/boundaries-deny', expected: ['error', expect.objectContaining({ calls: expect.objectContaining({ 'Schema.Struct': 'Name the Schema in <d>.schemas.ts.' }) })] },
-    { name: 'a contract service takes params types', tree: contractTree, files: contract, folders: {}, file: 'packages/contract/src/order/order.service.ts', rule: 'arch/effect-service-params', expected: 'error' },
+    { name: 'a contract service takes params types', tree: contractTree, files: contract, folders: {}, file: 'packages/contract/src/order/order.service.ts', rule: 'arch/effect-service-params', expected: ['error', { allow: ['^\\w+Schemas\\.'] }] },
     { name: 'a server takes no loose file in its source', tree, files: server, folders: {}, file: 'apps/server/src/helpers.ts', rule: 'arch/files-restricted', expected: ['error', { message: 'Server code lives in application/, domains/, rpc/ or mails/.' }] },
     { name: 'a server takes no other folder in its source', tree: [...tree, 'apps/server/src/lib/'], files: server, folders: {}, file: 'apps/server/src/lib/dates.ts', rule: 'arch/files-restricted', expected: ['error', { message: 'Server code lives in application/, domains/, rpc/ or mails/.' }] },
     { name: 'a project opens another server folder', tree: [...tree, 'apps/server/src/lib/'], files: server, folders: { 'apps/server/src/lib': { rules: { 'arch/files-restricted': 'off' } } }, file: 'apps/server/src/lib/dates.ts', rule: 'arch/files-restricted', expected: 'off' },
@@ -576,6 +575,15 @@ describe('preset Effect server', () => {
     },
     { name: 'a server documents its functions', tree, files: server, folders: {}, file: 'apps/server/src/rpc/app/orders.ts', rule: 'arch/comments-code', expected: ['error', { why: false, jsdoc: true }] },
     { name: 'a contract package has no docblock rule', tree: contractTree, files: contract, folders: {}, file: 'packages/contract/src/order/order.schemas.ts', rule: 'arch/comments-code', expected: expect.not.arrayContaining([expect.objectContaining({ jsdoc: true })]) },
+    { name: 'an Effect file allows long strings and template literals', tree, files: server, folders: {}, file: 'apps/server/src/domains/order/order.actions.ts', rule: 'eslint-js/max-len', expected: ['error', { ignoreStrings: true, ignoreTemplateLiterals: true }] },
+    { name: 'a domain config file reads Effect config', tree, files: server, folders: {}, file: 'apps/server/src/domains/order/order.config.ts', rule: 'arch/boundaries-deny', expected: ['error', { imports: expect.not.objectContaining({ 'effect/Config': expect.anything() }) }] },
+    { name: 'other domain files read no Effect config', tree, files: server, folders: {}, file: 'apps/server/src/domains/order/order.actions.ts', rule: 'arch/boundaries-deny', expected: ['error', { imports: { 'effect/Config': 'Read config only in application/app.config.ts or domains/<d>/<d>.config.ts.' } }] },
+    { name: 'a server test nests functions five deep', tree: [...tree, 'apps/server/tests/'], files: server, folders: {}, file: 'apps/server/tests/order.test.ts', rule: 'arch/code-function-nesting', expected: ['error', { max: 5 }] },
+    { name: 'a server test support file nests functions five deep', tree: [...tree, 'apps/server/test/support/'], files: server, folders: {}, file: 'apps/server/test/support/order.layer.ts', rule: 'arch/code-function-nesting', expected: ['error', { max: 5 }] },
+    { name: 'a server test names no yields', tree: [...tree, 'apps/server/test/'], files: server, folders: {}, file: 'apps/server/test/order.test.ts', rule: 'arch/effect-yield-name', expected: 'off' },
+    { name: 'a mail file may import dynamically', tree, files: { ...server, 'apps/server/src/mails/welcome.mail.ts': '' }, folders: {}, file: 'apps/server/src/mails/welcome.mail.ts', rule: 'linteffect/prevent-dynamic-imports', expected: 'off' },
+    { name: 'a server without mails gets no mail key', tree: ['apps/server/src/domains/order/'], files: server, folders: {}, file: 'apps/server/src/mails/welcome.mail.ts', rule: 'linteffect/prevent-dynamic-imports', expected: expect.not.stringMatching(/^off$/) },
+    { name: 'a mail key turns back on', tree, files: { ...server, 'apps/server/src/mails/welcome.mail.ts': '' }, folders: { 'apps/server/src/mails/*.mail.ts': { rules: { 'linteffect/prevent-dynamic-imports': 'error' } } }, file: 'apps/server/src/mails/welcome.mail.ts', rule: 'linteffect/prevent-dynamic-imports', expected: 'error' },
   ])('$name', (row) => {
     expect({ value: testerPreset(row) }).toMatchObject({ value: row.expected })
   })

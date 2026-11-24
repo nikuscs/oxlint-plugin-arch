@@ -75,7 +75,6 @@ A file key takes every key above and every group, except those that say what a f
 'src/app/default.tsx': { rules: { 'arch/code-trivial-functions': 'off' } },
 'src/app/@dialog/**/{default,page}.tsx': { rules: { 'arch/code-trivial-functions': 'off' } },
 'src/lib/{dgsi,dr}': pureCore,
-'alchemy.*.ts': { rules: { 'import-extra/no-relative-packages': 'off' } },
 'tools/legacy/**/*.gen.ts': false,
 ```
 
@@ -116,6 +115,23 @@ export default preset({
 | `each: 'set'` on an object inside a list | One object per item, with `{key}` and `{value}` filled in everywhere inside it |
 
 A map gives its keys where a list is expected. Sets expand before anything else, in every folder value including `rules`; a name that is not a set, such as `{Domain}`, is left for the rule.
+
+## 🧱 Fragments
+
+`extends` takes a list of fragments, each `{ sets, folders }`, so a shared config can be split into parts and each project picks the parts it needs. Fragments apply left to right, then the config's own `sets` and `folders`: a set of the same name replaces the earlier one, and folder and file keys merge with the same rules as above (lists add, objects merge, `false` and `'off'` turn an entry off). A folder written alone twice in one fragment still throws; the same folder in two fragments merges.
+
+```ts
+const server = { folders: { 'apps/server/src/domains/*/*.actions.ts': { limits: { lines: 1500 } } } }
+const tests = { folders: { '**/{test,tests}/**/*.{ts,tsx}': { rules: { 'arch/code-inline': 'off' } } } }
+
+export default preset({
+  root: import.meta.dirname,
+  extends: [server, tests],
+  folders: { 'apps/server/src/domains/*/*.actions.ts': { limits: { lines: 1200 } } },
+})
+```
+
+A fragment's file pattern that matches no file adds nothing, so one fragment fits projects with and without those files.
 
 ## 🔎 Detection
 
@@ -159,7 +175,9 @@ Detection also adds conventions, as folder and file keys you can restate: lists 
 | Backend `tests/kits/` or `test/kits/` | Kit file names; the tests import kit files, not the kit index |
 | Any `migrations/` up to 8 folders deep in a backend, outside `tests/` and `test/` | Numbered file names (`001_init.ts`, `20240101120000-init.ts`, `2026-11-12-10-00-create-news.ts`), unique numbers (a dated prefix is read whole), no layout check |
 | Backend registry | `backend.registry` when set, else `services/service.ts`, `core/core.services.ts` or `service.ts`; see [`backend`](groups/backend.md). The registry file is exempt from the domain layout |
-| Web app | Bans the backend's `package.json` `imports` aliases that the app does not define itself, and server `.service` files when there is a backend; `components/` and `routes/` import only the backend client entry |
+| Web app | Bans the backend's `package.json` `imports` aliases that the app does not define itself, and server `.service` files when there is a backend; `components/` and `routes/` import only the backend client entry; with a `services/rpc.client.ts` (or `services/rpc/rpc.client.ts`), `components/` does not import it |
+| Root `alchemy.*.ts` | `import-extra/no-relative-packages` off |
+| Workspace `package.json` `imports` | `"#name/*": "./src/*"` entries become [`imports.aliases`](groups/imports.md) |
 | Web app, or a React package with `pages/` or `link.tsx` | `layout.services: 'flat'` when its `services/` holds more files than folders |
 | App or backend without `services/` | Its `lib/` is the service folder; with `services/`, `lib/` stays portable helpers |
 | Package | Bans `../../apps/**` and the backend's import aliases (not its own) |

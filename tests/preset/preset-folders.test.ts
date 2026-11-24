@@ -7,6 +7,14 @@ import type { TesterPresetRow } from '../types/tester.types.ts'
 
 describe('preset folders', () => {
   const root = resolve(import.meta.dirname, '../..')
+  const workspaces = JSON.stringify({ workspaces: ['apps/*'] })
+
+  const manifest = (name: string, dependencies: Record<string, string>, imports: Record<string, string>) =>
+    JSON.stringify({
+      name,
+      dependencies,
+      imports,
+    })
 
   it.each<TesterPresetRow>([
     {
@@ -195,6 +203,122 @@ describe('preset folders', () => {
       expected: undefined,
     },
     {
+      name: 'a fragment set expands a local folder key',
+      tree: ['src/auth/', 'src/pay/'],
+      extends: [{ sets: { areas: ['auth', 'pay'] } }],
+      folders: { 'src/{areas}': { deny: { calls: { log: 'No logs in {key}.' } } } },
+      detect: false,
+      file: 'src/pay/a.ts',
+      rule: 'arch/boundaries-deny',
+      expected: ['error', { calls: { log: 'No logs in pay.' } }],
+    },
+    {
+      name: 'a local set replaces a fragment set of the same name',
+      tree: ['src/auth/', 'src/pay/'],
+      extends: [{ sets: { areas: ['auth'] }, folders: { 'src/{areas}': { deny: { calls: { log: 'No logs in {key}.' } } } } }],
+      sets: { areas: ['pay'] },
+      folders: {},
+      detect: false,
+      file: 'src/auth/a.ts',
+      rule: 'arch/boundaries-deny',
+      expected: undefined,
+    },
+    {
+      name: 'a later fragment merges into an earlier folder key',
+      tree: ['src/'],
+      extends: [{ folders: { src: { deny: { calls: { log: 'No logs.', warn: 'No warnings.' } } } } }, { folders: { src: { deny: { calls: { warn: false } } } } }],
+      folders: {},
+      detect: false,
+      file: 'src/a.ts',
+      rule: 'arch/boundaries-deny',
+      expected: ['error', { calls: { log: 'No logs.' } }],
+    },
+    {
+      name: 'local folders merge over a fragment and keep its other entries',
+      tree: ['src/'],
+      extends: [{ folders: { src: { deny: { calls: { log: 'No logs.' } } } } }],
+      folders: { src: { deny: { calls: { warn: 'No warnings.' } } } },
+      detect: false,
+      file: 'src/a.ts',
+      rule: 'arch/boundaries-deny',
+      expected: ['error', { calls: { log: 'No logs.', warn: 'No warnings.' } }],
+    },
+    {
+      name: 'a fragment and the local folders may list the same folder',
+      tree: ['src/'],
+      extends: [{ folders: { src: { severity: 'warn' } } }],
+      folders: { src: { deny: { calls: { log: 'No logs.' } } } },
+      detect: false,
+      file: 'src/a.ts',
+      rule: 'arch/boundaries-deny',
+      expected: ['warn', { calls: { log: 'No logs.' } }],
+    },
+    {
+      name: 'a fragment file key merges with a local file key',
+      tree: ['src/'],
+      files: { 'src/order.errors.ts': '' },
+      extends: [{ folders: { '**/*.errors.ts': { rules: { 'arch/files-no-functions': 'error', 'arch/files-exports': 'error' } } } }],
+      folders: { '**/*.errors.ts': { rules: { 'arch/files-exports': 'off' } } },
+      detect: false,
+      file: 'src/order.errors.ts',
+      rule: 'arch/files-no-functions',
+      expected: 'error',
+    },
+    {
+      name: 'a local file key turns off one rule of a fragment file key',
+      tree: ['src/'],
+      files: { 'src/order.errors.ts': '' },
+      extends: [{ folders: { '**/*.errors.ts': { rules: { 'arch/files-no-functions': 'error', 'arch/files-exports': 'error' } } } }],
+      folders: { '**/*.errors.ts': { rules: { 'arch/files-exports': 'off' } } },
+      detect: false,
+      file: 'src/order.errors.ts',
+      rule: 'arch/files-exports',
+      expected: 'off',
+    },
+    {
+      name: 'a fragment wildcard file key with no files matches nothing',
+      tree: ['src/'],
+      extends: [{ folders: { '{**/*.{schemas,tables}.ts,**/application/app.ts}': { rules: { 'arch/files-no-functions': 'error' } }, '**/{test,tests}/**/*.{ts,tsx}': { rules: { 'arch/code-inline': 'off' } } } }],
+      folders: {},
+      detect: false,
+      file: 'src/a.ts',
+      rule: 'arch/files-no-functions',
+      expected: undefined,
+    },
+    {
+      name: 'a fragment wildcard file key applies once the files exist',
+      tree: ['src/'],
+      files: { 'src/order.tables.ts': '' },
+      extends: [{ folders: { '{**/*.{schemas,tables}.ts,**/application/app.ts}': { rules: { 'arch/files-no-functions': 'error' } } } }],
+      folders: {},
+      detect: false,
+      file: 'src/order.tables.ts',
+      rule: 'arch/files-no-functions',
+      expected: 'error',
+    },
+    {
+      name: 'a fragment file key reopens a root deny entry with false',
+      tree: ['src/'],
+      files: { 'src/application/app.ts': '' },
+      extends: [{ folders: { '.': { deny: { imports: { 'effect/Config': 'Read config in one place.', lodash: 'Use the standard library.' } } }, '**/application/app.ts': { deny: { imports: { 'effect/Config': false } } } } }],
+      folders: {},
+      detect: false,
+      file: 'src/application/app.ts',
+      rule: 'arch/boundaries-deny',
+      expected: ['error', { imports: expect.not.objectContaining({ 'effect/Config': expect.anything() }) }],
+    },
+    {
+      name: 'a root deny entry stays outside the reopened file',
+      tree: ['src/'],
+      files: { 'src/application/app.ts': '' },
+      extends: [{ folders: { '.': { deny: { imports: { 'effect/Config': 'Read config in one place.' } } }, '**/application/app.ts': { deny: { imports: { 'effect/Config': false } } } } }],
+      folders: {},
+      detect: false,
+      file: 'src/a.ts',
+      rule: 'arch/boundaries-deny',
+      expected: ['error', { imports: { 'effect/Config': 'Read config in one place.' } }],
+    },
+    {
       name: 'a top-level list allows imports and the listed calls',
       tree: ['tests/'],
       folders: { 'tests/**/*.test.ts': { top: ['it', 'it.each'] } },
@@ -261,11 +385,111 @@ describe('preset folders', () => {
       rule: 'arch/naming-imports',
       expected: undefined,
     },
+    {
+      name: 'a workspace subpath import becomes an import alias',
+      files: {
+        'package.json': workspaces,
+        'apps/server/package.json': manifest('server', { hono: '1' }, { '#server/*': './src/*', '#config': './src/config.ts' }),
+        'apps/server/src/a.ts': '',
+      },
+      folders: {},
+      file: 'apps/server/src/a.ts',
+      rule: 'arch/boundaries-imports',
+      expected: ['error', { aliases: { '#server': expect.stringMatching(/apps\/server\/src$/) } }],
+    },
+    {
+      name: 'a single-file subpath import is no alias',
+      files: {
+        'package.json': workspaces,
+        'apps/server/package.json': manifest('server', { hono: '1' }, { '#config': './src/config.ts' }),
+        'apps/server/src/a.ts': '',
+      },
+      folders: {},
+      file: 'apps/server/src/a.ts',
+      rule: 'arch/boundaries-imports',
+      expected: ['error', { aliases: expect.not.objectContaining({ '#config': expect.anything() }) }],
+    },
+    {
+      name: 'a configured alias wins over a harvested one',
+      files: {
+        'package.json': workspaces,
+        'apps/server/package.json': manifest('server', { hono: '1' }, { '#server/*': './src/*' }),
+        'apps/server/src/a.ts': '',
+      },
+      folders: { 'apps/server': { imports: { aliases: { '#server': 'apps/server/lib' } } } },
+      file: 'apps/server/src/a.ts',
+      rule: 'arch/boundaries-imports',
+      expected: ['error', { aliases: { '#server': expect.stringMatching(/apps\/server\/lib$/) } }],
+    },
+    {
+      name: 'false drops a harvested alias',
+      files: {
+        'package.json': workspaces,
+        'apps/server/package.json': manifest('server', { hono: '1' }, { '#server/*': './src/*' }),
+        'apps/server/src/a.ts': '',
+      },
+      folders: { '.': { imports: { aliases: { '#server/': false } } } },
+      file: 'apps/server/src/a.ts',
+      rule: 'arch/boundaries-imports',
+      expected: ['error', { aliases: expect.not.objectContaining({ '#server': expect.anything() }) }],
+    },
+    {
+      name: 'a framework rule reads the harvested aliases too',
+      files: {
+        'package.json': workspaces,
+        'apps/web/package.json': manifest('web', { '@tanstack/react-start': '1', react: '19' }, { '#web/*': './src/*' }),
+        'apps/web/src/services/a.ts': '',
+      },
+      folders: {},
+      file: 'apps/web/src/services/a.ts',
+      rule: 'arch/boundaries-tanstack',
+      expected: ['error', { aliases: { '#web': expect.stringMatching(/apps\/web\/src$/) } }],
+    },
+    {
+      name: 'a subpath import two packages map to different folders is no alias',
+      files: {
+        'package.json': workspaces,
+        'apps/web/package.json': manifest('web', { '@tanstack/react-start': '1', react: '19' }, { '#/*': './src/*' }),
+        'apps/server/package.json': manifest('server', { hono: '1' }, { '#/*': './src/*' }),
+        'apps/web/src/services/a.ts': '',
+      },
+      folders: {},
+      file: 'apps/web/src/services/a.ts',
+      rule: 'arch/boundaries-tanstack',
+      expected: ['error', { aliases: expect.not.objectContaining({ '#': expect.anything() }) }],
+    },
+    {
+      name: 'a root alchemy file may import across packages',
+      tree: ['apps/web/src/'],
+      files: { 'package.json': workspaces, 'apps/web/package.json': manifest('web', { '@tanstack/react-start': '1' }, {}), 'alchemy.run.ts': '' },
+      folders: {},
+      file: 'alchemy.run.ts',
+      rule: 'import-extra/no-relative-packages',
+      expected: 'off',
+    },
+    {
+      name: 'a project without an alchemy file keeps the relative package check',
+      tree: ['apps/web/src/'],
+      files: { 'package.json': workspaces, 'apps/web/package.json': manifest('web', { '@tanstack/react-start': '1' }, {}), 'alchemy.ts': '' },
+      folders: {},
+      file: 'alchemy.ts',
+      rule: 'import-extra/no-relative-packages',
+      expected: 'error',
+    },
+    {
+      name: 'the alchemy key turns back on',
+      tree: ['apps/web/src/'],
+      files: { 'package.json': workspaces, 'apps/web/package.json': manifest('web', { '@tanstack/react-start': '1' }, {}), 'alchemy.run.ts': '' },
+      folders: { 'alchemy.*.ts': { rules: { 'import-extra/no-relative-packages': 'error' } } },
+      file: 'alchemy.run.ts',
+      rule: 'import-extra/no-relative-packages',
+      expected: 'error',
+    },
   ])('$name', (row) => {
     expect({ value: testerPreset(row) }).toMatchObject({ value: row.expected })
   })
 
-  it.each<{ name: string; folders: unknown; sets?: unknown; message: string }>([
+  it.each<{ name: string; folders: unknown; sets?: unknown; extends?: unknown; message: string }>([
     { name: 'an owned entry without places fails', folders: { src: { deny: { only: [{ imports: 'a' }] } } }, message: 'deny.only takes entries such as `{ imports: [...], in: [...], message }`, with `imports` or `calls` and the places that may use them.' },
     { name: 'an unknown set fails', folders: { src: { deny: { only: [{ each: 'kits', imports: '{key}', in: 'src' }] } } }, sets: { other: ['a'] }, message: 'Unknown set `kits`.' },
     {
@@ -281,9 +505,10 @@ describe('preset folders', () => {
       message: 'layout.files takes file names such as `*.prompts.ts`; `!*.utils.ts` removes one.',
     },
     { name: 'two folders written alone twice still fail', folders: { 'src/rules': true, './src/rules': true }, message: 'Folder `src/rules` is listed twice.' },
-  ])('$name', ({ folders, sets, message }) => {
+    { name: 'a fragment listing one folder twice fails', folders: {}, extends: [{ folders: { 'src/rules': true, './src/rules': true } }], message: 'Folder `src/rules` is listed twice.' },
+  ])('$name', ({ folders, sets, extends: fragments, message }) => {
     // SAFETY: these rows hold invalid folder maps on purpose; preset() validates its input at runtime.
-    const config = { root, folders: folders as PresetFolders, sets: sets as PresetConfig['sets'] }
+    const config = { root, folders: folders as PresetFolders, sets: sets as PresetConfig['sets'], extends: fragments as PresetConfig['extends'] }
 
     expect(() => preset(config)).toThrow(new PresetError(message))
   })

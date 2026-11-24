@@ -34,7 +34,7 @@ Takes `true`, `false`, `'warn'` or an object:
 | `server` | object | the values below | [Server knobs](#server-knobs): `folders`, `kinds`, `operations`, `spans`, `rpc`, `tests` |
 | `contract` | object | the values below | [Contract knobs](#contract-knobs): `kinds`, `root`, `service` |
 
-Project style, in both modes: `typescript/consistent-type-assertions` with `assertionStyle: 'never'` and `eslint-js/max-len` at `width` (ignoring URLs, comments and regular expressions). When installed, each on its own (optional peer dependencies), it also loads `eslint-plugin-regexp` (`flat/recommended`), `eslint-plugin-de-morgan` (`recommended`) and `eslint-plugin-sonarjs` (`sonarjs/super-linear-regex` only); a package that is not installed adds nothing.
+Project style, in both modes: `typescript/consistent-type-assertions` with `assertionStyle: 'never'` and `eslint-js/max-len` at `width` (ignoring URLs, comments, regular expressions, strings and template literals). When installed, each on its own (optional peer dependencies), it also loads `eslint-plugin-regexp` (`flat/recommended`), `eslint-plugin-de-morgan` (`recommended`) and `eslint-plugin-sonarjs` (`sonarjs/super-linear-regex` only); a package that is not installed adds nothing.
 
 Effect code, with `code` on: the rules below, plus [`arch/code-object-params`](../rules/code-object-params.md) with `all: true, services: true`, [`arch/code-switch`](../rules/code-switch.md) with "Branch with Match." and `arch/naming-exports` off. It turns off [`arch/code-trivial-functions`](../rules/code-trivial-functions.md), which reports an Effect function written as one pipe.
 
@@ -91,16 +91,17 @@ A unit with the `effect` group whose source holds `domains/` is an Effect server
 | --- | --- |
 | `S` | `deny.imports`: `@tanstack/*`, `react-dom`, `react-dom/**`, `next`, `next/**`, `vite` and `effect/Config`; `rules`: `arch/types-declarations` with `modules: true`, `arch/types-inline` with `variables`, `assertions` and `arguments`, `arch/comments-code` with `why: false`, `jsdoc: true`, `allow: ['^\\s*SAFETY: ']`, `steps: true` |
 | the unit | `types: { placement: false }`: none of the `types` group's placement advice |
-| `D` | `layout.files`: adds `*.actions.ts`, `*.queries.ts`, `*.layer.ts`, `*.workflows.ts`, `*.prompts.ts`, `*-*.driver.ts`; removes `*.service.ts`, `*.client.ts`, `*.server.ts`, `*.rsc.ts`, `*.rsc.tsx`, `*.utils.ts`, `*.types.ts`, `*.handler.ts`, `*-action.*.ts`, `*-query.*.ts`; `deny.imports`: `../*/*.constants{,.ts}` |
-| `D/*/*.actions.ts` | `limits.lines` 1000; `arch/files-exports` with `stem: 'folder'`, `patterns: ['{domain}Action[A-Z]\\w*']`, `types: true`; [`arch/naming-labels`](../rules/naming-labels.md): an `Effect.fn` span is its function's name without `Action` or `Query`, dots and case aside (`orderActionScheduleCancel` is `'order.schedule.cancel'`) |
-| `D/*/*.queries.ts` | the same `arch/naming-labels`; `limits.lines` 1000; `arch/files-exports` with `patterns: ['{domain}Query[A-Z]\\w*']`; `deny.calls`: `insertInto`, `updateTable`, `deleteFrom`, `mergeInto`, `replaceInto`, `dispatch`, `send`; `deny.imports`: `./*.actions{,.ts}` |
+| `D` | `layout.files`: adds `*.actions.ts`, `*.queries.ts`, `*.layer.ts`, `*.workflows.ts`, `*.prompts.ts`, `*-*.driver.ts`, `*.config.ts` and keeps `*.utils.ts`; removes `*.service.ts`, `*.client.ts`, `*.server.ts`, `*.rsc.ts`, `*.rsc.tsx`, `*.types.ts`, `*.handler.ts`, `*-action.*.ts`, `*-query.*.ts`; `deny.imports`: `../*/*.constants{,.ts}` |
+| `D/*/*.actions.ts` | `arch/files-exports` with `stem: 'folder'`, `patterns: ['{domain}Action[A-Z]\\w*']`, `types: true`; [`arch/naming-labels`](../rules/naming-labels.md): an `Effect.fn` span is its function's name without `Action` or `Query`, dots and case aside (`orderActionScheduleCancel` is `'order.schedule.cancel'`) |
+| `D/*/*.queries.ts` | the same `arch/naming-labels`; `arch/files-exports` with `patterns: ['{domain}Query[A-Z]\\w*']`; `deny.calls`: `insertInto`, `updateTable`, `deleteFrom`, `mergeInto`, `replaceInto`, `dispatch`, `send`; `deny.imports`: `./*.actions{,.ts}` |
 | `D/*/*.constants.ts` | `arch/files-no-functions` with `reexports: false` |
 | `D/*/*.layer.ts`, `D/*/*.driver.ts` | [`arch/effect-layer-file`](../rules/effect-layer-file.md) with `suffix: 'Layer'`: local layers are `<Role>Layer` |
-| `D/*/*.workflows.ts` | `arch/naming-labels`: a `Workflow.make` name is its constant without `Workflow`; `deny.calls`: `selectFrom` and the write calls; `deny.imports`: `**/database`, `./*.{actions,queries}{,.ts}` |
-| `S/application/app.config.ts` | `deny.imports`: `'effect/Config': false` |
+| `D/*/*.workflows.ts` | `arch/naming-labels`: a `Workflow.make` name is its constant without `Workflow`, an `Activity.make` `name` is kebab-case; `deny.calls`: `selectFrom` and the write calls; `deny.imports`: `**/database`, `./*.{actions,queries}{,.ts}` |
+| `S/application/app.config.ts`, `D/*/*.config.ts` | `deny.imports`: `'effect/Config': false` |
 | `S/application/app.ts` | `arch/boundaries-imports` off; `deny.imports`: `**/domains/*/!(*.layer|*.layer.ts|*.workflows|*.workflows.ts)` |
 | `S/**/*.tsx` | `arch/files-restricted`: mail templates are the only JSX on a server |
 | `S/mails/*.mail.tsx` | `arch/files-restricted` off |
+| `S/mails/*.mail.ts` | `linteffect/prevent-dynamic-imports` off |
 | `S/rpc` | [`arch/code-delegate`](../rules/code-delegate.md) |
 
 A domain's other files stay private through [`arch/boundaries-imports`](../rules/boundaries-imports.md).
@@ -132,12 +133,13 @@ With `strict` on (the default), an Effect server and a contract package also get
 | `domains` | `D/*/*.prompts.ts` | `top`: only exported constants; exports named `<d>Prompt<Name>` |
 | `rpc` | `S/rpc/*/*.ts` | file `rpc/<group>/rpc.<group>.<area>.ts`, one exported constant `rpc<Group><Area>` (`effect.server.rpc`); [`arch/naming-keys`](../rules/naming-keys.md) `delegate`: a handler under `schedule.cancel` returns the call `<service>.schedule.cancel` (`effect.handlers.allow` skips key paths) |
 | `mails` | `S/mails/*.mail.tsx` | exports `<name>Mail` and `<Name>Email` |
-| `tests` | `tests/**/*.test.ts`, `test/**/*.test.ts`, `tests/**/*.spec.ts`, `test/**/*.spec.ts` | `top`: only `describe*`, `it*`, `test*` and `layer*` calls (`effect.server.tests`) |
+| `tests` | `tests/**/*.test.ts`, `test/**/*.test.ts`, `tests/**/*.spec.ts`, `test/**/*.spec.ts` | `top`: only `describe*`, `it*`, `test*` and `layer*` calls (`effect.server.tests`); [`arch/code-function-nesting`](../rules/code-function-nesting.md) with `max: 5`; `arch/effect-yield-name` off |
 | `places` | `C/*.ts`, `C/*/*/**` | files beside the contract folders are `contract.ts`, `contract.<name>.ts`, `errors.ts` or `index.ts` (`effect.contract.root`); a contract folder holds no folder |
-| `kinds` | `C/*/*.schemas.ts` | `top`: types, interfaces, `declare module` and exported constants |
+| `kinds` | `C/*/*.schemas.ts` | `top`: types, interfaces, `declare module` and exported constants; in `C/shared/*.schemas.ts` also exported function constants |
+| `kinds` | `C/*/*.tables.ts` | `top`: types and `declare module` |
 | `kinds` | `C/*/*.contract.ts` | `top`: types, exported constants, and unexported constants built by a namespace call; `deny.calls`: `Schema.Struct` (name it in `<d>.schemas.ts`); [`arch/files-siblings`](../rules/files-siblings.md): `<d>.service.ts` beside it, unless `effect.files` removes that kind |
-| `kinds` | `C/*/*.service.ts` | `top`: interfaces, types, one class, `declare module` |
-| `service` | `C/*/*.service.ts` | the `Context.Service` key is `<package>/<d>/<d>.service/<Class>` (`effect.contract.service`); [`arch/effect-service-params`](../rules/effect-service-params.md): a method takes `<D>…Params` |
+| `kinds` | `C/*/*.service.ts` | `top`: interfaces, types, one class, `declare module`; only exported classes when the contract has `*.tables.ts` files |
+| `service` | `C/*/*.service.ts` | the `Context.Service` key is `<package>/<d>/<d>.service/<Class>` (`effect.contract.service`); [`arch/effect-service-params`](../rules/effect-service-params.md): a method takes `<D>…Params`, or a `<Name>Schemas.` type (`allow: ['^\\w+Schemas\\.']`) |
 | `kinds` | `C/*/*.errors.ts` | `top`: exported classes only |
 | `errors` | `C/*/*.errors.ts` | an error's tag is its class name, and a `code` is `SCREAMING_CASE` (`effect.errors.tag`, `effect.errors.code`) |
 
@@ -205,15 +207,21 @@ folders: {
 
 A unit with the `effect` group that is not a server and whose source holds a `<d>/<d>.contract.ts` is a contract package. Detection adds these keys, relative to the unit; `C` is its source. Later keys win on the files they share.
 
+The file kinds follow what the contract holds: a `<d>.tables.ts` anywhere adds the `*.tables.ts` kind (and narrows the service top level above), a `<d>.constants.ts` adds the `*.constants.ts` kind, and `*.layer.types.ts` drops out when the contract has `<d>.service.ts` files and no `<d>.layer.types.ts`. `effect.files` and `effect.contract.kinds` still add or remove any kind.
+
 | Key | Sets |
 | --- | --- |
 | the unit | `types: { placement: false }`: a contract declares its types next to its Schemas |
 | `C/*/*.ts` | `arch/naming-file`: `<d>.schemas.ts`, `<d>-<part>.schemas.ts`, `<d>.admin.schemas.ts`, `<d>.contract.ts`, `<d>.admin.contract.ts`, `<d>.errors.ts`, `<d>.layer.types.ts`, `<d>.service.ts`, plus the kinds in `effect.files`; `arch/naming-folder` with `singularize: 'none'`, `separators: ['.', '-']`; `arch/files-exports` with `stem: 'folder'`, `singularize: 'trailing-s'`, `patterns: ['{Domain}\\w*']` |
 | `C/*/*.admin.*.ts` | `arch/files-exports` with `patterns: ['Admin{Domain}\\w*']` |
 | `C/*/*.schemas.ts`, `C/*/*.contract.ts` | `arch/files-no-functions` with `reexports: false`; `arch/files-constants-only` with `types: true`, `functions: true`; `arch/types-imported-alias`; `arch/schemas-single-use` with `namespaces: ['Schema']`, `methods: ['Array', 'Union', 'Record', 'Tuple']`, `structural: ['Struct', 'Array', 'Union', 'Record', 'Tuple', 'NullOr', 'UndefinedOr', 'optional', 'TaggedStruct']` |
-| `C/*/*.errors.ts`, `C/*/*.layer.types.ts`, `C/*/*.service.ts` | `arch/files-no-functions` |
+| `C/*/*.schemas.ts` | also [`arch/effect-schema-first`](../rules/effect-schema-first.md); its lines count against `limits.types` |
+| `C/*/*.errors.ts`, `C/*/*.layer.types.ts` | `arch/files-no-functions` |
+| `C/*/*.service.ts` | `arch/files-no-functions`; `effecttsgo/lazy-effect` off |
+| `C/*/*.constants.ts` | `arch/files-exports` with `patterns: ['{STEM}(?:_[A-Z0-9]+)*']`: `ORDER_LIMIT` in `order.constants.ts` |
 | `C/shared/*.ts` | `arch/naming-file`, `arch/naming-folder`, `arch/files-exports` and `arch/files-no-functions` off; `arch/files-constants-only` with `types: true`, `functions: true` |
 | `C/contract*.ts` | `arch/files-constants-only` with `types: true`, `functions: true`; `arch/types-imported-alias`; `arch/schemas-single-use` |
+| `C/contract.constants.ts` | `arch/files-constants-only` with `reexports: true` |
 
 ```ts
 folders: {
@@ -253,14 +261,25 @@ A React package (not a framework app) with the `effect` group in either mode and
 
 | Key | Sets |
 | --- | --- |
-| the unit | `forms: true` |
+| the unit | `forms: true`; with a contract package, `deny.imports`: `<contract>/*/*.service{,.ts}` (data functions come as props) |
 | `F` | [`arch/react-query-props`](../rules/react-query-props.md); `deny.imports`: `@orpc/*`; `no-restricted-imports` with `@tanstack/react-router` (`allowImportNames: ['ClientOnly']`), `next/link`, `next/navigation`, `next/router` and `expo-router`, plus the imports group's patterns |
 | `F/link.tsx`, `F/link.ts` | `no-restricted-imports` back to the imports group's setting |
 | `F/services/**/*.client.ts` | `arch/backend-service-functions` with `frontend: true` |
+| `F/components`, `F/pages` | `deny.calls`: `useContext` (read a context with `use()`), `localStorage.getItem`, `localStorage.setItem`, `sessionStorage.getItem`, `sessionStorage.setItem` |
+| `F/components/**/*.tsx` | `arch/files-exports` with `file: '{area}/{name}.tsx'`, `names: ['{Name}']`; `arch/files-top-level`: imports, interfaces, functions named `<Name>…` and an exported `lazy()` constant `<Name>`; `arch/naming-declarations`: interfaces end in `Props` |
+| `F/pages/**/*.tsx` | what a component gets from the `react` and `naming` groups (`arch/react-props`, `arch/files-components-only`, `arch/files-helpers`, `arch/naming-folder`, `arch/types-declarations` for `Props` only), plus `arch/files-exports` with `file: '{area}/{name}-page.tsx'`, `names: ['{Name}Page']`; `arch/files-top-level`: imports, interfaces, functions named `<Stem>…`; `arch/naming-declarations`: interfaces end in `Props` |
+| `F/pages/**/*.ts` | `arch/files-restricted`: pages are TSX |
+| `F/context/*.ts` | `deny.calls`: `useContext`; `arch/files-exports` with `patterns: ['[A-Z]\\w*Context$']` |
+| `F/context/**/*.tsx` | `arch/types-declarations` with `allow: 'Props$'` |
+| `F/constants/*.constants.ts` | `arch/files-exports`: `ORDER_…` constants or `Order<Name>` values in `order.constants.ts` |
+
+Each key is added only when its folder exists. Write the same key to change one: `'off'` turns a rule off, `false` a `deny` entry.
 
 ```ts
 folders: {
   'packages/frontend/src': { rules: { 'arch/react-query-props': 'off' } },
+  'packages/frontend/src/components': { deny: { calls: { 'localStorage.getItem': false } } },
+  'packages/frontend/src/pages/**/*.tsx': { rules: { 'arch/files-top-level': 'off' } },
 }
 ```
 

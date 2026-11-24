@@ -11,8 +11,8 @@ export const limitsGroup: PresetBuilder<'limits'> = (project, settings) => [
     project.ui,
   ),
   presetOverride(
-    presetScopes(project.app, '**/*.types.ts'),
-    { 'max-lines': ['error', { max: settings.types, skipBlankLines: true, skipComments: true }] },
+    [...presetScopes(project.app, '**/*.types.ts'), ...presetScopes(project.app, '**/*.schemas.ts')],
+    { 'max-lines': ['error', { max: Math.max(settings.lines, settings.types), skipBlankLines: true, skipComments: true }] },
     project.ui,
   ),
 ]

@@ -185,8 +185,39 @@ export function presetFileOverlaps(
   return [...keys, ...merged]
 }
 
-export function presetAliases(root: string, aliases: Record<string, string> | undefined): Record<string, string> {
-  return Object.fromEntries(Object.entries(aliases ?? {}).map(([alias, path]) => [alias.replace(/\/$/, ''), resolve(root, path)]))
+export function presetImportTargets(value: unknown): string[] {
+  if (typeof value === 'string') {
+    return [value]
+  }
+
+  if (Array.isArray(value)) {
+    return value.flatMap(presetImportTargets)
+  }
+
+  return value instanceof Object ? Object.values(value).flatMap(presetImportTargets) : []
+}
+
+export function presetHarvestAliases(root: string, directories: string[]): Record<string, string> {
+  const found = new Map<string, Set<string>>()
+
+  for (const directory of directories) {
+    for (const [key, value] of Object.entries(presetManifest(root, directory).imports ?? {})) {
+      const alias = /^(#[^*]*)\/\*$/.exec(key)?.[1]
+      const target = presetImportTargets(value).find((mapped) => /^\.\/(?:[^*]*\/)?\*$/.test(mapped))
+
+      if (alias && target) {
+        found.set(alias, (found.get(alias) ?? new Set()).add(posix.join(directory, target.slice(0, -1)).replace(/\/$/, '') || '.'))
+      }
+    }
+  }
+
+  return Object.fromEntries([...found].flatMap(([alias, paths]) => (paths.size === 1 ? [[alias, [...paths][0]]] : [])))
+}
+
+export function presetAliases(project: PresetTypes.PresetProject, aliases: Record<string, string | false> | undefined): Record<string, string> {
+  const merged = { ...project.aliases, ...Object.fromEntries(Object.entries(aliases ?? {}).map(([alias, path]) => [alias.replace(/\/$/, ''), path])) }
+
+  return Object.fromEntries(Object.entries(merged).flatMap(([alias, path]) => (path === false ? [] : [[alias, resolve(project.root, path)]])))
 }
 
 export function presetRuntime(
@@ -203,7 +234,7 @@ export function presetRuntime(
     const options: PresetTypes.PresetRuntimeOptions = {
       web: project.web.map((path) => resolve(project.root, path)),
       backend: project.backend.map((path) => resolve(project.root, path)),
-      aliases: presetAliases(project.root, unit.scope.effective.imports?.aliases),
+      aliases: presetAliases(project, unit.scope.effective.imports?.aliases),
       backendPackages: project.units.flatMap((item) => (item.kind === 'backend' ? (presetPackageName(project.root, item.key) ?? []) : [])),
       server: settings.server,
       client: settings.client,

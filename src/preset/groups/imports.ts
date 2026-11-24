@@ -59,7 +59,7 @@ export const importsGroup: PresetTypes.PresetBuilder<'imports'> = (project, sett
           roles: project.fileKinds,
           services: absolute([...project.web, ...project.backend].map((source) => project.serviceFolders[source])),
           portable: true,
-          aliases: presetAliases(project.root, settings.aliases),
+          aliases: presetAliases(project, settings.aliases),
           appPackages: importsPackageNames(project, ['web', 'backend']),
           backendPackages: importsPackageNames(project, ['backend']),
           entrypoints: project.publicEntrypoints,

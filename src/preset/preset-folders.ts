@@ -5,7 +5,7 @@ import { presetSets } from './preset-sets.ts'
 import { presetStylesheet } from './preset-stylesheet.ts'
 import { presetUnits } from './preset-units.ts'
 import * as PresetConstants from './preset.constants.ts'
-import { presetBraces, PresetError, presetFileOverlaps, presetGlobEscape, presetIntersect, presetIsDirectory, presetIsFile, presetManifest, presetMerge, presetNames, presetScopes, presetServiceScopes } from './preset.utils.ts'
+import { presetBraces, PresetError, presetFileOverlaps, presetGlobEscape, presetHarvestAliases, presetIntersect, presetIsDirectory, presetIsFile, presetManifest, presetMerge, presetNames, presetScopes, presetServiceScopes } from './preset.utils.ts'
 import type * as PresetTypes from '../types/preset.types.ts'
 
 function presetPortableKey(key: string): string {
@@ -263,37 +263,45 @@ export function presetProject(config: PresetTypes.PresetConfig): PresetTypes.Pre
   const given = resolve(config.root ?? process.cwd())
   const root = existsSync(given) ? realpathSync(given) : given
 
-  const expanded = Object.entries(presetSets(config.folders ?? {}, config.sets)).flatMap(([key, value]) =>
-    presetBraces(key).map((path): [string, boolean | PresetTypes.PresetFolder, boolean] => [presetPortableKey(path), value, key.includes('{')]),
+  const expanded = presetSets([...(config.extends ?? []), config]).flatMap((folders, source) =>
+    Object.entries(folders).flatMap(([key, value]) =>
+      presetBraces(key).map((path): PresetTypes.PresetSourced => [presetPortableKey(path), value, key.includes('{'), source]),
+    ),
   )
 
-  const files = expanded.filter(([key]) => presetIsFileKey(root, key))
+  const gather = (entries: PresetTypes.PresetSourced[]) => {
+    const folders: PresetTypes.PresetFolders = {}
+
+    for (const [key, value] of entries) {
+      folders[key] = presetMerge(folders[key], value)
+    }
+
+    return folders
+  }
+
+  const fileList = expanded.filter(([key]) => presetIsFileKey(root, key))
+  const files = gather(fileList)
 
   const listed = expanded
-    .filter((entry) => !files.includes(entry))
-    .map(([key, value, fromList]): [string, boolean | PresetTypes.PresetFolder, boolean] => [presetNormalizeKey(key), value, fromList])
+    .filter((entry) => !fileList.includes(entry))
+    .map(([key, value, fromList, source]): PresetTypes.PresetSourced => [presetNormalizeKey(key), value, fromList, source])
 
-  const twice = listed.find(([key, , fromList], index) =>
-    listed.some(([other, , otherFromList], at) => at < index && other === key && !fromList && !otherFromList),
-  )
+  const alone = listed.flatMap(([key, , braced, source]) => (braced ? [] : [`${source}/${key}`]))
+  const twice = alone.find((entry, index) => alone.indexOf(entry) !== index)
 
   if (twice) {
-    throw new PresetError(`Folder \`${twice[0]}\` is listed twice.`)
+    throw new PresetError(`Folder \`${twice.slice(twice.indexOf('/') + 1)}\` is listed twice.`)
   }
 
-  const configured: PresetTypes.PresetFolders = {}
-
-  for (const [key, value] of listed) {
-    configured[key] = key in configured ? presetMerge(configured[key], value) : value
-  }
+  const configured = gather(listed)
 
   const detected = config.detect === false ? configured : presetDetect(root, configured)
   const conventions = Object.entries(detected).filter(([key]) => !(key in configured) && presetIsFileKey(root, key))
   const folders = Object.fromEntries(Object.entries(detected).filter(([key]) => !conventions.some(([other]) => other === key)))
 
   const fileEntries = [
-    ...conventions.filter(([key]) => !files.some(([other]) => other === key)),
-    ...files.map(([key, value]): [string, boolean | PresetTypes.PresetFolder] => [key, key in detected ? presetMerge(detected[key], value) : value]),
+    ...conventions.filter(([key]) => !(key in files)),
+    ...Object.entries(files).map(([key, value]): PresetTypes.PresetEntry => [key, presetMerge(detected[key], value)]),
   ]
 
   const scopes = presetScopesTree(root, folders)
@@ -383,14 +391,9 @@ export function presetProject(config: PresetTypes.PresetConfig): PresetTypes.Pre
 
   const stylesheet = (unit: PresetTypes.PresetUnit) => {
     const tailwind = unit.scope.effective.tailwind
+    const css = tailwind && (tailwind.css ?? presetStylesheet(root, unit.key))
 
-    if (!tailwind) {
-      return undefined
-    }
-
-    const css = tailwind.css ?? presetStylesheet(root, unit.key)
-
-    return css === undefined ? undefined : resolve(root, css)
+    return css ? resolve(root, css) : undefined
   }
 
   const webCss = Object.fromEntries(webUnits.flatMap((unit) => {
@@ -413,7 +416,7 @@ export function presetProject(config: PresetTypes.PresetConfig): PresetTypes.Pre
           return name in { ...manifest.dependencies, ...manifest.devDependencies }
         })
 
-        const css = stylesheet(unit) ?? (unit.scope.effective.kit ? ((consumer && webCss[consumer.source]) ?? webStylesheets.at(0)) : undefined)
+        const css = stylesheet(unit) ?? (consumer && webCss[consumer.source]) ?? webStylesheets.at(0)
 
         if (css === undefined && unit.scope.effective.kit) {
           throw new PresetError(`The UI kit ${unit.key} needs a Tailwind stylesheet: set tailwind.css on it.`)
@@ -481,6 +484,8 @@ export function presetProject(config: PresetTypes.PresetConfig): PresetTypes.Pre
     backend,
     backendRoots,
     packageSources,
+    reactPackages: libraryUnits.filter((unit) => unit.scope.effective.react && !unit.scope.effective.kit).map((unit) => unit.source),
+    aliases: presetHarvestAliases(root, [...new Set(['.', ...units.map((unit) => unit.key)])]),
     serviceRoots: [...backend, ...packageSources],
     app,
     appFiles,

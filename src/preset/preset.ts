@@ -35,6 +35,7 @@ import type { OxlintConfig, OxlintOverride } from 'oxlint'
 
 export type {
   PresetConfig,
+  PresetFragment,
   PresetFolder,
   PresetFolders,
   PresetGroups,

@@ -24,6 +24,7 @@ function layoutFolders(project: PresetProject, folders: string[] | undefined, sc
 
 export const layoutGroup: PresetBuilder<'layout'> = (project, settings, owner) => {
   const { web, nextWeb, serviceRoots, app, services, utilities, ui, testFiles, layouts, operations } = project
+  const react = [...web, ...project.reactPackages]
   const folderOperations = presetServiceScopes(project.serviceFolders, operations, '*/{actions,queries}/*.ts')
   const operationMessage = "Action/query files export exactly one named operation. Keep helpers used only by this operation private inside its function; do not export them. Move a helper to the module's .utils.ts only when it is genuinely shared, not merely to satisfy lint."
   const names = settings.files.map((name) => name.split('*').map((part) => part.replaceAll('.', '[.]')).join('[a-z0-9]+(?:-[a-z0-9]+)*'))
@@ -92,14 +93,14 @@ export const layoutGroup: PresetBuilder<'layout'> = (project, settings, owner) =
       ui,
     ),
     presetOverride(
-      [...presetScopes(web, 'components/**/*.ts'), ...presetScopes(web, 'hooks/**/*.tsx')],
+      [...presetScopes(react, 'components/**/*.ts'), ...presetScopes(react, 'hooks/**/*.tsx')],
       { 'arch/files-restricted': ['error', { message: 'Components use TSX; hooks use .ts files.' }] },
       ui,
     ),
     presetOverride(
-      presetScopes(web, '**/use-*.{ts,tsx}'),
+      presetScopes(react, '**/use-*.{ts,tsx}'),
       { 'arch/files-restricted': ['error', { message: 'Hooks belong in src/hooks.' }] },
-      [...presetScopes(web, 'hooks/**'), ...ui],
+      [...presetScopes(react, 'hooks/**'), ...ui],
     ),
     presetOverride(
       presetServiceScopes(project.serviceFolders, web, '**/*.{ts,tsx}'),
