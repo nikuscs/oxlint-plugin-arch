@@ -20,9 +20,7 @@ Preset defaults that change what an app reports:
 - Effect frontend packages also: `components/` and `pages/` build no Schema (`Schema.Struct`, `Literals`, `Union`, `Array`, `Record`) and keep folder names as is; `constants/*.constants.ts` stop at 400 lines; `services/*.client.ts` call no `Date.now`, `DateTime.now`, `Math.random` and export no `<stem>Client…`; `types/*.types.ts` export `<Stem>…` without `Client`; the package calls no `JSON.stringify`, `parseInt` or `parseFloat`. An Effect web app with a contract bans those three calls too, when the app itself uses Effect.
 - A React package with `tailwind` and no stylesheet of its own uses the stylesheet of the app that depends on it (TanStack, Next or a plain React app), like a kit.
 - A root `alchemy.*.ts` file skips `import-extra/no-relative-packages`.
-
 - `arch/naming-exports` (and every `{Name}`/`{name}` placeholder) drops route markers: TanStack `$param`, `$` splat, `{-$optional}`, `prefix{$param}suffix`, `(group)`, `[.]` escapes, `_pathless`, `name_` and `__root`, and Next `[id]`, `[...slug]`, `[[...slug]]`, `(group)`, `(.)intercept` and `@slot` become plain words (`AdminUsersUserIdRoute`, `ShopSlugPage`).
-
 - TanStack apps name each route's component after its path (`PostsPostIdEditRoute`); Next and Vinext apps name each page after its folders (`BlogSlugPage`, `…Layout`), App Router and Pages Router alike. Turn it off or replace it with `arch/naming-exports` on the routes folder.
 
 Options:
