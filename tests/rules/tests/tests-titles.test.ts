@@ -51,5 +51,7 @@ test(\`loads \${count} items\`, fn)`,
     },
     { name: 'a configured fails modifier', code: "test.fails('should save', fn)", options: { deny: '^should', modifiers: ['fails'] }, errors: ['forbidden'] },
     { name: 'a configured modifier', code: "test.only('should load', fn)", options: { deny: '^should', modifiers: ['only'] }, errors: ['forbidden'] },
+    { name: 'a lowercase title passes the capital deny', code: "it('saves', () => {}); describe('Orders', () => {})", options: { callees: ['it', 'test'], deny: '^\\p{Lu}', flags: 'u' } },
+    { name: 'a capital title with the capital deny', code: "it.effect('Élan saves', () => run)", options: { callees: ['it', 'test'], deny: '^\\p{Lu}', flags: 'u' }, errors: ['forbidden'] },
   ])('$name', (row) => testerRun(testsTitles, row))
 })

@@ -23,13 +23,14 @@ export const useChat = () => useContext(ChatContext)
 | `restrictions` | `object[]` | none | Several rules of `{ token \| member, allow?, patterns?, message? }` |
 | `restrictions[].member` | `string` | none | Dotted member like `process.env`, or `*.name` for any object |
 
-The top level needs `token` or `restrictions`; each restriction needs exactly one of `token` or `member`. A restriction's `message` is appended to the report.
+The top level needs `token` or `restrictions`; each restriction needs exactly one of `token` or `member`. A restriction's `message` is appended to the report. A `member` matches only a read like `x.name` or `x?.name`, never an object key, class field or type member, so `{ member: '*._tag' }` reports `error._tag === 'OrderNotFound'` and `switch (error._tag)` but not `Schema.Struct({ _tag: Schema.Literal('OrderNotFound') })`. Computed access (`error['_tag']`) is not matched.
 
 ```ts
 'arch/boundaries-token-owner': ['error', {
   restrictions: [
     { token: 'createContext', patterns: ['/context/'] },
     { member: 'process.env', allow: ['/env.ts'], message: 'Read config from env.ts.' },
+    { member: '*._tag', message: 'Match the error with Effect.catchTag or Schema.is.' },
   ],
 }]
 ```

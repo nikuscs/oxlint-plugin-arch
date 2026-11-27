@@ -51,7 +51,9 @@ function namingLabelsPlain(text: string, loose: boolean | undefined): string {
 function namingLabelsExpected({ entry, drop }: NamingLabelsCompiled, captures: Record<string, string>, binding: string): string[] {
   const name = drop.reduce((text, pattern) => text.replace(pattern, ''), binding)
 
-  return [entry.name ?? []].flat().map((template) => namingExpand(template, { ...captures, name }, false))
+  const templates = [entry.name ?? []].flat().filter((template) => binding !== '' || !/\{name\}/i.test(template))
+
+  return templates.map((template) => namingExpand(template, { ...captures, name }, false))
 }
 
 export const namingLabels = defineRule({
@@ -76,6 +78,7 @@ export const namingLabels = defineRule({
                 pattern: optionsPatternSchema,
                 drop: optionsPatternSchema,
                 loose: { type: 'boolean' },
+                always: { type: 'boolean' },
                 within: optionsPatternSchema,
                 message: { type: 'string' },
               },
@@ -89,6 +92,7 @@ export const namingLabels = defineRule({
     ],
     messages: {
       name: "'{{label}}' must be '{{expected}}', after the name '{{name}}'.{{message}}",
+      label: "'{{label}}' must be '{{expected}}'.{{message}}",
       pattern: "'{{label}}' must match {{pattern}}.{{message}}",
     },
   },
@@ -145,14 +149,14 @@ export const namingLabels = defineRule({
             })
           }
 
-          const binding = namingLabelsBinding(node, compiled.within)
+          const binding = namingLabelsBinding(node, compiled.within) ?? (compiled.entry.always ? '' : undefined)
           const expected = binding === undefined ? [] : namingLabelsExpected(compiled, captures, binding)
           const plain = expected.map((item) => namingLabelsPlain(item, compiled.entry.loose))
 
           if (binding !== undefined && expected.length > 0 && !plain.includes(namingLabelsPlain(label, compiled.entry.loose))) {
             context.report({
               node: target,
-              messageId: 'name',
+              messageId: binding === '' ? 'label' : 'name',
               data: { label, expected: expected.join(' or '), name: binding, message: optionsMessage(compiled.entry.message, message) },
             })
           }

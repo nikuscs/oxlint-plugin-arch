@@ -3,6 +3,7 @@ import { backendOrpcOutput } from './rules/backend/backend-orpc-output.ts'
 import { backendRegistry } from './rules/backend/backend-registry.ts'
 import { backendServiceFunctions } from './rules/backend/backend-service-functions.ts'
 import { backendSqlLike } from './rules/backend/backend-sql-like.ts'
+import { backendTableOwner } from './rules/backend/backend-table-owner.ts'
 import { boundariesDeny } from './rules/boundaries/boundaries-deny.ts'
 import { boundariesImports } from './rules/boundaries/boundaries-imports.ts'
 import { boundariesNext } from './rules/boundaries/boundaries-next.ts'
@@ -28,7 +29,11 @@ import { codeTrivialFunctions } from './rules/code/code-trivial-functions.ts'
 import { codeYieldArgument } from './rules/code/code-yield-argument.ts'
 import { commentsCode } from './rules/comments/comments-code.ts'
 import { commentsDirectives } from './rules/comments/comments-directives.ts'
+import { commentsDocblock } from './rules/comments/comments-docblock.ts'
+import { commentsHeader } from './rules/comments/comments-header.ts'
 import { copyDashes } from './rules/copy/copy-dashes.ts'
+import { copyHardcoded } from './rules/copy/copy-hardcoded.ts'
+import { effectConfigKeys } from './rules/effect/effect-config-keys.ts'
 import { effectLayerFile } from './rules/effect/effect-layer-file.ts'
 import { effectLayerKeys } from './rules/effect/effect-layer-keys.ts'
 import { effectLayers } from './rules/effect/effect-layers.ts'
@@ -102,6 +107,7 @@ export default eslintCompatPlugin({
     'backend-registry': backendRegistry,
     'backend-service-functions': backendServiceFunctions,
     'backend-sql-like': backendSqlLike,
+    'backend-table-owner': backendTableOwner,
     'boundaries-deny': boundariesDeny,
     'boundaries-imports': boundariesImports,
     'boundaries-next': boundariesNext,
@@ -127,7 +133,11 @@ export default eslintCompatPlugin({
     'code-yield-argument': codeYieldArgument,
     'comments-code': commentsCode,
     'comments-directives': commentsDirectives,
+    'comments-docblock': commentsDocblock,
+    'comments-header': commentsHeader,
     'copy-dashes': copyDashes,
+    'copy-hardcoded': copyHardcoded,
+    'effect-config-keys': effectConfigKeys,
     'effect-layer-file': effectLayerFile,
     'effect-layer-keys': effectLayerKeys,
     'effect-layers': effectLayers,

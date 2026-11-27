@@ -154,5 +154,18 @@ describe('arch/boundaries-token-owner', () => {
       options: { token: 'RouterClient', restrictions: [{ member: 'process.platform', message: 'Use the runtime adapter instead.' }] },
       errors: ['restricted', 'restrictedWithMessage'],
     },
+    { name: 'a tag key in a schema passes a tag member restriction', code: "const OrderNotFound = Schema.Struct({ _tag: Schema.Literal('OrderNotFound') })", options: { restrictions: [{ member: '*._tag' }] } },
+    { name: 'a tag field in a class passes a tag member restriction', code: "class OrderNotFound { readonly _tag = 'OrderNotFound' }", options: { restrictions: [{ member: '*._tag' }] } },
+    { name: 'a tag key in an object and a type passes', code: "const error = { _tag: 'OrderNotFound' } satisfies { _tag: string }", options: { restrictions: [{ member: '*._tag' }] } },
+    { name: 'Match.tag passes a tag member restriction', code: "Match.value(error).pipe(Match.tag('OrderNotFound', () => 1))", options: { restrictions: [{ member: '*._tag' }] } },
+    { name: 'a tag compared with a string', code: "const found = error._tag === 'OrderNotFound'", options: { restrictions: [{ member: '*._tag' }] }, errors: ['restricted'] },
+    { name: 'a tag compared the other way round', code: "if ('OrderNotFound' !== error._tag) {}", options: { restrictions: [{ member: '*._tag' }] }, errors: ['restricted'] },
+    { name: 'an optional tag read', code: "const found = error?._tag == 'OrderNotFound'", options: { restrictions: [{ member: '*._tag' }] }, errors: ['restricted'] },
+    {
+      name: 'a tag read with a message',
+      code: 'switch (error._tag) {}',
+      options: { restrictions: [{ member: '*._tag', message: 'Match the error with Effect.catchTag or Schema.is.' }] },
+      errors: ["'*._tag' may only appear in configured owner paths. Match the error with Effect.catchTag or Schema.is."],
+    },
   ])('$name', (row) => testerRun(boundariesTokenOwner, row))
 })

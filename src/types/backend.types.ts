@@ -1,6 +1,12 @@
+import type { NamingCaptureOptions } from './naming.types.ts'
+
 export interface BackendOrpcOutputOptions {
   handler?: string
   output?: string
+  roots?: string[]
+  require?: string[]
+  ignore?: string[]
+  message?: string
 }
 
 export interface BackendServiceFunctionsOptions {
@@ -24,4 +30,12 @@ export interface BackendRegistryOptions {
   skip?: string[]
   object?: string
   file?: string
+}
+
+export interface BackendTableOwnerOptions extends NamingCaptureOptions {
+  methods?: string[]
+  owners?: Record<string, string>
+  domains?: string[]
+  prefix?: boolean
+  message?: string
 }

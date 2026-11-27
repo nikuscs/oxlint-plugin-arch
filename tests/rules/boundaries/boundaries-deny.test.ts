@@ -64,5 +64,8 @@ describe('arch/boundaries-deny', () => {
     { name: 'a placeholder call key', filename: 'src/order/order.ts', code: 'orderDelete(id)', options: { calls: { '{stem}Delete': '' } }, errors: ['call'] },
     { name: 'a placeholder owner place passes', filename: 'packages/wallet/src/wallet.layer.ts', code: "import '@scope/kit-database'", options: { file: 'packages/{name}/**', only: [{ imports: '@scope/kit-database', in: 'packages/{name}/src/{name}.layer.ts' }] } },
     { name: 'a placeholder owner place reports elsewhere', filename: 'packages/wallet/src/wallet.service.ts', code: "import '@scope/kit-database'", options: { file: 'packages/{name}/**', only: [{ imports: '@scope/kit-database', in: 'packages/{name}/src/{name}.layer.ts', message: 'Only {name}.layer.ts reads the database.' }] }, errors: ["Do not import '@scope/kit-database' here. Only wallet.layer.ts reads the database."] },
+    { name: 'Schema.is passes a tag call ban', code: 'const found = Schema.is(OrderNotFound)(error)', options: { calls: { 'Predicate.isTagged': 'Use Schema.is.' } } },
+    { name: 'a tag check with a value', code: "const found = Predicate.isTagged(error, 'OrderNotFound')", options: { calls: { 'Predicate.isTagged': 'Use Schema.is.' } }, errors: ['call'] },
+    { name: 'a curried tag check', code: "const isMissing = Predicate.isTagged('OrderNotFound')", options: { calls: { 'Predicate.isTagged': 'Use Schema.is.' } }, errors: ['call'] },
   ])('$name', (row) => testerRun(boundariesDeny, row))
 })

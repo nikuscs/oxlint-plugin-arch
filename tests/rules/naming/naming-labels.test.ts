@@ -95,5 +95,16 @@ describe('arch/naming-labels', () => {
     { name: 'an entry message', code: "const a = Effect.fn('b')(function* () {})", options: { labels: [{ callee: 'Effect.fn', pattern: '^a', message: 'Spans start with a.' }] }, errors: ["'b' must match ^a. Spans start with a."] },
     { name: 'a rule message', code: "const a = Effect.fn('b')(function* () {})", options: { message: 'See the guide.', labels: [{ callee: 'Effect.fn', name: '{name}' }] }, errors: ["'b' must be 'a', after the name 'a'. See the guide."] },
     { name: 'a domain from the folder', filename: 'src/orders/orders.layer.ts', code: "const a = Effect.fn('order.a')(function* () {})", options: { stem: 'folder', singularize: 'trailing-s', labels: [{ callee: 'Effect.fn', pattern: '^{domain}[.]' }] } },
+    { name: 'an unbound label passes without always', filename: 'test/order/order.delivery.test.ts', code: "layer(AppLayer)('order', (it) => {})", options: { stem: 'full-basename', roles: ['test'], separators: ['.'], labels: [{ callee: 'layer', name: '{stem}' }] } },
+    { name: 'an unbound label equal to the file stem', filename: 'test/order/order.delivery.test.ts', code: "layer(TestLayer.AppLayer)('order.delivery', (it) => { it.effect('works', () => run) })", options: { stem: 'full-basename', roles: ['test'], separators: ['.'], labels: [{ callee: 'layer', name: '{stem}', always: true }] } },
+    {
+      name: 'an unbound label off the file stem',
+      filename: 'test/order/order.delivery.test.ts',
+      code: "layer(TestLayer.AppLayer)('order.delivery with a clock', (it) => {})",
+      options: { stem: 'full-basename', roles: ['test'], separators: ['.'], labels: [{ callee: 'layer', name: '{stem}', always: true }] },
+      errors: ["'order.delivery with a clock' must be 'order.delivery'."],
+    },
+    { name: 'an unbound label skips a template that needs the name', code: "register(Effect.fn('anything')(function* () {}))", options: { labels: [{ callee: 'Effect.fn', name: '{name}', always: true }] } },
+    { name: 'a bound label with always still follows its name', code: "const a = Effect.fn('b')(function* () {})", options: { labels: [{ callee: 'Effect.fn', name: '{name}', always: true }] }, errors: ['name'] },
   ])('$name', (row) => testerRun(namingLabels, row))
 })

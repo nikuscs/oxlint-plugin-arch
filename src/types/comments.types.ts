@@ -1,3 +1,5 @@
+import type { DeclarationsKind } from './declarations.types.ts'
+import type { OptionsPattern } from './options.types.ts'
 import type { ESTree } from '@oxlint/plugins'
 
 export interface CommentsOptions {
@@ -23,3 +25,16 @@ export type CommentsMemberNode =
   | ESTree.BindingProperty
   | ESTree.AssignmentTargetProperty
   | ESTree.SpreadElement
+
+export interface CommentsHeaderOptions {
+  comment: string
+  imports?: OptionsPattern
+  files?: OptionsPattern
+  message?: string
+}
+
+export interface CommentsDocblockOptions {
+  kinds?: DeclarationsKind[]
+  names?: OptionsPattern
+  message?: string
+}

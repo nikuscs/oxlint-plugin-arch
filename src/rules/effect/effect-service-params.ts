@@ -32,6 +32,8 @@ export const effectServiceParams = defineRule({
           name: OptionsUtils.optionsPatternSchema,
           allow: OptionsUtils.optionsPatternSchema,
           declaration: { type: 'string', minLength: 1 },
+          values: OptionsUtils.optionsPatternSchema,
+          params: { type: 'integer', minimum: 0 },
           message: { type: 'string' },
           ...namingCaptureSchemaProperties,
         },
@@ -40,14 +42,29 @@ export const effectServiceParams = defineRule({
     messages: {
       name: "'{{path}}' takes '{{type}}'; a service method takes a params type that matches {{pattern}}.{{message}}",
       inline: "'{{path}}' takes an unnamed type; a service method takes a params type that matches {{pattern}}.{{message}}",
+      value: "'{{path}}' is typed '{{type}}'; a service member is a function, so a read without input takes no parameters.{{message}}",
+      params: "'{{path}}' takes {{count}} parameters; a service method takes at most {{max}}.{{message}}",
     },
   },
   createOnce(context) {
     let options: EffectServiceParamsOptions = {}
     let captures: Record<string, string> = {}
     let allowed: RegExp[] = []
+    let values: RegExp[] = []
 
-    function checkParams(params: ESTree.ParamPattern[], keys: string[]): void {
+    function reportMessage(keys: string[]): string {
+      return OptionsUtils.optionsMessage(options.message && namingExpand(options.message, namingKeyPath(captures, keys), true))
+    }
+
+    function checkParams(node: ESTree.Node, params: ESTree.ParamPattern[], keys: string[]): void {
+      if (options.params !== undefined && params.length > options.params) {
+        context.report({
+          node,
+          messageId: 'params',
+          data: { path: keys.join('.'), count: String(params.length), max: String(options.params), message: reportMessage(keys) },
+        })
+      }
+
       const first = params.at(0)
       const annotation = first && 'typeAnnotation' in first ? first.typeAnnotation?.typeAnnotation : undefined
 
@@ -55,9 +72,8 @@ export const effectServiceParams = defineRule({
         return
       }
 
-      const values = namingKeyPath(captures, keys)
-      const sources = [options.name ?? '^{Folder}\\w*Params$'].flat().map((source) => namingExpand(source, values, true, OptionsUtils.optionsEscape))
-      const data = { path: keys.join('.'), pattern: OptionsUtils.optionsPatternLabel(sources), message: OptionsUtils.optionsMessage(options.message && namingExpand(options.message, values, true)) }
+      const sources = [options.name ?? '^{Folder}\\w*Params$'].flat().map((source) => namingExpand(source, namingKeyPath(captures, keys), true, OptionsUtils.optionsEscape))
+      const data = { path: keys.join('.'), pattern: OptionsUtils.optionsPatternLabel(sources), message: reportMessage(keys) }
 
       if (annotation.type !== 'TSTypeReference') {
         context.report({
@@ -91,11 +107,17 @@ export const effectServiceParams = defineRule({
         }
 
         if (member.type === 'TSMethodSignature') {
-          checkParams(member.params, [...path, key])
+          checkParams(member, member.params, [...path, key])
         } else if (type?.type === 'TSFunctionType') {
-          checkParams(type.params, [...path, key])
+          checkParams(member, type.params, [...path, key])
         } else if (type?.type === 'TSTypeLiteral') {
           check(type, [...path, key])
+        } else if (type?.type === 'TSTypeReference' && OptionsUtils.optionsPatternsTest(values, effectServiceParamsTypeName(type.typeName))) {
+          context.report({
+            node: member,
+            messageId: 'value',
+            data: { path: [...path, key].join('.'), type: effectServiceParamsTypeName(type.typeName), message: reportMessage([...path, key]) },
+          })
         }
       }
     }
@@ -104,6 +126,7 @@ export const effectServiceParams = defineRule({
       before() {
         options = OptionsUtils.optionsFirst<EffectServiceParamsOptions>(context, {})
         allowed = OptionsUtils.optionsPatterns(options.allow)
+        values = OptionsUtils.optionsPatterns(options.values)
         const paths = namingCaptures(context.filename, options)
 
         if (!paths) {

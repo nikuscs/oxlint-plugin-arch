@@ -15,6 +15,8 @@ export interface TestsModifiersOptions {
 
 export interface TestsAssertionsOptions extends TestsModifiersOptions {
   assertions?: string[]
+  max?: number
+  last?: boolean
 }
 
 export interface TestsAssertionsRegistration {
@@ -26,6 +28,12 @@ export interface TestsAssertionsRegistration {
 export interface TestsAssertionsRow {
   bindings: Map<ESTree.Node, AstFunction>
   callbacks: AstFunction[]
+}
+
+export interface TestsAssertionsLimit {
+  node: ESTree.Node
+  messageId: 'many' | 'last'
+  data?: Record<string, string>
 }
 
 export interface TestsAssertionsState {

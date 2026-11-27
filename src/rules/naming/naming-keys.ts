@@ -1,5 +1,5 @@
 import { defineRule } from '@oxlint/plugins'
-import { astDottedName, astIsInlineFunction, astReturnExpressions, astSome, astUnwrap } from '../../utils/ast.utils.ts'
+import { astDottedName, astIsInlineFunction, astReturnExpressions, astSome, astStaticString, astUnwrap } from '../../utils/ast.utils.ts'
 import { declarationsPropertyName } from '../../utils/declarations.utils.ts'
 import { namingCaptures, namingCaptureSchemaProperties, namingExpand, namingKeyPath } from '../../utils/naming.utils.ts'
 import * as OptionsUtils from '../../utils/options.utils.ts'
@@ -89,18 +89,21 @@ export const namingKeys = defineRule({
           name: OptionsUtils.optionsPatternSchema,
           keys: OptionsUtils.optionsPatternSchema,
           inline: { type: 'boolean' },
+          calls: { type: 'boolean' },
+          types: OptionsUtils.optionsPatternSchema,
           delegate: { type: 'boolean' },
           allow: OptionsUtils.optionsPatternSchema,
           ...namingCaptureSchemaProperties,
           message: { type: 'string' },
         },
-        anyOf: [{ required: ['callees'] }, { required: ['exports'] }],
+        anyOf: [{ required: ['callees'] }, { required: ['exports'] }, { required: ['types'] }],
       },
     ],
     messages: {
       name: "'{{name}}' under key '{{path}}' must match {{pattern}}.{{message}}",
       key: "Key '{{key}}' in '{{path}}' must match {{pattern}}.{{message}}",
       inline: "Bind a named function under '{{path}}', not an inline one.{{message}}",
+      call: "Bind '{{path}}' by reference, not the result of a call.{{message}}",
       delegate: "'{{path}}' must return a call to '{{path}}' on its service, not '{{called}}'.{{message}}",
     },
   },
@@ -109,6 +112,7 @@ export const namingKeys = defineRule({
     let captures: Record<string, string> = {}
     let callees: RegExp[] = []
     let exported: RegExp[] = []
+    let typed: RegExp[] = []
     let allowed: RegExp[] = []
     let keyPatterns: RegExp[] = []
     let message = ''
@@ -124,6 +128,14 @@ export const namingKeys = defineRule({
         context.report({
           node: value,
           messageId: 'inline',
+          data: { path, message },
+        })
+      }
+
+      if (!fn && options.calls === false && (value.type === 'CallExpression' || value.type === 'NewExpression')) {
+        context.report({
+          node: value,
+          messageId: 'call',
           data: { path, message },
         })
       }
@@ -145,6 +157,35 @@ export const namingKeys = defineRule({
       }
     }
 
+    function checkKey(node: ESTree.Node, key: string, keys: string[]): void {
+      if (keyPatterns.length > 0 && !OptionsUtils.optionsPatternsTest(keyPatterns, key)) {
+        context.report({
+          node,
+          messageId: 'key',
+          data: { key, path: keys.join('.'), pattern: OptionsUtils.optionsPatternLabel(options.keys), message },
+        })
+      }
+    }
+
+    function checkType(members: ESTree.TSSignature[], path: string[]): void {
+      for (const member of members) {
+        const plain = (member.type === 'TSPropertySignature' || member.type === 'TSMethodSignature') && !member.computed ? member.key : undefined
+        const key = plain?.type === 'Identifier' ? plain.name : plain && astStaticString(plain)
+        const keys = key === undefined ? path : [...path, key]
+        const type = member.type === 'TSPropertySignature' ? member.typeAnnotation?.typeAnnotation : undefined
+
+        if (!plain || key === undefined || OptionsUtils.optionsPatternsTest(allowed, keys.join('.'))) {
+          continue
+        }
+
+        checkKey(plain, key, keys)
+
+        if (type?.type === 'TSTypeLiteral') {
+          checkType(type.members, keys)
+        }
+      }
+    }
+
     function check(object: ESTree.ObjectExpression, path: string[]): void {
       for (const property of object.properties) {
         const key = declarationsPropertyName(property)
@@ -154,13 +195,7 @@ export const namingKeys = defineRule({
           continue
         }
 
-        if (keyPatterns.length > 0 && !OptionsUtils.optionsPatternsTest(keyPatterns, key)) {
-          context.report({
-            node: property.key,
-            messageId: 'key',
-            data: { key, path: keys.join('.'), pattern: OptionsUtils.optionsPatternLabel(options.keys), message },
-          })
-        }
+        checkKey(property.key, key, keys)
 
         if (property.value.type === 'ObjectExpression') {
           check(property.value, keys)
@@ -183,10 +218,11 @@ export const namingKeys = defineRule({
         message = OptionsUtils.optionsMessage(options.message)
         callees = OptionsUtils.optionsWildcards(options.callees)
         exported = OptionsUtils.optionsPatterns(options.exports)
+        typed = OptionsUtils.optionsPatterns(options.types)
         allowed = OptionsUtils.optionsPatterns(options.allow)
         keyPatterns = OptionsUtils.optionsPatterns(options.keys)
 
-        if (callees.length === 0 && exported.length === 0) {
+        if (callees.length === 0 && exported.length === 0 && typed.length === 0) {
           return false
         }
       },
@@ -195,6 +231,16 @@ export const namingKeys = defineRule({
 
         if (first?.type === 'ObjectExpression' && OptionsUtils.optionsPatternsTest(callees, astDottedName(node.callee) ?? '')) {
           check(first, [])
+        }
+      },
+      TSInterfaceDeclaration(node) {
+        if (OptionsUtils.optionsPatternsTest(typed, node.id.name)) {
+          checkType(node.body.body, [])
+        }
+      },
+      TSTypeAliasDeclaration(node) {
+        if (node.typeAnnotation.type === 'TSTypeLiteral' && OptionsUtils.optionsPatternsTest(typed, node.id.name)) {
+          checkType(node.typeAnnotation.members, [])
         }
       },
       VariableDeclarator(node) {

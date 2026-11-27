@@ -87,5 +87,14 @@ export interface EffectServiceParamsOptions extends NamingCaptureOptions {
   name?: OptionsPattern;
   allow?: OptionsPattern;
   declaration?: string;
+  values?: OptionsPattern;
+  params?: number;
+  message?: string;
+}
+
+export interface EffectConfigKeysOptions extends NamingCaptureOptions {
+  prefix?: OptionsPattern;
+  allow?: string[];
+  callees?: string[];
   message?: string;
 }

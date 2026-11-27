@@ -114,5 +114,55 @@ describe('arch/effect-service-params', () => {
       options: { stem: 'folder', singularize: 'trailing-s', name: '^{Domain}\\w*Params$', message: 'Name it after the domain.' },
       errors: ["'create' takes 'CreateParams'; a service method takes a params type that matches ^Order\\w*Params$. Name it after the domain."],
     },
+    {
+      name: 'an effect member passes without values',
+      filename: 'src/order/order.service.ts',
+      code: "class Orders extends Context.Service<Orders, { readonly current: Effect.Effect<Order> }>()('key') {}",
+    },
+    {
+      name: 'a no-input read as a function passes values',
+      filename: 'src/order/order.service.ts',
+      code: "class Orders extends Context.Service<Orders, { readonly current: () => Effect.Effect<Order>; readonly channels: Kit.Channels<Input> }>()('key') {}",
+      options: { values: '^Effect\\.Effect$' },
+    },
+    {
+      name: 'two parameters pass without params',
+      filename: 'src/order/order.service.ts',
+      code: "class Orders extends Context.Service<Orders, { readonly move: (params: OrderMoveParams, to: OrderMoveParams) => void }>()('key') {}",
+    },
+    {
+      name: 'one parameter passes params 1',
+      filename: 'src/order/order.service.ts',
+      code: "class Orders extends Context.Service<Orders, { readonly move: (params: OrderMoveParams) => void; readonly list: () => void }>()('key') {}",
+      options: { params: 1 },
+    },
+    {
+      name: 'an effect member with values',
+      filename: 'src/order/order.service.ts',
+      code: "class Orders extends Context.Service<Orders, { readonly current: Effect.Effect<Order> }>()('key') {}",
+      options: { values: '^Effect\\.Effect$' },
+      errors: ['value'],
+    },
+    {
+      name: 'an effect member in a group',
+      filename: 'src/order/order.service.ts',
+      code: "class Orders extends Context.Service<Orders, { readonly schedule: { readonly current: Effect.Effect<Order> } }>()('key') {}",
+      options: { values: '^Effect\\.Effect$', message: 'Read {Path} on each call.' },
+      errors: ["'schedule.current' is typed 'Effect.Effect'; a service member is a function, so a read without input takes no parameters. Read ScheduleCurrent on each call."],
+    },
+    {
+      name: 'two parameters with params 1',
+      filename: 'src/order/order.service.ts',
+      code: "class Orders extends Context.Service<Orders, { readonly move: (params: OrderMoveParams, to: OrderMoveParams) => void }>()('key') {}",
+      options: { params: 1 },
+      errors: ['params'],
+    },
+    {
+      name: 'a method signature with two parameters',
+      filename: 'src/order/order.service.ts',
+      code: "class Orders extends Context.Service<Orders, { move(params: OrderMoveParams, to: string): void }>()('key') {}",
+      options: { params: 1 },
+      errors: ["'move' takes 2 parameters; a service method takes at most 1."],
+    },
   ])('$name', (row) => testerRun(effectServiceParams, row))
 })

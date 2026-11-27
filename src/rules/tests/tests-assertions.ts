@@ -1,5 +1,5 @@
 import { defineRule } from '@oxlint/plugins'
-import { astDottedName, astMatchesCallee, astModuleName, astUnwrap, astVisit } from '../../utils/ast.utils.ts'
+import { astDottedName, astMatchesCallee, astMemberName, astModuleName, astSingleExpression, astUnwrap, astVisit } from '../../utils/ast.utils.ts'
 import { optionsFirst } from '../../utils/options.utils.ts'
 import type { AstFunction } from '../../types/ast.types.ts'
 import type * as TestsTypes from '../../types/tests.types.ts'
@@ -18,6 +18,8 @@ const testsAssertionsFunctions = [
   'assert',
   'assertType',
 ]
+
+const testsAssertionsPlans = new Set(['expect.assertions', 'expect.hasAssertions'])
 
 const testsAssertionsPackages = ['vitest', '@effect/vitest', 'bun:test', '@jest/globals', '@playwright/test']
 
@@ -101,15 +103,7 @@ function hasAssertion(
   seen.add(fn)
   let found = false
   astVisit(fn.body, [], (node, ancestors) => {
-    if (
-      found ||
-      node.type !== 'CallExpression' ||
-      ancestors.some(
-        (ancestor) =>
-          ancestor.type === 'FunctionDeclaration' ||
-          ((ancestor.type === 'FunctionExpression' || ancestor.type === 'ArrowFunctionExpression') && ancestor.parent.type !== 'CallExpression'),
-      )
-    ) {
+    if (found || node.type !== 'CallExpression' || ancestors.some(isNestedFunction)) {
       return
     }
 
@@ -128,6 +122,77 @@ function hasAssertion(
   })
 
   return found
+}
+
+function isNestedFunction(ancestor: ESTree.Node): boolean {
+  return (
+    ancestor.type === 'FunctionDeclaration' ||
+    ((ancestor.type === 'FunctionExpression' || ancestor.type === 'ArrowFunctionExpression') && ancestor.parent.type !== 'CallExpression')
+  )
+}
+
+function bodyStatements(fn: AstFunction): ESTree.Node[] {
+  const single = astSingleExpression(fn)
+  let call = single ? astUnwrap(single) : undefined
+
+  while (call?.type === 'CallExpression' && call.callee.type === 'MemberExpression' && astMemberName(call.callee) === 'pipe' && call.callee.object.type === 'CallExpression') {
+    call = call.callee.object
+  }
+
+  const inner = call?.type === 'CallExpression' ? call.arguments.findLast(isFunction) : undefined
+
+  if (inner) {
+    return bodyStatements(inner)
+  }
+
+  if (fn.body?.type === 'BlockStatement') {
+    return fn.body.body
+  }
+
+  return fn.body ? [fn.body] : []
+}
+
+function assertionCalls(node: ESTree.Node, state: TestsTypes.TestsAssertionsState): ESTree.CallExpression[] {
+  const calls: ESTree.CallExpression[] = []
+
+  astVisit(node, [], (candidate, ancestors) => {
+    const name = candidate.type === 'CallExpression' && !ancestors.some(isNestedFunction) ? assertionName(candidate, state) : undefined
+
+    if (candidate.type === 'CallExpression' && name && !testsAssertionsPlans.has(name) && state.patterns.some((pattern) => pattern.test(name))) {
+      calls.push(candidate)
+    }
+  })
+
+  return calls
+}
+
+function assertionLimits(
+  registration: TestsTypes.TestsAssertionsRegistration,
+  options: TestsTypes.TestsAssertionsOptions,
+  state: TestsTypes.TestsAssertionsState,
+): TestsTypes.TestsAssertionsLimit[] {
+  if (options.max === undefined && !options.last) {
+    return []
+  }
+
+  const statements = bodyStatements(registration.callback)
+  const count = statements.flatMap((statement) => assertionCalls(statement, state)).length
+  const last = statements.at(-1)
+  const limits: TestsTypes.TestsAssertionsLimit[] = []
+
+  if (options.max !== undefined && count > options.max) {
+    limits.push({
+      node: registration.call,
+      messageId: 'many',
+      data: { count: String(count), max: String(options.max) },
+    })
+  }
+
+  if (options.last && count > 0 && last && assertionCalls(last, state).length === 0) {
+    limits.push({ node: last, messageId: 'last' })
+  }
+
+  return limits
 }
 
 function propertyKey(key: ESTree.PropertyKey): string | undefined {
@@ -292,11 +357,15 @@ export const testsAssertions = defineRule({
         properties: {
           functions: { type: 'array', items: { type: 'string' } },
           assertions: { type: 'array', items: { type: 'string' } },
+          max: { type: 'integer', minimum: 1 },
+          last: { type: 'boolean' },
         },
       },
     ],
     messages: {
       missing: 'This test has no recognized assertion in every case. Assert the result directly or call its assertion helper. Register imported assertion helpers only after verifying that they fail on incorrect results.',
+      many: 'This test makes {{count}} assertions; a test makes at most {{max}}. Split it into tests that each check one outcome.',
+      last: 'The assertion is the last statement of a test; move this statement before it.',
       standalone: 'Put this assertion inside a test or an assertion helper. Table-row assertion callbacks must belong to a registered test.',
     },
   },
@@ -414,6 +483,10 @@ export const testsAssertions = defineRule({
           state.allowed.add(registration.callback)
           if (!isAssertedTest(registration, sourceCode, state)) {
             context.report({ node: call, messageId: 'missing' })
+          }
+
+          for (const limit of assertionLimits(registration, options, state)) {
+            context.report(limit)
           }
         }
 

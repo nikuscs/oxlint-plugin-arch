@@ -103,5 +103,18 @@ describe('arch/tests-assertions', () => {
     { name: 'expect in describe', code: "describe('users', () => expect(1).toBe(1))", errors: ['standalone'] },
     { name: 'expect in an IIFE', code: '(() => expect(1).toBe(1))()', errors: ['standalone'] },
     { name: 'expect in an unregistered table', code: 'const rows = [{ verify: () => expect(1).toBe(1) }]', errors: ['standalone'] },
+    { name: 'two assertions pass without max', code: "test('saves', () => { expect(a).toBe(1); expect(b).toBe(2) })" },
+    { name: 'one assertion chain is one with max 1', code: "test('saves', async () => { const user = await save(); expect(user).resolves.toEqual({ ok: true }) })", options: { max: 1, last: true } },
+    { name: 'an assertion inside a nested helper is not counted', code: "test('saves', () => { const check = () => expect(a).toBe(1); expect(b).toBe(2) })", options: { max: 1 } },
+    { name: 'an effect test ending with its assertion', code: "it.effect('saves', () => Effect.gen(function* () { const user = yield* save(); assert.deepStrictEqual(user, expected) }))", options: { max: 1, last: true } },
+    { name: 'a piped effect test ending with its assertion', code: "it.effect('saves', () => Effect.gen(function* () { const user = yield* save(); assert.deepStrictEqual(user, expected) }).pipe(Effect.provide(Live)))", options: { last: true } },
+    { name: 'an expression body is its own last statement', code: "test('saves', () => expect(save()).toBe(1))", options: { last: true } },
+    { name: 'a statement after the assertion passes without last', code: "test('saves', () => { expect(a).toBe(1); cleanup() })" },
+    { name: 'an assertion plan is not counted', code: "test('saves', async () => { expect.assertions(1); await expect(save()).resolves.toBe(1) })", options: { max: 1, last: true } },
+    { name: 'two assertions with max 1', code: "test('saves', () => { expect(a).toBe(1); expect(b).toBe(2) })", options: { max: 1 }, errors: ['This test makes 2 assertions; a test makes at most 1. Split it into tests that each check one outcome.'] },
+    { name: 'two effect assertions with max 1', code: "it.effect('saves', () => Effect.gen(function* () { assert.deepStrictEqual(a, 1); assert.strictEqual(b, 2) }))", options: { max: 1 }, errors: ['many'] },
+    { name: 'a statement after the assertion with last', code: "test('saves', () => { expect(a).toBe(1); cleanup() })", options: { last: true }, errors: ['last'] },
+    { name: 'a yield after the effect assertion with last', code: "it.effect('saves', () => Effect.gen(function* () { assert.deepStrictEqual(a, 1); yield* cleanup() }))", options: { last: true }, errors: ['last'] },
+    { name: 'a test without assertions reports only missing', code: "test('saves', () => { save() })", options: { max: 1, last: true }, errors: ['missing'] },
   ])('$name', (row) => testerRun(testsAssertions, row))
 })

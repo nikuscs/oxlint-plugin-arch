@@ -21,4 +21,5 @@ test('saves the user', () => {})
 ```ts
 'arch/tests-titles': ['error', { deny: '^should' }]
 'arch/tests-titles': ['error', { require: '^(saves|loads) ' }]
+'arch/tests-titles': ['error', { callees: ['it', 'test'], deny: '^\\p{Lu}', flags: 'u' }]
 ```

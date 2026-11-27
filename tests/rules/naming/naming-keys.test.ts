@@ -53,5 +53,14 @@ describe('arch/naming-keys', () => {
     { name: 'a path template capture', filename: 'packages/kit-order/src/order.layer.ts', code: 'bind({ create: orderCreate })', options: { file: 'kit-{module}/src/**', callees: ['bind'], name: '^{module}{Path}$' } },
     { name: 'a file off the path template is skipped', filename: 'apps/web/a.ts', code: 'bind({ create: wrong })', options: { file: 'kit-{module}/src/**', callees: ['bind'], name: '^{module}{Path}$' } },
     { name: 'a message is added', code: 'bind({ create: () => 1 })', options: { callees: ['bind'], inline: false, message: 'Name the action.' }, errors: ["Bind a named function under 'create', not an inline one. Name the action."] },
+    { name: 'a call passes without calls', code: 'Domain.bind({ catalog: Queries.productQueryCatalog() })', options: { callees: ['*.bind'] } },
+    { name: 'a reference and a wrapped function pass calls', code: "Domain.bind({ catalog: Queries.productQueryCatalog, list: Effect.fn('list')(function* () {}) })", options: { callees: ['*.bind'], calls: false } },
+    { name: 'a call bound as a value', code: 'Domain.bind({ catalog: Queries.productQueryCatalog() })', options: { callees: ['*.bind'], calls: false }, errors: ["Bind 'catalog' by reference, not the result of a call."] },
+    { name: 'a nested call and a new value', code: 'export const layerOrders = { query: { catalog: catalog() }, store: new Store() }', options: { exports: '^layer', calls: false }, errors: ['call', 'call'] },
+    { name: 'type keys follow a pattern', code: 'interface Tables { orders: OrderTable; orderSchedules: OrderScheduleTable }', options: { types: '^Tables$', keys: '^[a-z][a-zA-Z0-9]*s$' } },
+    { name: 'another type is skipped', code: 'interface Rows { order: OrderTable }', options: { types: '^Tables$', keys: '^[a-z][a-zA-Z0-9]*s$' } },
+    { name: 'a type in a module declaration', code: "declare module 'db' { interface Tables { order: OrderTable } }", options: { types: '^Tables$', keys: '^[a-z][a-zA-Z0-9]*s$' }, errors: ["Key 'order' in 'order' must match ^[a-z][a-zA-Z0-9]*s$."] },
+    { name: 'a type alias and a quoted key', code: "type Tables = { 'order_events': OrderEventTable; Users: UserTable }", options: { types: '^Tables$', keys: '^[a-z][a-zA-Z0-9]*s$' }, errors: ['key', 'key'] },
+    { name: 'an allowed type key is skipped', code: 'interface Tables { audit: AuditTable }', options: { types: '^Tables$', keys: '^[a-z][a-zA-Z0-9]*s$', allow: '^audit$' } },
   ])('$name', (row) => testerRun(namingKeys, row))
 })

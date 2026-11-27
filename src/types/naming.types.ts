@@ -122,6 +122,7 @@ export interface NamingLabelsEntry {
   pattern?: OptionsPattern
   drop?: OptionsPattern
   loose?: boolean
+  always?: boolean
   within?: OptionsPattern
   message?: string
 }
@@ -146,6 +147,8 @@ export interface NamingKeysOptions extends NamingCaptureOptions {
   name?: OptionsPattern
   keys?: OptionsPattern
   inline?: boolean
+  calls?: boolean
+  types?: OptionsPattern
   delegate?: boolean
   allow?: OptionsPattern
   singularize?: 'none' | 'trailing-s'
