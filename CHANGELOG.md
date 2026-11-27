@@ -1,5 +1,24 @@
 # Changelog
 
+## 0.13.7
+
+New rules, all off until a config turns them on:
+
+- New `arch/backend-table-owner`: a top-level `selectFrom` or any `insertInto`, `updateTable` or `deleteFrom` on a table another domain owns reports; joins and subqueries pass. Owners come from an `owners` map, or from table names prefixed with a known domain (the `domains` list and the folders beside the file's domain).
+- New `arch/comments-docblock`: exported declarations, `export default function` and `export default class` included, need a `/** … */` docblock right above them, filtered by `kinds` and `names`; re-exports are skipped.
+- New `arch/comments-header`: a file starts with a comment that matches `comment` on line 1, optionally only when it imports a source that matches `imports` or matches `files`; a matching comment further down reports as misplaced.
+- New `arch/copy-hardcoded`: text typed into JSX reports: text children, string children and the string values of `placeholder`, `title`, `aria-label`, `alt` and `label`. Text without a letter passes, and URLs, paths, `mailto:`, `tel:` and `#` anchors are ignored by default; `exclude` skips files.
+- New `arch/effect-config-keys`: an env key read through `Config.string('KEY')` and the other `Config` readers starts with a prefix built from the path (`{DOMAIN}_` with `file: 'domains/{domain}/**'`) or a shared prefix in `allow` (`APP_`).
+
+New options, off by default:
+
+- `arch/backend-orpc-output`: `roots` checks oRPC contract procedures too: a call chain that starts at one of `roots` calls each `require` method (`.output()` by default, `['output', 'meta']` for both). Methods called inside arguments do not count, a chain that calls an `ignore` method (`.router()`) is skipped, and `message` extends every report. Without `roots` the rule checks `.handler()` chains as before.
+- `arch/effect-service-params`: `values` reports a member typed as a matching value (`values: '^Effect\\.Effect$'` makes a read without input a function), and `params` caps how many parameters a method takes.
+- `arch/naming-keys`: `calls: false` reports a call bound as a value (`catalog: catalog()`) instead of a reference, and `types` checks the keys of a named interface or object type (`Tables`) against `keys`.
+- `arch/naming-labels`: an entry with `always` checks `name` on a call that is not assigned to a name too, so `layer(AppLayer)('order.delivery', …)` can be held to its file name.
+- `arch/tests-assertions`: `max` caps the assertions in one test, and `last` requires the assertion to be the test's last statement, inside `Effect.gen` too.
+- `arch/tests-titles` documents a lowercase-title setup: `deny: '^\\p{Lu}'` with `flags: 'u'`.
+
 ## 0.13.6
 
 Fixes that make rules report what they already promised, so Effect code and Effect tests may get new reports:
