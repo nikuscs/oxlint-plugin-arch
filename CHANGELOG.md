@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.13.6
+
+Fixes that make rules report what they already promised, so Effect code and Effect tests may get new reports:
+
+- `arch/code-inside` follows a callback through wrapper calls, so `db.transaction(Effect.gen(function* () { … }))` and `db.transaction(Effect.fn('…')(function* () { … }))` are checked; the preset's "start the workflow after the commit" ban now reaches Effect transactions.
+- `arch/code-object-params` checks constants built with `Effect.fn` and `Effect.fnUntraced` through their generator.
+- `arch/tests-assertions` and `arch/tests-titles` follow `@effect/vitest`'s `it.effect` and `it.live` (with `.each`), and `tests-assertions` reads `test`/`it` imported from `@effect/vitest` and the `expect` fixture from the second argument of `it.effect.each`.
+- The backend test rules (`arch/tests-concurrent-db`, the `helpers/` import ban) cover a `test/` folder as well as `tests/`, like the rest of the tests group.
+
 ## 0.13.5
 
 Preset defaults that change what an app reports:
