@@ -12,9 +12,20 @@ function codeInsideOwners(node: ESTree.Node): string[] {
   }
 
   const callback = node.type === 'FunctionExpression' || node.type === 'ArrowFunctionExpression'
-  const owner = callback && astIsCall(parent) && parent.arguments.some((item) => item === node) ? astDottedName(parent.callee) : undefined
 
-  return [...(owner === undefined ? [] : [owner]), ...codeInsideOwners(parent)]
+  return [...(callback ? codeInsideCallers(node) : []), ...codeInsideOwners(parent)]
+}
+
+function codeInsideCallers(node: ESTree.Node): string[] {
+  const parent = node.parent
+
+  if (!parent || !astIsCall(parent) || !parent.arguments.some((item) => item === node)) {
+    return []
+  }
+
+  const name = astDottedName(parent.callee)
+
+  return [...(name === undefined ? [] : [name]), ...codeInsideCallers(parent)]
 }
 
 export const codeInside = defineRule({

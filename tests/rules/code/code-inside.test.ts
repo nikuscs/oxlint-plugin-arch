@@ -10,6 +10,19 @@ describe('arch/code-inside', () => {
     { name: 'a call in the arguments is not inside the callback', code: 'db.transaction(send(), () => save())', options: { inside: [{ callee: '*.transaction', calls: { send: '' } }] } },
     { name: 'a banned call in the callback', code: 'db.transaction(() => send())', options: { inside: [{ callee: '*.transaction', calls: { send: '' } }] }, errors: ['inside'] },
     { name: 'a banned call in a generator callback', code: 'db.transaction(function* () { yield* Flows.OrderWorkflow.execute(payload) })', options: { inside: [{ callee: '*.transaction', calls: { '*Workflow.execute': '' } }] }, errors: ['inside'] },
+    { name: 'a call in a wrapper call in the arguments is not inside', code: 'db.transaction(wrap(send()))', options: { inside: [{ callee: '*.transaction', calls: { send: '' } }] } },
+    {
+      name: 'a banned call in an Effect.gen callback',
+      code: 'db.transaction(Effect.gen(function* () { yield* OrderWorkflow.execute(payload) }))',
+      options: { inside: [{ callee: '*.transaction', calls: { '*Workflow.execute': '' } }] },
+      errors: ['inside'],
+    },
+    {
+      name: 'a banned call in an Effect.fn callback',
+      code: "db.transaction(Effect.fn('order.save')(function* () { yield* OrderWorkflow.execute(payload) }))",
+      options: { inside: [{ callee: '*.transaction', calls: { '*Workflow.execute': '' } }] },
+      errors: ['inside'],
+    },
     { name: 'a banned call nested deeper', code: 'db.transaction(() => rows.map((row) => mail.send(row)))', options: { inside: [{ callee: ['*.transaction'], calls: { '*.send': '' } }] }, errors: ['inside'] },
     {
       name: 'the report names both calls',

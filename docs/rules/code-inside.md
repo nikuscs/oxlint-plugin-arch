@@ -14,7 +14,7 @@ yield* db.transaction(save)
 yield* OrderRefundWorkflow.execute({ orderId })
 ```
 
-Both sides are dotted names where `*` is any text. A call is inside when it sits in a function passed as an argument of the outer call, at any depth; a call in the outer call's own arguments is not.
+Both sides are dotted names where `*` is any text. A call is inside when it sits in a function passed as an argument of the outer call, at any depth, also through wrapper calls such as `Effect.gen(function* () {})` or `Effect.fn('name')(function* () {})`; a call in the outer call's own arguments is not.
 
 | Entry key | Type | |
 | --- | --- | --- |

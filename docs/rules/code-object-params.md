@@ -1,6 +1,6 @@
 # arch/code-object-params
 
-An exported function, including `export const f = () => {}`, with more than `max` parameters, or a parameter that is not an object: a destructured pattern, an untyped parameter, a type reference, a type literal or an intersection counts as an object; primitives, unions, arrays and function types do not. A default value does not hide the parameter type, and an `export default` function expression is checked as `default`.
+An exported function, including `export const f = () => {}`, with more than `max` parameters, or a parameter that is not an object: a destructured pattern, an untyped parameter, a type reference, a type literal or an intersection counts as an object; primitives, unions, arrays and function types do not. A default value does not hide the parameter type, and an `export default` function expression is checked as `default`. A constant built with `Effect.fn` or `Effect.fnUntraced` is checked through its generator.
 
 ```ts
 // ❌

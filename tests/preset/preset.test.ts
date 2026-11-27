@@ -50,6 +50,8 @@ describe('preset', () => {
       expected: ['error', { message: 'Tests live in a tests/ folder, not next to the code.' }],
     },
     { name: 'a test file in tests is not restricted', folders: { '.': recipes.backend }, file: 'tests/services/order.test.ts', rule: 'arch/files-restricted', expected: undefined },
+    { name: 'a backend test in tests/ checks concurrent database tests', folders: { '.': recipes.backend }, file: 'tests/services/order.test.ts', rule: 'arch/tests-concurrent-db', expected: 'error' },
+    { name: 'a backend test in test/ checks concurrent database tests', folders: { '.': recipes.backend }, file: 'test/services/order.test.ts', rule: 'arch/tests-concurrent-db', expected: 'error' },
     {
       name: 'a unit without src keeps its tests folder',
       tree: ['apps/web/tests/'],

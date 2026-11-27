@@ -1,8 +1,31 @@
 import { defineRule } from '@oxlint/plugins'
-import { exportsCheckedFunctions } from '../../utils/exports.utils.ts'
-import { optionsFirst, optionsPatterns, optionsPatternSchema } from '../../utils/options.utils.ts'
+import { effectGenerator } from '../../utils/effect.utils.ts'
+import { exportsCheckedFunctions, exportsCollect } from '../../utils/exports.utils.ts'
+import { optionsFirst, optionsPatterns, optionsPatternSchema, optionsPatternsTest } from '../../utils/options.utils.ts'
 import type { CodeObjectParamsOptions } from '../../types/code.types.ts'
+import type * as DeclarationsTypes from '../../types/declarations.types.ts'
 import type { ESTree } from '@oxlint/plugins'
+
+const codeObjectParamsBuilders = new Set(['Effect.fn', 'Effect.fnUntraced'])
+
+function codeObjectParamsGenerators(program: ESTree.Program, all: boolean, allowed: RegExp[]): DeclarationsTypes.DeclarationsFunction[] {
+  const exported = new Set(exportsCollect(program).map((binding) => binding.localName))
+
+  return program.body.flatMap((statement) => {
+    const declaration = statement.type === 'ExportNamedDeclaration' ? statement.declaration : statement
+
+    if (declaration?.type !== 'VariableDeclaration') {
+      return []
+    }
+
+    return declaration.declarations.flatMap((item) => {
+      const node = effectGenerator(item.init, codeObjectParamsBuilders)
+      const name = item.id.type === 'Identifier' ? item.id.name : undefined
+
+      return node && name && (all || exported.has(name)) && !optionsPatternsTest(allowed, name) ? [{ name, node }] : []
+    })
+  })
+}
 
 function isObjectParam(node: ESTree.ParamPattern): boolean {
   if (node.type === 'ObjectPattern') {
@@ -55,7 +78,14 @@ export const codeObjectParams = defineRule({
           allow: allowPattern,
         } = optionsFirst<CodeObjectParamsOptions>(context, {})
 
-        for (const { name, node } of exportsCheckedFunctions(program, allDeclarations, serviceMethods, optionsPatterns(allowPattern))) {
+        const allowed = optionsPatterns(allowPattern)
+
+        const functions = [
+          ...exportsCheckedFunctions(program, allDeclarations, serviceMethods, allowed),
+          ...codeObjectParamsGenerators(program, allDeclarations, allowed),
+        ]
+
+        for (const { name, node } of functions) {
           if (node.params.length <= maxParams && node.params.every(isObjectParam)) {
             continue
           }

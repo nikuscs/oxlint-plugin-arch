@@ -5,7 +5,7 @@ import type { AstFunction } from '../../types/ast.types.ts'
 import type * as TestsTypes from '../../types/tests.types.ts'
 import type { ESTree, SourceCode, Variable } from '@oxlint/plugins'
 
-const testsAssertionsModifiers = new Set(['for', 'each', 'concurrent', 'sequential', 'only', 'skip'])
+const testsAssertionsModifiers = new Set(['for', 'each', 'concurrent', 'sequential', 'only', 'skip', 'effect', 'live'])
 
 const testsAssertionsFunctions = [
   'expect',
@@ -19,7 +19,7 @@ const testsAssertionsFunctions = [
   'assertType',
 ]
 
-const testsAssertionsPackages = ['vitest', 'bun:test', '@jest/globals', '@playwright/test']
+const testsAssertionsPackages = ['vitest', '@effect/vitest', 'bun:test', '@jest/globals', '@playwright/test']
 
 const testsAssertionsDeclarations = new Set([
   'VariableDeclarator',
@@ -179,7 +179,8 @@ function isAssertedTest(
 ): boolean {
   const { call, callback } = registration
   const builder = call.callee.type === 'CallExpression' ? callName(call.callee.callee) : undefined
-  const fixtureParameter = builder?.endsWith('.each') ? undefined : callback.params.at(builder?.endsWith('.for') ? 1 : 0)
+  const effectEach = /\.(?:effect|live)\.each$/.test(builder ?? '')
+  const fixtureParameter = builder?.endsWith('.each') && !effectEach ? undefined : callback.params.at(effectEach || builder?.endsWith('.for') ? 1 : 0)
   const variables = sourceCode.getDeclaredVariables(callback)
 
   if (fixtureParameter?.type === 'ObjectPattern') {
