@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.13.9
+
+- `arch/code-paired-call`: dotted names in `when` and `require` (`rpcErrors.message`) match the receiver and method (resolving aliased receiver imports), so `rpcErrors.message(...)` satisfies a pair without letting unrelated `.message(...)` calls through.
+
 ## 0.13.8
 
 - `arch/naming-labels`: an entry with `prefix` lets the label go on after the name and a space, so `layer(…)('order.delivery while the clock stops', …)` passes in `order.delivery.test.ts`.

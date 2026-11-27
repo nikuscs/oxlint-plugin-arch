@@ -1,5 +1,5 @@
 import { defineRule } from '@oxlint/plugins'
-import { astCallName, astModuleName } from '../../utils/ast.utils.ts'
+import { astCallName, astDottedName, astModuleName } from '../../utils/ast.utils.ts'
 import { boundariesDeclaredVariable } from '../../utils/boundaries.utils.ts'
 import { optionsFirst, optionsPatternSchema } from '../../utils/options.utils.ts'
 import type { CodePairedCallOptions, CodePairedCallState } from '../../types/code.types.ts'
@@ -45,15 +45,26 @@ export const codePairedCall = defineRule({
       },
       CallExpression(node) {
         const callee = node.callee
-        const binding = callee.type === 'Identifier' ? boundariesDeclaredVariable(context.sourceCode.getScope(node), callee.name)?.defs.at(0)?.node : undefined
-        const name = binding?.type === 'ImportSpecifier' ? astModuleName(binding.imported) : astCallName(node)
+        const scope = context.sourceCode.getScope(node)
+
+        const imported = (identifier: string) => {
+          const binding = boundariesDeclaredVariable(scope, identifier)?.defs.at(0)?.node
+          return binding?.type === 'ImportSpecifier' ? astModuleName(binding.imported) : undefined
+        }
+
+        const name = (callee.type === 'Identifier' ? imported(callee.name) : undefined) ?? astCallName(node)
+        const raw = callee.type === 'MemberExpression' ? astDottedName(callee) : undefined
+        const dot = raw ? raw.indexOf('.') : -1
+        const root = raw && dot > 0 ? imported(raw.slice(0, dot)) : undefined
+        const dotted = raw && root ? `${root}${raw.slice(dot)}` : raw
+        const matches = (expected: string) => (expected.includes('.') ? dotted === expected : name === expected)
 
         for (const pair of pairs) {
-          if (name === pair.when) {
+          if (matches(pair.when)) {
             pair.firstWhen ??= node
           }
 
-          if (name !== undefined && [pair.require].flat().includes(name)) {
+          if ([pair.require].flat().some(matches)) {
             pair.sawRequired = true
           }
         }

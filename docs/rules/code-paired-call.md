@@ -1,6 +1,6 @@
 # arch/code-paired-call
 
-A call to `when` in a file that never calls `require`. Names match the function or method name, so write bare names (`useFakeTimers`), not dotted ones (`vi.useFakeTimers`); a called name that resolves to an aliased import matches the imported name. Only the first call to `when` reports, once per pair.
+A call to `when` in a file that never calls `require`. A bare name matches the function or method name (`useFakeTimers` matches `vi.useFakeTimers()`); a dotted name matches the receiver and method (`rpcErrors.message` matches `rpcErrors.message()` and not `other.message()`). A called function or dotted receiver that resolves to an aliased import matches the imported name. Only the first call to `when` reports, once per pair.
 
 ```ts
 // with { when: 'useFakeTimers', require: 'useRealTimers' }

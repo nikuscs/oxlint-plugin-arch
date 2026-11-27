@@ -63,6 +63,33 @@ describe('arch/code-paired-call', () => {
       code: 'const form = useForm({})\nconst mutation = useMutation({ onError: formServerErrors({ form }) })',
       options: { pairs: [{ when: 'useMutation', require: ['formServerErrors', 'rpcErrors'] }] },
     },
+    {
+      name: 'a dotted partner matches its receiver and method',
+      code: 'const mutation = useMutation({ onError: (error) => toast.error(rpcErrors.message({ error })) })',
+      options: { pairs: [{ when: 'useMutation', require: ['formServerErrors', 'rpcErrors', 'rpcErrors.message'] }] },
+    },
+    {
+      name: 'a dotted partner resolves an aliased receiver import',
+      code: "import { rpcErrors as errors } from 'tools'\nconst mutation = useMutation({ onError: (error) => errors.message({ error }) })",
+      options: { pairs: [{ when: 'useMutation', require: ['formServerErrors', 'rpcErrors', 'rpcErrors.message'] }] },
+    },
+    {
+      name: 'a dotted trigger passes when paired',
+      code: 'vi.useFakeTimers(); run(); vi.useRealTimers()',
+      options: { when: 'vi.useFakeTimers', require: 'vi.useRealTimers' },
+    },
+    {
+      name: 'another receiver with the same method fails a dotted partner',
+      code: 'const mutation = useMutation({ onError: (error) => other.message({ error }) })',
+      options: { pairs: [{ when: 'useMutation', require: ['formServerErrors', 'rpcErrors', 'rpcErrors.message'] }] },
+      errors: ['useMutation requires a call to formServerErrors or rpcErrors or rpcErrors.message in the same file.'],
+    },
+    {
+      name: 'a parameter shadowing an aliased receiver fails a dotted partner',
+      code: "import { rpcErrors as errors } from 'tools'\nconst mutation = useMutation({ mutationFn })\nfunction run(errors) { errors.message() }",
+      options: { pairs: [{ when: 'useMutation', require: ['rpcErrors.message'] }] },
+      errors: ['paired'],
+    },
     { name: 'a call outside the pairs needs no partner', code: 'const form = useForm({ resolver: standardSchemaResolver(schema) })', options: { pairs: [{ when: 'useMutation', require: ['formServerErrors', 'rpcErrors'] }] } },
     { name: 'missing partner fails', code: 'start()', options: { when: 'start', require: 'finish' }, errors: ['paired'] },
     { name: 'repeated triggers report once', code: 'start(); start()', options: { when: 'start', require: 'finish' }, errors: ['paired'] },
