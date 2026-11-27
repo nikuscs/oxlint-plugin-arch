@@ -17,9 +17,10 @@ vi.useRealTimers()
 | Option | Type | Default | |
 | --- | --- | --- | --- |
 | `when` | `string` | | Call that needs a partner; set together with `require` |
-| `require` | `string` | | Partner call that must appear in the same file; set together with `when` |
+| `require` | `string \| string[]` | | Partner call that must appear in the same file; with a list, any one of them; set together with `when` |
 | `pairs` | `{ when, require }[]` | | More pairs, with or instead of `when` |
 
 ```ts
 'arch/code-paired-call': ['error', { pairs: [{ when: 'useFakeTimers', require: 'useRealTimers' }] }]
+'arch/code-paired-call': ['error', { pairs: [{ when: 'useMutation', require: ['formServerErrors', 'rpcErrors'] }] }]
 ```

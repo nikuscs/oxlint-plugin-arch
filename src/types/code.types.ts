@@ -37,12 +37,12 @@ export interface CodeObjectParamsOptions {
 
 export interface CodePairedCallPair {
   when: string
-  require: string
+  require: string | string[]
 }
 
 export interface CodePairedCallOptions {
   when?: string
-  require?: string
+  require?: string | string[]
   pairs?: CodePairedCallPair[]
 }
 

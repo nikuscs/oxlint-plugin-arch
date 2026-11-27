@@ -53,6 +53,17 @@ describe('arch/code-paired-call', () => {
       code: 'useForm()\nstandardSchemaResolver(schema)\ntrackEvent()\nflushEvents()',
       options: { when: 'useForm', require: 'standardSchemaResolver', pairs: [{ when: 'trackEvent', require: 'flushEvents' }] },
     },
+    {
+      name: 'any one of several partners passes',
+      code: 'const mutation = useMutation({ onError: rpcErrors({ toastId: \'order\' }) })',
+      options: { pairs: [{ when: 'useMutation', require: ['formServerErrors', 'rpcErrors'] }] },
+    },
+    {
+      name: 'the other of several partners passes',
+      code: 'const form = useForm({})\nconst mutation = useMutation({ onError: formServerErrors({ form }) })',
+      options: { pairs: [{ when: 'useMutation', require: ['formServerErrors', 'rpcErrors'] }] },
+    },
+    { name: 'a call outside the pairs needs no partner', code: 'const form = useForm({ resolver: standardSchemaResolver(schema) })', options: { pairs: [{ when: 'useMutation', require: ['formServerErrors', 'rpcErrors'] }] } },
     { name: 'missing partner fails', code: 'start()', options: { when: 'start', require: 'finish' }, errors: ['paired'] },
     { name: 'repeated triggers report once', code: 'start(); start()', options: { when: 'start', require: 'finish' }, errors: ['paired'] },
     { name: 'reference is not a partner call', code: 'start(finish)', options: { when: 'start', require: 'finish' }, errors: ['paired'] },
@@ -61,6 +72,12 @@ describe('arch/code-paired-call', () => {
       code: "import { start as begin } from 'tools'\nbegin()",
       options: { when: 'start', require: 'finish' },
       errors: ['paired'],
+    },
+    {
+      name: 'none of several partners',
+      code: 'const mutation = useMutation({ mutationFn })',
+      options: { pairs: [{ when: 'useMutation', require: ['formServerErrors', 'rpcErrors'] }] },
+      errors: ['useMutation requires a call to formServerErrors or rpcErrors in the same file.'],
     },
     {
       name: 'a parameter shadowing an import alias is not the partner',

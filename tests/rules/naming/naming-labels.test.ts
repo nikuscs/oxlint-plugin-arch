@@ -104,6 +104,32 @@ describe('arch/naming-labels', () => {
       options: { stem: 'full-basename', roles: ['test'], separators: ['.'], labels: [{ callee: 'layer', name: '{stem}', always: true }] },
       errors: ["'order.delivery with a clock' must be 'order.delivery'."],
     },
+    {
+      name: 'a prefix label that goes on after a space',
+      filename: 'test/order/order.delivery-failures.test.ts',
+      code: "layer(OrderLayer.AppFailureMarkDownLayer)('order.delivery-failures while the failure mark stays down', (it) => {})",
+      options: { stem: 'full-basename', roles: ['test'], separators: ['.'], labels: [{ callee: 'layer', name: '{stem}', always: true, prefix: true }] },
+    },
+    {
+      name: 'a prefix label equal to the file stem',
+      filename: 'test/order/order.delivery-failures.test.ts',
+      code: "layer(OrderLayer.AppLayer)('order.delivery-failures', (it) => {})",
+      options: { stem: 'full-basename', roles: ['test'], separators: ['.'], labels: [{ callee: 'layer', name: '{stem}', always: true, prefix: true }] },
+    },
+    {
+      name: 'a prefix label shorter than the file stem',
+      filename: 'test/order/order.delivery-failures.test.ts',
+      code: "layer(OrderLayer.AppLayer)('order.delivery', (it) => {})",
+      options: { stem: 'full-basename', roles: ['test'], separators: ['.'], labels: [{ callee: 'layer', name: '{stem}', always: true, prefix: true }] },
+      errors: ["'order.delivery' must be 'order.delivery-failures'."],
+    },
+    {
+      name: 'a prefix label joined to more text without a space',
+      filename: 'test/order/order.delivery.test.ts',
+      code: "layer(OrderLayer.AppLayer)('order.delivery-failures', (it) => {})",
+      options: { stem: 'full-basename', roles: ['test'], separators: ['.'], labels: [{ callee: 'layer', name: '{stem}', always: true, prefix: true }] },
+      errors: ["'order.delivery-failures' must be 'order.delivery'."],
+    },
     { name: 'an unbound label skips a template that needs the name', code: "register(Effect.fn('anything')(function* () {}))", options: { labels: [{ callee: 'Effect.fn', name: '{name}', always: true }] } },
     { name: 'a bound label with always still follows its name', code: "const a = Effect.fn('b')(function* () {})", options: { labels: [{ callee: 'Effect.fn', name: '{name}', always: true }] }, errors: ['name'] },
   ])('$name', (row) => testerRun(namingLabels, row))

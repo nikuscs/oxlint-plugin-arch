@@ -24,6 +24,7 @@ In `name`, `{name}` is the name as written (after `drop`) and `{Name}` its Pasca
 | `drop` | `string \| string[]` | none | Regexes removed from the name first, such as `'Workflow$'` |
 | `loose` | `boolean` | `false` | Compare without case and without `.`, `-`, `_`, `/` |
 | `always` | `boolean` | `false` | Check `name` on a call that is not assigned to a name too, such as a statement call; there a template that uses `{name}` is skipped |
+| `prefix` | `boolean` | `false` | The label may go on after the name and a space: `'order.delivery while the clock stops'` passes for `'order.delivery'` |
 | `message` | `string` | none | Report text for this entry, instead of the rule's `message` |
 | `within` | `string \| string[]` | none | A label passed as an argument takes its name from the receiver of that call: with `'*.toLayer'`, `OrderRefundWorkflow.toLayer(Effect.fn('order.refundWorkflow')(…))` is named `OrderRefundWorkflow` |
 
@@ -44,5 +45,5 @@ In `name`, `{name}` is the name as written (after `drop`) and `{Name}` its Pasca
     { callee: '*.Tagged', property: 'code', pattern: '^[A-Z][A-Z0-9_]*$' },
   ],
 }]
-'arch/naming-labels': ['error', { stem: 'full-basename', roles: ['test'], separators: ['.'], labels: [{ callee: 'layer', name: '{stem}', always: true }] }]
+'arch/naming-labels': ['error', { stem: 'full-basename', roles: ['test'], separators: ['.'], labels: [{ callee: 'layer', name: '{stem}', always: true, prefix: true }] }]
 ```

@@ -8,6 +8,19 @@ const copyHardcodedAttributes = ['placeholder', 'title', 'aria-label', 'alt', 'l
 
 const copyHardcodedIgnore = String.raw`^(?:https?:|mailto:|tel:|/|#|\.{1,2}/)\S*$`
 
+const copyHardcodedCodeToken = /^[\w(){}[\].,:;=<>'"`/*+-]+$/
+
+const copyHardcodedCodeMark = /[A-Za-z0-9]_[A-Za-z0-9]|^[a-z]{2,}[A-Z][a-z]|\w[([{=]|=\w|[{}]/
+
+const copyHardcodedUnit = /^[/+~×x-]?\d[\d.,]*\p{L}{0,3}$/u
+
+function copyHardcodedCode(text: string): boolean {
+  const tokens = text.split(' ')
+  const units = tokens.filter((token) => /\p{L}/u.test(token)).every((token) => copyHardcodedUnit.test(token))
+
+  return units || (tokens.every((token) => copyHardcodedCodeToken.test(token)) && tokens.some((token) => copyHardcodedCodeMark.test(token)))
+}
+
 export const copyHardcoded = defineRule({
   meta: {
     type: 'suggestion',
@@ -35,7 +48,7 @@ export const copyHardcoded = defineRule({
     function check(node: ESTree.Node, value: string | undefined): void {
       const text = value?.replaceAll(/&(?:#\w+|[A-Za-z]\w*);/g, ' ').replaceAll(/\s+/g, ' ').trim() ?? ''
 
-      if (!/\p{L}/u.test(text) || optionsPatternsTest(ignored, text)) {
+      if (!/\p{L}/u.test(text) || copyHardcodedCode(text) || optionsPatternsTest(ignored, text)) {
         return
       }
 

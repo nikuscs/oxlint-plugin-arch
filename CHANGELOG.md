@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- `arch/naming-labels`: an entry with `prefix` lets the label go on after the name and a space, so `layer(…)('order.delivery while the clock stops', …)` passes in `order.delivery.test.ts`.
+- `arch/code-paired-call`: `require` takes a list, and any one of its calls satisfies the pair.
+- `arch/copy-hardcoded`: code samples (`create_order(`, `productId, quantity, link`) and units after a value (`/1k –`, `24h`) no longer report.
+
 ## 0.13.7
 
 New rules, all off until a config turns them on:

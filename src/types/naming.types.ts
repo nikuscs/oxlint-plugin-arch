@@ -123,6 +123,7 @@ export interface NamingLabelsEntry {
   drop?: OptionsPattern
   loose?: boolean
   always?: boolean
+  prefix?: boolean
   within?: OptionsPattern
   message?: string
 }

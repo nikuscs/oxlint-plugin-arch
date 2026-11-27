@@ -3,7 +3,7 @@ import { astDottedName, astStaticString } from '../../utils/ast.utils.ts'
 import { declarationsPropertyName } from '../../utils/declarations.utils.ts'
 import { namingCaptures, namingCaptureSchemaProperties, namingExpand } from '../../utils/naming.utils.ts'
 import { optionsEscape, optionsFirst, optionsMessage, optionsPatternLabel, optionsPatterns, optionsPatternSchema, optionsPatternsTest, optionsWildcards } from '../../utils/options.utils.ts'
-import type { NamingLabelsCompiled, NamingLabelsOptions } from '../../types/naming.types.ts'
+import type { NamingLabelsCompiled, NamingLabelsEntry, NamingLabelsOptions } from '../../types/naming.types.ts'
 import type { ESTree } from '@oxlint/plugins'
 
 function namingLabelsRoot(node: ESTree.Node): string | undefined {
@@ -48,6 +48,10 @@ function namingLabelsPlain(text: string, loose: boolean | undefined): string {
   return loose ? text.replaceAll(/[._\-/\s]/g, '').toLowerCase() : text
 }
 
+function namingLabelsMatches(label: string, expected: string, { loose, prefix }: NamingLabelsEntry): boolean {
+  return namingLabelsPlain(label, loose) === namingLabelsPlain(expected, loose) || (prefix === true && label.startsWith(`${expected} `))
+}
+
 function namingLabelsExpected({ entry, drop }: NamingLabelsCompiled, captures: Record<string, string>, binding: string): string[] {
   const name = drop.reduce((text, pattern) => text.replace(pattern, ''), binding)
 
@@ -79,6 +83,7 @@ export const namingLabels = defineRule({
                 drop: optionsPatternSchema,
                 loose: { type: 'boolean' },
                 always: { type: 'boolean' },
+                prefix: { type: 'boolean' },
                 within: optionsPatternSchema,
                 message: { type: 'string' },
               },
@@ -151,9 +156,8 @@ export const namingLabels = defineRule({
 
           const binding = namingLabelsBinding(node, compiled.within) ?? (compiled.entry.always ? '' : undefined)
           const expected = binding === undefined ? [] : namingLabelsExpected(compiled, captures, binding)
-          const plain = expected.map((item) => namingLabelsPlain(item, compiled.entry.loose))
 
-          if (binding !== undefined && expected.length > 0 && !plain.includes(namingLabelsPlain(label, compiled.entry.loose))) {
+          if (binding !== undefined && expected.length > 0 && !expected.some((item) => namingLabelsMatches(label, item, compiled.entry))) {
             context.report({
               node: target,
               messageId: binding === '' ? 'label' : 'name',

@@ -12,7 +12,7 @@ const Orders = () => <h1>{m.orders_title()}</h1>
 const Search = () => <input placeholder={m.orders_search()} />
 ```
 
-Text with no letter never reports, so punctuation, numbers and entities like `&copy;` pass. A string child (`{'Welcome'}`) and a template without expressions count as text; any other expression is skipped. Only the listed attributes are read, so `className`, `type` and component props outside the list pass.
+Text with no letter never reports, so punctuation, numbers and entities like `&copy;` pass. Code and units pass too: text made only of identifiers and code punctuation with one code mark (`create_order(`, `productId, quantity, link`, a `{`, `=`), and text whose only words are a number with a short unit (`/1k –`, `24h`, `2x`). A string child (`{'Welcome'}`) and a template without expressions count as text; any other expression is skipped. Only the listed attributes are read, so `className`, `type` and component props outside the list pass.
 
 | Option | Type | Default | |
 | --- | --- | --- | --- |

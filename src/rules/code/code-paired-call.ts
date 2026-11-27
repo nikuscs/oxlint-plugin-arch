@@ -1,7 +1,7 @@
 import { defineRule } from '@oxlint/plugins'
 import { astCallName, astModuleName } from '../../utils/ast.utils.ts'
 import { boundariesDeclaredVariable } from '../../utils/boundaries.utils.ts'
-import { optionsFirst } from '../../utils/options.utils.ts'
+import { optionsFirst, optionsPatternSchema } from '../../utils/options.utils.ts'
 import type { CodePairedCallOptions, CodePairedCallState } from '../../types/code.types.ts'
 
 export const codePairedCall = defineRule({
@@ -13,7 +13,7 @@ export const codePairedCall = defineRule({
         additionalProperties: false,
         properties: {
           when: { type: 'string' },
-          require: { type: 'string' },
+          require: optionsPatternSchema,
           pairs: {
             type: 'array',
             items: {
@@ -21,7 +21,7 @@ export const codePairedCall = defineRule({
               additionalProperties: false,
               properties: {
                 when: { type: 'string' },
-                require: { type: 'string' },
+                require: optionsPatternSchema,
               },
               required: ['when', 'require'],
             },
@@ -53,7 +53,7 @@ export const codePairedCall = defineRule({
             pair.firstWhen ??= node
           }
 
-          if (name === pair.require) {
+          if (name !== undefined && [pair.require].flat().includes(name)) {
             pair.sawRequired = true
           }
         }
@@ -64,7 +64,7 @@ export const codePairedCall = defineRule({
             context.report({
               node: firstWhen,
               messageId: 'paired',
-              data: { when, require },
+              data: { when, require: [require].flat().join(' or ') },
             })
           }
         }
